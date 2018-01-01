@@ -1,0 +1,19 @@
+#cambiar ids numericas por nombres? en el tablero se seguirian usando numeros,
+#pero aclarando ahi mismo que numero es cada cosa
+#siempre se van a crear las piezas de aca, incluso mientras corre el juego,
+#asi que usar nombres es mas comodo que ir mirando que numero es quien
+#faltaría agregar el token nombre, que carga el string
+#tambien podria implementar agregar espacios como token despues de wasd,
+#para poder hacer cosas como w{a,d} que funcionen bien. Igual eso sería util
+#en casos muy especificos nomas, no vale mucho la pena perder tiempo en eso
+
+
+def mover  vacio mov
+def captura  enemigo capt
+def estandar  {mover,captura} #cambiar por v despues
+
+:1 "peace man"
+{mov{capt,vacio},enemigo}
+
+:2 "caballo"
+{{ww,ss}{a,d},{aa,dd}{w,s}} captura
