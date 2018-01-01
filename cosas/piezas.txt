@@ -1,0 +1,324 @@
+
+
+
+
+
+
+
+
+
+el archivo save guarda primero todas las matrices y despues todas las piezas,
+para evitar repeticiones
+
+
+
+la informacion de cada pieza se genera en el editor y se guarda en un archivo
+cada pieza tiene un id, un sn, una lista de bools 
+y despues los movimientos, que son un numero
+que indica que tipo de movimiento es y despues las coordenadas
+
+Cuando se entra a proper se recorre la matriz que se le haya pasado y se cargan
+las piezas (supongo que no voy a nesitar mas la clase plantilla, el archivo
+va a cumplir esa funcion)
+[en caso de que se haya borrado una pieza y haya una referencia en la matriz, ese 
+numero ahora va a corresponder a otra y se va a cargar esa otra. Y en caso de se haga
+una referencia a algo que no esta hay que hacer que no haga nada]
+
+Cuando se entra al editor se cargan todas las piezas, y cuando se sale se borra
+el archivo y se reescribe, asi se eliminan, modifican y agregan piezas directamente
+
+Hay que mantener los bloques de calculo separados de los de accion porque hay varios
+calculos que hacen la misma accion y acciones que salen del mismo calculo
+
+Para seguir la filosofia de generalizar todo voy a intentar nunca usar herencia,
+aunque si la necesito esta ahi
+Esto significa que la mecanica del fantasma tiene que ser general, añadirse
+como la accion que sale del bloque que maneja movimiento inicial
+Tambien hay que crear un movimiento de enroque general. Este toma por coordenadas
+piezas preseleccionadas (en el unico caso estandar, el rey y las torres). Solo efectua
+el movimiento si las piezas estan en una linea, ninguna se movio, y los espacios
+entre si estan libres. 
+Como son movimientos y acciones pre armadas la IA debería poder manejar todo sin
+problemas
+
+debería sacar las initializer list y usar vectores de vectores. Hasta ahora use
+initializer list porque era mas comodo harcodear con eso, pero ahora que se
+hace mas mecanicamente es mas comodo usar vectores de vectores. A demas
+no con vectores no necesito mandar el tamaño
+
+
+
+
+
+
+Pieza{
+ calcularMovimientos
+ clicked
+ especial
+ acciones?
+}
+
+cada bloque de calculo de movimientos recive una lista de listas de coordenadas y crea así el bloque de calculo
+para ese movimiento especifico en esa pieza especifica.
+Lo que se guarda en el txt es la lista de coordenadas y a que bloque de calculo pasarselo
+
+Supongo que el calculo y las acciones podrían formar parte del mismo struct?
+
+
+
+
+
+
+
+Supongo que calcular movimientos le asigna un valor a cada movimiento, siendo 0 estandar, 1 solo movimientos, 2 solo
+captura, y así para cosas más raras como hops con y sin captura en salto, conversiones, giros y cosas raras
+Se miraría una lista de acciones de cada pieza para matchear los numeros y ver que hacer
+
+Esta sería una forma de crear piezas complejas sin hacer un unico struct con un monton de cosas. Los calculos de movimiento,
+y las acciones respectivas, estan en bloques que se agregan cuando se necesiten
+
+Hay que pensar bien como serían las killing sprees
+
+calcularMovimientos primero mira si la pieza esta paralizada. De estarlo no hace nada. Sino calcula los movimientos
+segun que sea cada pieza
+clicked crea clickers segun los movimientos calculados
+Estos clickers despues se encargan de realizar el movimiento. Supongo que la IA lo hace directamente, mirando los calculados
+tambien
+Especial es para acciones especiales de piezas especificas, para la gran mayoria es una funcion vacia. Añade un boton con
+un simbolo, y si se apreta se lee un codigo. El rey puede rendirse, la bomba puede explotar, el ponedor de paredes puede
+poner una pared
+Acciones es lo que se mira para saber que codigo correr cuando se eligió un movimiento
+
+
+Por ejemplo, una torre tendría como un bloque de calcular movimientos la lista de sus 4 coordenadas junto con su instruccion
+de replicarse. Crearía clickers todos con 0, cada uno conteniendo la lista de coordenadas para moverse hasta ahí
+En acciones tendría un unico bloque, que interpretaría los clickers con 0, y movería la torre coordenada por coordenada
+hasta llegar a la ultima
+
+A esta torre se le podrían agregar unos movimientos diagonales donde no puede capturar, entonces se le agrega un segundo
+bloque que genera clickers con 1, y una lista de coordenadas (en este caso simples, no listas)
+Entonces se procesarían los dos bloques, y se generarían dos clickers distintos. El segundo clicker llama a un segundo
+bloque accion que hace el movimiento correspondiente.
+
+Y así se pueden seguir agregando movimientos a esta pieza sin necesidad de meterle cosas que no necesite ni perturbar otras
+piezas, tambíen puedo crear piezas con movimientos unicos y hacer fusiones con piezas viejas sin que haya problema
+
+Por ultimo podría agregarsele la capacidad de convertir a piezas que esten a un movimiento de caballo. Se agregaría otro
+bloque de calcular movimiento que pone clickers 6, y una accion 6 que realiza la conversion.
+
+Lo unico a tener en cuenta es que puede que haya clickers que se superpongan, en especial en piezas que calculen sus movimientos
+en cada turno y tengan movimientos propios. Una solucion sea hacer que los clickers se sobreescriban segun el orden
+de bloques, otra que coexistan. Supongo que lo mejor sería lo segundo pero tambien es lo mas complicado.
+Supongo que cuando se coloca un clicker si se detecta que ya hay uno en esa posicion (se tendría que mirar la lista hasta
+ese punto por cada uno que se pone) se crea un super clicker que, al ser tocado, da a elegir entre todos los clickers
+que contenga. Si los clickers son de un mismo tipo (llaman a la misma accion) se deja uno y ya esta.
+Así se pueden crear piezas que puedan convertir o capturar, por ejemplo
+
+ 
+
+
+
+
+Hacer que el editor seleccione como tiles promocionables por defecto los de la ultima fila, pero que
+esto se pueda cambiar. Que haya una entidad que marque la promocion permite crear tableros mas raros
+y hacer que el reaper sea mas general, puede mover a cualquier tile no promocionable
+
+
+
+
+
+
+
+
+
+
+
+el atributo de realeza se asigna desde el editor. Algunas piezas, como el rey, antirey y rey de combate lo tienen
+por defecto, pero se lo puede sacar.
+Hay dos atributos del realeza. La OR hace que se pierda la partida cuando todas las piezas reales OR sean capturadas
+La AND hace que se pierda el juego cuando se es capturada.
+Supongo que la IA le da un valor de 9999 a las AND y un valor de 1000 a las OR (este valor nomas sería superado por
+la capacidad de capturar a alguna pieza real enemiga)
+Por lo tanto, todas las piezas tienen dos bools de realeza. En el editor aparece una coronita
+Si no hay piezas reales se gana por conquista
+Pueden darse casos donde no se pueda hacer nada (como que queden dos alfiles de distinto bando en distinto color) Va
+a ser medio jodido hacer una forma de determinar estos casos. Por ahí simplemente dejar que pasen los turnos
+hasta quedar en tablas. Por ahi una forma de detectar estos casos es mirar si la IA esta confundida muchos turnos 
+seguidos
+
+si hay dos piezas reales, y una esta en check, hay una obligacion a sacarla de ahí? Supongo que esto
+es algo para un bool mas
+
+Cada pieza tiene una lista de movimientos iniciales, lista de movimientos default (ataque y desplazamiento), solo 
+desplazamiento, solo ataque, hopping y movimientos con etapas
+Las piezas de salto tienen directamente las coordenadas
+Las de desliz tienen listas de coordenadas. Normalmente son solo una coordenada con un indicativo de que esta
+se puede repetir indefinidamente, pero hay piezas que pueden tener un rango (entonces tienen una lista de la
+misma coordenada repetida un numero de veces), o pueden tener movimientos mas complejos (mover una vez diagonalmente,
+despues repetir coordenadas verticales)
+
+Algunas piezas tienen un calculo de movimiento todavia mas complejo, que requiere un procesado en el momento. Por ejemplo,
+todas las piezas que funcionan haciendo hops, y las que tienen killing sprees necesitan calcularlo en el momento. Tambien
+el alfil de rebote, y las piezas que armen su listado de movimiento en cada turno.
+Cuando se dibujan los espacios de avance posibles de piezas con desliz, se va marcando cada casillero hasta llegar a un borde,
+o a alguna pieza (a menos que sea una pieza enemiga oculta, como el asesino)
+
+El desliz no se hace de forma instantanea, se va avanzando espacio por espacio para que quede una animacion y para hacer
+checks de que no se esta llevandose puesta ninguna pieza oculta
+Algunas piezas se mueven de forma indefinida usando esta mecanica (no hay ninguna pero podría hacer una para aprovechar)
+esas piezas deberían usar otro color para su movimiento, no sé si meter un bool solo para eso. O por ahí cambio el color
+directamente en el constructor y esta todo armado de tal forma que va a quedar asi?
+
+Hopping
+las piezas que necesitan saltar otras tienen movimiento de hop. 
+Tambien hay un bool que indica si captura o no lo saltado.
+Las listas de hop son las mas complejas. Arrancan con el hoping, despues tienen un indicador (como el repetir) que indica
+que hacer despues del hopping. Hay varios de estos indicadores que indican que tipo de movimiento se puede hacer. Por
+ejemplo, la dama sería (1,0) (repetir) (solo movimiento) (1,0), bool de captura en salto true, y asi para las 4 direcciones
+el grasshopper sería (1,1) (repetir) (estandar) (1,1), bool de captura en salto false, y asi para las 8 direcciones
+Hay algunas cosas tecnicas que poner sobre el hopping, como que no se puede saltar sobre paredes, se puede atravezar
+el escudo de la pieza esa, etc
+
+Killing sprees
+un bool indica si la pieza tiene killing sprees. De tenerlas, luego de comer una pieza se repite su turno, 
+dandose solo los movimientos de ataque. (movimientos de solo ataque y, de haber estandars, estandars que pasen
+sobre una pieza enemiga)
+hay un bool que indica si seguir atacando cuando sea posible es obligatorio o no
+Si esta ese bool y solo hay una opcion se hace automaticamente, sino se da a elegir.
+Si seguir atacando no es obligatorio tiene que aparecer un boton de 'no hacer nada' Estaria bueno que sea
+tocar la pieza dos veces
+
+Algunas piezas, como Mao, se mueven primero a una posicion y despues a otra. No basta con la lista de movimientos
+para esto, porque esa lista permite que se haga solo el primer movimiento. En este caso, el primer movimiento es una
+condicion para el segundo. Para moverse al segundo lugar no solo ese tiene que estar vacante, el primero tambien
+Generalizando, solo la ultima coordenada esta disponible, y figura solo si esta y el resto de la lista estan vacias.
+Cuando se selecciona se recorre la lista para hacer la animacion completa. No sé que pasa si se encuentra a un asesino
+
+
+
+
+
+
+
+Hay piezas que vienen encastilladas, tienen dentro de si una lista de coordenadas donde se dibuja una pared que ellas
+no pueden atravesar. El dibujado y logica se hace dentro de la misma pieza. Las coordenadas son relativas a la posicion
+inicial de la pieza, se vuelven absolutas despues
+Es medio raro que si un leon sale del castillo despues de salir en una captura real, el castillo siga existiendo y este
+no pueda volver a entrar ahi (en caso de que el enemigo mas de un rey). Pero bueno, puede quedarse asi o puede haber 
+un clicker unico que ademas de hacer la captura real borre el castillo, o lo mueva a donde esta, no sé.
+Si hago este clicker hacer una pieza que lo use bastante
+
+Supongo que todas las piezas en todos los turnos tienen una funcion de look around para ver si estan congeladas. La 
+mayoria de las piezas lo tienen solo para eso, y no hay muchas piezas que congelen. Pero bueno
+Hay una matriz de ints de casilleros congelados, cada pieza que congele se encarga de poner y sacar sus cosas. Si es 0
+no esta congelado. Si es 1 o mas si. Uso ints y no bools por el caso de que haya dos areas de congelamiento superpuestas, 
+y una pieza al meter su area en la del otro y salir se la borre
+Algunas piezas, como las que calculan sus movimientos en cada turno, aprovechan para hacer sus cosas
+
+No todas las piezas capturan. Supongo que hay un bool para determinar eso. Las que no capturan usan sus coordenadas de
+ataque para convertir a la otra pieza.
+Tambien podría haber piezas que capturan a distancia, o tienen una mezcla. Habría que agregar yet another list para esto
+
+Las piezas generan un movimiento simetrico en el eje y por defecto, pero no es algo obligatorio
+
+Piezas incapturables, un bool para eso
+
+Piezas solo capturables por otras piezas. Hay que meter una lista de punteros para marcar las otras supongo, se asigna
+todo en el editor. Puede que algunas piezas busquen otras por defecto
+Esta es medio una cagada. no sé como podría usar esta lista solo en algunas piezas mientras que en otras no exista
+
+Hia es una pieza que crea un campo que bloquea el avance de otras piezas. Supongo que crea alguna pieza tecnica del bando
+enemigo para confundir el movimiento. O por ahí creo un tercer bando de piezas neutrales, ahí entrarian tambien las paredes
+
+Un sistema de promocion. Las piezas tienen un bool de promocionable que indica si el peon puede transformarse
+en ella o no, y a demas algunas piezas pueden promocionar en otras. Si solo puede promocionar en una lo hace
+directamente, si hay eleccion salen unos botones
+
+
+
+
+
+
+
+Efectos despues de captura -creo que ninguna pieza tiene esto pero podría estar
+
+Comandos especiales -por ejemplo el rey tiene el boton de rendicion. Tambien quiero hacer un peon bomba. Sería un boton
+extra que aparece al seleccionar estas piezas, que activa un pedazo de codigo. En el caso del rey, la rendicion. En el
+caso de la bomba, retira su pieza y todas las que esten en un rango. Va a ser medio jodido que la IA use bien estos
+comandos, probablemente los razonamientos para usarlos esten harcodeados y ya esta.
+
+
+El sistema de movimientos con extensiones es suficientemente flexible como para bancarse todo, creo. Hay que hacer ciertos
+comandos para extension como "captura de pieza sin que se haya movido otra a su posicion" y "cambio de bando", pero se
+puede pistear
+
+
+hay una matriz de bools que indica los espacios de rio. Si una pieza esta en un espacio de rio por dos turnos seguidos
+se ahoga. Supongo que tiene un bool la pieza, a la primera se vuelve true, a la segunda se ahoga
+Algunas piezas, como el cocodrilo, pueden estar en el agua y cambian su set de movimientos
+
+
+Algo jodido va a ser piezas que copien movimientos al inicio del turno, por el orden en que lo hacen.
+Por ejemplo, hay un huerfano y un amigo. El huerfano copia los movimientos de todas las piezas que
+pueda atacar, el amigo copia eso. Funciona bien.
+Ahora, si el amigo mira primero va a copiar lo que el huerfano tuviera antes de actualizarse, kakeo
+
+
+el emperador es una pieza que se puede mover y capturar en cualquier lugar del tablero, siempre y cuando no sea
+capturado por hacerlo (incluso si ganaría el juego por hacerlo). Esto lo hace cuando haya al menos un principe 
+en juego, si no solo puede saltar a lugares dentro del rango de ataque de piezas de su bando
+hacer un rey especial que pueda promocionar en emperador
+el principe se mueve igual que el rey
+Supongo que va a requerir codigo especial para no hacer una lista de cada coordenada posible
+
+Reaper: Puede mover y capturar a cualquier casillero excepto a la ultima fila. Puede capturar piezas propias
+
+
+
+Hacer la IA mas modular para poder harcodear mas piezas especiales
+
+piezas a agregar:
+misiles https://en.wikipedia.org/wiki/Stratomic
+piezas que se deslicen hasta chocar con alguien, o hasta llegar a su posicion inicial
+pieza bomba
+pieza que cambie su posicion con cualquier otra dentro de un rango de 3
+pieza que pueda generar 3 paredes (distintas de las paredes que se usan para otras cosas, estas tienen un dibujo
+propio), luego no haga nada (por ahí es la tercera pared, queda ahí)(Puede que se use
+para encerrar al rey, pero llevaría muchos turnos y al menos dos piezas para lograrlo. En ese caso el otro debería
+encargarse de eliminar el resto de sus piezas, luego el otro quedaría ahogado. Tambien esta el tema de que si se deja
+un espacio para moverse para adelante y atras, ahí crearía tablas. Podría dejarlo así, o hacer alguna mecanica en
+que las paredes desaparecen si solo queda una pieza real)
+lo jodido de estar piezas, mas que hacerlas, va a ser que la IA las use bien
+una pieza vivora multiblock?
+pieza camuflada, tiene como movimiento especial ser reemplazada por otra pieza, y hacer que el resto de su clase
+se vuelvan normales. (para juego como por ejemplo en el que algun peon es en realidad una reina. Al usar el especial
+se transforma en una reina, y transforma al resto de peones especiales en peones comunes)
+Pieza que resusite, pase al antes de nacer y se pueda volver a poner
+pieza multiblock. Ni idea de como capturaria o sería capturada, pero no estaría mal. Haciendo movimientos unicos se
+puede hacer sin problema
+pieza ariete, que pueda contener otra pieza (medio picante but fun. Supongo que tiene un movimiento lento pero es
+incapturable o algo asi, tiene clickers a su alredor y a demas tiene los clickers de la pieza que contiene. Si
+se tocan estos la pieza se suelta) La pieza no puede salir si el arite esta siendo amenazado
+pieza barco, algo original
+pieza asimetrica
+pieza que tenga un movimiento que permita cambiar su posicion con cualquier otra, y pueda hacer esto varias veces
+en un mismo turno
+pieza mimo, que tiene la habilidad de copiar todos los movimientos y habilidades de otra pieza (se volvería realmente
+la otra pieza, y a esta se le agregaría la opcion de mimo)
+pieza absorbente, que obtiene todos los bloques de movimiento, accion y propiedades de quien absorva. Necesita absorver
+a una pieza aliada para comenzar a actuar, su unico movimiento inicial es absorver ortogonalmente. Puede que este un 
+poco rota. Es una cuestion de tener una super pieza vs tener muchas piezas.
+
+
+
+Crazyhouse esta bueno y podría implementarse facil con la mecanica del antes de nacer. Habría que agregar un
+gamemode para que cuando se capture una pieza pase al antes de nacer con bando cambiado, y hay que hacer que
+todas las piezas que se promuevan recuerden que eran antes de promoverse.
+
+
+la pieza pared es una pieza de bando 0, incapturable, inimitable, cuya sprite es un cuadrado negro. Esta para hacer
+tableros no cuadrados. 
+
+
+el ubi-ubi por ahi lo dejo de lado porque va a haltear a la maquina. Si lo pongo va a necesitar programacion especial
+para saltear eso, es medio al pedo, dejarlo para el final
