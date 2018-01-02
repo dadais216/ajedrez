@@ -1,6 +1,0 @@
-Juego - Input, Estado
-Estado - Juego, Pieza, Boton, Clickers, tablero, input
-Boton - Juego
-Clicker - Estado
-Pieza - Juego
-tablero - 

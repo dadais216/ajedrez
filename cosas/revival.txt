@@ -388,3 +388,11 @@ desliz aplica las acciones del buffer directamente si su condicion es verdadera,
 multi tambien aplica acciones de forma explicita y sigue funcionando
 
 
+podría hacer que then, ; y todos los delimitadores sean el mismo token. Creo que no causaría problemas
+normal retorna en eol y delimitador, y sigue el control es el manejador de movimientos o en el operador que llamó
+
+
+agregar algun simbolo a multi que sea alternativa al eol, asi se lo puede meter en un def
+
+
+
