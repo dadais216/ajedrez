@@ -599,11 +599,11 @@
 	<string>
 	<global.h>
 
-1514679133 source:c:\users\daniel\desktop\c\ajedrez\src\lector.cpp
+1514706494 source:c:\users\daniel\desktop\c\ajedrez\src\lector.cpp
 	"lector.h"
 	<Pieza.h>
 
-1514670071 c:\users\daniel\desktop\c\ajedrez\include\global.h
+1514766345 c:\users\daniel\desktop\c\ajedrez\include\global.h
 	<iostream>
 	<vector>
 	<list>
@@ -611,4 +611,5 @@
 	<map>
 	<assert.h>
 	<Juego.h>
+	<vec.h>
 

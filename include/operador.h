@@ -4,20 +4,22 @@
 #include <global.h>
 
 struct accion{
-    vec pos;
-    void accion();
+    void operator()(vec);
 };
 struct condicion{
-    vec pos;
-    bool condicion();
+    bool operator()(vec);
 };
 
 list<accion> buffer;
 
+vec* or; //lo carga la pieza
+
+bool separator;
+
 struct operador{
     list<condicion> conds;
     list<accion> accs;
-    bool operar(vec);
+    bool operar(vec)=0;
     operador* sig;
 };
 
@@ -25,12 +27,10 @@ struct normal:public operador{};
 
 struct desliz:public operador{
     operador* inside;
-    //if inside avanzar y repetir, cuando falle pasar al siguiente
 };
 
 struct or:public operador{
     list<operador*> ops;
-    //if !op ir al siguiente
 };
 
 struct multi:public operador{
