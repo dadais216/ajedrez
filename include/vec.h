@@ -6,19 +6,25 @@ using namespace std;
 struct v{
     int x;
     int y;
-    int tec; //para pasar datos tecnicos, para que los casos especiales se menejen con esto en vez de numeros especificos
     v(){};
     v(int x,int y)
-    :x(x),y(y),tec(0){}
-    void show(){
+    :x(x),y(y){}
+    v show(){
         cout<<"("<<x<<","<<y<<")"<<endl;
+        return *this;
     }
     friend v operator+(v a,v b){
         //cout<<a.x+b.x<<","<<a.y+b.y<<endl;
         return v(a.x+b.x,a.y+b.y);
     }
+
     friend bool operator==(v a,v b){
         return a.x==b.x&&a.y==b.y;
+    }
+    v operator=(v vec){
+        x=vec.x;
+        y=vec.y;
+        return vec;
     }
 };
 

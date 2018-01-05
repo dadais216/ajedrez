@@ -1,23 +1,22 @@
 #ifndef PIEZA_H
 #define PIEZA_H
-#include <SFML/Graphics.hpp>
-#include <Manager.h>
-#include <vector>
-#include <cstdarg>
-#include <vec.h>
+//#include <cstdarg>
 #include <tablero.h>
+#include <global.h>
 using namespace std;
 using namespace sf;
-struct Juego;
+struct operador;
 
 struct Pieza{
-    RenderWindow* window;
     Sprite sprite;
-    tablero* t;
     int bando;
+    int id; //para hacer copias
+    int sn;
 
-    Pieza();
-    void draw(int,int);
+    list<operador*> movs;
+
+    Pieza(int,int,int);
+    void draw(v);
 };
 
 

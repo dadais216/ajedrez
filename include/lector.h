@@ -1,10 +1,11 @@
 #ifndef LECTOR_H
 #define LECTOR_H
 #include <fstream>
-#include <string>
 #include <global.h>
 using namespace std;
 struct Pieza;
+
+
 struct lector
 {
     lector();
@@ -20,10 +21,10 @@ struct lector
     W,A,S,D,
     mov,capt,
     vacio,enemigo,
-    esp,eol,last};//last se usa para los sig token, generados por los def
+    desliz,opt,multi,
+    esp,eol,sep,lim,last};//last se usa para los sig token, generados por los def
     bool hayAtras;
     int i,j;
-    list<int> tokens;
     map<int,list<int>> defs;
     list<int>* lista;
     map<string,int> tabla;

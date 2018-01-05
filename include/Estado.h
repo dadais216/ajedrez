@@ -1,13 +1,7 @@
 #ifndef ESTADO_H
 #define ESTADO_H
 
-
-#include <SFML/Graphics.hpp>
-#include <Manager.h>
-#include <array>
-#include <vector>
-#include <vec.h>
-#include <fstream>
+#include <global.h>
 #include <tablero.h>
 
 struct Boton;

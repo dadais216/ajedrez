@@ -2,40 +2,43 @@
 #define OPERADOR_H
 
 #include <global.h>
+#include <Pieza.h>
 
-struct accion{
-    void operator()(vec);
+enum t{condt,acct,movt};
+struct acm{
+    t tipo;
+    void(*func)(void);
 };
-struct condicion{
-    bool operator()(vec);
-};
-
-list<accion> buffer;
-
-vec* or; //lo carga la pieza
-
-bool separator;
 
 struct operador{
-    list<condicion> conds;
-    list<accion> accs;
-    bool operar(vec)=0;
+    virtual bool operar()=0;
+    virtual void debug(){};
     operador* sig;
 };
 
-struct normal:public operador{};
+struct normal:public operador{
+    normal();
+    virtual void debug();
+    virtual bool operar();
+    list<acm*> acms;
+};
 
 struct desliz:public operador{
+    desliz();
+    virtual bool operar();
     operador* inside;
 };
 
-struct or:public operador{
+struct opt:public operador{
+    opt();
+    virtual bool operar();
     list<operador*> ops;
 };
 
 struct multi:public operador{
+    multi();
+    virtual bool operar();
     list<operador*> ops;
-    list<accion> anteriores;
     //aplicar el anterior con las acciones generadas por los que den verdadero
 
     //algo wacky para esperar el input y seguir
