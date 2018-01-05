@@ -1,6 +1,8 @@
 #include "lector.h"
 #include <Pieza.h>
 
+list<int> tokens;
+
 lector::lector(){
     extra=0;
     tabla["mov"]=mov;
@@ -70,14 +72,17 @@ Pieza* lector::crearPieza(int n){
     archPiezas.clear();
     archPiezas.seekg(0, ios::beg);
     string linea;
+    int sn;
     while(getline(archPiezas,linea)){
         if(linea.empty()) continue;
         if(linea[0]==':'){
             int j;
             for(j=1;j<linea.length()&&linea[j]!='"';j++);
             linea=linea.substr(1,j-1);
-            if(stringToIntR(linea)==abso(n))
+            if(stringToIntR(linea)==abso(n)){
+                sn=stringToIntR(linea);
                 goto enPieza;
+            }
         }
     }
     cout<<"una pieza no esta";
@@ -186,7 +191,7 @@ Pieza* lector::crearPieza(int n){
 
 
 
-    Pieza* p=new Pieza;
+    Pieza* p=new Pieza(abso(n),sgn(n),sn);
 
     tokens.clear();
     return p;

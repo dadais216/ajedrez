@@ -8,7 +8,7 @@ struct Input{
     RenderWindow* window;
     Input(RenderWindow*);
     void check();
-    v get();
+    v get(int);
     v pixel();
     void show();
     bool inRange();

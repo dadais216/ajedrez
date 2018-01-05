@@ -12,8 +12,8 @@ def mover  vacio mov
 def captura  enemigo capt
 def estandar  {mover,captura} #cambiar por v despues
 
-:1 "peace man"
-{mov{capt,vacio},enemigo}
+:1 1 #wachin
+w vacio mov enemigo capt sss
 
 :2 "caballo"
 {{ww,ss}{a,d},{aa,dd}{w,s}} captura

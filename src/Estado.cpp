@@ -7,6 +7,7 @@
 #include <Clicker.h>
 #include <Pieza.h>
 #include <lector.h>
+#include <operador.h>
 
 Estado::Estado(){}
 
@@ -84,37 +85,31 @@ void Proper::draw(){
     for(Clicker* cli:clickers){
         cli->draw();
     }
-
-    return;
     tablero.drawPieces();
 }
 
 void Proper::update(){
-    return;
     //turno jugador
-//    if(input->click()){
-//        if(input->isInRange(v(576,0),v(640,64))){
-//            j->change(new Selector());
-//            return;
-//        }
-//        if(input->inGameRange(tablero->tam)){
-//            clickers.clear();
-//            Pieza* act=tablero(v(input->get().x,input->get().y));
-//            if(act){
-//                if(act->bando==-1){
-//                    for(int i=0;i<act->mov.size();i++){
-//                        if(inRange(act->mov[i]+v(input->get().x,input->get().y))){
-//                            clickers.push_back(Clicker(act->mov[i]+v(input->get().x,input->get().y),window));
-//                        }
+    if(input->click()){
+        if(input->isInRange(v(576,0),v(640,64))){
+            j->change(new Selector());
+            return;
+        }
+        if(input->inGameRange(tablero.tam)){
+            clickers.clear();
+            Pieza* act=tablero(input->get(escala).show());
+            if(act&&act->bando==-1){
+                for(operador* o:act->movs){
+                    o->debug();
+
+//                    if(inRange(act->mov[i]+v(input->get().x,input->get().y))){
+//                        clickers.push_back(Clicker(act->mov[i]+v(input->get().x,input->get().y),window));
 //                    }
-//                }
-//            }
-//        }
-//    }
-
-    //turno makina
+                }
+            }
+        }
+    }
 }
-
 bool Proper::inRange(v a){
     return a.x>=0&&a.x<=tablero.tam.x-1&&a.y>=0&&a.y<=tablero.tam.y-1;
 }

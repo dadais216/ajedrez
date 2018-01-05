@@ -1,8 +1,7 @@
 #ifndef MANAGER_H
 #define MANAGER_H
-#include <iostream>
-#include <map>
-#include <list>
+#include <global.h>
+
 using namespace std;
 template<class T>
 class Manager{
