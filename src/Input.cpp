@@ -1,4 +1,5 @@
 #include "Input.h"
+
 Input::Input(RenderWindow* window)
 :window(window),clickCont(true){}
 
@@ -36,8 +37,8 @@ bool Input::inGameRange(v tam){
     return ve.x>=0&&ve.x<tam.x*64&&ve.y>=0&&ve.y<tam.y*64;
 }
 
-v Input::get(){
-    return v(ve.x/64,ve.y/64);
+v Input::get(int escala){
+    return v(ve.x/(32*escala),ve.y/(32*escala));
 }
 
 v Input::pixel(){

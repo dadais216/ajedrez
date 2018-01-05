@@ -2,6 +2,7 @@
 
 
 #include <global.h>
+#include <Juego.h>
 
 int Boton::i;
 bool Boton::tocado;
