@@ -17,6 +17,8 @@ struct Pieza{
 
     Pieza(int,int,int);
     void draw(v);
+
+    void calcularMovimientos(v);
 };
 
 

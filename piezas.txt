@@ -13,7 +13,7 @@ def captura  enemigo capt
 def estandar  {mover,captura} #cambiar por v despues
 
 :1 1 #wachin
-w vacio mov enemigo capt sss
+w vacio mov enemigo capt color 40 40 40 sss
 
 :2 "caballo"
 {{ww,ss}{a,d},{aa,dd}{w,s}} captura
