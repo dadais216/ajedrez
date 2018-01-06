@@ -36,12 +36,8 @@ struct Proper:public Estado{
     Proper(int);
     virtual void update();
     virtual void draw();
-    bool inRange(v a);
+    bool inRange(v a); //uso esto?
     tablero tablero;
-    vector<Clicker*> clickers;
-
-
-    void mover(v a, v b);
 };
 
 #endif // ESTADO_H

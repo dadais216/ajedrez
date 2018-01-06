@@ -10,6 +10,7 @@ lector::lector(){
     tabla["vacio"]=vacio;
     tabla["enemigo"]=enemigo;
     tabla["def"]=def;
+    tabla["color"]=color;
 
     archPiezas.open("piezas.txt");
     archTablero.open("tableros.txt");
@@ -231,14 +232,21 @@ void lector::token(string linea){
     //cout<<"++"<<palabra<<"++"<<i<<" "<<j<<"\n";
     i=j;
 
-    bool esMov=true;
-    for(int k=0;k<palabra.length();k++)
+    bool esMov=true,esNum=true;
+    for(int k=0;k<palabra.length();k++){
         if(palabra[k]!='w'&&palabra[k]!='a'&&palabra[k]!='s'&&palabra[k]!='d')
             esMov=false;
+        if(palabra[k]<'0'||palabra[k]>'9')
+            esNum=false;
+    }
     if(esMov){
         for(int k=0;k<palabra.length();k++)
             token(palabra[k]);
         lista->push_back(esp);
+        return;
+    }
+    if(esNum){
+        lista->push_back(-stringToIntR(palabra));
         return;
     }
 
@@ -253,7 +261,7 @@ void lector::token(string linea){
         lista->push_back(last+extra);
         extra++;
     }else{
-        cout<<"palabra no reconocida";
+        cout<<"palabra no reconocida: "<<palabra;
         exit(EXIT_FAILURE);
     }
 }

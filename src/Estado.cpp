@@ -79,7 +79,6 @@ Proper::Proper(int id)
     //construir piezas adicionales
 }
 
-
 void Proper::draw(){
     tablero.drawTiles();
     for(Clicker* cli:clickers){
@@ -97,19 +96,14 @@ void Proper::update(){
         }
         if(input->inGameRange(tablero.tam)){
             clickers.clear();
-            Pieza* act=tablero(input->get(escala).show());
-            if(act&&act->bando==-1){
-                for(operador* o:act->movs){
-                    o->debug();
-
-//                    if(inRange(act->mov[i]+v(input->get().x,input->get().y))){
-//                        clickers.push_back(Clicker(act->mov[i]+v(input->get().x,input->get().y),window));
-//                    }
-                }
-            }
+            act=tablero(input->get().show());
+            input->pixel().show();
+            if(act&&act->bando==-1)
+                act->calcularMovimientos(input->get());
         }
     }
 }
+
 bool Proper::inRange(v a){
     return a.x>=0&&a.x<=tablero.tam.x-1&&a.y>=0&&a.y<=tablero.tam.y-1;
 }

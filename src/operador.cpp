@@ -6,50 +6,69 @@ bool cond;
 bool outbounds;
 bool separator;
 list<acm*> buffer;
-v* org; //de la pieza, lo usa y actualiza mov. Su contenido se pasa al primer mov tambien
 v pos;
+v org;
 Pieza* act;//para chequeos
 
-//el tablero va a tener que ser global
-void movf(){
-    *org=pos;
-}
-void captf(){
-    //mover pieza en pos a capturados
-}
-void vaciof(){
-    cond=true;
-}
-void enemigof(){
-    cond=true;
-}
-void Wf(){
-    pos.y+=act->bando;
-}
-void Sf(){
-    pos.y-=act->bando;
-}
-void Af(){
-    pos.x--;
-}
-void Df(){
-    pos.x++;
-}
-void espf(){
-    //controlar que la pos este dentro del tablero
-    outbounds=true;
-    cond=false;
-}
 
-acm mov={acct,movf};
-acm capt={acct,captf};
-acm vacio={condt,vaciof};
-acm enemigo={condt,enemigof};
-acm W={movt,Wf};
-acm S={movt,Sf};
-acm A={movt,Af};
-acm D={movt,Df};
-acm esp={condt,espf};
+struct color:public acm{
+    sf::Color _color;
+    RectangleShape cuadrado;
+
+    color(int r,int g,int b)
+    :cuadrado(Vector2f(32*escala,32*escala)),_color(-r,-g,-b){
+        tipo=colort;
+        cuadrado.setFillColor(_color);
+        cuadrado.setPosition(pos.x*32*escala,pos.y*32*escala);
+    }
+    virtual void func(){
+        window->draw(cuadrado);
+    }
+};
+
+#define fabMov(NOMB,TIPO,FUNC)\
+struct NOMB:public acm{\
+    NOMB(){\
+        tipo=TIPO;\
+    };\
+    virtual void func(){\
+        FUNC\
+    }\
+}\
+
+
+fabMov(mov,acct,
+       //(*tabl)(org,nullptr);
+       //(*tabl)(pos,act);
+       //org=pos;
+);
+fabMov(capt,acct,
+
+);
+fabMov(vacio,condt,
+        cond=true;
+);
+fabMov(enemigo,condt,
+        cond=true;
+);
+fabMov(W,movt,
+       pos.y+=act->bando;
+       cout<<"W";
+);
+fabMov(S,movt,
+        pos.y-=act->bando;
+        cout<<"S";
+);
+fabMov(A,movt,
+        pos.x--;
+);
+fabMov(D,movt,
+        pos.x++;
+);
+fabMov(esp,condt,
+        outbounds=true;
+        cond=true;
+);
 
 operador* keepOn(){
     if(tokens.empty())
@@ -70,7 +89,8 @@ normal::normal(){
         int tok=tokens.front();
         tokens.pop_front();
         switch(tok){
-        #define caseT(TOKEN)  case lector::TOKEN: acms.push_back(&TOKEN);break;
+        #define caseT(TOKEN)  case lector::TOKEN: acms.push_back(new TOKEN);break
+        //como la mayoria de los acm no tiene datos el new no debería alocar nada
         caseT(W);
         caseT(A);
         caseT(S);
@@ -83,6 +103,10 @@ normal::normal(){
         caseT(mov);
         caseT(capt);
 
+        //movs con parametros
+        case lector::color:
+            acms.push_back(new color(tokens.front(),(tokens.pop_front(),tokens.front()),(tokens.pop_front(),tokens.front())));
+            break;
         case lector::sep:
             separator=true;
             return;
@@ -100,18 +124,19 @@ normal::normal(){
 }
 
 bool normal::operar(){
-    v aux=pos;
+    v org=pos;
+    cond=true;
     for(acm* a:acms){
         if(a->tipo==condt){
-            a->func();
-            if(cond==false)
+            if((a->func(),cond==false))
                 return false;
         }else if(a->tipo==movt)
             a->func();
     }
-    pos=aux;
+    cout<<"AAAAAAAAA";
+    pos=org;
     for(acm* a:acms){
-        if(a->tipo==acct||a->tipo==movt)
+        if(a->tipo==acct||a->tipo==movt||a->tipo==colort)
             buffer.push_back(a);
     }
     return true;
@@ -119,7 +144,7 @@ bool normal::operar(){
 
 void normal::debug(){
     for(acm* a:acms)
-        cout<<"|"<<a->tipo<<"|";
+        cout<<"^"<<a->tipo<<"^";
     cout<<endl;
 }
 
@@ -169,10 +194,10 @@ multi::multi(){
 
 bool multi::operar(){
     for(auto op:ops){
-        v aux=*org;
+        v aux=org;
         v aux2=pos;
         op->operar();
-        *org=aux;
+        org=aux;
         pos=aux2;
     }
 }
