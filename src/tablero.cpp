@@ -3,8 +3,11 @@
 #include <Pieza.h>
 
 float escala;
+tablero* tabl;
 
-tablero::tablero(){}
+tablero::tablero(){
+    tabl=this;
+}
 
 tablero::armar(v a){
     tam=a;
@@ -15,6 +18,7 @@ tablero::armar(v a){
         tiles[i].resize(tam.y);
     }
     escala=16*(1/(float)(tam.x>tam.y?tam.x:tam.y));
+    cout<<escala<<endl;
     for(int i=0;i<tam.x;i++){
         for(int j=0;j<tam.y;j++){
             tiles[i][j]=(i+j)%2;

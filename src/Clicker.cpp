@@ -1,10 +1,18 @@
 #include "Clicker.h"
-Clicker::Clicker(v ve)
-:ve(ve),tocado(false),rectangle(Vector2f(64,64)){
-    rectangle.setFillColor(Color::Green);
-    rectangle.setPosition(ve.x*64,ve.y*64);
+#include "global.h"
+#include <operador.h>
+
+Clicker::Clicker(){
+    acciones.splice(acciones.begin(),buffer);
 }
 
 void Clicker::draw(){
-    window->draw(rectangle);
+    for(acm* a:acciones){
+        if(a->tipo==colort||a->tipo==movt)
+            a->func();
+    }
+    pos=org;
 }
+
+
+

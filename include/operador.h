@@ -4,10 +4,10 @@
 #include <global.h>
 #include <Pieza.h>
 
-enum t{condt,acct,movt};
+enum t{condt,acct,movt,colort};
 struct acm{
     t tipo;
-    void(*func)(void);
+    virtual void func()=0;
 };
 
 struct operador{

@@ -1,6 +1,7 @@
 #include "Pieza.h"
 #include <global.h>
 #include <operador.h>
+#include <Clicker.h>
 
 Pieza::Pieza(int _id,int _bando,int _sn){
     id=_id;
@@ -16,13 +17,30 @@ Pieza::Pieza(int _id,int _bando,int _sn){
         movs.push_back(new normal);
     }
     for(operador* o:movs){
-        o->debug();
+        do{
+            o->debug();
+        }while(o=o->sig);
     }
 }
 
 void Pieza::draw(v vec){
     sprite.setPosition(vec.x*escala*32,vec.y*escala*32);
     window->draw(sprite);
+}
+
+list<Clicker*> clickers;
+
+void Pieza::calcularMovimientos(v posAct){
+    org=posAct;
+    for(operador* op:movs){
+        pos=org;
+        operador* it=op;//por ahi no es necesario
+
+        while(it->operar()&&(it=it->sig));
+        pos.show()=org;
+
+        clickers.push_back(new Clicker);
+    }
 }
 
 

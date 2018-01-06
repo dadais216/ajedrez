@@ -11,11 +11,11 @@
 	<Input.h>
 	<Manager.h>
 
-1515132794 c:\users\daniel\desktop\c\ajedrez\include\estado.h
+1515213674 c:\users\daniel\desktop\c\ajedrez\include\estado.h
 	<global.h>
 	<tablero.h>
 
-1515141973 c:\users\daniel\desktop\c\ajedrez\include\input.h
+1515192755 c:\users\daniel\desktop\c\ajedrez\include\input.h
 	<SFML/Graphics.hpp>
 	<vec.h>
 
@@ -513,7 +513,7 @@
 	<SFML/Audio/Export.hpp>
 	<string>
 
-1515142112 source:c:\users\daniel\desktop\c\ajedrez\src\estado.cpp
+1515226970 source:c:\users\daniel\desktop\c\ajedrez\src\estado.cpp
 	"Estado.h"
 	<SFML/Graphics.hpp>
 	<global.h>
@@ -524,17 +524,19 @@
 	<lector.h>
 	<operador.h>
 
-1515141973 source:c:\users\daniel\desktop\c\ajedrez\src\input.cpp
+1515192755 source:c:\users\daniel\desktop\c\ajedrez\src\input.cpp
 	"Input.h"
+	<global.h>
 
-1515139514 c:\users\daniel\desktop\c\ajedrez\include\pieza.h
+1515192575 c:\users\daniel\desktop\c\ajedrez\include\pieza.h
 	<tablero.h>
 	<global.h>
 
-1515140600 source:c:\users\daniel\desktop\c\ajedrez\src\pieza.cpp
+1515228112 source:c:\users\daniel\desktop\c\ajedrez\src\pieza.cpp
 	"Pieza.h"
 	<global.h>
 	<operador.h>
+	<Clicker.h>
 
 1514412314 source:c:\users\daniel\desktop\c\ajedrez\src\juego.cpp
 	"Juego.h"
@@ -562,13 +564,15 @@
 	<iostream>
 	<SFML/Graphics.hpp>
 
-1514265280 c:\users\daniel\desktop\c\ajedrez\include\clicker.h
+1515212229 c:\users\daniel\desktop\c\ajedrez\include\clicker.h
 	<vec.h>
 	<SFML/Graphics.hpp>
 	<global.h>
 
-1514262871 source:c:\users\daniel\desktop\c\ajedrez\src\clicker.cpp
+1515213674 source:c:\users\daniel\desktop\c\ajedrez\src\clicker.cpp
 	"Clicker.h"
+	"global.h"
+	<operador.h>
 
 1494836668 c:\users\daniel\desktop\c\ajedrez\include\tablerro.h
 	<vec.h>
@@ -578,20 +582,20 @@
 	<global.h>
 	<Juego.h>
 
-1515141079 source:c:\users\daniel\desktop\c\ajedrez\src\tablero.cpp
+1515199831 source:c:\users\daniel\desktop\c\ajedrez\src\tablero.cpp
 	"tablero.h"
 	<global.h>
 	<Pieza.h>
 
-1515133845 c:\users\daniel\desktop\c\ajedrez\include\lector.h
+1515226461 c:\users\daniel\desktop\c\ajedrez\include\lector.h
 	<fstream>
 	<global.h>
 
-1515135407 source:c:\users\daniel\desktop\c\ajedrez\src\lector.cpp
+1515226734 source:c:\users\daniel\desktop\c\ajedrez\src\lector.cpp
 	"lector.h"
 	<Pieza.h>
 
-1515140344 c:\users\daniel\desktop\c\ajedrez\include\global.h
+1515212115 c:\users\daniel\desktop\c\ajedrez\include\global.h
 	<fstream>
 	<vector>
 	<list>
@@ -604,11 +608,11 @@
 	<vec.h>
 	<string>
 
-1515136862 source:c:\users\daniel\desktop\c\ajedrez\src\operador.cpp
+1515228112 source:c:\users\daniel\desktop\c\ajedrez\src\operador.cpp
 	"operador.h"
 	"lector.h"
 
-1515136951 c:\users\daniel\desktop\c\ajedrez\include\operador.h
+1515211502 c:\users\daniel\desktop\c\ajedrez\include\operador.h
 	<global.h>
 	<Pieza.h>
 

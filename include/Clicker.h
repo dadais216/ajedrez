@@ -9,11 +9,11 @@ using namespace sf;
 
 struct Clicker
 {
-    Clicker(v ve);
-    RectangleShape rectangle;
-    v ve;
+    Clicker();
+    list<acm*> acciones;
     bool tocado;
     void draw();
+    void activar();
 };
 
 #endif // CLICKER_H
