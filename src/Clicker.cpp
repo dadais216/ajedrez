@@ -4,14 +4,29 @@
 
 Clicker::Clicker(){
     acciones.splice(acciones.begin(),buffer);
+    drawClickers=true;
 }
 
 void Clicker::draw(){
-    for(acm* a:acciones){
-        if(a->tipo==colort||a->tipo==movt)
-            a->func();
+    if(drawClickers){
+        for(acm* a:acciones){
+            if(a->tipo==colort||a->tipo==movt)
+                a->func();
+        }
+        clickPos=pos;
+        pos=org;
     }
-    pos=org;
+}
+
+bool Clicker::update(){
+    if(input->get()==clickPos){
+        drawClickers=false;
+        for(acm* a:acciones){
+            a->func();
+        }
+        return true;
+    }
+    return false;
 }
 
 

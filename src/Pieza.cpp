@@ -37,7 +37,6 @@ void Pieza::calcularMovimientos(v posAct){
         operador* it=op;//por ahi no es necesario
 
         while(it->operar()&&(it=it->sig));
-        pos.show()=org;
 
         clickers.push_back(new Clicker);
     }

@@ -21,6 +21,7 @@ Juego::Juego()
     window=&this->_window;
     imagen=&this->_imagen;
     actual= new Arranque();
+    drawScreen();
 }
 void Juego::gameloop(){
     while(true){
@@ -28,9 +29,6 @@ void Juego::gameloop(){
         //t=time.asSeconds();
         _input.check();
         actual->update();
-        _window.clear();
-        actual->draw(); //en realidad no hay necesidad de dibujar en cada tick, podría delegarse a update esto
-        _window.display();
         while (_window.pollEvent(event)){
             if (event.type == Event::Closed){
                 _window.close();
@@ -43,4 +41,15 @@ void Juego::gameloop(){
 void Juego::change(Estado* est){
     delete actual;
     actual=est;
+    drawScreen();
+}
+
+void Juego::draw(){
+    _window.clear();
+    actual->draw();
+    _window.display();
+}
+
+void drawScreen(){
+    j->draw();
 }

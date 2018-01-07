@@ -41,4 +41,6 @@ extern list<int> tokens;
 extern list<acm*> buffer;
 extern list<Clicker*> clickers;
 
+void drawScreen();
+
 #endif

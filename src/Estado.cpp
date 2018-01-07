@@ -95,11 +95,19 @@ void Proper::update(){
             return;
         }
         if(input->inGameRange(tablero.tam)){
+            if(!clickers.empty())
+                for(Clicker* cli:clickers){
+                    if(cli->update()){
+                        clickers.clear();
+                        drawScreen();
+                        return;
+                    }
+                }
             clickers.clear();
             act=tablero(input->get().show());
-            input->pixel().show();
             if(act&&act->bando==-1)
                 act->calcularMovimientos(input->get());
+            drawScreen();
         }
     }
 }
@@ -107,12 +115,6 @@ void Proper::update(){
 bool Proper::inRange(v a){
     return a.x>=0&&a.x<=tablero.tam.x-1&&a.y>=0&&a.y<=tablero.tam.y-1;
 }
-
-//void Proper::mover(v a,v b){
-//    tablero[b.x][b.y]=tablero[a.x][a.y];
-//    tablero[a.x][a.y]=nullptr;
-//    //se guarda el movimiento en el vector de movimientos
-//}
 
 
 

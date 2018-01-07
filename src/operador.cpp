@@ -1,5 +1,6 @@
 #include "operador.h"
 #include "lector.h"
+#include <windows.h>
 
 
 bool cond;
@@ -16,12 +17,12 @@ struct color:public acm{
     RectangleShape cuadrado;
 
     color(int r,int g,int b)
-    :cuadrado(Vector2f(32*escala,32*escala)),_color(-r,-g,-b){
+    :cuadrado(Vector2f(32*escala,32*escala)),_color(-r,-g,-b,40){
         tipo=colort;
         cuadrado.setFillColor(_color);
-        cuadrado.setPosition(pos.x*32*escala,pos.y*32*escala);
     }
     virtual void func(){
+        cuadrado.setPosition(pos.x*32*escala,pos.y*32*escala);
         window->draw(cuadrado);
     }
 };
@@ -38,26 +39,27 @@ struct NOMB:public acm{\
 
 
 fabMov(mov,acct,
-       //(*tabl)(org,nullptr);
-       //(*tabl)(pos,act);
-       //org=pos;
+       (*tabl)(org.show(),nullptr);
+       (*tabl)(pos.show(),act);
+       org=pos;
+       drawScreen();
+       Sleep(60);
 );
 fabMov(capt,acct,
-
+        delete (*tabl)(pos);
+        (*tabl)(pos,nullptr);
 );
 fabMov(vacio,condt,
-        cond=true;
+        cond=(*tabl)(pos)==nullptr;
 );
 fabMov(enemigo,condt,
-        cond=true;
+        cond=(*tabl)(pos)->bando==act->bando*-1;
 );
 fabMov(W,movt,
        pos.y+=act->bando;
-       cout<<"W";
 );
 fabMov(S,movt,
         pos.y-=act->bando;
-        cout<<"S";
 );
 fabMov(A,movt,
         pos.x--;
@@ -66,8 +68,11 @@ fabMov(D,movt,
         pos.x++;
 );
 fabMov(esp,condt,
-        outbounds=true;
-        cond=true;
+        if(pos.x>=0&&pos.x<tabl->tam.x&&pos.y>=0&&pos.y<tabl->tam.y){
+            outbounds=true;
+            cond=true;
+        }else
+            cond=false;
 );
 
 operador* keepOn(){
@@ -133,7 +138,6 @@ bool normal::operar(){
         }else if(a->tipo==movt)
             a->func();
     }
-    cout<<"AAAAAAAAA";
     pos=org;
     for(acm* a:acms){
         if(a->tipo==acct||a->tipo==movt||a->tipo==colort)
