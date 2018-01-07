@@ -11,9 +11,10 @@ struct Clicker
 {
     Clicker();
     list<acm*> acciones;
-    bool tocado;
+    v clickPos;
     void draw();
-    void activar();
+    bool update();
+    bool drawClickers;
 };
 
 #endif // CLICKER_H
