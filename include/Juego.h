@@ -22,9 +22,12 @@ struct Juego{
     Input _input;
     Event event;
     Juego();
+    void draw();
     void gameloop();
     void change(Estado*);
 };
+
+void auxDraw();
 
 
 
