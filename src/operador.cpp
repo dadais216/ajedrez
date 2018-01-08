@@ -1,6 +1,6 @@
 #include "operador.h"
 #include "lector.h"
-#include <windows.h>
+#include <Clicker.h>
 
 
 bool cond;
@@ -119,17 +119,18 @@ normal::normal(){
         case lector::lim:
             return;
         case lector::desliz:
-            sig=new desliz;break;
+            sig=new desliz(true);return;
+        case lector::deslizCond:
+            sig=new desliz(false);return;
         case lector::multi:
-            sig=new multi;break;
+            sig=new multi;return;
         case lector::opt:
-            sig=new opt;break;
+            sig=new opt;return;
         }
     }
 }
 
 bool normal::operar(){
-    v org=pos;
     cond=true;
     for(acm* a:acms){
         if(a->tipo==condt){
@@ -138,7 +139,6 @@ bool normal::operar(){
         }else if(a->tipo==movt)
             a->func();
     }
-    pos=org;
     for(acm* a:acms){
         if(a->tipo==acct||a->tipo==movt||a->tipo==colort)
             buffer.push_back(a);
@@ -149,22 +149,33 @@ bool normal::operar(){
 void normal::debug(){
     for(acm* a:acms)
         cout<<"^"<<a->tipo<<"^";
-    cout<<endl;
 }
 
-desliz::desliz(){
-    //tomar movs
+desliz::desliz(bool _doClickers){
+    doClickers=_doClickers;
     inside=new normal;
     sig=keepOn();
 }
 
+void desliz::debug(){
+    cout<<"d ";
+    inside->debug();
+    cout<<"t ";
+}
+
 bool desliz::operar(){
     //mover org
-    int i=-1;
+    int i=0;
+    v aux=pos;
     while(inside->operar()){
+        cout<<"D";
+        aux=pos;
         i++;
-        //crear cliker con buffer parcial
+        if(doClickers){
+            clickers.push_back(new Clicker(true));
+        }
     }
+    pos=aux;
     return i;
 }
 

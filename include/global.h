@@ -13,6 +13,7 @@
 #include <assert.h>
 #include <vec.h>
 #include <string>
+#include <windows.h>
 
 using namespace std;
 using namespace sf;

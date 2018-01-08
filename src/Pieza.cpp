@@ -20,6 +20,7 @@ Pieza::Pieza(int _id,int _bando,int _sn){
         do{
             o->debug();
         }while(o=o->sig);
+        cout<<endl;
     }
 }
 
@@ -31,14 +32,20 @@ void Pieza::draw(v vec){
 list<Clicker*> clickers;
 
 void Pieza::calcularMovimientos(v posAct){
-    org=posAct;
+    pos=org=posAct;
     for(operador* op:movs){
-        pos=org;
         operador* it=op;//por ahi no es necesario
 
-        while(it->operar()&&(it=it->sig));
+        do{
+            if(!it->operar()){
+                buffer.clear();
+                goto cont;
+            }
+        }while(it=it->sig);
 
-        clickers.push_back(new Clicker);
+        clickers.push_back(new Clicker(false));
+        cont:
+        pos=org;
     }
 }
 

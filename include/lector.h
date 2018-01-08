@@ -17,11 +17,11 @@ struct lector
     int stringToIntR(string&);
 
     Pieza* crearPieza(int);
-    enum token{def=1,igual,llaveizq,llaveder,coma,
+    enum token{def,igual,llaveizq,llaveder,coma,
     W,A,S,D,
     mov,capt,
     vacio,enemigo,esp,
-    desliz,opt,multi,
+    desliz,deslizCond,opt,multi,
     color,eol,sep,lim,last};//last se usa para los sig token, generados por los def
     bool hayAtras;
     int i,j;
