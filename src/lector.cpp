@@ -5,12 +5,16 @@ list<int> tokens;
 
 lector::lector(){
     extra=0;
-    tabla["mov"]=mov;
-    tabla["capt"]=capt;
-    tabla["vacio"]=vacio;
-    tabla["enemigo"]=enemigo;
-    tabla["def"]=def;
-    tabla["color"]=color;
+    #define rel(T) tabla[#T]=T;
+    rel(mov);
+    rel(capt);
+    rel(vacio);
+    rel(enemigo);
+    rel(def);
+    rel(color);
+    rel(desliz);
+    rel(deslizCond);
+    tabla["then"]=lim;
 
     archPiezas.open("piezas.txt");
     archTablero.open("tableros.txt");
@@ -56,7 +60,6 @@ void lector::leer(int n){
             return;
         }
     }
-    cout<<"ERRORERROEREEROEREREOEEROEORROROREOREOROER";
 }
 
 void lector::mostrar(){
@@ -160,6 +163,7 @@ Pieza* lector::crearPieza(int n){
                             act.pop_front();
                             auto jt=act.begin(),it=act.begin();
                             pos++;
+                            it--;
                             do{
                                 it++;
                                 if(*it==llaveizq)
@@ -231,6 +235,9 @@ void lector::token(string linea){
 
     //cout<<"++"<<palabra<<"++"<<i<<" "<<j<<"\n";
     i=j;
+
+    if(palabra=="pass")
+        return;
 
     bool esMov=true,esNum=true;
     for(int k=0;k<palabra.length();k++){

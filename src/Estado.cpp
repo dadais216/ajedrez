@@ -73,7 +73,7 @@ Proper::Proper(int id)
         for(int j=0;j<lect.matriz[i].size();j++){
             int n=lect.matriz[i][j];
             if(n)
-                tablero(v(i,j),lect.crearPieza(n));
+                tablero(v(j,i),lect.crearPieza(n));
         }
     }
     //construir piezas adicionales

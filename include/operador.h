@@ -23,9 +23,12 @@ struct normal:public operador{
     list<acm*> acms;
 };
 
+//repite un operador normal hasta que falle, creando clickers en cada paso, a menos que sea deslizcond
 struct desliz:public operador{
-    desliz();
+    bool doClickers;
+    desliz(bool);
     virtual bool operar();
+    virtual void debug();
     operador* inside;
 };
 
