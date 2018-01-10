@@ -21,8 +21,9 @@ struct lector
     W,A,S,D,
     mov,capt,
     vacio,enemigo,esp,
-    desliz,deslizCond,opt,multi,
-    color,eol,sep,lim,last};//last se usa para los sig token, generados por los def
+    desliz,opt,multi,
+    color,click,pausa,
+    eol,sep,lim,last};
     bool hayAtras;
     int i,j;
     map<int,list<int>> defs;

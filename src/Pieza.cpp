@@ -14,12 +14,14 @@ Pieza::Pieza(int _id,int _bando,int _sn){
 
 
     while(!tokens.empty()){
-        movs.push_back(new normal);
+//        for(int tok:tokens){
+//            cout<<tok<<"-";
+//        }
+//        cout<<endl;
+        movs.push_back(tomar());
     }
     for(operador* o:movs){
-        do{
-            o->debug();
-        }while(o=o->sig);
+        o->debug();
         cout<<endl;
     }
 }
@@ -34,22 +36,14 @@ list<Clicker*> clickers;
 void Pieza::calcularMovimientos(v posAct){
     pos=org=posAct;
     for(operador* op:movs){
-        operador* it=op;//por ahi no es necesario
-
-        do{
-            if(!it->operar()){
-                buffer.clear();
-                goto cont;
-            }
-        }while(it=it->sig);
-
-        clickers.push_back(new Clicker(false));
-        cont:
-        pos=org;
+        if(op->operar()&&cambios){
+            clickers.push_back(new Clicker(false));
+        }else{
+            buffer.clear();
+        }
+       pos=org;
     }
 }
-
-
 
 
 
