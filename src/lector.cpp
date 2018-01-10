@@ -13,8 +13,9 @@ lector::lector(){
     rel(def);
     rel(color);
     rel(desliz);
-    rel(deslizCond);
-    tabla["then"]=lim;
+    rel(click);
+    rel(lim);
+    rel(pausa);
 
     archPiezas.open("piezas.txt");
     archTablero.open("tableros.txt");

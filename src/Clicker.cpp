@@ -5,12 +5,14 @@
 bool drawClickers;
 
 Clicker::Clicker(bool copiarBuffer){
-    if(copiarBuffer)
+    if(copiarBuffer){
         acciones.assign(buffer.begin(),buffer.end());
+        cambios=false;
+    }
     else
         acciones.splice(acciones.begin(),buffer);
     drawClickers=true;
-    cout<<"ye: "<<acciones.size()<<endl;
+    cout<<"y: "<<acciones.size()<<endl;
 }
 
 void Clicker::draw(){

@@ -13,6 +13,7 @@ struct acm{
 struct operador{
     virtual bool operar()=0;
     virtual void debug(){};
+    bool then();
     operador* sig;
 };
 
@@ -25,17 +26,23 @@ struct normal:public operador{
 
 //repite un operador normal hasta que falle, creando clickers en cada paso, a menos que sea deslizcond
 struct desliz:public operador{
-    bool doClickers;
-    desliz(bool);
-    virtual bool operar();
+    desliz();
     virtual void debug();
+    virtual bool operar();
     operador* inside;
 };
 
 struct opt:public operador{
     opt();
     virtual bool operar();
+    virtual void debug();
     list<operador*> ops;
+};
+
+struct click:public operador{
+    click();
+    virtual bool operar();
+    virtual void debug();
 };
 
 struct multi:public operador{
@@ -46,5 +53,8 @@ struct multi:public operador{
 
     //algo wacky para esperar el input y seguir
 };
+
+operador* keepOn();
+operador* tomar();
 
 #endif // OPERADOR_H
