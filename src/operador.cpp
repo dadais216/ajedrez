@@ -6,6 +6,7 @@
 bool cond;
 bool outbounds;
 bool separator;
+bool cambios;
 list<acm*> buffer;
 v pos;
 v org;
@@ -34,6 +35,7 @@ struct NOMB:public acm{\
     };\
     virtual void func(){\
         FUNC\
+        cout<<#NOMB<<" ";\
     }\
 }\
 
@@ -42,19 +44,30 @@ fabMov(mov,acct,
        (*tabl)(org.show(),nullptr);
        (*tabl)(pos.show(),act);
        org=pos;
-       drawScreen();
-       Sleep(60);
 );
 fabMov(capt,acct,
-        delete (*tabl)(pos);
+        delete (*tabl)(pos);//en realidad mover a capturados
         (*tabl)(pos,nullptr);
 );
+fabMov(pausa,acct,
+        drawScreen();
+        Sleep(60);
+);
+
 fabMov(vacio,condt,
         cond=(*tabl)(pos)==nullptr;
 );
 fabMov(enemigo,condt,
         cond=(*tabl)(pos)->bando==act->bando*-1;
 );
+fabMov(esp,condt,
+        if(pos.x>=0&&pos.x<tabl->tam.x&&pos.y>=0&&pos.y<tabl->tam.y){
+            outbounds=true;
+            cond=true;
+        }else
+            cond=false;
+);
+
 fabMov(W,movt,
        pos.y+=act->bando;
 );
@@ -67,25 +80,7 @@ fabMov(A,movt,
 fabMov(D,movt,
         pos.x++;
 );
-fabMov(esp,condt,
-        if(pos.x>=0&&pos.x<tabl->tam.x&&pos.y>=0&&pos.y<tabl->tam.y){
-            outbounds=true;
-            cond=true;
-        }else
-            cond=false;
-);
 
-operador* keepOn(){
-    if(tokens.empty())
-        return nullptr;
-    switch(tokens.front()){
-    case lector::eol:
-    case lector::sep:
-    case lector::lim:
-        return nullptr;
-    }
-    return new normal;
-}
 
 normal::normal(){
     sig=nullptr;
@@ -93,6 +88,7 @@ normal::normal(){
         if(tokens.empty()) return;
         int tok=tokens.front();
         tokens.pop_front();
+        cout<<"TOK:"<<tok<<endl;
         switch(tok){
         #define caseT(TOKEN)  case lector::TOKEN: acms.push_back(new TOKEN);break
         //como la mayoria de los acm no tiene datos el new no debería alocar nada
@@ -107,25 +103,24 @@ normal::normal(){
 
         caseT(mov);
         caseT(capt);
+        caseT(pausa);
 
         //movs con parametros
         case lector::color:
             acms.push_back(new color(tokens.front(),(tokens.pop_front(),tokens.front()),(tokens.pop_front(),tokens.front())));
+            tokens.pop_front();
             break;
         case lector::sep:
             separator=true;
             return;
         case lector::eol:
+            return;
         case lector::lim:
             return;
-        case lector::desliz:
-            sig=new desliz(true);return;
-        case lector::deslizCond:
-            sig=new desliz(false);return;
-        case lector::multi:
-            sig=new multi;return;
-        case lector::opt:
-            sig=new opt;return;
+        default:
+            tokens.push_front(tok);
+            sig=tomar();
+            return;
         }
     }
 }
@@ -134,26 +129,30 @@ bool normal::operar(){
     cond=true;
     for(acm* a:acms){
         if(a->tipo==condt){
-            if((a->func(),cond==false))
+            if((a->func(),cond==false)){
+                cout<<" F ";
                 return false;
+            }
         }else if(a->tipo==movt)
             a->func();
     }
+    cout<<" V ";
+    cambios=true;
     for(acm* a:acms){
         if(a->tipo==acct||a->tipo==movt||a->tipo==colort)
             buffer.push_back(a);
     }
-    return true;
+    return then();
 }
 
 void normal::debug(){
     for(acm* a:acms)
         cout<<"^"<<a->tipo<<"^";
+    if(sig) sig->debug();
 }
 
-desliz::desliz(bool _doClickers){
-    doClickers=_doClickers;
-    inside=new normal;
+desliz::desliz(){
+    inside=tomar();
     sig=keepOn();
 }
 
@@ -161,6 +160,7 @@ void desliz::debug(){
     cout<<"d ";
     inside->debug();
     cout<<"t ";
+    if(sig) sig->debug();
 }
 
 bool desliz::operar(){
@@ -171,12 +171,11 @@ bool desliz::operar(){
         cout<<"D";
         aux=pos;
         i++;
-        if(doClickers){
-            clickers.push_back(new Clicker(true));
-        }
     }
     pos=aux;
-    return i;
+    if(i)
+        return then();
+    return false;
 }
 
 opt::opt(){
@@ -195,6 +194,10 @@ bool opt::operar(){
         if(op->operar())
             return true;
     return false;
+}
+
+void opt::debug(){
+
 }
 
 multi::multi(){
@@ -217,4 +220,53 @@ bool multi::operar(){
     }
 }
 
+click::click(){
+    sig=keepOn();
+}
+
+void click::debug(){
+    cout<<" click ";
+}
+
+bool click::operar(){
+    if(!buffer.empty())
+        clickers.push_back(new Clicker(true));
+    return then();
+}
+
+operador* keepOn(){
+    if(tokens.empty())
+        return nullptr;
+    switch(tokens.front()){
+    case lector::eol:
+    case lector::sep:
+    case lector::lim:
+        tokens.pop_front();
+        return nullptr;
+    }
+    return tomar();
+}
+
+operador* tomar(){
+    if(tokens.empty()) return nullptr;
+    int tok=tokens.front();tokens.pop_front();
+    cout<<"TOK T "<<tok<<endl;
+    switch(tok){
+    case lector::desliz:
+        return new desliz();
+    case lector::opt:
+        return new opt;
+    case lector::click:
+        return new click;
+    default:
+        tokens.push_front(tok);
+        return new normal;
+    }
+}
+
+bool operador::then(){
+    if(!sig)
+        return true;
+    return sig->operar();
+}
 

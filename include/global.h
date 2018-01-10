@@ -41,6 +41,7 @@ struct acm;
 extern list<int> tokens;
 extern list<acm*> buffer;
 extern list<Clicker*> clickers;
+extern bool cambios;
 
 void drawScreen();
 
