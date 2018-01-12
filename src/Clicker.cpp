@@ -23,7 +23,7 @@ void Clicker::draw(){
                 a->func();
         }
         clickPos=pos;
-        pos=org;
+        resetearValores();
     }
 }
 

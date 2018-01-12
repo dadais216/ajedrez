@@ -29,6 +29,7 @@ struct desliz:public operador{
     desliz();
     virtual void debug();
     virtual bool operar();
+    bool restore;
     operador* inside;
 };
 

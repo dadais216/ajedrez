@@ -12,19 +12,68 @@ v pos;
 v org;
 Pieza* act;//para chequeos
 
+#define M(algo) (cout<<"|"<<algo<<"|",algo)
 
 struct color:public acm{
     sf::Color _color;
     RectangleShape cuadrado;
 
-    color(int r,int g,int b)
-    :cuadrado(Vector2f(32*escala,32*escala)),_color(-r,-g,-b,40){
+    color()
+    :cuadrado(Vector2f(32*escala,32*escala)),
+    _color(){
+        _color.r=-tokens.front();tokens.pop_front();
+        _color.g=-tokens.front();tokens.pop_front();
+        _color.b=-tokens.front();tokens.pop_front();
+        _color.a=40;
         tipo=colort;
         cuadrado.setFillColor(_color);
     }
     virtual void func(){
         cuadrado.setPosition(pos.x*32*escala,pos.y*32*escala);
         window->draw(cuadrado);
+    }
+};
+
+array<int,20> numeros;
+bool memcambios;
+
+struct posRemember:public acm{
+    int index,jndex;
+    posRemember(){
+        tipo=movt;
+        if(!tokens.empty()&&tokens.front()<0){
+            index=-tokens.front(); tokens.pop_front();
+            jndex=-tokens.front(); tokens.pop_front();
+        }else{
+            index=0;
+            jndex=1;
+        }
+    }
+    virtual void func(){
+        memcambios=true;
+        numeros[index]=pos.x;
+        numeros[jndex]=pos.y;
+        cout<<"remember ";
+    }
+};
+
+struct posRestore:public acm{
+    int index,jndex;
+    posRestore(){
+        tipo=movt;
+        if(!tokens.empty()&&tokens.front()<0){
+            index=-tokens.front(); tokens.pop_front();
+            jndex=-tokens.front(); tokens.pop_front();
+        }else
+            index=0;
+            jndex=1;
+    }
+    virtual void func(){
+        cout<<"restore ";pos.show();cout<<" -> ";v(numeros[index],numeros[jndex]).show();
+        if(memcambios){
+            pos.x=numeros[index];
+            pos.y=numeros[jndex];
+        }
     }
 };
 
@@ -81,13 +130,11 @@ fabMov(D,movt,
         pos.x++;
 );
 
-
 normal::normal(){
     sig=nullptr;
     while(true){
         if(tokens.empty()) return;
-        int tok=tokens.front();
-        tokens.pop_front();
+        int tok=tokens.front();tokens.pop_front();
         cout<<"TOK:"<<tok<<endl;
         switch(tok){
         #define caseT(TOKEN)  case lector::TOKEN: acms.push_back(new TOKEN);break
@@ -104,11 +151,12 @@ normal::normal(){
         caseT(mov);
         caseT(capt);
         caseT(pausa);
+        caseT(posRemember);
+        caseT(posRestore);
 
         //movs con parametros
         case lector::color:
-            acms.push_back(new color(tokens.front(),(tokens.pop_front(),tokens.front()),(tokens.pop_front(),tokens.front())));
-            tokens.pop_front();
+            acms.push_back(new color());
             break;
         case lector::sep:
             separator=true;
@@ -220,19 +268,24 @@ bool multi::operar(){
     }
 }
 
-click::click(){
-    sig=keepOn();
+
+#define fabOp(NOMB,FUNC) \
+NOMB::NOMB(){ \
+    sig=keepOn(); \
+} \
+void NOMB::debug(){ \
+    cout<<" NOMB "; \
+} \
+bool NOMB::operar(){ \
+    FUNC \
+    return then(); \
 }
 
-void click::debug(){
-    cout<<" click ";
-}
+fabOp(click,
+    clickers.push_back(new Clicker(true));
+);
 
-bool click::operar(){
-    if(!buffer.empty())
-        clickers.push_back(new Clicker(true));
-    return then();
-}
+
 
 operador* keepOn(){
     if(tokens.empty())
