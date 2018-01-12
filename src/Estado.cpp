@@ -95,7 +95,7 @@ void Proper::update(){
             return;
         }
         if(input->inGameRange(tablero.tam)){
-            if(!clickers.empty())
+            if(!clickers.empty()){
                 for(Clicker* cli:clickers){
                     if(cli->update()){
                         clickers.clear();
@@ -103,7 +103,8 @@ void Proper::update(){
                         return;
                     }
                 }
-            clickers.clear();
+                clickers.clear();
+            }
             act=tablero(input->get().show());
             if(act&&act->bando==-1)
                 act->calcularMovimientos(input->get());
