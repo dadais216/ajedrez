@@ -40,6 +40,7 @@ void Pieza::calcularMovimientos(v posAct){
             clickers.push_back(new Clicker(false));
         }else{
             buffer.clear();
+            bufferColores.clear();
         }
         cout<<endl<<"FIN DE MOVIMIENTO"<<endl;
         resetearValores();

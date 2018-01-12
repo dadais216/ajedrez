@@ -7,6 +7,7 @@
 #include <list>
 #include <forward_list>
 #include <map>
+#include <utility>
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <Manager.h>
@@ -38,13 +39,17 @@ extern v pos;
 extern v org;
 
 struct acm;
+struct color;
 extern list<int> tokens;
 extern list<acm*> buffer;
+extern list<pair<RectangleShape*,v>> bufferColores;
 extern list<Clicker*> clickers;
 extern bool cambios;
 
 extern bool memcambios;
 extern array<int,20> numeros;
+
+extern bool drawJustSquares;
 
 void resetearValores();
 void drawScreen();

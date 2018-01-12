@@ -7,6 +7,10 @@ bool cond;
 bool outbounds;
 bool separator;
 bool cambios;
+
+struct color;
+list<pair<RectangleShape*,v>> colores;
+list<pair<RectangleShape*,v>> bufferColores;
 list<acm*> buffer;
 v pos;
 v org;
@@ -14,25 +18,18 @@ Pieza* act;//para chequeos
 
 #define M(algo) (cout<<"|"<<algo<<"|",algo)
 
-struct color:public acm{
-    sf::Color _color;
-    RectangleShape cuadrado;
-
-    color()
-    :cuadrado(Vector2f(32*escala,32*escala)),
-    _color(){
-        _color.r=-tokens.front();tokens.pop_front();
-        _color.g=-tokens.front();tokens.pop_front();
-        _color.b=-tokens.front();tokens.pop_front();
-        _color.a=40;
-        tipo=colort;
-        cuadrado.setFillColor(_color);
-    }
-    virtual void func(){
-        cuadrado.setPosition(pos.x*32*escala,pos.y*32*escala);
-        window->draw(cuadrado);
-    }
-};
+color::color()
+:cuadrado(Vector2f(32*escala,32*escala)),_color(){
+    _color.r=-tokens.front();tokens.pop_front();
+    _color.g=-tokens.front();tokens.pop_front();
+    _color.b=-tokens.front();tokens.pop_front();
+    _color.a=40;
+    tipo=colort;
+    cuadrado.setFillColor(_color);
+}
+void color::func(){
+    colores.push_back(pair<RectangleShape*,v>(&cuadrado,pos));
+}
 
 array<int,20> numeros;
 bool memcambios;
@@ -179,15 +176,20 @@ bool normal::operar(){
         if(a->tipo==condt){
             if((a->func(),cond==false)){
                 cout<<" F ";
+                colores.clear();
                 return false;
             }
         }else if(a->tipo==movt)
             a->func();
+        else if(a->tipo==colort)
+            a->func();
     }
     cout<<" V ";
+    bufferColores.splice(bufferColores.begin(),colores);
+
     cambios=true;
     for(acm* a:acms){
-        if(a->tipo==acct||a->tipo==movt||a->tipo==colort)
+        if(a->tipo==acct||a->tipo==movt)
             buffer.push_back(a);
     }
     return then();
