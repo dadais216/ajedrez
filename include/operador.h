@@ -10,6 +10,14 @@ struct acm{
     virtual void func()=0;
 };
 
+struct color:public acm{
+    sf::Color _color;
+    RectangleShape cuadrado;
+
+    color();
+    virtual void func();
+};
+
 struct operador{
     virtual bool operar()=0;
     virtual void debug(){};
