@@ -41,8 +41,17 @@ void Pieza::calcularMovimientos(v posAct){
         }else{
             buffer.clear();
         }
-       pos=org;
+        cout<<endl<<"FIN DE MOVIMIENTO"<<endl;
+        resetearValores();
     }
+}
+
+void resetearValores(){
+    if(memcambios){
+        numeros.fill(0);
+        memcambios=false;
+    }
+    pos=org;
 }
 
 

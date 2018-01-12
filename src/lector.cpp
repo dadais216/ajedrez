@@ -16,6 +16,8 @@ lector::lector(){
     rel(click);
     rel(lim);
     rel(pausa);
+    rel(posRestore);
+    rel(posRemember);
 
     archPiezas.open("piezas.txt");
     archTablero.open("tableros.txt");

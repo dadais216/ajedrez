@@ -43,6 +43,10 @@ extern list<acm*> buffer;
 extern list<Clicker*> clickers;
 extern bool cambios;
 
+extern bool memcambios;
+extern array<int,20> numeros;
+
+void resetearValores();
 void drawScreen();
 
 #endif
