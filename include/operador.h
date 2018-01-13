@@ -37,7 +37,6 @@ struct desliz:public operador{
     desliz();
     virtual void debug();
     virtual bool operar();
-    bool restore;
     operador* inside;
 };
 
@@ -52,6 +51,13 @@ struct click:public operador{
     click();
     virtual bool operar();
     virtual void debug();
+};
+
+struct bloque:public operador{
+    bloque();
+    virtual bool operar();
+    virtual void debug();
+    operador* inside;
 };
 
 struct multi:public operador{

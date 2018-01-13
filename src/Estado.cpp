@@ -81,8 +81,10 @@ Proper::Proper(int id)
 
 void Proper::draw(){
     tablero.drawTiles();
-    for(Clicker* cli:clickers){
-        cli->draw();
+    if(Clicker::drawClickers){
+        for(Clicker* cli:clickers){
+            cli->draw();
+        }
     }
     tablero.drawPieces();
 }

@@ -49,8 +49,6 @@ extern bool cambios;
 extern bool memcambios;
 extern array<int,20> numeros;
 
-extern bool drawJustSquares;
-
 void resetearValores();
 void drawScreen();
 
