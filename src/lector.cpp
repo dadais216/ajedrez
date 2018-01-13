@@ -19,6 +19,9 @@ lector::lector(){
     rel(posRestore);
     rel(posRemember);
 
+    tabla["<<"]=bloque;
+    tabla[">>"]=lim;
+
     archPiezas.open("piezas.txt");
     archTablero.open("tableros.txt");
 

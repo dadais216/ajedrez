@@ -271,6 +271,34 @@ bool multi::operar(){
 }
 
 
+bloque::bloque(){
+    inside=tomar();
+    sig=keepOn();
+}
+
+bool bloque::operar(){
+    v posRes=pos;
+    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
+    list<pair<RectangleShape*,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
+
+    inside->operar(); //supongo que va a ignorar el valor de contenido
+
+    pos=posRes;
+    cout<<"antes "<<buffer.size();
+    buffer.erase(bufferRes,buffer.end());
+    cout<<"despues "<<buffer.size();
+    bufferColores.erase(bColorRes,bufferColores.end());
+    return then();
+}
+
+void bloque::debug(){
+    cout<<"<<";
+    inside->debug();
+    cout<<">>";
+}
+
+
+
 #define fabOp(NOMB,FUNC) \
 NOMB::NOMB(){ \
     sig=keepOn(); \
@@ -311,6 +339,8 @@ operador* tomar(){
         return new desliz();
     case lector::opt:
         return new opt;
+    case lector::bloque:
+        return new bloque;
     case lector::click:
         return new click;
     default:

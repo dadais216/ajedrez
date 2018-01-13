@@ -21,7 +21,7 @@ struct lector
     W,A,S,D,
     mov,capt,
     vacio,enemigo,esp,
-    desliz,opt,
+    desliz,opt,bloque,
     posRemember,posRestore,
     color,click,pausa,
     eol,sep,lim,last};

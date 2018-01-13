@@ -2,7 +2,7 @@
 #include "global.h"
 #include <operador.h>
 
-bool drawClickers;
+bool Clicker::drawClickers;
 
 Clicker::Clicker(bool copiarBuffer){
     if(copiarBuffer){
@@ -14,7 +14,7 @@ Clicker::Clicker(bool copiarBuffer){
         colores.splice(colores.begin(),bufferColores);
     }
 
-    drawClickers=true;
+    drawClickers=true; //cuando me ponga a  limpiar memoria tendría que borrar el buffer en lugar de
     clickPos=pos;
     cout<<"y: "<<acciones.size()<<" "<<colores.size()<<endl;
 }

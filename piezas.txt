@@ -18,7 +18,11 @@ s mover
 desliz w movernc posRemember clickc desliz {wa,wd} movernc clickc end posRestore end
 
 :4 4 #reina
-click {a,d} mover
+#w mover w mover w mover click << desliz {a,d} mover click end >> w mover
+desliz w mover click << desliz a mover click end >> end
+desliz a mover click << desliz s mover click end >> end
+desliz s mover click << desliz d mover click end >> end
+desliz d mover click << desliz w mover click end >> end
 
 #desliz {{ww,ss}{a,d},{aa,dd}{w,s}}{w,wa,a,as,s,sd,d,dw} mover then pass
 
