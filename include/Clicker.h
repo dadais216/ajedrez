@@ -15,6 +15,7 @@ struct Clicker
     v clickPos;
     void draw();
     bool update();
+    static bool drawClickers;
 };
 
 #endif // CLICKER_H
