@@ -344,6 +344,10 @@ promocionen en lugares distintos o con cosas que no dependen de la ubicacion, co
 usando el contador de every o alguna condicion especifica hecha con comandos
 
 
+posRemember 0 1 forEach isPieza 4 isAlly posRemember 2 3 numDist 0 2 numDist 1 3 setNum 4 1 break end numCmp 4 1 optord\
+{wa,as,sd,dw} posRemember 4 5 numGreater 0 4 numGreater 4 2 desliz ... 
+
+
 
 
 

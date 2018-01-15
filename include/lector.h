@@ -20,8 +20,9 @@ struct lector
     enum token{def=1,igual,llaveizq,llaveder,coma,
     W,A,S,D,
     mov,capt,
-    vacio,enemigo,esp,
+    vacio,enemigo,esp,outbounds,
     desliz,opt,bloque,
+    nc,t,
     posRemember,posRestore,
     color,click,pausa,
     eol,sep,lim,last};
