@@ -4,7 +4,7 @@
 
 
 bool cond;
-bool outbounds;
+bool bOutbounds=false;
 bool separator;
 bool cambios;
 
@@ -30,6 +30,9 @@ color::color()
 void color::func(){
     colores.push_back(pair<RectangleShape*,v>(&cuadrado,pos));
 }
+void color::debug(){
+    cout<<"color ";
+}
 
 array<int,20> numeros;
 bool memcambios;
@@ -50,7 +53,9 @@ struct posRemember:public acm{
         memcambios=true;
         numeros[index]=pos.x;
         numeros[jndex]=pos.y;
-        cout<<"remember ";
+    }
+    virtual void debug(){
+        cout<<"posRemember ";
     }
 };
 
@@ -66,11 +71,13 @@ struct posRestore:public acm{
             jndex=1;
     }
     virtual void func(){
-        cout<<"restore ";pos.show();cout<<" -> ";v(numeros[index],numeros[jndex]).show();
         if(memcambios){
             pos.x=numeros[index];
             pos.y=numeros[jndex];
         }
+    }
+    virtual void debug(){
+        cout<<"posRestore ";pos.show();cout<<" -> ";v(numeros[index],numeros[jndex]).show();
     }
 };
 
@@ -81,8 +88,10 @@ struct NOMB:public acm{\
     };\
     virtual void func(){\
         FUNC\
-        cout<<#NOMB<<" ";\
     }\
+    virtual void debug(){\
+        cout<<#NOMB<<" ";\
+    } \
 }\
 
 
@@ -108,10 +117,15 @@ fabMov(enemigo,condt,
 );
 fabMov(esp,condt,
         if(pos.x>=0&&pos.x<tabl->tam.x&&pos.y>=0&&pos.y<tabl->tam.y){
-            outbounds=true;
             cond=true;
-        }else
+        }else{
             cond=false;
+            bOutbounds=true;
+        }
+);
+fabMov(outbounds,condt,
+        cond=bOutbounds;
+        bOutbounds=false;
 );
 
 fabMov(W,movt,
@@ -142,11 +156,13 @@ normal::normal(){
         caseT(D);
 
         caseT(esp);
+        caseT(outbounds);
         caseT(vacio);
         caseT(enemigo);
 
         caseT(mov);
         caseT(capt);
+
         caseT(pausa);
         caseT(posRemember);
         caseT(posRestore);
@@ -161,6 +177,7 @@ normal::normal(){
         case lector::eol:
             return;
         case lector::lim:
+            cout<<"AZAWOP";
             return;
         default:
             tokens.push_front(tok);
@@ -196,20 +213,32 @@ bool normal::operar(){
 }
 
 void normal::debug(){
-    for(acm* a:acms)
-        cout<<"^"<<a->tipo<<"^";
+    for(acm* a:acms){
+        a->debug();
+    }
     if(sig) sig->debug();
 }
 
+#define paramCase(PARAM) case lector::PARAM: tokens.pop_front(); PARAM=true
+
 desliz::desliz(){
+    t=nc=false;
+    while(true){
+        switch(tokens.front()){
+        paramCase(nc);
+        paramCase(t);
+        default: goto next;
+        }
+    }
+    next:
     inside=tomar();
     sig=keepOn();
 }
 
 void desliz::debug(){
-    cout<<"d ";
+    cout<<"desliz< ";
     inside->debug();
-    cout<<"t ";
+    cout<<"> ";
     if(sig) sig->debug();
 }
 
@@ -218,58 +247,36 @@ bool desliz::operar(){
     int i=0;
     v aux=pos;
     while(inside->operar()){
-        cout<<"D";
         aux=pos;
         i++;
+        if(!nc)
+            crearClicker();
     }
     pos=aux;
-    if(i)
+    if(i||t)
         return then();
     return false;
 }
 
-opt::opt(){
-    separator=true;
-    while(separator){
-        separator=false;
-        v aux=pos;
-        ops.push_back(new normal);
-        pos=aux;
-    }
-    sig=keepOn();
+bool operarAislado(operador* op){
+    v posRes=pos;
+    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
+    list<pair<RectangleShape*,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
+    Pieza* pRes=act;
+
+    bool ret=op->operar();
+
+    if(ret)
+        crearClicker();
+
+    pos=posRes;
+    //cout<<"antes "<<buffer.size();
+    buffer.erase(++bufferRes,buffer.end());
+    //cout<<"despues "<<buffer.size();
+    bufferColores.erase(++bColorRes,bufferColores.end());
+    act=pRes;
+    return ret;
 }
-
-bool opt::operar(){
-    for(auto op:ops)
-        if(op->operar())
-            return true;
-    return false;
-}
-
-void opt::debug(){
-
-}
-
-multi::multi(){
-    separator=false;
-    while(!separator){
-        v aux=pos;
-        ops.push_back(new normal);
-        pos=aux;
-    }
-    sig=keepOn();
-}
-
-bool multi::operar(){
-    for(auto op:ops){
-        v aux=org;
-        v aux2=pos;
-        op->operar();
-        org=aux;
-        pos=aux2;
-    }
-}
-
 
 bloque::bloque(){
     inside=tomar();
@@ -277,34 +284,52 @@ bloque::bloque(){
 }
 
 bool bloque::operar(){
-    v posRes=pos;
-    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
-    list<pair<RectangleShape*,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
-
-    inside->operar(); //supongo que va a ignorar el valor de contenido
-
-    pos=posRes;
-    cout<<"antes "<<buffer.size();
-    buffer.erase(bufferRes,buffer.end());
-    cout<<"despues "<<buffer.size();
-    bufferColores.erase(bColorRes,bufferColores.end());
+    operarAislado(inside);
     return then();
 }
 
 void bloque::debug(){
-    cout<<"<<";
+    cout<<"<< ";
     inside->debug();
-    cout<<">>";
+    cout<<">> ";
 }
 
+opt::opt(){
+    separator=true;
+    while(separator){
+        separator=false;
+        ops.push_back(tomar());
+    }
+    sig=keepOn();
+    for(operador* op:ops){
+        while(op->sig)
+            op=op->sig;
+        op->sig=sig;
+    }
+}
 
+bool opt::operar(){
+    bool ret=false;
+    for(operador* op:ops)
+        ret=operarAislado(op)||ret;
+    return ret;
+}
+
+void opt::debug(){
+    cout<<"opt <";
+    for(operador* op:ops){
+        op->debug();
+        cout<<" | ";
+    }
+    cout<<"> ";
+}
 
 #define fabOp(NOMB,FUNC) \
 NOMB::NOMB(){ \
     sig=keepOn(); \
 } \
 void NOMB::debug(){ \
-    cout<<" NOMB "; \
+    cout<<"NOMB "; \
 } \
 bool NOMB::operar(){ \
     FUNC \
@@ -312,7 +337,7 @@ bool NOMB::operar(){ \
 }
 
 fabOp(click,
-    clickers.push_back(new Clicker(true));
+    crearClicker();
 );
 
 
@@ -321,10 +346,10 @@ operador* keepOn(){
     if(tokens.empty())
         return nullptr;
     switch(tokens.front()){
-    case lector::eol:
     case lector::sep:
+        separator=true;
+    case lector::eol:
     case lector::lim:
-        tokens.pop_front();
         return nullptr;
     }
     return tomar();
@@ -353,5 +378,9 @@ bool operador::then(){
     if(!sig)
         return true;
     return sig->operar();
+}
+
+void crearClicker(){
+    clickers.push_back(new Clicker(true));
 }
 
