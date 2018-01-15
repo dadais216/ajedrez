@@ -5,22 +5,32 @@ list<int> tokens;
 
 lector::lector(){
     extra=0;
-    #define rel(T) tabla[#T]=T;
-    rel(mov);
-    rel(capt);
-    rel(vacio);
-    rel(enemigo);
+    #define rel(T) tabla[#T]=T
     rel(def);
     rel(color);
-    rel(desliz);
-    rel(click);
     rel(lim);
     rel(pausa);
     rel(posRestore);
     rel(posRemember);
 
+
+    rel(mov);
+    rel(capt);
+
+    rel(vacio);
+    rel(enemigo);
+    rel(outbounds);
+
+    rel(desliz);
+    rel(opt);
+    rel(click);
+
+    rel(nc);
+    rel(t);
+
     tabla["<<"]=bloque;
     tabla[">>"]=lim;
+    tabla["or"]=sep;
 
     archPiezas.open("piezas.txt");
     archTablero.open("tableros.txt");

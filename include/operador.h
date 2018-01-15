@@ -8,6 +8,7 @@ enum t{condt,acct,movt,colort};
 struct acm{
     t tipo;
     virtual void func()=0;
+    virtual void debug()=0;
 };
 
 struct color:public acm{
@@ -16,6 +17,7 @@ struct color:public acm{
 
     color();
     virtual void func();
+    virtual void debug();
 };
 
 struct operador{
@@ -37,6 +39,7 @@ struct desliz:public operador{
     desliz();
     virtual void debug();
     virtual bool operar();
+    bool nc,t;
     operador* inside;
 };
 
@@ -71,5 +74,7 @@ struct multi:public operador{
 
 operador* keepOn();
 operador* tomar();
+bool operarAislado();
+void crearClicker();
 
 #endif // OPERADOR_H
