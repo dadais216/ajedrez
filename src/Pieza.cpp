@@ -44,6 +44,7 @@ void Pieza::calcularMovimientos(v posAct){
         }
         cout<<endl<<"FIN DE MOVIMIENTO"<<endl;
         resetearValores();
+        limites.clear();
     }
 }
 

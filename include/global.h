@@ -43,6 +43,7 @@ struct color;
 extern list<int> tokens;
 extern list<acm*> buffer;
 extern list<pair<RectangleShape*,v>> bufferColores;
+extern list<v> limites;
 extern list<Clicker*> clickers;
 extern bool cambios;
 
