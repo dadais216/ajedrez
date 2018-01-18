@@ -40,6 +40,8 @@ struct desliz:public operador{
     virtual void debug();
     virtual bool operar();
     bool nc,t;
+    int i;
+    v aux;
     operador* inside;
 };
 
@@ -48,6 +50,16 @@ struct opt:public operador{
     virtual bool operar();
     virtual void debug();
     list<operador*> ops;
+};
+
+struct joiner:public operador{
+    joiner();
+    //existe con el unico fin de manejar el caso de
+    // desliz < opt < ... > > , ya que desliz setea
+    // el sig de opt despues de que este haya armado sus ramas
+    // y puesto los sig de estas en nullptt
+    virtual bool operar();
+    virtual void debug();
 };
 
 struct click:public operador{

@@ -27,6 +27,7 @@ lector::lector(){
 
     rel(nc);
     rel(t);
+    rel(prob);
 
     tabla["<<"]=bloque;
     tabla[">>"]=lim;

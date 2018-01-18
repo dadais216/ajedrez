@@ -1,5 +1,8 @@
 def mover  vacio mov color 20 200 115 pausa
-def moverc vacio mov color 60 100 150 pausa
+def moverng vacio mov << color 20 200 115 >>
+def moverc vacio mov color 200 0 0 pausa
+def movera vacio mov color 0 0 200 pausa
+def moverb vacio mov color 200 120 0 pausa
 def movernc vacio mov pausa
 def clickc click color 20 200 115
 def captura  enemigo capt
@@ -9,16 +12,20 @@ def end lim
 
 :1 1 #torre
 #desliz opt a or w or s or d end mover end 
-desliz a mover then opt outbounds desliz w mover end or desliz s mover end end
+desliz a mover then opt outbounds desliz w mover end or desliz s end end
 
 :2 2 #caballo
-desliz {{ww,ss}{a,d},{aa,dd}{w,s}} mover then desliz {{ww,ss}{a,d},{aa,dd}{w,s}} mover end
+#desliz opt wwa moverc or aaw mover end end
+#desliz opt ssd moverc or dds mover end end
+#desliz opt aas moverc or ssa mover end end
+#desliz opt ddw moverc or wwd mover end end
+#desliz {{ww,ss}{a,d},{aa,dd}{w,s}} then desliz {{ww,ss}{a,d},{aa,dd}{w,s}} mover end
+desliz opt wwa or aaw or aas or ssa or ssd or dds or ddw or wwd end moverng prob end
 
 :3 3 #alfil
-#desliz {wa,wd} movernc end
-s mover
 #desliz w mover posRemember desliz {wa,wd} mover end posRestore end #pone mal los clickers, ni idea
-desliz w mover << desliz {as,sd} mover end >> end
+#desliz w mover << desliz {as,sd} mover end >> end
+desliz opt w or a or s or d end moverng prob end
 
 :4 4 #reina
 #desliz w mover << desliz a mover end >> end
@@ -26,7 +33,10 @@ desliz w mover << desliz {as,sd} mover end >> end
 #desliz s mover << desliz d mover end >> end
 #desliz d mover << desliz w mover end >> end
 
-desliz w mover opt a mover or d mover end end
+desliz w movernc opt a mover or d movera end prob end
+desliz s movernc opt a mover or d movera end prob end
+desliz a movernc opt w moverb or s moverc end prob end
+desliz d movernc opt w moverb or s moverc end prob end
 
 #desliz {{ww,ss}{a,d},{aa,dd}{w,s}}{w,wa,a,as,s,sd,d,dw} mover then pass
 

@@ -88,6 +88,7 @@ struct NOMB:public acm{\
     };\
     virtual void func(){\
         FUNC\
+        cout<<#NOMB<<" ";\
     }\
     virtual void debug(){\
         cout<<#NOMB<<" ";\
@@ -115,13 +116,23 @@ fabMov(vacio,condt,
 fabMov(enemigo,condt,
         cond=(*tabl)(pos)->bando==act->bando*-1;
 );
+list<v> limites,limitesAux;
 fabMov(esp,condt,
         if(pos.x>=0&&pos.x<tabl->tam.x&&pos.y>=0&&pos.y<tabl->tam.y){
             cond=true;
+            for(v vec:limites){ //si realentiza mover a otra cond
+                if(pos==vec){
+                    cond=false;
+                    break;
+                }
+            }
         }else{
             cond=false;
             bOutbounds=true;
         }
+);
+fabMov(prob,condt,
+        limitesAux.emplace_back(pos);
 );
 fabMov(outbounds,condt,
         cond=bOutbounds;
@@ -159,6 +170,7 @@ normal::normal(){
         caseT(outbounds);
         caseT(vacio);
         caseT(enemigo);
+        caseT(prob);
 
         caseT(mov);
         caseT(capt);
@@ -173,11 +185,8 @@ normal::normal(){
             break;
         case lector::sep:
             separator=true;
-            return;
         case lector::eol:
-            return;
         case lector::lim:
-            cout<<"AZAWOP";
             return;
         default:
             tokens.push_front(tok);
@@ -194,6 +203,7 @@ bool normal::operar(){
             if((a->func(),cond==false)){
                 cout<<" F ";
                 colores.clear();
+                limitesAux.clear();
                 return false;
             }
         }else if(a->tipo==movt)
@@ -203,6 +213,7 @@ bool normal::operar(){
     }
     cout<<" V ";
     bufferColores.splice(bufferColores.begin(),colores);
+    limites.splice(limites.begin(),limitesAux);
 
     cambios=true;
     for(acm* a:acms){
@@ -219,8 +230,9 @@ void normal::debug(){
     if(sig) sig->debug();
 }
 
-#define paramCase(PARAM) case lector::PARAM: tokens.pop_front(); PARAM=true
+#define paramCase(PARAM) case lector::PARAM: tokens.pop_front(); PARAM=true; break
 
+struct click;
 desliz::desliz(){
     t=nc=false;
     while(true){
@@ -232,7 +244,20 @@ desliz::desliz(){
     }
     next:
     inside=tomar();
+
+    operador* it=inside;
+    while(it->sig)
+        it=it->sig;
+    if(!nc){
+        it->sig=new click; //hago esto en vez de usar bools por casos de opt
+        it=it->sig;
+    }
+    it->sig=this;
+
+    i=-1;
+
     sig=keepOn();
+
 }
 
 void desliz::debug(){
@@ -243,18 +268,23 @@ void desliz::debug(){
 }
 
 bool desliz::operar(){
-    //mover org
-    int i=0;
-    v aux=pos;
-    while(inside->operar()){
-        aux=pos;
-        i++;
-        if(!nc)
-            crearClicker();
-    }
+    i++;
+    aux=pos;
+
+    cout<<"DESLIZ ";
+    inside->operar();
+
+    cout<<"/DESLIZ ";
+//    while(inside->operar()){
+//        aux=pos;
+//        i++;
+//    }
     pos=aux;
-    if(i||t)
+    if(i||t){
+        i=-1;
         return then();
+    }
+    i=-1;
     return false;
 }
 
@@ -270,9 +300,7 @@ bool operarAislado(operador* op){
         crearClicker();
 
     pos=posRes;
-    //cout<<"antes "<<buffer.size();
     buffer.erase(++bufferRes,buffer.end());
-    //cout<<"despues "<<buffer.size();
     bufferColores.erase(++bColorRes,bufferColores.end());
     act=pRes;
     return ret;
@@ -284,7 +312,9 @@ bloque::bloque(){
 }
 
 bool bloque::operar(){
+    list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
     operarAislado(inside);
+    limites.erase(++limitRes,limites.end());
     return then();
 }
 
@@ -292,7 +322,12 @@ void bloque::debug(){
     cout<<"<< ";
     inside->debug();
     cout<<">> ";
+    sig->debug();
 }
+
+joiner::joiner(){sig=nullptr;};
+bool joiner::operar(){return then();}
+void joiner::debug(){cout<<"joiner ";}
 
 opt::opt(){
     separator=true;
@@ -301,18 +336,19 @@ opt::opt(){
         ops.push_back(tomar());
     }
     sig=keepOn();
-    for(operador* op:ops){
-        while(op->sig)
-            op=op->sig;
-        op->sig=sig;
-    }
-}
 
-bool opt::operar(){
-    bool ret=false;
-    for(operador* op:ops)
-        ret=operarAislado(op)||ret;
-    return ret;
+    cout<<"#######################";
+    sig->debug();
+    cout<<"#######################";
+
+    if(!sig)
+        sig=new joiner;
+    for(operador* op:ops){
+        operador* it=op;
+        while(it->sig)
+            it=it->sig;
+        it->sig=sig;
+    }
 }
 
 void opt::debug(){
@@ -322,6 +358,18 @@ void opt::debug(){
         cout<<" | ";
     }
     cout<<"> ";
+}
+
+bool opt::operar(){
+    bool ret=false;
+
+    cout<<"OPT ";
+    for(operador* op:ops){
+        ret=operarAislado(op)||ret;
+        cout<<"OR ";
+    }
+    cout<<"/OPT";
+    return ret;
 }
 
 #define fabOp(NOMB,FUNC) \
