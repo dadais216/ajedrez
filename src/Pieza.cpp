@@ -54,6 +54,7 @@ void resetearValores(){
         memcambios=false;
     }
     pos=org;
+
 }
 
 

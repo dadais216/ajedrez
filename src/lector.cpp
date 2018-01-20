@@ -10,6 +10,7 @@ lector::lector(){
     rel(color);
     rel(lim);
     rel(pausa);
+
     rel(posRestore);
     rel(posRemember);
 
@@ -19,15 +20,18 @@ lector::lector(){
 
     rel(vacio);
     rel(enemigo);
+    rel(pieza);
     rel(outbounds);
+    rel(prob);
 
     rel(desliz);
     rel(opt);
     rel(click);
+    rel(contr);
 
     rel(nc);
     rel(t);
-    rel(prob);
+    rel(exc);
 
     tabla["<<"]=bloque;
     tabla[">>"]=lim;

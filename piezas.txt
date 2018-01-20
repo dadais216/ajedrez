@@ -1,5 +1,5 @@
 def mover  vacio mov color 20 200 115 pausa
-def moverng vacio mov << color 20 200 115 >>
+def moverng vacio mov << color 20 200 115 >> pausa
 def moverc vacio mov color 200 0 0 pausa
 def movera vacio mov color 0 0 200 pausa
 def moverb vacio mov color 200 120 0 pausa
@@ -9,10 +9,19 @@ def captura  enemigo capt
 def estandar  {mover,captura} #cambiar por v despues
 def then lim
 def end lim
+def control color 200 0 0 pieza contr
+def controlu color 200 0 0 contr
+def moveru mov color 20 200 115 pausa
 
 :1 1 #torre
 #desliz opt a or w or s or d end mover end 
-desliz a mover then opt outbounds desliz w mover end or desliz s end end
+#desliz a mover then opt outbounds desliz w mover end or desliz s end end
+#desliz opt desliz w mover prob end or desliz s mover prob end end end
+#opt desliz w mover end or s mover end aa mover
+{w,s,d} mover
+#d mover d control aa moveru d controlu d moveru
+#desliz d control then d mover
+desliz nc d pieza then desliz nc control d moveru aa end color 200 0 0
 
 :2 2 #caballo
 #desliz opt wwa moverc or aaw mover end end
@@ -25,7 +34,9 @@ desliz opt wwa or aaw or aas or ssa or ssd or dds or ddw or wwd end moverng prob
 :3 3 #alfil
 #desliz w mover posRemember desliz {wa,wd} mover end posRestore end #pone mal los clickers, ni idea
 #desliz w mover << desliz {as,sd} mover end >> end
-desliz opt w or a or s or d end moverng prob end
+#desliz opt w or a or s or d end moverng prob end
+desliz opt exc desliz wa mover prob end outbounds or desliz wd mover prob end outbounds or desliz as mover prob end outbounds or desliz sd mover prob end outbounds end end 
+
 
 :4 4 #reina
 #desliz w mover << desliz a mover end >> end

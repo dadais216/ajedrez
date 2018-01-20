@@ -113,6 +113,9 @@ fabMov(pausa,acct,
 fabMov(vacio,condt,
         cond=(*tabl)(pos)==nullptr;
 );
+fabMov(pieza,condt,
+       cond=(*tabl)(pos);
+);
 fabMov(enemigo,condt,
         cond=(*tabl)(pos)->bando==act->bando*-1;
 );
@@ -157,9 +160,8 @@ normal::normal(){
     while(true){
         if(tokens.empty()) return;
         int tok=tokens.front();tokens.pop_front();
-        cout<<"TOK:"<<tok<<endl;
         switch(tok){
-        #define caseT(TOKEN)  case lector::TOKEN: acms.push_back(new TOKEN);break
+        #define caseT(TOKEN)  case lector::TOKEN: cout<<#TOKEN<<endl;acms.push_back(new TOKEN);break
         //como la mayoria de los acm no tiene datos el new no debería alocar nada
         caseT(W);
         caseT(A);
@@ -169,6 +171,7 @@ normal::normal(){
         caseT(esp);
         caseT(outbounds);
         caseT(vacio);
+        caseT(pieza);
         caseT(enemigo);
         caseT(prob);
 
@@ -181,12 +184,18 @@ normal::normal(){
 
         //movs con parametros
         case lector::color:
+            cout<<"color"<<endl;
             acms.push_back(new color());
             break;
         case lector::sep:
+            cout<<"sep"<<endl;
             separator=true;
+            return;
         case lector::eol:
+            cout<<"eol"<<endl;
+            return;
         case lector::lim:
+            cout<<"lim"<<endl;
             return;
         default:
             tokens.push_front(tok);
@@ -234,6 +243,7 @@ void normal::debug(){
 
 struct click;
 desliz::desliz(){
+    doDebug=true;
     t=nc=false;
     while(true){
         switch(tokens.front()){
@@ -249,7 +259,7 @@ desliz::desliz(){
     while(it->sig)
         it=it->sig;
     if(!nc){
-        it->sig=new click; //hago esto en vez de usar bools por casos de opt
+        it->sig=new click(false); //hago esto en vez de usar bools por casos de opt
         it=it->sig;
     }
     it->sig=this;
@@ -257,19 +267,22 @@ desliz::desliz(){
     i=-1;
 
     sig=keepOn();
-
 }
 
 void desliz::debug(){
-    cout<<"desliz< ";
-    inside->debug();
-    cout<<"> ";
-    if(sig) sig->debug();
+    if(doDebug){
+        doDebug=false;
+        cout<<"desliz< ";
+        inside->debug();
+        cout<<"> ";
+        if(sig) sig->debug();
+    }
 }
 
 bool desliz::operar(){
     i++;
     aux=pos;
+    backlash=true;
 
     cout<<"DESLIZ ";
     inside->operar();
@@ -279,16 +292,23 @@ bool desliz::operar(){
 //        aux=pos;
 //        i++;
 //    }
-    pos=aux;
-    if(i||t){
+    if(backlash){
+        backlash=false;
+        pos=aux;
+        if(i||t){
+            i=-1;
+            ret=then();
+            return ret;
+        }
         i=-1;
-        return then();
+        ret=false;
+        return false;
     }
-    i=-1;
-    return false;
+    return ret;
 }
 
 bool operarAislado(operador* op){
+    //debería guardar org tambien?
     v posRes=pos;
     list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
     list<pair<RectangleShape*,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
@@ -328,8 +348,16 @@ void bloque::debug(){
 joiner::joiner(){sig=nullptr;};
 bool joiner::operar(){return then();}
 void joiner::debug(){cout<<"joiner ";}
-
 opt::opt(){
+    exc=false;
+    while(true){
+        switch(tokens.front()){
+        paramCase(exc);
+        default: goto next;
+        }
+    }
+    next:
+
     separator=true;
     while(separator){
         separator=false;
@@ -337,9 +365,6 @@ opt::opt(){
     }
     sig=keepOn();
 
-    cout<<"#######################";
-    sig->debug();
-    cout<<"#######################";
 
     if(!sig)
         sig=new joiner;
@@ -366,28 +391,92 @@ bool opt::operar(){
     cout<<"OPT ";
     for(operador* op:ops){
         ret=operarAislado(op)||ret;
+        if(exc&&ret)
+            return true;
         cout<<"OR ";
     }
     cout<<"/OPT";
     return ret;
 }
 
-#define fabOp(NOMB,FUNC) \
-NOMB::NOMB(){ \
-    sig=keepOn(); \
-} \
-void NOMB::debug(){ \
-    cout<<"NOMB "; \
-} \
-bool NOMB::operar(){ \
-    FUNC \
-    return then(); \
+//#define fabOp(NOMB,FUNC) \
+//NOMB::NOMB(){ \
+//    sig=keepOn(); \
+//} \
+//void NOMB::debug(){ \
+//    cout<<"NOMB "; \
+//} \
+//bool NOMB::operar(){ \
+//    FUNC \
+//    return then(); \
+//}
+
+click::click(bool keep=true){
+    if(keep)
+        sig=keepOn();
+    else
+        sig=nullptr;
+}
+void click::debug(){
+    cout<<"click";
+}
+bool click::operar(){
+    crearClicker();
+    return then();
 }
 
-fabOp(click,
-    crearClicker();
-);
 
+struct contr_acc:public acm{
+    contr_acc(){
+        control_func();
+    }
+    virtual void func(){
+        control_func();
+    }
+    virtual void debug(){
+        cout<<"control ";
+    }
+    void control_func(){
+        org=pos;
+        act=(*tabl)(pos);
+    }
+};
+struct contr_clean:public acm{
+    v posRes;Pieza* pRes;
+    contr_clean(v _pos,Pieza* p){
+        posRes=_pos;pRes=p;
+        control_func();
+    }
+    virtual void func(){
+        control_func();
+    }
+    virtual void debug(){
+        cout<<"control ";
+    }
+    void control_func(){
+        org=posRes;
+        act=pRes;
+    }
+};
+contr::contr(){
+    sig=keepOn();
+}
+void contr::debug(){
+    cout<<"control ";
+}
+bool contr::operar(){
+    v orgRes=org;
+    Pieza* piezaRes=act;
+
+
+    buffer.push_back(new contr_acc());
+
+    bool ret=then();
+
+    buffer.push_back(new contr_clean(orgRes,piezaRes));
+
+    return ret;
+}
 
 
 operador* keepOn(){
@@ -398,6 +487,7 @@ operador* keepOn(){
         separator=true;
     case lector::eol:
     case lector::lim:
+        tokens.pop_front(); //por ahi rompe todo
         return nullptr;
     }
     return tomar();
@@ -406,16 +496,13 @@ operador* keepOn(){
 operador* tomar(){
     if(tokens.empty()) return nullptr;
     int tok=tokens.front();tokens.pop_front();
-    cout<<"TOK T "<<tok<<endl;
+    #define caseTomar(TOKEN) case lector::TOKEN: cout<<#TOKEN<<endl;return new TOKEN
     switch(tok){
-    case lector::desliz:
-        return new desliz();
-    case lector::opt:
-        return new opt;
-    case lector::bloque:
-        return new bloque;
-    case lector::click:
-        return new click;
+    caseTomar(desliz);
+    caseTomar(opt);
+    caseTomar(bloque);
+    caseTomar(click);
+    caseTomar(contr);
     default:
         tokens.push_front(tok);
         return new normal;
