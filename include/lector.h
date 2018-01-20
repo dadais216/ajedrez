@@ -18,13 +18,13 @@ struct lector
 
     Pieza* crearPieza(int);
     enum token{def=1,igual,llaveizq,llaveder,coma,
-    W,A,S,D,
+    W,A,S,D,posRemember,posRestore,
     mov,capt,
-    vacio,enemigo,esp,outbounds,prob,
+    vacio,pieza,enemigo,esp,outbounds,prob,
     desliz,opt,bloque,
-    nc,t,
-    posRemember,posRestore,
-    color,click,pausa,
+    nc,t,exc,
+    click,contr,
+    color,pausa,
     eol,sep,lim,last};
     bool hayAtras;
     int i,j;

@@ -38,9 +38,10 @@ struct normal:public operador{
 struct desliz:public operador{
     desliz();
     virtual void debug();
+    bool doDebug;
     virtual bool operar();
     bool nc,t;
-    int i;
+    int i,backlash,ret;
     v aux;
     operador* inside;
 };
@@ -49,6 +50,7 @@ struct opt:public operador{
     opt();
     virtual bool operar();
     virtual void debug();
+    bool exc;
     list<operador*> ops;
 };
 
@@ -63,7 +65,13 @@ struct joiner:public operador{
 };
 
 struct click:public operador{
-    click();
+    click(bool);
+    virtual bool operar();
+    virtual void debug();
+};
+
+struct contr:public operador{
+    contr();
     virtual bool operar();
     virtual void debug();
 };
