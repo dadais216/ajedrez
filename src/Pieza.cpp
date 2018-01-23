@@ -11,8 +11,6 @@ Pieza::Pieza(int _id,int _bando,int _sn){
     sprite.setTextureRect(IntRect(64+sn*64+(16+16*bando),0,32,32));
     sprite.setScale(escala,escala);
 
-
-
     while(!tokens.empty()){
 //        for(int tok:tokens){
 //            cout<<tok<<"-";
@@ -44,17 +42,16 @@ void Pieza::calcularMovimientos(v posAct){
         }
         cout<<endl<<"FIN DE MOVIMIENTO"<<endl;
         resetearValores();
-        limites.clear();
     }
 }
 
 void resetearValores(){
-    if(memcambios){
+    if(memcambios){ //no es necesario
         numeros.fill(0);
         memcambios=false;
     }
     pos=org;
-
+    limites.clear();
 }
 
 
