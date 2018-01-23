@@ -20,9 +20,9 @@ Pieza* act;//para chequeos
 
 color::color()
 :cuadrado(Vector2f(32*escala,32*escala)),_color(){
-    _color.r=-tokens.front();tokens.pop_front();
-    _color.g=-tokens.front();tokens.pop_front();
-    _color.b=-tokens.front();tokens.pop_front();
+    _color.r=tokens.front()-1000;tokens.pop_front();
+    _color.g=tokens.front()-1000;tokens.pop_front();
+    _color.b=tokens.front()-1000;tokens.pop_front();
     _color.a=40;
     tipo=colort;
     cuadrado.setFillColor(_color);
@@ -41,9 +41,9 @@ struct posRemember:public acm{
     int index,jndex;
     posRemember(){
         tipo=movt;
-        if(!tokens.empty()&&tokens.front()<0){
-            index=-tokens.front(); tokens.pop_front();
-            jndex=-tokens.front(); tokens.pop_front();
+        if(!tokens.empty()&&tokens.front()>=1000){
+            index=tokens.front()-1000; tokens.pop_front();
+            jndex=tokens.front()-1000; tokens.pop_front();
         }else{
             index=0;
             jndex=1;
@@ -63,9 +63,9 @@ struct posRestore:public acm{
     int index,jndex;
     posRestore(){
         tipo=movt;
-        if(!tokens.empty()&&tokens.front()<0){
-            index=-tokens.front(); tokens.pop_front();
-            jndex=-tokens.front(); tokens.pop_front();
+        if(!tokens.empty()&&tokens.front()>=1000){
+            index=tokens.front()-1000; tokens.pop_front();
+            jndex=tokens.front()-1000; tokens.pop_front();
         }else
             index=0;
             jndex=1;
@@ -80,6 +80,32 @@ struct posRestore:public acm{
         cout<<"posRestore ";pos.show();cout<<" -> ";v(numeros[index],numeros[jndex]).show();
     }
 };
+
+#define numFab(NOMB,TIPO,FUNC) \
+struct NOMB:public acm{ \
+    int val,index; \
+    NOMB(){ \
+        tipo=TIPO; \
+        index=tokens.front()-1000; tokens.pop_front();  \
+        val=tokens.front()-1000; tokens.pop_front(); \
+    } \
+    virtual void func(){ \
+        FUNC \
+    } \
+    virtual void debug(){ \
+        cout<<"NOMB "<<index<<" "<<val<<" "<<numeros[index]<<" "; \
+    } \
+}
+
+numFab(numSet,movt,numeros[index]=val;);
+numFab(numAdd,movt,numeros[index]+=val;);
+numFab(numCmp,condt,cond=numeros[index]==val;);
+numFab(numDst,condt,cond=numeros[index]!=val;);
+
+numFab(numSeti,movt,numeros[index]=numeros[val];);
+numFab(numAddi,movt,numeros[index]+=numeros[val];);
+numFab(numCmpi,condt,cond=numeros[index]==numeros[val];);
+numFab(numDsti,condt,cond=numeros[index]!=numeros[val];);
 
 #define fabMov(NOMB,TIPO,FUNC)\
 struct NOMB:public acm{\
@@ -141,6 +167,9 @@ fabMov(outbounds,condt,
         cond=bOutbounds;
         bOutbounds=false;
 );
+fabMov(inbounds,condt,
+        cond=!bOutbounds; //esta mal
+);
 
 fabMov(W,movt,
        pos.y+=act->bando;
@@ -167,13 +196,23 @@ normal::normal(){
         caseT(A);
         caseT(S);
         caseT(D);
+        caseT(numSet);
+        caseT(numAdd);
+        caseT(numSeti);
+        caseT(numAddi);
+
 
         caseT(esp);
         caseT(outbounds);
+        caseT(inbounds);
         caseT(vacio);
         caseT(pieza);
         caseT(enemigo);
         caseT(prob);
+        caseT(numCmp);
+        caseT(numDst);
+        caseT(numCmpi);
+        caseT(numDsti);
 
         caseT(mov);
         caseT(capt);

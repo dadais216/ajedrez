@@ -13,15 +13,14 @@ def control color 200 0 0 pieza contr
 def controlu color 200 0 0 contr
 def moveru mov color 20 200 115 pausa
 
+def circ[ numSet 1 0 desliz numDsti 1 0
+def ]circ << mover >> numAdd 1 1 end inbounds
+
 :1 1 #torre
-#desliz opt a or w or s or d end mover end 
-#desliz a mover then opt outbounds desliz w mover end or desliz s end end
-#desliz opt desliz w mover prob end or desliz s mover prob end end end
-#opt desliz w mover end or s mover end aa mover
-{w,s,d} mover
-#d mover d control aa moveru d controlu d moveru
-#desliz d control then d mover
-desliz nc d pieza then desliz nc control d moveru aa end color 200 0 0
+numSet 0 2 sd desliz nc circ[ w ]circ circ[ a ]circ circ[ s ]circ circ[ d ]circ sdsd numAdd 0 4 end 
+ 
+
+
 
 :2 2 #caballo
 #desliz opt wwa moverc or aaw mover end end

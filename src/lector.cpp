@@ -13,6 +13,10 @@ lector::lector(){
 
     rel(posRestore);
     rel(posRemember);
+    rel(numSet);
+    rel(numAdd);
+    rel(numSeti);
+    rel(numAddi);
 
 
     rel(mov);
@@ -22,7 +26,12 @@ lector::lector(){
     rel(enemigo);
     rel(pieza);
     rel(outbounds);
+    rel(inbounds);
     rel(prob);
+    rel(numCmp);
+    rel(numDst);
+    rel(numCmpi);
+    rel(numDsti);
 
     rel(desliz);
     rel(opt);
@@ -257,7 +266,7 @@ void lector::token(string linea){
     //cout<<"++"<<palabra<<"++"<<i<<" "<<j<<"\n";
     i=j;
 
-    if(palabra=="pass")
+    if(palabra=="pass") //no lo uso
         return;
 
     bool esMov=true,esNum=true;
@@ -274,7 +283,7 @@ void lector::token(string linea){
         return;
     }
     if(esNum){
-        lista->push_back(-stringToIntR(palabra));
+        lista->push_back(stringToIntR(palabra)+1000);
         return;
     }
 
