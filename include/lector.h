@@ -17,16 +17,16 @@ struct lector
     int stringToIntR(string&);
 
     Pieza* crearPieza(int);
-    enum token{def,igual,llaveizq,llaveder,coma,
-    W,A,S,D,posRemember,posRestore,numSet,numAdd,numSeti,numAddi,
+    enum token{def,llaveizq,llaveder,coma,lineJoin,
+    W,A,S,D,N,posRemember,posRestore,numSet,numAdd,numSeti,numAddi,
     mov,capt,
-    vacio,pieza,enemigo,esp,outbounds,inbounds,prob,numCmp,numDst,numCmpi,numDsti,
+    vacio,pieza,enemigo,esp,outbounds,prob,numCmp,numDst,numCmpi,numDsti,numLess,numLessi,
     desliz,opt,bloque,
     nc,t,exc,
     click,contr,
     color,pausa,
     eol,sep,lim,last};
-    bool hayAtras;
+    bool hayAtras,doEsp;
     int i,j;
     map<int,list<int>> defs;
     list<int>* lista;
