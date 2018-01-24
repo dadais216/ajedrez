@@ -11,6 +11,7 @@ lector::lector(){
     rel(lim);
     rel(pausa);
 
+
     rel(posRestore);
     rel(posRemember);
     rel(numSet);
@@ -22,16 +23,18 @@ lector::lector(){
     rel(mov);
     rel(capt);
 
+    rel(esp);
     rel(vacio);
     rel(enemigo);
     rel(pieza);
     rel(outbounds);
-    rel(inbounds);
     rel(prob);
     rel(numCmp);
     rel(numDst);
     rel(numCmpi);
     rel(numDsti);
+    rel(numLess);
+    rel(numLessi);
 
     rel(desliz);
     rel(opt);
@@ -122,7 +125,7 @@ Pieza* lector::crearPieza(int n){
     cout<<"una pieza no esta";
     exit(EXIT_FAILURE);
     enPieza:
-    hayAtras=false;
+    doEsp=hayAtras=false;
     cout<<"p"<<n<<endl;
     while(getline(archPiezas,linea)){
         //cout<<">"<<linea<<endl;
@@ -155,9 +158,6 @@ Pieza* lector::crearPieza(int n){
             }
         }
     }
-
-
-
     //aplicar llaves
     bool loop=true;
     while(loop){
@@ -219,11 +219,30 @@ Pieza* lector::crearPieza(int n){
         }
     }
 
+    //aplicar reglas especiales, como limpiar los eol con \
+
     for(int s:tokens)
         cout<<"|"<<s<<"|";
     cout<<endl;
 
+    for(list<int>::iterator it=tokens.begin();it!=tokens.end();++it){
+        list<int>::iterator jt=it;++jt;
+        cout<<*it<<" "<<*jt<<endl;
+        if(*it==N&&*jt==esp||*it==lineJoin&&*jt==eol){
+            tokens.erase(jt);
+            it=tokens.erase(it);
+            continue;
+        }
+        if(*it==sep&&*jt==lim)
+            tokens.erase(jt);
 
+    }
+
+
+
+    for(int s:tokens)
+        cout<<"|"<<s<<"|";
+    cout<<endl;
 
 
     Pieza* p=new Pieza(abso(n),sgn(n),sn);
@@ -235,7 +254,6 @@ Pieza* lector::crearPieza(int n){
 void lector::tokenizarLinea(string linea){
     i=0,j=0;
     for(;j<linea.length()+1;j++){
-        //cout<<"="<<linea[j]<<endl;
         if(token(linea,'#')) break;
         if(token(linea,' ')) continue;
         if(token(linea,'{')) continue;
@@ -243,6 +261,7 @@ void lector::tokenizarLinea(string linea){
         if(token(linea,'}')) continue;
         if(token(linea,'=')) continue;
         if(token(linea,'\0')) continue;
+        if(token(linea,'\\')) continue;
         hayAtras=true;
     }
 }
@@ -266,12 +285,9 @@ void lector::token(string linea){
     //cout<<"++"<<palabra<<"++"<<i<<" "<<j<<"\n";
     i=j;
 
-    if(palabra=="pass") //no lo uso
-        return;
-
     bool esMov=true,esNum=true;
     for(int k=0;k<palabra.length();k++){
-        if(palabra[k]!='w'&&palabra[k]!='a'&&palabra[k]!='s'&&palabra[k]!='d')
+        if(palabra[k]!='w'&&palabra[k]!='a'&&palabra[k]!='s'&&palabra[k]!='d'&&palabra[k]!='n')
             esMov=false;
         if(palabra[k]<'0'||palabra[k]>'9')
             esNum=false;
@@ -279,7 +295,7 @@ void lector::token(string linea){
     if(esMov){
         for(int k=0;k<palabra.length();k++)
             token(palabra[k]);
-        lista->push_back(esp);
+        doEsp=true;
         return;
     }
     if(esNum){
@@ -308,17 +324,25 @@ void lector::token(char c){
     case '{':lista->push_back(llaveizq);break;
     case ',':lista->push_back(coma);break;
     case '}':lista->push_back(llaveder);break;
-    case '=':lista->push_back(igual);break;
-    case '\0':lista->push_back(eol);break;
     case 'w':lista->push_back(W);break;
     case 'a':lista->push_back(A);break;
     case 's':lista->push_back(S);break;
     case 'd':lista->push_back(D);break;
-    //' ' y # no hacer nada
+    case 'n':lista->push_back(N);break;
+    case '\\':lista->push_back(lineJoin);break;
+    case ' ':if(doEsp){
+        lista->push_back(esp);
+        doEsp=false;
+        } break;
+    case '\0':if(doEsp){
+        lista->push_back(esp);
+        doEsp=false;}
+        lista->push_back(eol);break;
     }
 }
 
 void lector::cargarDefs(){
+    doEsp=hayAtras=false;
     string linea;
     while(getline(archPiezas,linea)){
         if(linea.empty()) continue;
@@ -326,6 +350,10 @@ void lector::cargarDefs(){
         if(!lista)
             lista=new list<int>;
         tokenizarLinea(linea);
+
+        for(int s:*lista)
+            cout<<"."<<s<<".";
+        cout<<endl;
 
         if(lista->empty()) continue;
         if(lista->front()==def){

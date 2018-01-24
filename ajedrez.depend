@@ -587,11 +587,11 @@
 	<global.h>
 	<Pieza.h>
 
-1516677368 c:\users\daniel\desktop\c\ajedrez\include\lector.h
+1516764856 c:\users\daniel\desktop\c\ajedrez\include\lector.h
 	<fstream>
 	<global.h>
 
-1516677368 source:c:\users\daniel\desktop\c\ajedrez\src\lector.cpp
+1516765407 source:c:\users\daniel\desktop\c\ajedrez\src\lector.cpp
 	"lector.h"
 	<Pieza.h>
 
@@ -610,7 +610,7 @@
 	<string>
 	<windows.h>
 
-1516677386 source:c:\users\daniel\desktop\c\ajedrez\src\operador.cpp
+1516747615 source:c:\users\daniel\desktop\c\ajedrez\src\operador.cpp
 	"operador.h"
 	"lector.h"
 	<Clicker.h>

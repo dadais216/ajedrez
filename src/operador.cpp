@@ -101,11 +101,13 @@ numFab(numSet,movt,numeros[index]=val;);
 numFab(numAdd,movt,numeros[index]+=val;);
 numFab(numCmp,condt,cond=numeros[index]==val;);
 numFab(numDst,condt,cond=numeros[index]!=val;);
+numFab(numLess,condt,cond=numeros[index]<val;);
 
 numFab(numSeti,movt,numeros[index]=numeros[val];);
 numFab(numAddi,movt,numeros[index]+=numeros[val];);
 numFab(numCmpi,condt,cond=numeros[index]==numeros[val];);
 numFab(numDsti,condt,cond=numeros[index]!=numeros[val];);
+numFab(numLessi,condt,cond=numeros[index]<numeros[val];);
 
 #define fabMov(NOMB,TIPO,FUNC)\
 struct NOMB:public acm{\
@@ -167,9 +169,6 @@ fabMov(outbounds,condt,
         cond=bOutbounds;
         bOutbounds=false;
 );
-fabMov(inbounds,condt,
-        cond=!bOutbounds; //esta mal
-);
 
 fabMov(W,movt,
        pos.y+=act->bando;
@@ -204,7 +203,6 @@ normal::normal(){
 
         caseT(esp);
         caseT(outbounds);
-        caseT(inbounds);
         caseT(vacio);
         caseT(pieza);
         caseT(enemigo);
@@ -213,6 +211,8 @@ normal::normal(){
         caseT(numDst);
         caseT(numCmpi);
         caseT(numDsti);
+        caseT(numLess);
+        caseT(numLessi);
 
         caseT(mov);
         caseT(capt);
