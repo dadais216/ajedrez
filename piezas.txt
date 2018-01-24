@@ -1,4 +1,4 @@
-def mover  vacio mov color 20 200 115 pausa
+def mover vacio mov color 20 200 115 pausa
 def moverng vacio mov << color 20 200 115 >> pausa
 def moverc vacio mov color 200 0 0 pausa
 def movera vacio mov color 0 0 200 pausa
@@ -14,11 +14,10 @@ def controlu color 200 0 0 contr
 def moveru mov color 20 200 115 pausa
 
 def circ[ numSet 1 0 desliz numDsti 1 0
-def ]circ << mover >> numAdd 1 1 end inbounds
+def ]circ << esp mover >> numAdd 1 1 end
 
 :1 1 #torre
-numSet 0 2 sd desliz nc circ[ w ]circ circ[ a ]circ circ[ s ]circ circ[ d ]circ sdsd numAdd 0 4 end 
- 
+numSet 0 2 sdn desliz nc numLess 0 20 circ[ wn ]circ circ[ an ]circ circ[ sn ]circ circ[ dn ]circ sdsdn numAdd 0 4 end
 
 
 
