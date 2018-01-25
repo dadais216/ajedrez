@@ -3,13 +3,17 @@
 #include <operador.h>
 #include <Clicker.h>
 
-Pieza::Pieza(int _id,int _bando,int _sn){
+list<Pieza*> piezas;
+
+Pieza::Pieza(int _id,int _sn){
     id=_id;
     sn=_sn;
-    bando=_bando;
-    sprite.setTexture(imagen->get("sprites.png"));
-    sprite.setTextureRect(IntRect(64+sn*64+(16+16*bando),0,32,32));
-    sprite.setScale(escala,escala);
+    spriteb.setTexture(imagen->get("sprites.png"));
+    spriteb.setTextureRect(IntRect(64+sn*64,0,32,32));
+    spriteb.setScale(escala,escala);
+    spriten.setTexture(imagen->get("sprites.png"));
+    spriten.setTextureRect(IntRect(64+sn*64+32,0,32,32));
+    spriten.setScale(escala,escala);
 
     while(!tokens.empty()){
 //        for(int tok:tokens){
@@ -22,11 +26,7 @@ Pieza::Pieza(int _id,int _bando,int _sn){
         o->debug();
         cout<<endl;
     }
-}
-
-void Pieza::draw(v vec){
-    sprite.setPosition(vec.x*escala*32,vec.y*escala*32);
-    window->draw(sprite);
+    piezas.push_back(this);
 }
 
 list<Clicker*> clickers;
@@ -54,5 +54,20 @@ void resetearValores(){
     limites.clear();
 }
 
+Holder::Holder(int _bando,Pieza* p){
+    bando=_bando;
+    inicial=false;
+    pieza=p;
+}
+
+void Holder::draw(v vec){
+    if(bando==1){
+        pieza->spriten.setPosition(vec.x*escala*32,vec.y*escala*32);
+        window->draw(pieza->spriten);
+    }else{
+        pieza->spriteb.setPosition(vec.x*escala*32,vec.y*escala*32);
+        window->draw(pieza->spriteb);
+    }
+}
 
 

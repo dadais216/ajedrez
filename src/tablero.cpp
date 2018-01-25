@@ -9,7 +9,7 @@ tablero::tablero(){
     tabl=this;
 }
 
-tablero::armar(v a){
+void tablero::armar(v a){
     tam=a;
     matriz.resize(tam.x);
     tiles.resize(tam.x);
@@ -33,11 +33,11 @@ tablero::armar(v a){
     n.setTextureRect(IntRect(32,0,32,32));
 }
 
-Pieza* tablero::operator()(v a){
+Holder* tablero::operator()(v a){
     return matriz[a.x][a.y];
 }
 
-void tablero::operator()(v a, Pieza* p){
+void tablero::operator()(v a, Holder* p){
     matriz[a.x][a.y]=p;
 }
 
@@ -58,7 +58,7 @@ void tablero::drawTiles(){
 void tablero::drawPieces(){
     for(int i=0;i<tam.x;i++){
         for(int j=0;j<tam.y;j++){
-            Pieza* p;
+            Holder* p;
             if(p=(*this)(v(i,j))){
                 p->draw(v(i,j));
             }
