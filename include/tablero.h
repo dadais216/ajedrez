@@ -6,16 +6,16 @@
 using namespace std;
 using namespace sf;
 
-struct Pieza;
+struct Holder;
 struct tablero{
     tablero();
-    armar(v);
+    void armar(v);
     Sprite b,n;
     v tam;
-    vector<vector<Pieza*>> matriz;
+    vector<vector<Holder*>> matriz;
     vector<vector<bool>> tiles;
-    Pieza* operator()(v);
-    void operator()(v,Pieza*);
+    Holder* operator()(v);
+    void operator()(v,Holder*);
     void drawTiles();
     void drawPieces();
 };

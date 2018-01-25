@@ -16,7 +16,7 @@ struct lector
     void mostrar();
     int stringToIntR(string&);
 
-    Pieza* crearPieza(int);
+    Holder* crearPieza(int);
     enum token{def,llaveizq,llaveder,coma,lineJoin,
     W,A,S,D,N,posRemember,posRestore,numSet,numAdd,numSeti,numAddi,
     mov,capt,
