@@ -23,9 +23,10 @@ struct Juego;
 struct Input;
 template<typename T>
 struct Manager;
-struct Pieza;
+struct Holder;
 struct tablero;
 struct Clicker;
+struct Pieza;
 
 extern Juego* j;
 extern Input* input;
@@ -34,7 +35,8 @@ extern Manager<Texture>* imagen;
 
 extern float escala;
 extern tablero* tabl;
-extern Pieza* act;
+extern list<Pieza*> piezas;
+extern Holder* act;
 extern v pos;
 extern v org;
 

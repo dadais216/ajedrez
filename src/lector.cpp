@@ -105,7 +105,13 @@ void lector::mostrar(){
     }
 }
 
-Pieza* lector::crearPieza(int n){
+Holder* lector::crearPieza(int n){
+    for(Pieza* p:piezas){
+        if(p->id==abso(n))
+            return new Holder(sgn(n),p);
+    }
+
+
     archPiezas.clear();
     archPiezas.seekg(0, ios::beg);
     string linea;
@@ -221,20 +227,15 @@ Pieza* lector::crearPieza(int n){
 
     //aplicar reglas especiales, como limpiar los eol con \
 
-    for(int s:tokens)
-        cout<<"|"<<s<<"|";
-    cout<<endl;
-
     for(list<int>::iterator it=tokens.begin();it!=tokens.end();++it){
         list<int>::iterator jt=it;++jt;
-        cout<<*it<<" "<<*jt<<endl;
         if(*it==N&&*jt==esp||*it==lineJoin&&*jt==eol){
             tokens.erase(jt);
             it=tokens.erase(it);
             continue;
         }
         if(*it==sep&&*jt==lim)
-            tokens.erase(jt);
+            it=tokens.erase(it);
 
     }
 
@@ -244,11 +245,9 @@ Pieza* lector::crearPieza(int n){
         cout<<"|"<<s<<"|";
     cout<<endl;
 
-
-    Pieza* p=new Pieza(abso(n),sgn(n),sn);
-
+    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn));
     tokens.clear();
-    return p;
+    return h;
 }
 
 void lector::tokenizarLinea(string linea){
@@ -350,10 +349,6 @@ void lector::cargarDefs(){
         if(!lista)
             lista=new list<int>;
         tokenizarLinea(linea);
-
-        for(int s:*lista)
-            cout<<"."<<s<<".";
-        cout<<endl;
 
         if(lista->empty()) continue;
         if(lista->front()==def){

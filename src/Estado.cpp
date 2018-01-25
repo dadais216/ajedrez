@@ -109,7 +109,7 @@ void Proper::update(){
             }
             act=tablero(input->get().show());
             if(act&&act->bando==-1)
-                act->calcularMovimientos(input->get());
+                act->pieza->calcularMovimientos(input->get());
             drawScreen();
         }
     }

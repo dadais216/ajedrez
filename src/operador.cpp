@@ -14,7 +14,7 @@ list<pair<RectangleShape*,v>> bufferColores;
 list<acm*> buffer;
 v pos;
 v org;
-Pieza* act;//para chequeos
+Holder* act;//para chequeos
 
 #define M(algo) (cout<<"|"<<algo<<"|",algo)
 
@@ -351,7 +351,7 @@ bool operarAislado(operador* op){
     v posRes=pos;
     list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
     list<pair<RectangleShape*,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
-    Pieza* pRes=act;
+    Holder* pRes=act;
 
     bool ret=op->operar();
 
@@ -481,8 +481,8 @@ struct contr_acc:public acm{
     }
 };
 struct contr_clean:public acm{
-    v posRes;Pieza* pRes;
-    contr_clean(v _pos,Pieza* p){
+    v posRes;Holder* pRes;
+    contr_clean(v _pos,Holder* p){
         posRes=_pos;pRes=p;
         control_func();
     }
@@ -505,7 +505,7 @@ void contr::debug(){
 }
 bool contr::operar(){
     v orgRes=org;
-    Pieza* piezaRes=act;
+    Holder* piezaRes=act;
 
 
     buffer.push_back(new contr_acc());
