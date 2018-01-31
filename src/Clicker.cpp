@@ -20,9 +20,22 @@ Clicker::Clicker(bool copiarBuffer){
 }
 
 void Clicker::draw(){
-    for(pair<RectangleShape*,v> c:colores){
-        get<0>(c)->setPosition(get<1>(c).x*32*escala,get<1>(c).y*32*escala);
-        window->draw(*get<0>(c));
+    for(pair<drawable,v> c:colores){
+        if(get<0>(c).tipo==0){
+            RectangleShape* rs=(RectangleShape*)get<0>(c).obj;
+            rs->setPosition(get<1>(c).x*32*escala,get<1>(c).y*32*escala);
+            window->draw(*rs);
+        }else if(get<0>(c).tipo==1){
+            Sprite* s=(Sprite*)get<0>(c).obj;
+            s->setPosition(get<1>(c).x*32*escala,get<1>(c).y*32*escala);
+            window->draw(*s);
+        }else{
+            Text* t=(Text*)get<0>(c).obj;
+            t->setPosition(get<1>(c).x*32*escala,get<1>(c).y*32*escala);
+            window->draw(*t);
+        }
+        //seguro que se puede simplificar con cast y esas boludeces
+
         //cout<<c->cuadrado.getPosition().x/32/escala<<" "<<c->cuadrado.getPosition().y/32/escala<<endl;
     }
 }
@@ -33,6 +46,7 @@ bool Clicker::update(){
         for(acm* a:acciones){
             a->func();
         }
+        act->inicial=false;
         return true;
     }
     return false;

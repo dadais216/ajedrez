@@ -11,7 +11,7 @@ struct Clicker
 {
     Clicker(bool);
     list<acm*> acciones;
-    list<pair<RectangleShape*,v>> colores;
+    list<pair<drawable,v>> colores;
     v clickPos;
     void draw();
     bool update();
