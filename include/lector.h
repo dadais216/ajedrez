@@ -1,9 +1,11 @@
 #ifndef LECTOR_H
 #define LECTOR_H
 #include <fstream>
-#include <global.h>
+#include<vector>
+#include<list>
+#include<map>
 using namespace std;
-struct Pieza;
+struct Holder;
 
 
 struct lector
@@ -19,12 +21,12 @@ struct lector
     Holder* crearPieza(int);
     enum token{def,llaveizq,llaveder,coma,lineJoin,
     W,A,S,D,N,posRemember,posRestore,numSet,numAdd,numSeti,numAddi,
-    mov,capt,
-    vacio,pieza,enemigo,esp,outbounds,prob,numCmp,numDst,numCmpi,numDsti,numLess,numLessi,
+    mov,capt,spwn,pausa,
+    vacio,pieza,enemigo,esp,outbounds,prob,numCmp,numDst,numCmpi,numDsti,numLess,numLessi,inicial,
     desliz,opt,bloque,
     nc,t,exc,
     click,contr,
-    color,pausa,
+    color,sprt,numShow,
     eol,sep,lim,last};
     bool hayAtras,doEsp;
     int i,j;

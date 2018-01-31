@@ -56,7 +56,7 @@ void resetearValores(){
 
 Holder::Holder(int _bando,Pieza* p){
     bando=_bando;
-    inicial=false;
+    inicial=true;
     pieza=p;
 }
 

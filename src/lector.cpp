@@ -1,5 +1,6 @@
 #include "lector.h"
 #include <Pieza.h>
+#include <global.h>
 
 list<int> tokens;
 
@@ -8,8 +9,9 @@ lector::lector(){
     #define rel(T) tabla[#T]=T
     rel(def);
     rel(color);
+    rel(sprt);
+    rel(numShow);
     rel(lim);
-    rel(pausa);
 
 
     rel(posRestore);
@@ -22,6 +24,8 @@ lector::lector(){
 
     rel(mov);
     rel(capt);
+    rel(pausa);
+    rel(spwn);
 
     rel(esp);
     rel(vacio);
@@ -35,6 +39,7 @@ lector::lector(){
     rel(numDsti);
     rel(numLess);
     rel(numLessi);
+    rel(inicial);
 
     rel(desliz);
     rel(opt);

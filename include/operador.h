@@ -19,6 +19,19 @@ struct color:public acm{
     virtual void func();
     virtual void debug();
 };
+struct sprt:public acm{
+    sprt();
+    Sprite _sprt;
+    virtual void func();
+    virtual void debug();
+};
+struct numShow:public acm{
+    numShow();
+    Text txt;
+    int index;
+    virtual void func();
+    virtual void debug();
+};
 
 struct operador{
     virtual bool operar()=0;
