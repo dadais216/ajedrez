@@ -14,6 +14,7 @@
 #include <assert.h>
 #include <vec.h>
 #include <string>
+#include <sstream>
 #include <windows.h>
 
 using namespace std;
@@ -40,11 +41,21 @@ extern Holder* act;
 extern v pos;
 extern v org;
 
+#include <lector.h>
+extern lector lect;
+
 struct acm;
-struct color;
+
+struct drawable{
+    drawable(int t,void* o)
+    {tipo=t;obj=o;}
+    int tipo;
+    void* obj;
+};
+
 extern list<int> tokens;
 extern list<acm*> buffer;
-extern list<pair<RectangleShape*,v>> bufferColores;
+extern list<pair<drawable,v>> bufferColores;
 extern list<v> limites;
 extern list<Clicker*> clickers;
 extern bool cambios;

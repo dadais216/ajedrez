@@ -8,15 +8,12 @@ bool bOutbounds=false;
 bool separator;
 bool cambios;
 
-struct color;
-list<pair<RectangleShape*,v>> colores;
-list<pair<RectangleShape*,v>> bufferColores;
+list<pair<drawable,v>> colores;
+list<pair<drawable,v>> bufferColores;
 list<acm*> buffer;
 v pos;
 v org;
 Holder* act;//para chequeos
-
-#define M(algo) (cout<<"|"<<algo<<"|",algo)
 
 color::color()
 :cuadrado(Vector2f(32*escala,32*escala)),_color(){
@@ -28,10 +25,41 @@ color::color()
     cuadrado.setFillColor(_color);
 }
 void color::func(){
-    colores.push_back(pair<RectangleShape*,v>(&cuadrado,pos));
+    colores.push_back(pair<drawable,v>(drawable(0,&cuadrado),pos));
 }
 void color::debug(){
     cout<<"color ";
+}
+
+sprt::sprt(){
+    int sn=tokens.front()-1000;tokens.pop_front();
+    _sprt.setTexture(imagen->get("sprites.png"));
+    _sprt.setTextureRect(IntRect(64+sn*64,0,32,32));
+    _sprt.setScale(escala,escala);
+    _sprt.setColor(Color(255,255,255,120));
+    tipo=colort;
+}
+void sprt::func(){
+    colores.push_back(pair<drawable,v>(drawable(1,&_sprt),pos));
+}
+void sprt::debug(){
+    cout<<"sprt ";
+}
+
+numShow::numShow(){
+    txt.setFont(j->font);
+    index=tokens.front()-1000;tokens.pop_front();
+    txt.setFillColor(Color::Black);
+    tipo=colort;
+}
+void numShow::func(){
+    std::ostringstream stm;
+    stm<<numeros[index];
+    txt.setString(stm.str());
+    colores.push_back(pair<drawable,v>(drawable(2,&txt),pos));
+}
+void numShow::debug(){
+    cout<<"numShow "<<index<<" ";
 }
 
 array<int,20> numeros;
@@ -93,7 +121,7 @@ struct NOMB:public acm{ \
         FUNC \
     } \
     virtual void debug(){ \
-        cout<<"NOMB "<<index<<" "<<val<<" "<<numeros[index]<<" "; \
+        cout<<#NOMB<<" "<<index<<" "<<val<<" "; \
     } \
 }
 
@@ -108,6 +136,23 @@ numFab(numAddi,movt,numeros[index]+=numeros[val];);
 numFab(numCmpi,condt,cond=numeros[index]==numeros[val];);
 numFab(numDsti,condt,cond=numeros[index]!=numeros[val];);
 numFab(numLessi,condt,cond=numeros[index]<numeros[val];);
+
+
+struct spwn:public acm{
+    int n;
+    spwn(){
+        tipo=acct;
+        n=tokens.front()-1000; tokens.pop_front();
+        //cuando anden los negativos se pueden invocar píezas del bando opuesto
+    }
+    virtual void func(){
+        (*tabl)(pos.show(),lect.crearPieza(n*act->bando));
+        cout<<"spwn "<<n<<" ";
+    }
+    virtual void debug(){
+        cout<<"spwn "<<n<<" ";
+    }
+};
 
 #define fabMov(NOMB,TIPO,FUNC)\
 struct NOMB:public acm{\
@@ -169,6 +214,9 @@ fabMov(outbounds,condt,
         cond=bOutbounds;
         bOutbounds=false;
 );
+fabMov(inicial,condt,
+        cond=act->inicial;
+);
 
 fabMov(W,movt,
        pos.y+=act->bando;
@@ -195,6 +243,8 @@ normal::normal(){
         caseT(A);
         caseT(S);
         caseT(D);
+        caseT(posRemember);
+        caseT(posRestore);
         caseT(numSet);
         caseT(numAdd);
         caseT(numSeti);
@@ -213,19 +263,18 @@ normal::normal(){
         caseT(numDsti);
         caseT(numLess);
         caseT(numLessi);
+        caseT(inicial);
 
         caseT(mov);
         caseT(capt);
-
         caseT(pausa);
-        caseT(posRemember);
-        caseT(posRestore);
+        caseT(spwn);
 
-        //movs con parametros
-        case lector::color:
-            cout<<"color"<<endl;
-            acms.push_back(new color());
-            break;
+
+        caseT(color);
+        caseT(sprt);
+        caseT(numShow);
+
         case lector::sep:
             cout<<"sep"<<endl;
             separator=true;
@@ -350,7 +399,7 @@ bool operarAislado(operador* op){
     //debería guardar org tambien?
     v posRes=pos;
     list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
-    list<pair<RectangleShape*,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
+    list<pair<drawable,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
     Holder* pRes=act;
 
     bool ret=op->operar();
@@ -502,6 +551,7 @@ contr::contr(){
 }
 void contr::debug(){
     cout<<"control ";
+    sig->debug();
 }
 bool contr::operar(){
     v orgRes=org;

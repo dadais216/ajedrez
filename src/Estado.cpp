@@ -51,9 +51,9 @@ void Selector::update(){
         j->change(new Proper(Boton::i));
 }
 
+lector lect;
 Proper::Proper(int id)
 :tablero(){
-    lector lect;
     lect.leer(id);
     lect.mostrar();
 
