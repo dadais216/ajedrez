@@ -195,6 +195,7 @@ fabMov(enemigo,condt,
 list<v> limites,limitesAux;
 fabMov(esp,condt,
         if(pos.x>=0&&pos.x<tabl->tam.x&&pos.y>=0&&pos.y<tabl->tam.y){
+            bOutbounds=false;
             cond=true;
             for(v vec:limites){ //si realentiza mover a otra cond
                 if(pos==vec){
@@ -212,7 +213,6 @@ fabMov(prob,condt,
 );
 fabMov(outbounds,condt,
         cond=bOutbounds;
-        bOutbounds=false;
 );
 fabMov(inicial,condt,
         cond=act->inicial;
@@ -229,6 +229,9 @@ fabMov(A,movt,
 );
 fabMov(D,movt,
         pos.x++;
+);
+fabMov(ori,movt,
+        pos=org;
 );
 
 normal::normal(){
@@ -249,6 +252,7 @@ normal::normal(){
         caseT(numAdd);
         caseT(numSeti);
         caseT(numAddi);
+        caseT(ori);
 
 
         caseT(esp);
@@ -421,7 +425,9 @@ bloque::bloque(){
 
 bool bloque::operar(){
     list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
+    cout<<"BLOQUE ";
     operarAislado(inside);
+    cout<<"\BLOQUE ";
     limites.erase(++limitRes,limites.end());
     return then();
 }
@@ -430,7 +436,7 @@ void bloque::debug(){
     cout<<"<< ";
     inside->debug();
     cout<<">> ";
-    sig->debug();
+    if(sig) sig->debug();
 }
 
 joiner::joiner(){sig=nullptr;};

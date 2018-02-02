@@ -50,6 +50,7 @@ void resetearValores(){
         numeros.fill(0);
         memcambios=false;
     }
+    bOutbounds=false;
     pos=org;
     limites.clear();
 }
