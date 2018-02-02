@@ -58,6 +58,7 @@ extern list<acm*> buffer;
 extern list<pair<drawable,v>> bufferColores;
 extern list<v> limites;
 extern list<Clicker*> clickers;
+extern bool bOutbounds;
 extern bool cambios;
 
 extern bool memcambios;
