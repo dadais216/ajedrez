@@ -20,6 +20,7 @@ lector::lector(){
     rel(numAdd);
     rel(numSeti);
     rel(numAddi);
+    rel(ori);
 
 
     rel(mov);
@@ -237,6 +238,7 @@ Holder* lector::crearPieza(int n){
         if(*it==N&&*jt==esp||*it==lineJoin&&*jt==eol){
             tokens.erase(jt);
             it=tokens.erase(it);
+            ----it;
             continue;
         }
         if(*it==sep&&*jt==lim)

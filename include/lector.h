@@ -20,7 +20,7 @@ struct lector
 
     Holder* crearPieza(int);
     enum token{def,llaveizq,llaveder,coma,lineJoin,
-    W,A,S,D,N,posRemember,posRestore,numSet,numAdd,numSeti,numAddi,
+    W,A,S,D,N,posRemember,posRestore,numSet,numAdd,numSeti,numAddi,ori,
     mov,capt,spwn,pausa,
     vacio,pieza,enemigo,esp,outbounds,prob,numCmp,numDst,numCmpi,numDsti,numLess,numLessi,inicial,
     desliz,opt,bloque,

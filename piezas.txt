@@ -15,6 +15,7 @@ def moveru mov color 20 200 115 pausa
 def spawn color 255 170 100 vacio spwn
 def spawnnc vacio spwn
 def spawnu color 255 170 100 spwn
+def castillo prob color 0 0 0
 
 def circ[ numSet 1 0 desliz numDsti 1 0
 def ]circ << esp mover numShow 0 >> numAdd 1 1 end
@@ -35,6 +36,7 @@ desliz s mover w spawnu 1 s end
 #desliz opt ddw moverc or wwd mover end end
 #desliz {{ww,ss}{a,d},{aa,dd}{w,s}} then desliz {{ww,ss}{a,d},{aa,dd}{w,s}} mover end
 numSet 0 0 desliz opt wwa or aaw or aas or ssa or ssd or dds or ddw or wwd end moverng prob numAdd 0 1 numShow 0 end
+
 
 :3 3 #alfil
 #desliz w mover posRemember desliz {wa,wd} mover end posRestore end #pone mal los clickers, ni idea
@@ -62,6 +64,66 @@ desliz d movernc opt w moverb or s moverc end prob end
 :5 5 #rey
 {w,wa,a,as,s,sd,d,dw} mover
 wa spawnnc 1 ss spawnnc 1 dd spawnnc 1 ww spawnnc 1 as color 0 0 0 
+#desliz nc a end desliz nc s end d desliz nc esp castillo wn end sa desliz nc esp castillo dn end wa desliz nc esp castillo sn end wa desliz nc esp castillo an end ori desliz {w,wa,a,as,s,sd,d,dw} mover end 
+
+#desliz t nc a end desliz t nc s end dw desliz nc castillo w end sn desliz nc castillo d end an desliz nc castillo s end wn desliz nc castillo a end castillo ori opt \
+#desliz {w,wa,a,as,s,sd,d,dw} mover end or \
+#end
+
+#numSet 0 0 \
+#desliz wa mover prob end outbounds \
+#desliz \
+#opt \
+#numCmp 0 0 desliz {wa,wd,sa,sd} mover prob end or \
+#end opt exc outbounds or numSet 0 1 end end
+
+#numSet 0 0 \
+#desliz wd mover prob end outbounds \
+#desliz \
+#opt \
+#numCmp 0 0 desliz {wa,wd,sa,sd} mover prob end or \
+#end opt exc outbounds or numSet 0 1 end end
+
+#numSet 0 0 \
+#desliz as mover prob end outbounds \
+#desliz \
+#opt \
+#numCmp 0 0 desliz {wa,wd,sa,sd} mover prob end or \
+#end opt exc outbounds or numSet 0 1 end end
+
+#numSet 0 0 \
+#desliz sd mover prob end outbounds \
+#desliz \
+#opt \
+#numCmp 0 0 desliz {wa,wd,sa,sd} mover prob end or \
+#end opt exc outbounds or numSet 0 1 end end
+
+
+
+
+#opt \
+#numSet 0 0 desliz {wa,wd,as,sd} mover end outbounds or \
+#end prob \
+#<< \
+#desliz \
+#opt \
+#numCmp 0 0 desliz {wa,wd,sa,sd} mover prob end or \
+#end opt exc outbounds or numSet 0 1 end end \
+#>>
+#la construccion se kakeo con el bloque, nomas lo mete bien en una rama
+
+#numSet 0 0 \
+#desliz wa mover prob end outbounds \
+#desliz \
+#opt \
+#numCmp 0 0 desliz {wa,wd,sa,sd} mover prob end or \
+#end opt exc outbounds or numSet 0 1 end end
+
+
+
+#if
+#numSet 0 0 aa color 50 50 50 opt exc vacio or numSet 0 1 end ori opt exc numCmp 0 0 \
+#desliz w mover end or desliz s mover end end
 
 
 #desliz {{ww,ss}{a,d},{aa,dd}{w,s}}{w,wa,a,as,s,sd,d,dw} mover then pass
