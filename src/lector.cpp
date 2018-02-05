@@ -27,6 +27,8 @@ lector::lector(){
     rel(capt);
     rel(pausa);
     rel(spwn);
+    rel(capt);
+    rel(del);
 
     rel(esp);
     rel(vacio);

@@ -64,4 +64,6 @@ void tablero::drawPieces(){
             }
         }
     }
+    for(int i=0;i<capturados.size();i++)
+        capturados[i]->draw(i);
 }

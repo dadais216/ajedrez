@@ -71,4 +71,14 @@ void Holder::draw(v vec){
     }
 }
 
-
+void Holder::draw(int n){ //pos en capturados
+    Sprite* sp;
+    if(bando==1)
+        sp=&pieza->spriten;
+    else
+        sp=&pieza->spriteb;
+    sp->setScale(1,1);
+    sp->setPosition(515+(16*n)%112,20+(n/7)*10);
+    window->draw(*sp);
+    sp->setScale(escala,escala);
+}
