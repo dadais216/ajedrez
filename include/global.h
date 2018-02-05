@@ -63,6 +63,7 @@ extern bool cambios;
 
 extern bool memcambios;
 extern array<int,20> numeros;
+extern vector<Holder*> capturados;
 
 void resetearValores();
 void drawScreen();

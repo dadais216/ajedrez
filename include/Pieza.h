@@ -26,6 +26,7 @@ struct Holder{
     bool inicial;
     Holder* next;
     void draw(v);
+    void draw(int);
 };
 
 
