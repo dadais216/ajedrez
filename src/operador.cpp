@@ -174,14 +174,20 @@ fabMov(mov,acct,
        (*tabl)(pos.show(),act);
        org=pos;
 );
-fabMov(capt,acct,
-        delete (*tabl)(pos);//en realidad mover a capturados
-        (*tabl)(pos,nullptr);
-);
 fabMov(pausa,acct,
         drawScreen();
         Sleep(60);
 );
+vector<Holder*> capturados;
+fabMov(capt,acct,
+        capturados.push_back((*tabl)(pos));
+        (*tabl)(pos,nullptr);
+);
+fabMov(del,acct,
+        delete (*tabl)(pos);
+        (*tabl)(pos,nullptr);
+);
+
 
 fabMov(vacio,condt,
         cond=(*tabl)(pos)==nullptr;
@@ -190,7 +196,10 @@ fabMov(pieza,condt,
        cond=(*tabl)(pos);
 );
 fabMov(enemigo,condt,
-        cond=(*tabl)(pos)->bando==act->bando*-1;
+        if((*tabl)(pos))
+            cond=(*tabl)(pos)->bando==act->bando*-1;
+        else
+            cond=false;
 );
 list<v> limites,limitesAux;
 fabMov(esp,condt,
@@ -273,6 +282,7 @@ normal::normal(){
         caseT(capt);
         caseT(pausa);
         caseT(spwn);
+        caseT(del);
 
 
         caseT(color);
