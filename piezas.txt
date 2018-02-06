@@ -17,22 +17,13 @@ def spawnnc vacio spwn
 def spawnu color 255 170 100 spwn
 def castillo prob color 0 0 0
 
-def circ[ numSet 1 0 desliz numDsti 1 0
-def ]circ << esp mover numShow 0 >> numAdd 1 1 end
+
 
 :1 1 #torre
-#numSet 0 2 sdn desliz nc numLess 0 20 circ[ wn ]circ circ[ an ]circ circ[ sn ]circ circ[ dn ]circ sdsdn numAdd 0 4 end
-{w,a,s,d} mover
-desliz {w,a,s,d} estandar end
-
-
+#{w,a,s,d} mover
+desliz {w,a,s,d} mover end
 
 :2 2 #caballo
-#desliz opt wwa moverc or aaw mover end end
-#desliz opt ssd moverc or dds mover end end
-#desliz opt aas moverc or ssa mover end end
-#desliz opt ddw moverc or wwd mover end end
-#desliz {{ww,ss}{a,d},{aa,dd}{w,s}} then desliz {{ww,ss}{a,d},{aa,dd}{w,s}} mover end
 numSet 0 0 desliz opt wwa or aaw or aas or ssa or ssd or dds or ddw or wwd end moverng prob numAdd 0 1 numShow 0 end
 
 
@@ -127,4 +118,8 @@ desliz {w,a,s,d} spawn 6 end
 
 
 #desliz {{ww,ss}{a,d},{aa,dd}{w,s}}{w,wa,a,as,s,sd,d,dw} mover then pass
+
+#def circ[ numSet 1 0 desliz numDsti 1 0
+#def ]circ << esp mover numShow 0 >> numAdd 1 1 end
+#numSet 0 2 sdn desliz nc numLess 0 20 circ[ wn ]circ circ[ an ]circ circ[ sn ]circ circ[ dn ]circ sdsdn numAdd 0 4 end
 
