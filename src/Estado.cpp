@@ -77,6 +77,9 @@ Proper::Proper(int id)
         }
     }
     //construir piezas adicionales
+
+
+    clickI=dt=0;
 }
 
 void Proper::draw(){
@@ -91,26 +94,35 @@ void Proper::draw(){
 
 void Proper::update(){
     //turno jugador
+    dt++;
+    if(!clickers.empty()){
+        if(dt>20){
+            dt=0;
+            clickI++;
+            for(Clicker* cli:clickers)
+                cli->activacion(clickI);
+        }
+        drawScreen();
+        if(input->click()){
+            for(Clicker* cli:clickers)
+                if(cli->update())
+                    break;
+            clickers.clear();
+            drawScreen();
+            return;
+        }
+    }
+
+
     if(input->click()){
         if(input->isInRange(v(576,0),v(640,64))){
             j->change(new Selector());
             return;
         }
         if(input->inGameRange(tablero.tam)){
-            if(!clickers.empty()){
-                for(Clicker* cli:clickers){
-                    if(cli->update()){
-                        clickers.clear();
-                        drawScreen();
-                        return;
-                    }
-                }
-                clickers.clear();
-            }
             act=tablero(input->get().show());
             if(act&&act->bando==-1)
                 act->pieza->calcularMovimientos(input->get());
-            drawScreen();
         }
     }
 }

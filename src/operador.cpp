@@ -526,6 +526,7 @@ void click::debug(){
 }
 bool click::operar(){
     crearClicker();
+    cambios=false;
     return then();
 }
 
@@ -621,6 +622,6 @@ bool operador::then(){
 }
 
 void crearClicker(){
-    clickers.push_back(new Clicker(true));
+    new Clicker(true);
 }
 
