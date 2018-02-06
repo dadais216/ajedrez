@@ -17,9 +17,25 @@ Clicker::Clicker(bool copiarBuffer){
     drawClickers=true; //cuando me ponga a  limpiar memoria tendría que borrar el buffer en lugar de
     clickPos=pos;
     cout<<"y: "<<acciones.size()<<" "<<colores.size()<<endl;
+
+    val=0;
+    mod=1;
+
+    list<Clicker*> conflictos;
+    for(Clicker* c:clickers)
+        if(c->clickPos==pos)
+            conflictos.push_back(c);
+    if(!conflictos.empty()){
+        for(Clicker* c:conflictos)
+            c->mod++;
+        val=conflictos.size();
+        mod=conflictos.size()+1;
+    }
+    clickers.push_back(this);
 }
 
 void Clicker::draw(){
+    if(!activo) return;
     for(pair<drawable,v> c:colores){
         if(get<0>(c).tipo==0){
             RectangleShape* rs=(RectangleShape*)get<0>(c).obj;
@@ -41,7 +57,7 @@ void Clicker::draw(){
 }
 
 bool Clicker::update(){
-    if(input->get()==clickPos){
+    if(activo&&input->get()==clickPos){
         drawClickers=false;
         for(acm* a:acciones){
             a->func();
@@ -50,6 +66,10 @@ bool Clicker::update(){
         return true;
     }
     return false;
+}
+
+void Clicker::activacion(int clickI){
+    activo=val==clickI%mod;
 }
 
 

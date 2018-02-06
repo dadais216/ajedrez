@@ -16,6 +16,10 @@ struct Clicker
     void draw();
     bool update();
     static bool drawClickers;
+    bool activo;
+    void activacion(int);
+
+    int val,mod;
 };
 
 #endif // CLICKER_H

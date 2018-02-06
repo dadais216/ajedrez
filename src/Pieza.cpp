@@ -35,7 +35,7 @@ void Pieza::calcularMovimientos(v posAct){
     pos=org=posAct;
     for(operador* op:movs){
         if(op->operar()&&cambios){
-            clickers.push_back(new Clicker(false));
+            new Clicker(false);
         }else{
             buffer.clear();
             bufferColores.clear();

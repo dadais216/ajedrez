@@ -13,11 +13,9 @@ struct Estado;
 
 struct Juego{
     Estado* actual;
-    Time time;
     Clock clock;
     Font font;
     Manager<Texture> _imagen;
-    float t;
     RenderWindow _window;
     Input _input;
     Event event;

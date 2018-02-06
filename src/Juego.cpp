@@ -12,7 +12,6 @@ Juego::Juego()
 ,_input(&_window)
 {
     _imagen.adddir("sprites\\");
-    time=seconds(0);
     _input.check();
     font.loadFromFile("sprites\\VL-PGothic-Regular.ttf");
 
@@ -24,17 +23,22 @@ Juego::Juego()
     drawScreen();
 }
 void Juego::gameloop(){
+    clock.restart();
+    float dt=0;
     while(true){
-        //time=clock.getElapsedTime();
-        //t=time.asSeconds();
-        _input.check();
-        actual->update();
-        while (_window.pollEvent(event)){
-            if (event.type == Event::Closed){
-                _window.close();
-                return;
+        dt+=clock.restart().asSeconds();
+        while(dt>1./30.){ //30 FPS masterrace
+            dt-=1./30.;
+            _input.check();
+            actual->update();
+            while (_window.pollEvent(event)){
+                if (event.type == Event::Closed){
+                    _window.close();
+                    return;
+                }
             }
         }
+
     }
 }
 

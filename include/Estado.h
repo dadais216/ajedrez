@@ -38,6 +38,7 @@ struct Proper:public Estado{
     virtual void draw();
     bool inRange(v a); //uso esto?
     tablero tablero;
+    int dt,clickI;
 };
 
 #endif // ESTADO_H
