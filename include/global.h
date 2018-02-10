@@ -68,4 +68,6 @@ extern vector<Holder*> capturados;
 void resetearValores();
 void drawScreen();
 
+extern bool confirm;
+
 #endif

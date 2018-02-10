@@ -27,8 +27,8 @@ void Juego::gameloop(){
     float dt=0;
     while(true){
         dt+=clock.restart().asSeconds();
-        while(dt>1./30.){ //30 FPS masterrace
-            dt-=1./30.;
+        while(dt>1./60.){
+            dt-=1./60.;
             _input.check();
             actual->update();
             while (_window.pollEvent(event)){
