@@ -63,7 +63,7 @@ struct opt:public operador{
     opt();
     virtual bool operar();
     virtual void debug();
-    bool exc;
+    bool exc,nc;
     list<operador*> ops;
 };
 
@@ -107,7 +107,7 @@ struct multi:public operador{
 
 operador* keepOn();
 operador* tomar();
-bool operarAislado();
+bool operarAislado(operador*,bool);
 void crearClicker();
 
 #endif // OPERADOR_H

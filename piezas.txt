@@ -17,15 +17,15 @@ def spawnnc vacio spwn
 def spawnu color 255 170 100 spwn
 def castillo prob color 0 0 0
 
-
-
 :1 1 #torre
 #{w,a,s,d} mover
-desliz {w,a,s,d} mover end
+desliz d opt w mover or s mover end end
+a mover
 
 :2 2 #caballo
-numSet 0 0 desliz opt wwa or aaw or aas or ssa or ssd or dds or ddw or wwd end moverng prob numAdd 0 1 numShow 0 end
-
+numSet 0 0 desliz opt wwa or aaw or aas or ssa or ssd or dds or ddw or wwd end mover prob numAdd 0 1 numShow 0 end
+#desliz nc opt nc dw mover click s or ds mover click w end end 
+#a mover
 
 :3 3 #alfil
 #desliz w mover posRemember desliz {wa,wd} mover end posRestore end #pone mal los clickers, ni idea
@@ -109,8 +109,10 @@ wa spawnnc 1 ss spawnnc 1 dd spawnnc 1 ww spawnnc 1 as color 0 0 0
 #opt \
 #desliz {w,a,s,d} spawn 6 end or \
 #end
-desliz {w,a,s,d} spawn 6 end
-
+#desliz {w,a,s,d} spawn 6 end
+numSet 0 0 desliz opt \
+{w,d,s,a} or \
+end mover prob numAdd 0 1 numShow 0 end
 
 #if
 #numSet 0 0 aa color 50 50 50 opt exc vacio or numSet 0 1 end ori opt exc numCmp 0 0 \
