@@ -8,7 +8,6 @@ bool bOutbounds=false;
 bool separator;
 bool cambios;
 
-list<pair<drawable,v>> colores;
 list<pair<drawable,v>> bufferColores;
 list<acm*> buffer;
 v pos;
@@ -25,7 +24,7 @@ color::color()
     cuadrado.setFillColor(_color);
 }
 void color::func(){
-    colores.push_back(pair<drawable,v>(drawable(0,&cuadrado),pos));
+    bufferColores.push_back(pair<drawable,v>(drawable(0,&cuadrado),pos));
 }
 void color::debug(){
     cout<<"color ";
@@ -40,7 +39,7 @@ sprt::sprt(){
     tipo=colort;
 }
 void sprt::func(){
-    colores.push_back(pair<drawable,v>(drawable(1,&_sprt),pos));
+    bufferColores.push_back(pair<drawable,v>(drawable(1,&_sprt),pos));
 }
 void sprt::debug(){
     cout<<"sprt ";
@@ -56,7 +55,7 @@ void numShow::func(){
     std::ostringstream stm;
     stm<<numeros[index];
     txt.setString(stm.str());
-    colores.push_back(pair<drawable,v>(drawable(2,&txt),pos));
+    bufferColores.push_back(pair<drawable,v>(drawable(2,&txt),pos));
 }
 void numShow::debug(){
     cout<<"numShow "<<index<<" ";
@@ -201,7 +200,7 @@ fabMov(enemigo,condt,
         else
             cond=false;
 );
-list<v> limites,limitesAux;
+list<v> limites;
 fabMov(esp,condt,
         if(pos.x>=0&&pos.x<tabl->tam.x&&pos.y>=0&&pos.y<tabl->tam.y){
             bOutbounds=false;
@@ -218,7 +217,7 @@ fabMov(esp,condt,
         }
 );
 fabMov(prob,condt,
-        limitesAux.emplace_back(pos);
+        limites.emplace_back(pos);
 );
 fabMov(outbounds,condt,
         cond=bOutbounds;
@@ -308,30 +307,36 @@ normal::normal(){
 }
 
 bool normal::operar(){
+    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
+    list<pair<drawable,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
+    list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
     cond=true;
     for(acm* a:acms){
         if(a->tipo==condt){
             if((a->func(),cond==false)){
                 cout<<" F ";
-                colores.clear();
-                limitesAux.clear();
+                buffer.erase(++bufferRes,buffer.end());
+                bufferColores.erase(++bColorRes,bufferColores.end());
+                limites.erase(++limitRes,limites.end());
                 return false;
             }
-        }else if(a->tipo==movt)
-            a->func();
-        else if(a->tipo==colort)
-            a->func();
+        }else{
+            if(a->tipo==movt||a->tipo==colort)
+                a->func();
+            if(a->tipo==movt||a->tipo==acct)
+                buffer.push_back(a);
+        }
     }
     cout<<" V ";
-    bufferColores.splice(bufferColores.begin(),colores);
-    limites.splice(limites.begin(),limitesAux);
-
     cambios=true;
-    for(acm* a:acms){
-        if(a->tipo==acct||a->tipo==movt)
-            buffer.push_back(a);
-    }
-    return then();
+    if(then())
+        return true;
+    //esto esta para manejar el caso de desliz normal opt, si realentiza sacarlo y prohibir ese caso
+    buffer.erase(++bufferRes,buffer.end());
+    bufferColores.erase(++bColorRes,bufferColores.end());
+    //no se limpian limites de normales terminados, aun cuando su seguida de falso.
+    //si algun movimiento raro lo necesita meter un booleano
+    return false;
 }
 
 void normal::debug(){
@@ -409,7 +414,7 @@ bool desliz::operar(){
     return ret;
 }
 
-bool operarAislado(operador* op){
+bool operarAislado(operador* op,bool nc=false){
     //debería guardar org tambien?
     v posRes=pos;
     list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
@@ -418,7 +423,7 @@ bool operarAislado(operador* op){
 
     bool ret=op->operar();
 
-    if(ret)
+    if(ret&&!nc)
         crearClicker();
 
     pos=posRes;
@@ -453,10 +458,11 @@ joiner::joiner(){sig=nullptr;};
 bool joiner::operar(){return then();}
 void joiner::debug(){cout<<"joiner ";}
 opt::opt(){
-    exc=false;
+    nc=exc=false;
     while(true){
         switch(tokens.front()){
         paramCase(exc);
+        paramCase(nc);
         default: goto next;
         }
     }
@@ -494,7 +500,7 @@ bool opt::operar(){
 
     cout<<"OPT ";
     for(operador* op:ops){
-        ret=operarAislado(op)||ret;
+        ret=operarAislado(op,nc)||ret;
         if(exc&&ret)
             return true;
         cout<<"OR ";
@@ -526,7 +532,6 @@ void click::debug(){
 }
 bool click::operar(){
     crearClicker();
-    cambios=false;
     return then();
 }
 
@@ -622,6 +627,7 @@ bool operador::then(){
 }
 
 void crearClicker(){
-    new Clicker(true);
+    if(cambios) new Clicker(true);
+    cambios=false;
 }
 

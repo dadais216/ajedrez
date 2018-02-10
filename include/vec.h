@@ -21,6 +21,9 @@ struct v{
     friend bool operator==(v a,v b){
         return a.x==b.x&&a.y==b.y;
     }
+    friend bool operator!=(v a,v b){
+        return a.x!=b.x||a.y!=b.y;
+    }
     v operator=(v vec){
         x=vec.x;
         y=vec.y;

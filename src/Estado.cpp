@@ -92,6 +92,7 @@ void Proper::draw(){
     tablero.drawPieces();
 }
 
+bool confirm;
 void Proper::update(){
     //turno jugador
     dt++;
@@ -103,11 +104,13 @@ void Proper::update(){
                 cli->activacion(clickI);
         }
         drawScreen();
+        confirm=false;
         if(input->click()){
             for(Clicker* cli:clickers)
                 if(cli->update())
                     break;
-            clickers.clear();
+            if(!confirm)
+                clickers.clear();
             drawScreen();
             return;
         }

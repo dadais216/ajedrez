@@ -58,10 +58,17 @@ void Clicker::draw(){
 
 bool Clicker::update(){
     if(activo&&input->get()==clickPos){
-        drawClickers=false;
-        for(acm* a:acciones){
-            a->func();
+        if(mod>1){
+            clickers.clear();
+            clickers.push_back(this);
+            confirm=true;
+            val=0;
+            mod=1;
+            return true;
         }
+        drawClickers=false;
+        for(acm* a:acciones)
+            a->func();
         act->inicial=false;
         return true;
     }
