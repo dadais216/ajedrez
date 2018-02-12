@@ -8,6 +8,7 @@ struct Boton;
 struct Pieza;
 struct Juego;
 struct Clicker;
+struct Jugador;
 
 using namespace std;
 using namespace sf;
@@ -39,6 +40,9 @@ struct Proper:public Estado{
     bool inRange(v a); //uso esto?
     tablero tablero;
     int dt,clickI;
+    bool turno1;
+    Jugador* primero;
+    Jugador* segundo;
 };
 
 #endif // ESTADO_H
