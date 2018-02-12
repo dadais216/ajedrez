@@ -8,6 +8,7 @@
 #include <Pieza.h>
 #include <lector.h>
 #include <operador.h>
+#include <Jugador.h>
 
 Estado::Estado(){}
 
@@ -79,7 +80,9 @@ Proper::Proper(int id)
     //construir piezas adicionales
 
 
-    clickI=dt=0;
+    primero=new Humano(-1);
+    segundo=new Humano(1);
+    turno1=true;
 }
 
 void Proper::draw(){
@@ -92,42 +95,11 @@ void Proper::draw(){
     tablero.drawPieces();
 }
 
-bool confirm;
 void Proper::update(){
-    //turno jugador
-    dt++;
-    if(!clickers.empty()){
-        if(dt>20){
-            dt=0;
-            clickI++;
-            for(Clicker* cli:clickers)
-                cli->activacion(clickI);
-        }
-        drawScreen();
-        confirm=false;
-        if(input->click()){
-            for(Clicker* cli:clickers)
-                if(cli->update())
-                    break;
-            if(!confirm)
-                clickers.clear();
-            drawScreen();
-            return;
-        }
-    }
-
-
-    if(input->click()){
-        if(input->isInRange(v(576,0),v(640,64))){
-            j->change(new Selector());
-            return;
-        }
-        if(input->inGameRange(tablero.tam)){
-            act=tablero(input->get().show());
-            if(act&&act->bando==-1)
-                act->pieza->calcularMovimientos(input->get());
-        }
-    }
+    if(turno1)
+        turno1=!primero->turno(tablero);
+    else
+        turno1=segundo->turno(tablero);
 }
 
 bool Proper::inRange(v a){

@@ -61,6 +61,7 @@
 		<Unit filename="include/Estado.h" />
 		<Unit filename="include/Input.h" />
 		<Unit filename="include/Juego.h" />
+		<Unit filename="include/Jugador.h" />
 		<Unit filename="include/Manager.h" />
 		<Unit filename="include/Pieza.h" />
 		<Unit filename="include/global.h" />
@@ -74,6 +75,7 @@
 		<Unit filename="src/Estado.cpp" />
 		<Unit filename="src/Input.cpp" />
 		<Unit filename="src/Juego.cpp" />
+		<Unit filename="src/Jugador.cpp" />
 		<Unit filename="src/Pieza.cpp" />
 		<Unit filename="src/lector.cpp" />
 		<Unit filename="src/operador.cpp" />
