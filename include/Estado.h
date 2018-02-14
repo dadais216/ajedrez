@@ -3,6 +3,7 @@
 
 #include <global.h>
 #include <tablero.h>
+#include <boton.h>
 
 struct Boton;
 struct Pieza;
@@ -29,20 +30,22 @@ struct Arranque:public Estado{
 struct Selector:public Estado{
     Selector();
     vector<Boton*> botones;
+    SelJugador sel1,sel2;
     virtual void update();
     virtual void draw();
 };
 
 struct Proper:public Estado{
-    Proper(int);
+    Proper(int,int,int);
     virtual void update();
     virtual void draw();
     bool inRange(v a); //uso esto?
     tablero tablero;
     int dt,clickI;
-    bool turno1;
+    bool turno1,antTurno;
     Jugador* primero;
     Jugador* segundo;
+    Sprite turnoBlanco,turnoNegro;
 };
 
 #endif // ESTADO_H

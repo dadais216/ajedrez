@@ -6,14 +6,13 @@
 #include "Estado.h"
 #include "Pieza.h"
 
-Humano::Humano(int bando_)
-:bando(bando_){
-}
+Humano::Humano(int bando_,tablero& tablero_)
+:bando(bando_),_tablero(tablero_){}
 
 int dt=0;
 int clickI=0;
 bool confirm;
-bool Humano::turno(tablero& tablero){
+bool Humano::turno(){
     dt++;
     if(!clickers.empty()){
         if(dt>20){
@@ -36,13 +35,14 @@ bool Humano::turno(tablero& tablero){
                 return false;
             }
             clickers.clear();
-            drawScreen();
+            if(!any)
+                drawScreen();
             return any;
         }
     }
     if(input->click()){
-        if(input->inGameRange(tablero.tam)){
-            act=tablero(input->get().show());
+        if(input->inGameRange(_tablero.tam)){
+            act=_tablero(input->get().show());
             if(act&&act->bando==bando)
                 act->pieza->calcularMovimientos(input->get());
         }

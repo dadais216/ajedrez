@@ -23,37 +23,45 @@ void Arranque::update(){
         j->change(new Selector());
 }
 
-Selector::Selector(){
-    Boton::i=0;
-    Boton::tocado=false;
-
+Selector::Selector()
+:sel1(1),sel2(-1){
     fstream tableros;
     tableros.open("tableros.txt");
     string linea;
+    int j=0;
     while(getline(tableros,linea)){
         if(!linea.empty()&&linea[0]=='"'){
             int i=1;
             for(;linea[i]!='"';i++);
-            botones.push_back(new Boton(linea.substr(1,i-1)));
+            botones.push_back(new Boton(linea.substr(1,i-1),j,32+(70*j/420)*140,40+(j*70)%420,2));
+            j++;
         }
     }
-}
 
+
+}
 void Selector::draw(){
     for(Boton* b:botones)
         b->draw();
+    sel1.draw();
+    sel2.draw();
 }
-
 void Selector::update(){
-    if(input->click())
-        for(Boton* b:botones)
-            b->clicked();
-    if(Boton::tocado)
-        j->change(new Proper(Boton::i));
+    if(input->click()){
+        for(Boton* b:botones){
+            int n;
+            if(n=b->clicked()){
+                j->change(new Proper(n-1,sel1.selected,sel2.selected));
+                return;
+            }
+        }
+        sel1.clicked();
+        sel2.clicked();
+    }
 }
 
 lector lect;
-Proper::Proper(int id)
+Proper::Proper(int id,int sel1,int sel2)
 :tablero(){
     lect.leer(id);
     lect.mostrar();
@@ -79,27 +87,52 @@ Proper::Proper(int id)
     }
     //construir piezas adicionales
 
+    auto selec=[&](int sel,int bando)->Jugador*{
+        switch(sel){
+        case 0: return new Nadie;
+        case 1: return new Humano(bando,tablero);
+        //case 2: return new Aleatorio(bando);
+        //case 3: return new IA(bando);
+        }
+    };
 
-    primero=new Humano(-1);
-    segundo=new Humano(1);
+    primero=selec(sel1,-1);
+    segundo=selec(sel2,1);
     turno1=true;
+    antTurno=false;
+
+    turnoBlanco.setTexture(imagen->get("sprites.png"));
+    turnoNegro.setTexture(imagen->get("sprites.png"));
+    turnoBlanco.setTextureRect(IntRect(0,0,32,32));
+    turnoNegro.setTextureRect(IntRect(32,0,32,32));
+    turnoBlanco.setScale(12,16);
+    turnoNegro.setScale(12,16);
+    turnoBlanco.setPosition(510,0);
+    turnoNegro.setPosition(510,0);
+
 }
 
 void Proper::draw(){
     tablero.drawTiles();
-    if(Clicker::drawClickers){
-        for(Clicker* cli:clickers){
+    if(Clicker::drawClickers)
+        for(Clicker* cli:clickers)
             cli->draw();
-        }
-    }
     tablero.drawPieces();
+    if(turno1)
+        window->draw(turnoBlanco);
+    else
+        window->draw(turnoNegro);
 }
 
 void Proper::update(){
+    if(antTurno!=turno1){
+        drawScreen();
+        antTurno=turno1;
+    }
     if(turno1)
-        turno1=!primero->turno(tablero);
+        turno1=!primero->turno();
     else
-        turno1=segundo->turno(tablero);
+        turno1=segundo->turno();
 }
 
 bool Proper::inRange(v a){
