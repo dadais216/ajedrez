@@ -49,7 +49,7 @@ void Juego::change(Estado* est){
 }
 
 void Juego::draw(){
-    _window.clear();
+    _window.clear(Color(209,177,158));
     actual->draw();
     _window.display();
 }
