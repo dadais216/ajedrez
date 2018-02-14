@@ -5,13 +5,18 @@ struct tablero;
 
 struct Jugador{
     Jugador(){};
-    virtual bool turno(tablero&)=0;
+    virtual bool turno()=0;
+};
+
+struct Nadie:public Jugador{
+    virtual bool turno(){return true;}
 };
 
 struct Humano:public Jugador{
     int bando;
-    Humano(int);
-    virtual bool turno(tablero&);
+    tablero& _tablero;
+    Humano(int,tablero&);
+    virtual bool turno();
 };
 
 #endif // JUGADOR_H
