@@ -89,10 +89,10 @@ Proper::Proper(int id,int sel1,int sel2)
 
     auto selec=[&](int sel,int bando)->Jugador*{
         switch(sel){
-        case 0: return new Nadie;
+        case 0: return new Nadie(bando,tablero);
         case 1: return new Humano(bando,tablero);
-        //case 2: return new Aleatorio(bando);
-        //case 3: return new IA(bando);
+        case 2: return new Aleatorio(bando,tablero);
+        //case 3: return new IA(bando,tablero);
         }
     };
 

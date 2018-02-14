@@ -18,8 +18,10 @@ struct Clicker
     static bool drawClickers;
     bool activo;
     void activacion(int);
-
+    void accionar();
     int val,mod;
+    Holder* pieza;
+    v bOrg;
 };
 
 #endif // CLICKER_H
