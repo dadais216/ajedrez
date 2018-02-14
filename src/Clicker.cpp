@@ -32,6 +32,12 @@ Clicker::Clicker(bool copiarBuffer){
         mod=conflictos.size()+1;
     }
     clickers.push_back(this);
+
+    pieza=act;
+    bOrg=org;
+
+    cout<<"cons"<<pieza<<" "<<act<<endl;
+    org.show();
 }
 
 void Clicker::draw(){
@@ -67,12 +73,20 @@ bool Clicker::update(){
             return true;
         }
         drawClickers=false;
-        for(acm* a:acciones)
-            a->func();
-        act->inicial=false;
+        accionar();
         return true;
     }
     return false;
+}
+
+void Clicker::accionar(){
+    act=pieza;
+    pos=org=bOrg;
+    cout<<"acc:"<<pieza<<" "<<act<<endl;
+    org.show();
+    for(acm* a:acciones)
+        a->func();
+    act->inicial=false;
 }
 
 void Clicker::activacion(int clickI){
