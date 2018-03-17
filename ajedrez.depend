@@ -530,11 +530,11 @@
 	"Input.h"
 	<global.h>
 
-1517780707 c:\users\daniel\desktop\c\ajedrez\include\pieza.h
+1521265881 c:\users\daniel\desktop\c\ajedrez\include\pieza.h
 	<tablero.h>
 	<global.h>
 
-1517818117 source:c:\users\daniel\desktop\c\ajedrez\src\pieza.cpp
+1518650580 source:c:\users\daniel\desktop\c\ajedrez\src\pieza.cpp
 	"Pieza.h"
 	<global.h>
 	<operador.h>
@@ -569,7 +569,7 @@
 	<SFML/Graphics.hpp>
 	<global.h>
 
-1518648734 source:c:\users\daniel\desktop\c\ajedrez\src\clicker.cpp
+1518650556 source:c:\users\daniel\desktop\c\ajedrez\src\clicker.cpp
 	"Clicker.h"
 	"global.h"
 	<operador.h>
@@ -598,7 +598,7 @@
 	<Pieza.h>
 	<global.h>
 
-1518220190 c:\users\daniel\desktop\c\ajedrez\include\global.h
+1520830926 c:\users\daniel\desktop\c\ajedrez\include\global.h
 	<fstream>
 	<vector>
 	<list>
@@ -620,7 +620,7 @@
 	"lector.h"
 	<Clicker.h>
 
-1517979764 c:\users\daniel\desktop\c\ajedrez\include\operador.h
+1521265881 c:\users\daniel\desktop\c\ajedrez\include\operador.h
 	<global.h>
 	<Pieza.h>
 

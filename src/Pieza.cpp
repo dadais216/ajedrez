@@ -32,9 +32,8 @@ Pieza::Pieza(int _id,int _sn){
 list<Clicker*> clickers;
 
 void Pieza::calcularMovimientos(v posAct){
-    pos=org=posAct;
     for(operador* op:movs){
-        if(op->operar()&&cambios){
+        if(op->operar(posAct)&&cambios){
             new Clicker(false);
         }else{
             buffer.clear();
