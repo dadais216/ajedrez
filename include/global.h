@@ -37,9 +37,9 @@ extern Manager<Texture>* imagen;
 extern float escala;
 extern tablero* tabl;
 extern list<Pieza*> piezas;
-extern Holder* act;
-extern v pos;
-extern v org;
+//extern Holder* act;
+//extern v pos;
+//extern v org;
 
 #include <lector.h>
 extern lector lect;
