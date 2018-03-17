@@ -3,16 +3,9 @@
 #include <Clicker.h>
 
 
-bool cond;
-bool bOutbounds=false;
-bool separator;
-bool cambios;
-
-list<pair<drawable,v>> bufferColores;
-list<acm*> buffer;
-v pos;
-v org;
-Holder* act;//para chequeos
+//bool bOutbounds=false;
+//bool separator;
+//bool cambios;
 
 color::color()
 :cuadrado(Vector2f(32*escala,32*escala)),_color(){
@@ -23,13 +16,14 @@ color::color()
     tipo=colort;
     cuadrado.setFillColor(_color);
 }
-void color::func(){
-    bufferColores.push_back(pair<drawable,v>(drawable(0,&cuadrado),pos));
+void color::draw(){
+    window->draw(cuadrado);
 }
 void color::debug(){
     cout<<"color ";
 }
 
+/*
 sprt::sprt(){
     int sn=tokens.front()-1000;tokens.pop_front();
     _sprt.setTexture(imagen->get("sprites.png"));
@@ -60,6 +54,7 @@ void numShow::func(){
 void numShow::debug(){
     cout<<"numShow "<<index<<" ";
 }
+*/
 
 array<int,20> numeros;
 bool memcambios;
@@ -153,10 +148,11 @@ struct spwn:public acm{
     }
 };
 
+//usando herencia podría evitar tener 800 constructores iguales, pero trae sus cosillas eso
 #define fabMov(NOMB,TIPO,FUNC)\
-struct NOMB:public acm{\
-    NOMB(){\
-        tipo=TIPO;\
+struct NOMB:public TIPO{\
+    NOMB(pos_){\
+        pos=pos_;\
     };\
     virtual void func(){\
         FUNC\
@@ -225,68 +221,66 @@ fabMov(outbounds,condt,
 fabMov(inicial,condt,
         cond=act->inicial;
 );
-
-fabMov(W,movt,
-       pos.y+=act->bando;
-);
-fabMov(S,movt,
-        pos.y-=act->bando;
-);
-fabMov(A,movt,
-        pos.x--;
-);
-fabMov(D,movt,
-        pos.x++;
 );
 fabMov(ori,movt,
         pos=org;
 );
 
 normal::normal(){
+    v pos(0,0);
     sig=nullptr;
     while(true){
         if(tokens.empty()) return;
         int tok=tokens.front();tokens.pop_front();
         switch(tok){
-        #define caseT(TOKEN)  case lector::TOKEN: cout<<#TOKEN<<endl;acms.push_back(new TOKEN);break
-        //como la mayoria de los acm no tiene datos el new no debería alocar nada
-        caseT(W);
-        caseT(A);
-        caseT(S);
-        caseT(D);
-        caseT(posRemember);
-        caseT(posRestore);
-        caseT(numSet);
-        caseT(numAdd);
-        caseT(numSeti);
-        caseT(numAddi);
-        caseT(ori);
+        case lector::W:
+            pos.y++; //el espejado se va a tener que hacer cuando se construyan las absolutas
+        break;case lector::S:
+            pos.y--;
+        break;case lector::D:
+            pos.x++;
+        break;case lector::A:
+            pos.x--;
+        break;
+        #define caseT(TIPO,TOKEN)  case lector::TOKEN: cout<<#TOKEN<<endl;TIPO.push_back(new TOKEN(pos));break
+        #define cond(TOKEN) caseT(conds,TOKEN)
 
+        cond(posRemember);
+        cond(numSet);
+        cond(numAdd);
+        cond(numSeti);
+        cond(numAddi);
+        cond(numCmp);
+        cond(numDst);
+        cond(numCmpi);
+        cond(numDsti);
+        cond(numLess);
+        cond(numLessi);
 
-        caseT(esp);
-        caseT(outbounds);
-        caseT(vacio);
-        caseT(pieza);
-        caseT(enemigo);
-        caseT(prob);
-        caseT(numCmp);
-        caseT(numDst);
-        caseT(numCmpi);
-        caseT(numDsti);
-        caseT(numLess);
-        caseT(numLessi);
-        caseT(inicial);
+        cond(esp);
+        cond(outbounds);
+        cond(vacio);
+        cond(pieza);
+        cond(enemigo);
+        cond(prob);
+        cond(inicial);
 
-        caseT(mov);
-        caseT(capt);
-        caseT(pausa);
-        caseT(spwn);
-        caseT(del);
+        #define acc(TOKEN) caseT(accs,TOKEN)
+
+        acc(mov);
+        acc(capt);
+        acc(pausa);
+        acc(spwn);
+        acc(del);
 
 
         caseT(color);
         caseT(sprt);
         caseT(numShow);
+
+        #undef acc
+        #undef cond
+        #undef caseT
 
         case lector::sep:
             cout<<"sep"<<endl;
@@ -306,37 +300,45 @@ normal::normal(){
     }
 }
 
-bool normal::operar(){
-    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
-    list<pair<drawable,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
-    list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
-    cond=true;
-    for(acm* a:acms){
-        if(a->tipo==condt){
-            if((a->func(),cond==false)){
-                cout<<" F ";
-                buffer.erase(++bufferRes,buffer.end());
-                bufferColores.erase(++bColorRes,bufferColores.end());
-                limites.erase(++limitRes,limites.end());
-                return false;
-            }
-        }else{
-            if(a->tipo==movt||a->tipo==colort)
-                a->func();
-            if(a->tipo==movt||a->tipo==acct)
-                buffer.push_back(a);
-        }
-    }
-    cout<<" V ";
-    cambios=true;
-    if(then())
-        return true;
-    //esto esta para manejar el caso de desliz normal opt, si realentiza sacarlo y prohibir ese caso
-    buffer.erase(++bufferRes,buffer.end());
-    bufferColores.erase(++bColorRes,bufferColores.end());
-    //no se limpian limites de normales terminados, aun cuando su seguida de falso.
-    //si algun movimiento raro lo necesita meter un booleano
-    return false;
+bool normal::operar(Holder* h){
+//    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
+//    list<pair<drawable,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
+//    list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
+//
+
+    ///calcular el movimiento
+
+
+
+
+
+//    cond=true;
+//    for(acm* a:acms){
+//        if(a->tipo==condt){
+//            if((a->func(),cond==false)){
+//                cout<<" F ";
+//                buffer.erase(++bufferRes,buffer.end());
+//                bufferColores.erase(++bColorRes,bufferColores.end());
+//                limites.erase(++limitRes,limites.end());
+//                return false;
+//            }
+//        }else{
+//            if(a->tipo==movt||a->tipo==colort)
+//                a->func();
+//            if(a->tipo==movt||a->tipo==acct)
+//                buffer.push_back(a);
+//        }
+//    }
+//    cout<<" V ";
+//    cambios=true;
+//    if(then())
+//        return true;
+//    //esto esta para manejar el caso de desliz normal opt, si realentiza sacarlo y prohibir ese caso
+//    buffer.erase(++bufferRes,buffer.end());
+//    bufferColores.erase(++bColorRes,bufferColores.end());
+//    //no se limpian limites de normales terminados, aun cuando su seguida de falso.
+//    //si algun movimiento raro lo necesita meter un booleano
+//    return false;
 }
 
 void normal::debug(){
@@ -386,7 +388,7 @@ void desliz::debug(){
     }
 }
 
-bool desliz::operar(){
+bool desliz::operar(v pos){
     i++;
     aux=pos;
     backlash=true;
@@ -438,7 +440,7 @@ bloque::bloque(){
     sig=keepOn();
 }
 
-bool bloque::operar(){
+bool bloque::operar(v pos){
     list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
     cout<<"BLOQUE ";
     operarAislado(inside);
@@ -455,7 +457,7 @@ void bloque::debug(){
 }
 
 joiner::joiner(){sig=nullptr;};
-bool joiner::operar(){return then();}
+bool joiner::operar(v pos){return then();}
 void joiner::debug(){cout<<"joiner ";}
 opt::opt(){
     nc=exc=false;
@@ -495,7 +497,7 @@ void opt::debug(){
     cout<<"> ";
 }
 
-bool opt::operar(){
+bool opt::operar(v pos){
     bool ret=false;
 
     cout<<"OPT ";
@@ -530,7 +532,7 @@ click::click(bool keep=true){
 void click::debug(){
     cout<<"click";
 }
-bool click::operar(){
+bool click::operar(v pos){
     crearClicker();
     return then();
 }
@@ -575,7 +577,7 @@ void contr::debug(){
     cout<<"control ";
     sig->debug();
 }
-bool contr::operar(){
+bool contr::operar(v pos){
     v orgRes=org;
     Holder* piezaRes=act;
 

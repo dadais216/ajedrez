@@ -1,0 +1,194 @@
+
+Hay que hacer que los movimientos se guarden en memoria para evitar recalcularlos constantemente
+
+La IA evalua el tablero por cada movimiento, y evaluar el tablero implica calcular todos los movimientos.
+Si los movimientos se guardan en memoria solo va a ser necesario recalcular los movimientos de la pieza que se movio
+y las que sean afectadas por eso
+(si n es la cantidad de movimientos y extra los movimientos de piezas afectadas la cantidad de calculos en el primer turno
+es 2n+extra, y en el proximo es n+extra. Sin guardan en memoria la cantidad de calculos es n^2 en todos los turnos)
+
+Tambien se ahorrarían recalculos para ver si hay jaque
+
+--
+
+El lenguaje da las instrucciones para formar movimientos
+Hay 3 estructuras de movimiento, normal, desliz y opt.
+
+los movimientos tienen en comun:
+bool estado, valido o invalido
+lista pos triggers, si una de estas posiciones se pisa o se deja por la pieza que se esta movimiendo se tiene que recalcular
+(debería haber varios tipos de triggers, de chequeo de vacio, enemigo, etc? por ahi no, nomas serían utiles es casos raros
+y aun asi no cubririan todos los casos)
+lista acciones, con las acciones marcadas en posiciones absolutas
+next, para encadenar movimientos
+tambien podrían tener un enum que los identifique, para hacer algunas optimizaciones especificas (si hay)
+
+en un movimiento normal:
+cuando se activa un trigger, siendo el estado valido o invalido, se recalcula.
+En la gran mayoria de los casos si el estado es valido se vuelve invalido, aun asi habría que recalcular por casos raros
+
+desliz:
+contiene una lista de movimientos, que genera a partir de un movimiento interno
+su estado es valido si el primer movimiento es valido, en la lista de movimientos todos menos el ultimo son validos
+cuando falla un trigger se invalidan todos los siguientes movimientos en la lista y se recalcula el fallado, reconstruyendo
+si hay un next se corre cuando falle el ultimo
+
+desliz genera los movimientos conforme los chequeos de su movimiento interno sigan dando verdadero, por lo que va ocupando
+memoria con movimientos absolutos. Cuando fallan se borran. 
+Por ahi podría no borrarse y mantener la memoria reservada, habría que ver. (si termina siendo necesario)
+
+
+la ventaja de hacer desliz una estructura es que una cadena de movimientos se guarda como una cadena de movimientos, no
+una lista de movimientos donde cada elemento tiene una copia del anterior mas un paso mas
+y tambien da lugar a un manejo mas inteligente de los recalculos, ya no es necesario recalcular toda la cadena, solo
+lo que venga despues de un trigger
+para recalcular avanzado habría que guardar la pos de cada inicio de mov o algo asi, no debería ser complicado
+
+
+desliz se tiene como siguiente a si mismo para manejarse bien con las ramificaciones de opt, si usara un bucle while habría
+que crear una estructura de control para cada ramificacion de opt
+
+opt:
+contiene una lista de movimientos internos que usa para crear ramificaciones, tambien una lista de acciones y triggers para
+cada rama.
+Se limita a recalcular solo la rama que haya disparado un trigger.
+
+--
+
+
+los movimientos se guardan en memoria como una accion y una pos. Ocupa mas espacio y hay muchas posiciones repetidas,
+pero hay que calcular menos cuando se hacen los calculos de movimientos y eso es lo que necesita mas velocidad.
+Se van a tener que copiar mas posiciones pero no se van a tener que copiar las instrucciones que cambiaban la posicion.
+A demas la posicion global tarda mas en acceder, debe ser eso lo que realentiza
+Y es algo que se abstrae del lenguaje.
+
+se manejan desde controladores de normal, desliz y opt
+
+dentro de normal:
+las condiciones si son falsas invalidan el movimiento y dejar un trigger en esa pos. Hasta que no se dispare ese trigger
+ese mov queda invalidado.
+si es verdadero se dejan triggers y se sigue mirando hasta terminar. 
+
+No sé si opt exc se va a poder agregar sin muchos problemas, en cualquier caso hacer un operador exc o if que haga eso y listo
+
+
+
+
+Actualmente cuando se toca una pieza a partir de las instrucciones se generan clickers, que crean una copia
+de el buffer de acciones y de colores. No hay distincion entre desliz, opt y normal a este nivel, los clickers
+se crean de forma explicita
+
+el sistema nuevo tendría que crearlos usando las estructuras que tambien usa la IA, asi queda todo con lo mismo y no
+hay un quilombo de cosas. A demas el sistema anterior tenia cosas raras, ver si se puede hacer algo con para que no
+pasen en este
+
+
+Una vez hecha la generacion va a quedar una lista de movimientos con posiciones absolutas dentro de 
+las estructuras (normal, desliz, opt).
+
+No sé si hay una forma clara de delimitar movimientos, puede que necesite poner una especie de click.
+Por ahi se puede hacer solo usando unos flags y aprovechando que las estructuras ahora son diferenciables.
+-al llegar a una normal sin continuacion
+-en cada elemento de la lista de un desliz nc
+-aplicando las mismas reglas en cada rama de un opt
+y arrastrando todo lo que haya atras
+
+la forma de identificar estos movimientos en las estructuras debería ser rapida, iterable y referenciable.
+La IA va a necesitar obtener un elemento, hacer algunas acciones, y luego obtener el proximo. 
+Los clickers van a necesitar alguna forma de referenciar que elemento de la lista de movimientos, y de que a que punto,
+hace referencia
+Hay que tener en cuenta que los movimientos se van a leer muchas veces
+
+Supongo que lo mejor va a ser tener una funcion que devuelva
+un movimiento en forma de lista de normales. La proxima vez que se la llame va a dar otro.
+Va a usar una estructura interna para saber cual es el siguiente o terminar
+Tambien se puede guardar y restaurar
+esta lista de normales es lo que se guarda en los clickers. La lista es de punteros para que sea rapido y simple
+
+Un tema es que la IA va a tener que usar esa funcion muchas veces para acceder a los mismos movimientos.
+(en cada iteracion del analisis de tableros. Abstraer el movimiento asi es util porque los recalculos no afectan nada)
+Aunque la funcion debería ser bastante rapida y no debería dar problemas.
+Guardar las normales en memoria y cambiarlas en caso de recalculo es una opcion, pero puede que mantener las listas
+en memoria y hacer chequeos de reemplazo y reemplazos a demas de ser complejo termine siendo mas lento. 
+La funcion solo debería hacer unas comparaciones de ints antes de devolver una lista de normales.
+
+
+
+limites y memoria
+estos funcionan durante el chequeo de condiciones, esta parte esta bastante intacta, no debería haber problemas
+Como en el producto final solo quedan las acciones no debería haber uso de memoria en el resultado final, es un condt
+la memoria era movt por posrestore y posremember nomas. Estos se pueden implementar como actt que tienen la pos seteada
+en la fase de condiciones
+
+hay que tener las mismas consideraciones con opt que las que estan ahora
+
+bloque
+bloque<contenido> = opt<contenido TERMINAR,>
+podría hacerse como un opt agregando un comando de terminar forzazamente el movimiento, o como una estructura unica.
+Hacer una estructura unica es gratis y es mas limpio
+Usaría un solo int de control, 0 hace que devuelva su normal y termine el movimiento, 1 hace que no haga nada
+
+De la misma forma podría agregarse un exc asi no bloteo opt
+
+
+
+
+Lo primero a implementar es sacar las instrucciones de movimiento, y poner la pos directamente en las acciones.
+En terminos de memoria es mas o menos lo mismo porque cada movimiento implica un puntero mas, se ahorran espacio
+si hay muchas acciones en una posicion pero se pierden si hay muchos movimientos.
+Y tener posiciones relativas va a ser mas facil conseguir absolutas, y las absolutas hacen todo el proceso mas simple y
+rapido
+Dentro de una normal las posiciones relativas son fijas
+Supongo que los graficos van a estar ligados a la normal, aparte de las acciones para ser toggeables. Se van a manejar igual,
+con posiciones absolutas y eso. En el sistema nuevo va a haber muchas menos copias al pedo de un mismo sprite, y usando
+indireccion se podría hacer que sean re pocas, una por RGBA usado, no se si es al pedo igual
+
+no hay necesidad de acm porque las pos van a estar en cada cosa
+
+De paso desglobalizar todo para no tener problemas de thredeado
+
+lo unico malo de thredear es que tengo que pasar por parametro la pos, el holder y el tablero del thread. Pero bueno, no
+creo que traiga mucho problema
+Supongo que lo mejor para esto va a ser meter la pos y el tablero dentro de holder y pasar solo holder. Total el tablero
+se accede pocas veces y aunque la pos se accede muchas veces es mas rapido acceder a ella que copiarla, supongo
+variables como outbounds se van a tener que guardar en holder
+los movimientos absolutos y triggers tambien, dentro de las estructuras de normal y eso
+
+la ventaja de tener el tablero como una matriz de punteros es que preguntar si una pieza esta en una posicion es directamente
+mirar en la matriz, en lugar de recorrer un vector de piezas comparando numeros
+Por otro lado, tener la pos guardada en el holder seria un poco mas comodo porque se tendría que pasar un parametro menos
+en las llamadas a funcion, aunque en la mayoria de los casos despues se va a tener que obtener la pos de ese puntero. Aun asi,
+puede que sea mas rapido. La pos se determina antes de llamar a calcular movimientos segun la matriz, y se suma a los valores
+relativos de cada movimiento.
+
+el desliz despues de cada iteracion setea pos a la pos del ultimo movimiento de su lista
+
+
+
+cuando se intente calcular los movs de un holder, en un primer turno:
+se calculan todos los movimientos, lo que implica obtener todos los movimientos de pieza, que ya tienen las posiciones
+relativas armadas, transformar las condiciones a absolutas y probar que anden.
+si andan, traducir las posiciones de las acciones y guardarlas (por ahora alocando y borrando, despues intentar no borrar)
+(se guardan en el holder, es algo unico de este)
+Las condiciones tambien guardan una lista de posiciones que se usa de trigger (no me parece util diferenciar entre distintos
+tipos de triggers), conforme se vayan evaluando, cortando antes si es falso
+En los proximos turnos se recalculan movimientos solo si se pisan triggers
+
+
+
+
+
+
+porRestore se deberían sacar porque no siguen en esquema de que cada normal tiene posiciones relativas fijas,
+por ejemplo w posRestore w no se podría pasar a relativas fijas. A ori, si actua solo dentro de una normal, no le 
+veo mucho sentido.
+posRestore no se usaria casi nunca pero tener algo que cargue posiciones a memoria permite hacer las piezas que
+promocionan en tal lugar sin usar contadores. Tambien se podría replicar un posRestore haciendo un desliz de normales que
+cuenten y avancen.
+
+
+
+
+
+
+

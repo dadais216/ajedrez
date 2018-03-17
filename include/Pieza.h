@@ -21,12 +21,16 @@ struct Pieza{
 
 struct Holder{
     Holder(int,Pieza*);
-    Pieza* pieza;
-    int bando;
-    bool inicial;
     Holder* next;
     void draw(v);
     void draw(int);
+    Pieza* pieza;
+    int bando;
+    bool inicial;
+    v ori;//se setea cuando se crea y por los movs
+    v pos;
+    ///estructuras de mov
+    ///tablero del thread
 };
 
 

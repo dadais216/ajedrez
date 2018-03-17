@@ -15,7 +15,7 @@ int dt=0;
 int clickI=0;
 bool confirm;
 bool Humano::turno(){
-    dt++;
+    dt++;//se podría mover adentro del if?
     if(!clickers.empty()){
         if(dt>20){
             dt=0;

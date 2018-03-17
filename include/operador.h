@@ -4,10 +4,28 @@
 #include <global.h>
 #include <Pieza.h>
 
-enum t{condt,acct,movt,colort};
-struct acm{
-    t tipo;
+//enum t{condt,acct,movt,colort};
+//struct acm{
+//    t tipo;
+//    virtual void func()=0;
+//    virtual void debug()=0;
+//};
+
+struct acct{
     virtual void func()=0;
+    virtual void debug()=0;
+};
+struct condt{
+    virtual bool check()=0;
+    virtual void debug()=0;
+};
+struct colort{
+    virtual void draw()=0;
+    /*los colores cambian bastante, antes func hacia que se guarden en el buffer que
+    se copiaba a clicker.
+    Ahora como buffereo los movimientos puedo usar esta funcion para dibujar
+    en vez de hacerlo desde afuera
+    */
     virtual void debug()=0;
 };
 
@@ -34,7 +52,7 @@ struct numShow:public acm{
 };
 
 struct operador{
-    virtual bool operar()=0;
+    virtual bool operar(v pos)=0;
     virtual void debug(){};
     bool then();
     operador* sig;
@@ -43,8 +61,10 @@ struct operador{
 struct normal:public operador{
     normal();
     virtual void debug();
-    virtual bool operar();
-    list<acm*> acms;
+    virtual bool operar(v pos);
+    list<acct> accs;
+    list<condt> conds;
+    list<colort> colors;
 };
 
 //repite un operador normal hasta que falle, creando clickers en cada paso, a menos que sea deslizcond
@@ -52,7 +72,7 @@ struct desliz:public operador{
     desliz();
     virtual void debug();
     bool doDebug;
-    virtual bool operar();
+    virtual bool operar(v pos);
     bool nc,t;
     int i,backlash,ret;
     v aux;
@@ -61,7 +81,7 @@ struct desliz:public operador{
 
 struct opt:public operador{
     opt();
-    virtual bool operar();
+    virtual bool operar(v pos);
     virtual void debug();
     bool exc,nc;
     list<operador*> ops;
@@ -73,36 +93,27 @@ struct joiner:public operador{
     // desliz < opt < ... > > , ya que desliz setea
     // el sig de opt despues de que este haya armado sus ramas
     // y puesto los sig de estas en nullptt
-    virtual bool operar();
+    virtual bool operar(v pos);
     virtual void debug();
 };
 
 struct click:public operador{
     click(bool);
-    virtual bool operar();
+    virtual bool operar(v pos);
     virtual void debug();
 };
 
 struct contr:public operador{
     contr();
-    virtual bool operar();
+    virtual bool operar(v pos);
     virtual void debug();
 };
 
 struct bloque:public operador{
     bloque();
-    virtual bool operar();
+    virtual bool operar(v pos);
     virtual void debug();
     operador* inside;
-};
-
-struct multi:public operador{
-    multi();
-    virtual bool operar();
-    list<operador*> ops;
-    //aplicar el anterior con las acciones generadas por los que den verdadero
-
-    //algo wacky para esperar el input y seguir
 };
 
 operador* keepOn();
