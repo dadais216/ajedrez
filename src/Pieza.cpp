@@ -32,6 +32,7 @@ Pieza::Pieza(int _id,int _sn){
 list<Clicker*> clickers;
 
 void Pieza::calcularMovimientos(v posAct){
+    /*
     for(operador* op:movs){
         if(op->operar(posAct)&&cambios){
             new Clicker(false);
@@ -42,9 +43,11 @@ void Pieza::calcularMovimientos(v posAct){
         cout<<endl<<"FIN DE MOVIMIENTO"<<endl;
         resetearValores();
     }
+    */
 }
 
 void resetearValores(){
+    /*
     if(memcambios){ //no es necesario
         numeros.fill(0);
         memcambios=false;
@@ -52,6 +55,7 @@ void resetearValores(){
     bOutbounds=false;
     pos=org;
     limites.clear();
+    */
 }
 
 Holder::Holder(int _bando,Pieza* p){
@@ -88,22 +92,23 @@ void Holder::draw(int n){ //pos en capturados
 }
 
 void Holder::procesar(vector<v>& pisados){ //vectores que potencialmente tocaron triggers
-    for(movHolder mh:movs)
+    for(movHolder* mh:movs)
         mh->procesar(pisados);
 }
 
-normalHolder::normalHolder(normal* org){
+normalHolder::normalHolder(Holder* h_,normal* org){
+    h=h_;
     op=org;
     accs.reserve(org->accs.size()*sizeof(acct*));
     for(acct* a:org->accs)
         accs.push_back(a->clone());
-    trigs.reserve(org->conds.size()*sizeof(v));
+    triggs.reserve(org->conds.size()*sizeof(v));
 }
 void normalHolder::procesar(vector<v>& pisados){
-    for(v trig:triggers){
+    for(v trig:triggs){
         for(v pis:pisados){
             if(trig==pis){
-                op->operar(this);
+                op->operar(this,h);
                 return;
             }
         }

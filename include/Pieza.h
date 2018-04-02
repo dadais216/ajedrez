@@ -26,26 +26,30 @@ struct movHolder{
     movHolder* sig;
 };
 struct normalHolder:public movHolder{
-    normalHolder(operador*);//supongo que ni bien se crea el op le copias las accs
+    normalHolder(Holder*,normal*);//supongo que ni bien se crea el op le copias las accs
     operador* op;
+    Holder* h;
     vector<acct*> accs;
-    vector<v> trigs; //en el constructor hacer que reserven algo de memoria
+    vector<v> triggs; //en el constructor hacer que reserven algo de memoria
     virtual void procesar(vector<v>&);
 };
 
 struct Holder{
     Holder(int,Pieza*);
-    Holder* next;
     void draw(v);
     void draw(int);
     Pieza* pieza;
-    int bando;
-    bool inicial;
-    v ori;//se setea cuando se crea y por los movs
     v pos;
     void procesar(vector<v>&);
     vector<movHolder*> movs;
+
+    v ori;//se setea cuando se crea y por los movs
+    int bando;
+    bool inicial;
+    bool outbounds;
+    ///vector de limites
     ///tablero del thread
+    ///Holder* next;
 };
 
 

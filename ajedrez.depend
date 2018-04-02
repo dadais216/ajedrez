@@ -530,7 +530,7 @@
 	"Input.h"
 	<global.h>
 
-1522608183 c:\users\daniel\desktop\c\ajedrez\include\pieza.h
+1522707848 c:\users\daniel\desktop\c\ajedrez\include\pieza.h
 	<tablero.h>
 	<global.h>
 	<operador.h>
@@ -617,12 +617,14 @@
 	<windows.h>
 	<lector.h>
 
-1518220658 source:c:\users\daniel\desktop\c\ajedrez\src\operador.cpp
+1522707709 source:c:\users\daniel\desktop\c\ajedrez\src\operador.cpp
 	"operador.h"
 	"lector.h"
 	<Clicker.h>
+	<tablero.h>
+	<Pieza.h>
 
-1522608307 c:\users\daniel\desktop\c\ajedrez\include\operador.h
+1522707318 c:\users\daniel\desktop\c\ajedrez\include\operador.h
 	<global.h>
 
 1522638339 source:c:\users\daniel\desktop\c\ajedrez\src\jugador.cpp

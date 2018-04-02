@@ -4,16 +4,18 @@
 #include <global.h>
 
 struct Pieza;
+struct Holder;
 
+///no uso herencia porque no me aporta casi nada
 struct acct{
-    virtual void func()=0;
+    virtual void func(Holder*)=0;
     //func se llama para realizar la accion, pos arranca siendo relativa y se hace absoluta desde afuera
     virtual void debug()=0;
+    virtual acct* clone();
     v pos;
 };
 struct condt{
-    virtual bool check(v)=0;
-    //se le pasa la pos de la pieza para formar la absoluta en el momento de chequeo
+    virtual bool check(Holder*,v)=0;
     virtual void debug()=0;
     v pos;
 };
@@ -53,17 +55,17 @@ struct numShow:public acm{
 
 struct movHolder;
 struct operador{
-    virtual bool operar(v pos)=0;
+    virtual bool operar(movHolder*,Holder*)=0;
     virtual void debug(){};
     virtual void generarMovHolder(movHolder*)=0;
     bool then();
     operador* sig;
 };
-
+struct normalHolder;
 struct normal:public operador{
     normal();
     virtual void debug();
-    virtual bool operar(v pos);
+    virtual bool operar(movHolder*,Holder*);
     virtual void generarMovHolder(movHolder*);
     vector<acct*> accs;
     vector<condt*> conds;
