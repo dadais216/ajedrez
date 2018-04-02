@@ -7,11 +7,11 @@ using namespace sf;
 
 #include <global.h>
 
+struct normalHolder;
 struct Clicker
 {
-    Clicker(bool);
-    list<acm*> acciones;
-    list<pair<drawable,v>> colores;
+    Clicker(vector<normalHolder*>*);
+    vector<normalHolder*>* normales;
     v clickPos;
     void draw();
     bool update();

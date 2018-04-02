@@ -119,8 +119,7 @@ estos funcionan durante el chequeo de condiciones, esta parte esta bastante inta
 Como en el producto final solo quedan las acciones no debería haber uso de memoria en el resultado final, es un condt
 la memoria era movt por posrestore y posremember nomas. Estos se pueden implementar como actt que tienen la pos seteada
 en la fase de condiciones
-
-hay que tener las mismas consideraciones con opt que las que estan ahora
+en desliz y deslizopt se va a tener que guardar el estado de memoria para retomar calculos, pero solo ahi
 
 bloque
 bloque<contenido> = opt<contenido TERMINAR,>
@@ -175,11 +174,65 @@ tipos de triggers), conforme se vayan evaluando, cortando antes si es falso
 En los proximos turnos se recalculan movimientos solo si se pisan triggers
 
 
+En holder van a estar los movimientos absolutos y los triggers, dentro de estructuras de control
+En pieza van a estar los movimientos relativos y las condiciones
+
+En cada turno se recorren todos los holder para ver si alguna estructura de control activo un trigger. De hacerlo,
+la misma va a llamar a la parte correspondiente en pieza para recalcular
+Por lo que cada estructura de control va a necesitar un puntero a su estructura correspondiente en pieza, y tambien 
+pasarse a si mismo como parametro. Quedo medio raro
+Supongo que basta con un puntero a funcion, sino un puntero a objeto
+
+si se activa un trigger en normal llama a normal en pieza y este recalcula, pasa todas las condiciones y acciones
+las normales solo se generan a traves de deslices, por lo que estos deberían ser los encargados de armarlas, ademas
+del arme inicial. Asi evito tener ifs de generado adentro de las normales y se aceleran un poco las cosas
+
+tengo que ver como copiar los accs de pieza a holder
+
+
+Desliz manda a revisar triggers a su contenido. Si alguno se activa, manda a recalcular a este y a los siguientes
+Por ejemplo, si tiene normal la primera normal que se active y las siguientes llamarian a pieza
+si tiene desliz, este desliz haria lo mismo con sus normales y si hubo recalculos le avisa a desliz, y todas las proximas
+iteraciones se recalculan
+la pos a adelantar se obtiene de el ultimo elemento de la ultima normal.
+No sé si va a haber problemas con opts, verlo cuando esten mas pensados
+Como voy a hacer opt distinto hacer que desliz no se llame a si mismo ocupando el stack al pedo
+
+
+Desliz crea una nueva instancia de contenido en holder, de necesitar, antes de llamarla a calcular, y pieza la setea.
+Asi se ahorra tener que crear y destruir al pedo
+
+Opt como esta ahora no sirve porque genera los datos al aire. Cuando esta adentro de un desliz genera una estructura
+de arbol y desliz genera listas. No hay forma de meter el arbol en la lista, al menos no una forma simple que se haga
+desde adentro de un opt no conciente de que esta en un desliz. Y aunque hubiera una solucion tendría que tener en cuenta
+todos los casos raros de anidacion y demases
+-
+Una solucion desde adentro de opt es hacer que cada vez que se lo llame genere sus 2 entradas (suponiendo que tenga 2 ramas),
+la proxima vez 2^2 y asi, estableciendo una relacion numerica entre cada uno. (el de la pos N le siguen 2N y 2N+1).
+El tema de esto es que opt necesita saber cuantas veces se lo llamo, y cosas como recalcular son complicadas. Tampoco estoy
+seguro de que funcione con casos raros, y la estructura termina siendo medio bizarra
+-
+otra solucion es crear una estructura deslizopt que se arme en una segunda barrida, haciendo algo como
+desliz n1 opt n2 , n3 end n4 end => deslizopt(n1,(n2,n3),n4)
+Sería lo mejor porque se llevaria bien con cualquier tipo de anidacion rara, y maneja los casos de tener cosas 
+antes y despues de opt de la forma mas eficiente. Crea la estructura de arbol directamente sin tener que hacer cosas
+rebuscadas. Es lo mas limpio.
+Igual dejar esto para mas adelante, ahora no es algo necesario.
+Tambien esta el tema de tener desliz opt n1 n2 end n3 opt n4 n5 end end, cosas como esta podrían directamente prohibirse
+porque nomas se dan en casos muy raros y pueden reescribirse de forma que no creen problemas y se mantengan igual
 
 
 
 
-porRestore se deberían sacar porque no siguen en esquema de que cada normal tiene posiciones relativas fijas,
+
+
+
+
+
+
+
+porRestore se deberían sacar porque no siguen en esquema de que cada normal tiene posiciones relativas fijas
+(lo que no es una restriccion necesaria pero las demas cosas la cumplen y simplifica un poco),
 por ejemplo w posRestore w no se podría pasar a relativas fijas. A ori, si actua solo dentro de una normal, no le 
 veo mucho sentido.
 posRestore no se usaria casi nunca pero tener algo que cargue posiciones a memoria permite hacer las piezas que
@@ -187,6 +240,22 @@ promocionan en tal lugar sin usar contadores. Tambien se podría replicar un posR
 cuenten y avancen.
 
 
+
+Optimizacion:
+cuando falla un trigger de una normal no es necesario verificar todas las condiciones, solo la que generó ese trigger.
+El tema es que los triggers no se diferencian y no hacen referencia a sus condiciones, y si lo hacen terminario siendo
+todo mas lento
+Pero puede que se pueda relacionar un trigger con su condicion por la posicion en la que esta en la lista. El trigger #3
+debería corresponder a la condicion #3 de la normal. Seguro que esto varia un poco ya que no todas las condiciones
+generan triggers, pero aun asi puede hacerse algo
+
+
+--
+
+
+Creo que no hay ninguna condicion no posicional que importe. Se podría dar que una pieza base su condicion en una propiedad
+de otra y cosas como every cambien esa propiedad. En estos casos especificos se podría hacer que un cambio en una pieza
+active los triggers que esten sobre esa pieza
 
 
 

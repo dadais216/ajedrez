@@ -530,9 +530,10 @@
 	"Input.h"
 	<global.h>
 
-1521265881 c:\users\daniel\desktop\c\ajedrez\include\pieza.h
+1522608183 c:\users\daniel\desktop\c\ajedrez\include\pieza.h
 	<tablero.h>
 	<global.h>
+	<operador.h>
 
 1518650580 source:c:\users\daniel\desktop\c\ajedrez\src\pieza.cpp
 	"Pieza.h"
@@ -564,21 +565,22 @@
 1518588031 c:\users\daniel\desktop\c\ajedrez\include\boton.h
 	<global.h>
 
-1518648751 c:\users\daniel\desktop\c\ajedrez\include\clicker.h
+1522628619 c:\users\daniel\desktop\c\ajedrez\include\clicker.h
 	<vec.h>
 	<SFML/Graphics.hpp>
 	<global.h>
 
-1518650556 source:c:\users\daniel\desktop\c\ajedrez\src\clicker.cpp
+1522636429 source:c:\users\daniel\desktop\c\ajedrez\src\clicker.cpp
 	"Clicker.h"
 	"global.h"
 	<operador.h>
+	<Pieza.h>
 
 1494836668 c:\users\daniel\desktop\c\ajedrez\include\tablerro.h
 	<vec.h>
 	<Pieza.h>
 
-1516844339 c:\users\daniel\desktop\c\ajedrez\include\tablero.h
+1522637012 c:\users\daniel\desktop\c\ajedrez\include\tablero.h
 	<global.h>
 	<Juego.h>
 
@@ -620,11 +622,10 @@
 	"lector.h"
 	<Clicker.h>
 
-1521265881 c:\users\daniel\desktop\c\ajedrez\include\operador.h
+1522608307 c:\users\daniel\desktop\c\ajedrez\include\operador.h
 	<global.h>
-	<Pieza.h>
 
-1518648734 source:c:\users\daniel\desktop\c\ajedrez\src\jugador.cpp
+1522638339 source:c:\users\daniel\desktop\c\ajedrez\src\jugador.cpp
 	"Jugador.h"
 	"global.h"
 	"Juego.h"
@@ -635,5 +636,5 @@
 	<stdlib.h>
 	<time.h>
 
-1518598265 c:\users\daniel\desktop\c\ajedrez\include\jugador.h
+1522638277 c:\users\daniel\desktop\c\ajedrez\include\jugador.h
 

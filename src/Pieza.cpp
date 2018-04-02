@@ -58,8 +58,14 @@ Holder::Holder(int _bando,Pieza* p){
     bando=_bando;
     inicial=true;
     pieza=p;
-}
 
+
+    for(operador* op:pieza->movs){
+        movHolder* mh;
+        op->generarMovHolder(mh);
+        movs.push_back(mh);
+    }
+}
 void Holder::draw(v vec){
     if(bando==1){
         pieza->spriten.setPosition(vec.x*escala*32,vec.y*escala*32);
@@ -69,7 +75,6 @@ void Holder::draw(v vec){
         window->draw(pieza->spriteb);
     }
 }
-
 void Holder::draw(int n){ //pos en capturados
     Sprite* sp;
     if(bando==1)
@@ -81,3 +86,30 @@ void Holder::draw(int n){ //pos en capturados
     window->draw(*sp);
     sp->setScale(escala,escala);
 }
+
+void Holder::procesar(vector<v>& pisados){ //vectores que potencialmente tocaron triggers
+    for(movHolder mh:movs)
+        mh->procesar(pisados);
+}
+
+normalHolder::normalHolder(normal* org){
+    op=org;
+    accs.reserve(org->accs.size()*sizeof(acct*));
+    for(acct* a:org->accs)
+        accs.push_back(a->clone());
+    trigs.reserve(org->conds.size()*sizeof(v));
+}
+void normalHolder::procesar(vector<v>& pisados){
+    for(v trig:triggers){
+        for(v pis:pisados){
+            if(trig==pis){
+                op->operar(this);
+                return;
+            }
+        }
+    }
+}
+
+
+
+
