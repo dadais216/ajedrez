@@ -1,46 +1,36 @@
 #include "Clicker.h"
 #include "global.h"
 #include <operador.h>
+#include <Pieza.h>
 
 bool Clicker::drawClickers;
 
-Clicker::Clicker(bool copiarBuffer){
-    if(copiarBuffer){
-        acciones.assign(buffer.begin(),buffer.end());
-        colores.assign(bufferColores.begin(),bufferColores.end());
-        cambios=false;
-    }else{
-        acciones.splice(acciones.begin(),buffer);
-        colores.splice(colores.begin(),bufferColores);
-    }
+Clicker::Clicker(vector<normalHolder*>* normales_){
+    ///con la estructura de movimiento hecha se arman listas de normales y se pasan a clickers
+    normales=normales_;
 
-    drawClickers=true; //cuando me ponga a  limpiar memoria tendría que borrar el buffer en lugar de
-    clickPos=pos;
-    cout<<"y: "<<acciones.size()<<" "<<colores.size()<<endl;
+    normalHolder* lastN=normales->operator[](normales->size()-1);
+    clickPos=lastN->accs[lastN->accs.size()-1]->pos;
 
+    //clickPos??
+    ///solapamientos
     val=0;
     mod=1;
-
-    list<Clicker*> conflictos;
+    int conflictos=0;
     for(Clicker* c:clickers)
-        if(c->clickPos==pos)
-            conflictos.push_back(c);
-    if(!conflictos.empty()){
-        for(Clicker* c:conflictos)
+        if(c->clickPos==clickPos){
+            conflictos++;
             c->mod++;
-        val=conflictos.size();
-        mod=conflictos.size()+1;
+        }
+    if(conflictos!=0){
+        val=conflictos;
+        mod=conflictos+1;
     }
     clickers.push_back(this);
-
-    pieza=act;
-    bOrg=org;
-
-    cout<<"cons"<<pieza<<" "<<act<<endl;
-    org.show();
 }
 
 void Clicker::draw(){
+    /*
     if(!activo) return;
     for(pair<drawable,v> c:colores){
         if(get<0>(c).tipo==0){
@@ -60,6 +50,7 @@ void Clicker::draw(){
 
         //cout<<c->cuadrado.getPosition().x/32/escala<<" "<<c->cuadrado.getPosition().y/32/escala<<endl;
     }
+    */
 }
 
 bool Clicker::update(){
@@ -80,13 +71,11 @@ bool Clicker::update(){
 }
 
 void Clicker::accionar(){
-    act=pieza;
-    pos=org=bOrg;
-    cout<<"acc:"<<pieza<<" "<<act<<endl;
-    org.show();
+    /*
     for(acm* a:acciones)
         a->func();
     act->inicial=false;
+    */
 }
 
 void Clicker::activacion(int clickI){

@@ -44,9 +44,10 @@ bool Humano::turno(){
     }
     if(input->click()){
         if(input->inGameRange(_tablero.tam)){
-            act=_tablero(input->get().show());
-            if(act&&act->bando==bando)
+            Holder* act=_tablero(input->get().show());
+            if(act&&act->bando==bando){
                 act->pieza->calcularMovimientos(input->get());
+            }
         }
     }
     return false;
@@ -60,7 +61,7 @@ Aleatorio::Aleatorio(int bando_,tablero& tablero_)
 bool Aleatorio::turno(){
     for(int i=0;i<_tablero.tam.x;i++)
         for(int j=0;j<_tablero.tam.y;j++){
-            act=_tablero(v(i,j));
+            Holder* act=_tablero(v(i,j));
             if(act&&act->bando==bando)
                 act->pieza->calcularMovimientos(v(i,j));
         }
