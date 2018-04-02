@@ -1,12 +1,12 @@
 #include "operador.h"
 #include "lector.h"
 #include <Clicker.h>
-
+#include <tablero.h>
 
 //bool bOutbounds=false;
 //bool separator;
 //bool cambios;
-
+/*
 color::color()
 :cuadrado(Vector2f(32*escala,32*escala)),_color(){
     _color.r=tokens.front()-1000;tokens.pop_front();
@@ -22,7 +22,7 @@ void color::draw(){
 void color::debug(){
     cout<<"color ";
 }
-
+*/
 /*
 sprt::sprt(){
     int sn=tokens.front()-1000;tokens.pop_front();
@@ -58,7 +58,7 @@ void numShow::debug(){
 
 array<int,20> numeros;
 bool memcambios;
-
+/*
 struct posRemember:public acm{
     int index,jndex;
     posRemember(){
@@ -102,7 +102,8 @@ struct posRestore:public acm{
         cout<<"posRestore ";pos.show();cout<<" -> ";v(numeros[index],numeros[jndex]).show();
     }
 };
-
+*/
+/*
 #define numFab(NOMB,TIPO,FUNC) \
 struct NOMB:public acm{ \
     int val,index; \
@@ -131,7 +132,8 @@ numFab(numCmpi,condt,cond=numeros[index]==numeros[val];);
 numFab(numDsti,condt,cond=numeros[index]!=numeros[val];);
 numFab(numLessi,condt,cond=numeros[index]<numeros[val];);
 
-
+*/
+/*
 struct spwn:public acm{
     int n;
     spwn(){
@@ -147,11 +149,14 @@ struct spwn:public acm{
         cout<<"spwn "<<n<<" ";
     }
 };
+*/
 
+///parece que hay un pos global en algun lado
 //usando herencia podría evitar tener 800 constructores iguales, pero trae sus cosillas eso
 #define fabMov(NOMB,TIPO,FUNC)\
 struct NOMB:public TIPO{\
-    NOMB(pos_){\
+    v pos;\
+    NOMB(v pos_){\
         pos=pos_;\
     };\
     virtual void func(){\
@@ -161,14 +166,18 @@ struct NOMB:public TIPO{\
     virtual void debug(){\
         cout<<#NOMB<<" ";\
     } \
+    NOMB* clone(){\
+        return new NOMB(pos);\
+    }\
 }\
 
-
+/*
 fabMov(mov,acct,
        (*tabl)(org.show(),nullptr);
        (*tabl)(pos.show(),act);
        org=pos;
 );
+*/
 fabMov(pausa,acct,
         drawScreen();
         Sleep(60);
@@ -221,7 +230,6 @@ fabMov(outbounds,condt,
 fabMov(inicial,condt,
         cond=act->inicial;
 );
-);
 fabMov(ori,movt,
         pos=org;
 );
@@ -273,14 +281,15 @@ normal::normal(){
         acc(spwn);
         acc(del);
 
+        #define colorr(TOKEN) caseT(colors,TOKEN)
+        colorr(color);
+        colorr(sprt);
+        colorr(numShow);
 
-        caseT(color);
-        caseT(sprt);
-        caseT(numShow);
-
-        #undef acc
-        #undef cond
-        #undef caseT
+        #undef acc(TOKEN)
+        #undef cond(TOKEN)
+        #undef colorr(TOKEN)
+        #undef caseT(TIPO,TOKEN)
 
         case lector::sep:
             cout<<"sep"<<endl;
@@ -300,45 +309,39 @@ normal::normal(){
     }
 }
 
-bool normal::operar(Holder* h){
+void normal::generarMovHolder(movHolder* mh){
+    mh=new normalHolder(this);//podría pasarle el vector de accs si es lo unico que necesita
+    if(sig)
+        sig->generarMovHolder(mh->sig);
+    else
+        mh->sig=nullptr;
+}
+
+void normal::operar(Holder* h){
 //    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
 //    list<pair<drawable,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
 //    list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
 //
 
-    ///calcular el movimiento
+    ///se determino que se necesita calcular este movimiento, se lo llama desde holder pasandose a si mismo como
+    ///parametro, un elemento de holder indica el espacio de memoria del movimiento actual
 
 
-
-
-
-//    cond=true;
-//    for(acm* a:acms){
-//        if(a->tipo==condt){
-//            if((a->func(),cond==false)){
-//                cout<<" F ";
-//                buffer.erase(++bufferRes,buffer.end());
-//                bufferColores.erase(++bColorRes,bufferColores.end());
-//                limites.erase(++limitRes,limites.end());
-//                return false;
-//            }
-//        }else{
-//            if(a->tipo==movt||a->tipo==colort)
-//                a->func();
-//            if(a->tipo==movt||a->tipo==acct)
-//                buffer.push_back(a);
-//        }
-//    }
-//    cout<<" V ";
-//    cambios=true;
-//    if(then())
-//        return true;
-//    //esto esta para manejar el caso de desliz normal opt, si realentiza sacarlo y prohibir ese caso
-//    buffer.erase(++bufferRes,buffer.end());
-//    bufferColores.erase(++bColorRes,bufferColores.end());
-//    //no se limpian limites de normales terminados, aun cuando su seguida de falso.
-//    //si algun movimiento raro lo necesita meter un booleano
-//    return false;
+    h->triggers.clear(); //no libera memoria
+    for(condt* c:conds){
+        v posAct=c->pos+h->pos; //creo que no es lo mas c++
+        h->triggers.push_back(posAct);
+        if(!c->check(posAct)){
+            h->valido=false;
+            return;
+        }
+    }
+    h->valido=true;
+    //accs en holder ya esta generado
+    for(int i=0;i<accs.size();i++){
+        h->accs[i].pos=accs[i].pos+h->pos;
+        //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
+    }
 }
 
 void normal::debug(){

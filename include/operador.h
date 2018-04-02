@@ -2,22 +2,20 @@
 #define OPERADOR_H
 
 #include <global.h>
-#include <Pieza.h>
 
-//enum t{condt,acct,movt,colort};
-//struct acm{
-//    t tipo;
-//    virtual void func()=0;
-//    virtual void debug()=0;
-//};
+struct Pieza;
 
 struct acct{
     virtual void func()=0;
+    //func se llama para realizar la accion, pos arranca siendo relativa y se hace absoluta desde afuera
     virtual void debug()=0;
+    v pos;
 };
 struct condt{
-    virtual bool check()=0;
+    virtual bool check(v)=0;
+    //se le pasa la pos de la pieza para formar la absoluta en el momento de chequeo
     virtual void debug()=0;
+    v pos;
 };
 struct colort{
     virtual void draw()=0;
@@ -27,8 +25,9 @@ struct colort{
     en vez de hacerlo desde afuera
     */
     virtual void debug()=0;
+    v pos;
 };
-
+/*
 struct color:public acm{
     sf::Color _color;
     RectangleShape cuadrado;
@@ -50,10 +49,13 @@ struct numShow:public acm{
     virtual void func();
     virtual void debug();
 };
+*/
 
+struct movHolder;
 struct operador{
     virtual bool operar(v pos)=0;
     virtual void debug(){};
+    virtual void generarMovHolder(movHolder*)=0;
     bool then();
     operador* sig;
 };
@@ -62,9 +64,10 @@ struct normal:public operador{
     normal();
     virtual void debug();
     virtual bool operar(v pos);
-    list<acct> accs;
-    list<condt> conds;
-    list<colort> colors;
+    virtual void generarMovHolder(movHolder*);
+    vector<acct*> accs;
+    vector<condt*> conds;
+    vector<colort*> colors;
 };
 
 //repite un operador normal hasta que falle, creando clickers en cada paso, a menos que sea deslizcond
@@ -73,6 +76,7 @@ struct desliz:public operador{
     virtual void debug();
     bool doDebug;
     virtual bool operar(v pos);
+    virtual void generarMovHolder(movHolder*);
     bool nc,t;
     int i,backlash,ret;
     v aux;
@@ -83,6 +87,7 @@ struct opt:public operador{
     opt();
     virtual bool operar(v pos);
     virtual void debug();
+    virtual void generarMovHolder(movHolder*);
     bool exc,nc;
     list<operador*> ops;
 };
