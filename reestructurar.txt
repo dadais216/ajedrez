@@ -112,6 +112,10 @@ Guardar las normales en memoria y cambiarlas en caso de recalculo es una opcion,
 en memoria y hacer chequeos de reemplazo y reemplazos a demas de ser complejo termine siendo mas lento. 
 La funcion solo debería hacer unas comparaciones de ints antes de devolver una lista de normales.
 
+La funcion recibe un vector<normalHolder*>* para evitar tener que armar la lista y despues copiarla a el clicker o la
+estructura de control de la normal. Si la funcion no puede generar nada devuelve falso y listo, si puede genera, lo tira
+en ese puntero y eso se pasa al constructor de clicker
+
 
 
 limites y memoria
