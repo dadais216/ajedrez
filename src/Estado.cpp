@@ -110,6 +110,13 @@ Proper::Proper(int id,int sel1,int sel2)
     turnoBlanco.setPosition(510,0);
     turnoNegro.setPosition(510,0);
 
+    for(int i=0;i<lect.matriz.size();i++){
+        for(int j=0;j<lect.matriz[i].size();j++){
+            Holder* act;
+            if(act=tablero(v(i,j)))
+                act->generar();
+        }
+    }
 }
 
 void Proper::draw(){

@@ -66,16 +66,17 @@ Holder::Holder(int _bando,Pieza* p){
 
     for(operador* op:pieza->movs){
         movHolder* mh;
-        op->generarMovHolder(mh);
+        op->generarMovHolder(mh,this);
         movs.push_back(mh);
     }
 }
-void Holder::draw(v vec){
+void Holder::draw(){
+    ///el sprite debería actualizarse cada vez que se mueve en lugar de cada vez que se dibuja, pero bueno
     if(bando==1){
-        pieza->spriten.setPosition(vec.x*escala*32,vec.y*escala*32);
+        pieza->spriten.setPosition(pos.x*escala*32,pos.y*escala*32);
         window->draw(pieza->spriten);
     }else{
-        pieza->spriteb.setPosition(vec.x*escala*32,vec.y*escala*32);
+        pieza->spriteb.setPosition(pos.x*escala*32,pos.y*escala*32);
         window->draw(pieza->spriteb);
     }
 }
@@ -90,10 +91,23 @@ void Holder::draw(int n){ //pos en capturados
     window->draw(*sp);
     sp->setScale(escala,escala);
 }
+void Holder::show(list<Clicker*>& clk){
+    vector<normalHolder*>* normales=new vector<normalHolder*>;
+    ///esto se pasa a la funcion que va devolviendo listas, las carga aca
+    for(movHolder* mh:movs){
+        normales->push_back(static_cast<normalHolder*>(mh));
+        clk.push_back(new Clicker(normales));
+    }
+}
+
 
 void Holder::procesar(vector<v>& pisados){ //vectores que potencialmente tocaron triggers
     for(movHolder* mh:movs)
         mh->procesar(pisados);
+}
+void Holder::generar(){
+    for(movHolder* mh:movs)
+        mh->generar();
 }
 
 normalHolder::normalHolder(Holder* h_,normal* org){
@@ -102,6 +116,9 @@ normalHolder::normalHolder(Holder* h_,normal* org){
     accs.reserve(org->accs.size()*sizeof(acct*));
     for(acct* a:org->accs)
         accs.push_back(a->clone());
+    colors.reserve(org->colors.size()*sizeof(colort*));
+    for(colort* c:org->colors)
+        colors.push_back(c->clone());
     triggs.reserve(org->conds.size()*sizeof(v));
 }
 void normalHolder::procesar(vector<v>& pisados){
@@ -114,7 +131,14 @@ void normalHolder::procesar(vector<v>& pisados){
         }
     }
 }
-
+void normalHolder::generar(){
+    op->operar(this,h);
+}
+void normalHolder::accionar(){
+    for(acct* ac:accs){
+        ac->func(h);
+    }
+}
 
 
 
