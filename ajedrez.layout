@@ -9,7 +9,7 @@
 	</File>
 	<File name="include\Pieza.h" open="1" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="592" topLine="7" />
+			<Cursor1 position="803" topLine="18" />
 		</Cursor>
 	</File>
 	<File name="include\Jugador.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -29,12 +29,19 @@
 	</File>
 	<File name="src\operador.cpp" open="1" top="1" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="8163" topLine="311" />
+			<Cursor1 position="929" topLine="6" />
 		</Cursor>
+		<Folding>
+			<Collapse line="45" />
+			<Collapse line="80" />
+			<Collapse line="125" />
+			<Collapse line="155" />
+			<Collapse line="397" />
+		</Folding>
 	</File>
 	<File name="src\Pieza.cpp" open="1" top="0" tabpos="7" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2283" topLine="80" />
+			<Cursor1 position="3123" topLine="101" />
 		</Cursor>
 	</File>
 	<File name="include\Manager.h" open="0" top="0" tabpos="9" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -44,12 +51,12 @@
 	</File>
 	<File name="src\tablero.cpp" open="1" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="1070" topLine="30" />
+			<Cursor1 position="1462" topLine="35" />
 		</Cursor>
 	</File>
 	<File name="include\tablero.h" open="1" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="300" topLine="0" />
+			<Cursor1 position="274" topLine="0" />
 		</Cursor>
 	</File>
 	<File name="include\lector.h" open="0" top="0" tabpos="15" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -64,7 +71,7 @@
 	</File>
 	<File name="src\Jugador.cpp" open="1" top="0" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="263" topLine="0" />
+			<Cursor1 position="1235" topLine="23" />
 		</Cursor>
 	</File>
 	<File name="include\Boton.h" open="1" top="0" tabpos="6" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -79,12 +86,12 @@
 	</File>
 	<File name="include\operador.h" open="1" top="0" tabpos="10" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="358" topLine="3" />
+			<Cursor1 position="1004" topLine="42" />
 		</Cursor>
 	</File>
 	<File name="src\Estado.cpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2687" topLine="42" />
+			<Cursor1 position="2947" topLine="103" />
 		</Cursor>
 	</File>
 	<File name="src\Juego.cpp" open="1" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -94,7 +101,7 @@
 	</File>
 	<File name="src\Clicker.cpp" open="1" top="0" tabpos="12" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2085" topLine="51" />
+			<Cursor1 position="2059" topLine="50" />
 		</Cursor>
 	</File>
 	<File name="include\Input.h" open="0" top="0" tabpos="8" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
@@ -102,9 +109,9 @@
 			<Cursor1 position="80" topLine="0" />
 		</Cursor>
 	</File>
-	<File name="src\lector.cpp" open="0" top="0" tabpos="14" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+	<File name="src\lector.cpp" open="1" top="0" tabpos="17" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="467" topLine="0" />
+			<Cursor1 position="1054" topLine="50" />
 		</Cursor>
 	</File>
 	<File name="include\Juego.h" open="0" top="0" tabpos="16" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">

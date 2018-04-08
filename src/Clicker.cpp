@@ -71,11 +71,9 @@ bool Clicker::update(){
 }
 
 void Clicker::accionar(){
-    /*
-    for(acm* a:acciones)
-        a->func();
-    act->inicial=false;
-    */
+    for(normalHolder* n:*normales){
+        n->accionar();
+    }
 }
 
 void Clicker::activacion(int clickI){
