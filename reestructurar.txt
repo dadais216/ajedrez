@@ -244,6 +244,66 @@ promocionan en tal lugar sin usar contadores. Tambien se podría replicar un posR
 cuenten y avancen.
 
 
+Carga de movimientos:
+Al iniciar la partida se cargan todos los movimientos de todas las piezas.
+
+Si el turno es de un humano, al elegir una pieza, con sus movimientos ya cargados, por cada movimiento se cargan todos
+los cambios de tablero que forme, que es volver a generar los movimientos de esa pieza en su nueva posicion y los movimientos 
+que se hayan recalculado por pisar triggers. Esto se hace para evitar movimientos invalidos que tengan que ver con el jaque
+y para marcar jaques
+
+Si el turno es de la IA, esta genera todos los cambios por cada movimiento que tiene y hace sus cosas
+
+
+
+
+
+
+
+
+
+
+
+Habría un beneficio en guardar todos los movimientos de movimientos? Como con los movimientos, habría una un incremento
+importante en la memoria que se usa, pero las cosas se harían mas rapido a la larga. La IA no tendría que recalcular los
+cambios que causa un movimiento si estos cambios no activaron sus triggers
+Al inicio de la partida se calcularian todos los movimientos y los cambios de cada uno (los movimientos de esa pieza
+una vez que cambio de posicion y los recalculos de los movimientos que se haya triggereado).
+En el turno del jugador todas las piezas tienen sus movimientos cargados, las que se invalidan por jaque estan invalidadas
+y las que crean jaques estan marcadas. No hay que calcular nada.
+En el turno de la IA tampoco hay que calcular nada, habría que correr la funcion de puntuar tablero con la informacion
+existente.
+
+Despues de que se efectue un movimiento habría que reemplazar los calculos del movimiento central, que es el que acaba
+de hacerse, por el de segundo orden que corresponda. Borrar los demas movimientos de segundo orden y calcular nuevos.
+Esto es lo unico que se calcularia en cada turno
+
+La diferencia entre este sistema y el que habia pensado antes es que este guarda los cambios y el anterior no, el anterior
+recalcula cosas al pedo y este ocupa mas memoria. Como hasta ahora estuve yendo por el camino de ocupar mas memoria voy
+a seguir con eso.
+
+se calculan todos los movimientos de todas las piezas, con sus triggers. 
+por cada movimiento se calculan los movimientos de segundo orden, como se tiene que pasar por condiciones ya se cargan
+sus triggers pero no se usan para nada por el momento. Una vez calculado cada movimiento de segundo orden se mira si
+piso algun trigger de primer orden de toda la lista y en caso de haberlo hecho se guarda en ese movimiento el recalculo 
+del pisado (la IA haria esto en cada turno sino)
+
+los recalculos nunca causan mas recalculos, creo. Pasaría con piezas tardias, pero estas van a tener su sistema y no
+creo que rompan nada
+
+Aleatorio no necesita este sistema pero se lo dejo, no vale la pena meter un if para esto total es algo que no se va
+a usar nunca. Quedaría para debuggear velocidades
+
+Se hace en forma general en lugar de desde la IA porque asi puedo guardar cosas directamente en los movimientos sin que
+quede raro y tambien porque el jugador humano necesita el segundo orden para hacer el chequeo de jaques
+
+
+
+
+
+
+La IA como esta ahora no valora las piezas, nomas valora como esta el tablero antes y despues de hacer un movimiento.
+Ver si esto es suficiente
 
 Optimizacion:
 cuando falla un trigger de una normal no es necesario verificar todas las condiciones, solo la que generó ese trigger.
@@ -256,6 +316,13 @@ generan triggers, pero aun asi puede hacerse algo
 
 --
 
+Piezas como el ubi ubi no van a llevarse bien con la IA porque tienen una cantidad de movimientos muy grande que se va
+a elevar al cuadrado. Podría meterse un ubi ubi haciendo que sus movimientos solo terminen con una pieza capturada, y 
+metiendo un prob persistente en cada pieza que se capture. El deslizopt se va a gastar y solo van a quedar tantos movimientos
+como piezas en rango del ubi ubi, que va a ser un numero bajo
+
+El emperado puede meterse directamente, va a tardar en cargar al principio pero sus calculos solo van a variar por
+cada movimiento de pieza, y no de forma exagerada
 
 Creo que no hay ninguna condicion no posicional que importe. Se podría dar que una pieza base su condicion en una propiedad
 de otra y cosas como every cambien esa propiedad. En estos casos especificos se podría hacer que un cambio en una pieza

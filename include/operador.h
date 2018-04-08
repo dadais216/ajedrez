@@ -11,8 +11,10 @@ struct acct{
     virtual void func(Holder*)=0;
     //func se llama para realizar la accion, pos arranca siendo relativa y se hace absoluta desde afuera
     virtual void debug()=0;
-    virtual acct* clone();
+    virtual acct* clone()=0;
     v pos;
+    ///la version en normal guarda las pos relativas, las copias en los normalHolder guardan
+    ///las absolutas
 };
 struct condt{
     virtual bool check(Holder*,v)=0;
@@ -27,17 +29,17 @@ struct colort{
     en vez de hacerlo desde afuera
     */
     virtual void debug()=0;
+    virtual colort* clone()=0;
     v pos;
 };
-/*
-struct color:public acm{
-    sf::Color _color;
-    RectangleShape cuadrado;
-
-    color();
-    virtual void func();
+struct color:public colort{
+    color(RectangleShape*,v);
+    RectangleShape* rs;
+    virtual void draw();
     virtual void debug();
+    virtual color* clone();
 };
+/*
 struct sprt:public acm{
     sprt();
     Sprite _sprt;
@@ -56,20 +58,21 @@ struct numShow:public acm{
 struct movHolder;
 struct operador{
     virtual bool operar(movHolder*,Holder*)=0;
+    virtual void generarMovHolder(movHolder*,Holder*)=0;
     virtual void debug(){};
-    virtual void generarMovHolder(movHolder*)=0;
     bool then();
     operador* sig;
 };
 struct normalHolder;
 struct normal:public operador{
     normal();
-    virtual void debug();
     virtual bool operar(movHolder*,Holder*);
-    virtual void generarMovHolder(movHolder*);
+    virtual void generarMovHolder(movHolder*,Holder*);
+    virtual void debug();
     vector<acct*> accs;
     vector<condt*> conds;
     vector<colort*> colors;
+    colort* crearColor(v);
 };
 
 //repite un operador normal hasta que falle, creando clickers en cada paso, a menos que sea deslizcond

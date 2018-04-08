@@ -59,8 +59,8 @@ void tablero::drawPieces(){
     for(int i=0;i<tam.x;i++){
         for(int j=0;j<tam.y;j++){
             Holder* p;
-            if(p=(*this)(v(i,j))){
-                p->draw(v(i,j));
+            if(p=matriz[i][j]){
+                p->draw();
             }
         }
     }

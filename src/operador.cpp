@@ -4,23 +4,45 @@
 #include <tablero.h>
 #include <Pieza.h>
 
-/*
-color::color()
-:cuadrado(Vector2f(32*escala,32*escala)),_color(){
-    _color.r=tokens.front()-1000;tokens.pop_front();
-    _color.g=tokens.front()-1000;tokens.pop_front();
-    _color.b=tokens.front()-1000;tokens.pop_front();
-    _color.a=40;
-    tipo=colort;
-    cuadrado.setFillColor(_color);
+
+
+color::color(RectangleShape* rs_,v pos_){
+    rs=rs_;
+    pos=pos_;
 }
 void color::draw(){
-    window->draw(cuadrado);
+    window->draw(*rs);///no se si aca se hace una copia, haciendo todo el tema del vector de colores al pedo
 }
 void color::debug(){
     cout<<"color ";
 }
-*/
+color* color::clone(){
+    return new color(rs,pos);
+}
+list<RectangleShape*> colores;
+colort* normal::crearColor(v pos){
+    ///se crea una instancia del sprite y cada colort la guarda en un puntero, se diferencia por tipo
+    ///en un parametro de esta funcion, por ahora solo manejo colores
+
+    int r=tokens.front()-1000;tokens.pop_front();
+    int g=tokens.front()-1000;tokens.pop_front();
+    int b=tokens.front()-1000;tokens.pop_front();
+
+
+
+    for(RectangleShape* c:colores){
+        if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b){
+            return new color(c,pos);
+        }
+    }
+    RectangleShape* rs=new RectangleShape(Vector2f(32*escala,32*escala));
+    rs->setFillColor(sf::Color(r,g,b,40));
+    colores.push_back(rs);
+    return new color(rs,pos);
+}
+
+
+
 /*
 sprt::sprt(){
     int sn=tokens.front()-1000;tokens.pop_front();
@@ -297,8 +319,8 @@ normal::normal(){
 //        acc(spwn);
         acc(del);
 
-        #define colorr(TOKEN) caseT(colors,TOKEN)
- //       colorr(color);
+        case lector::color:
+        colors.push_back(crearColor(pos));
  //       colorr(sprt);
  //       colorr(numShow);
 
@@ -325,10 +347,10 @@ normal::normal(){
     }
 }
 
-void normal::generarMovHolder(movHolder* mh){
-    mh=new normalHolder(this);//podría pasarle el vector de accs si es lo unico que necesita
+void normal::generarMovHolder(movHolder* mh,Holder* h){
+    mh=new normalHolder(h,this);//podría pasarle el vector de accs si es lo unico que necesita
     if(sig)
-        sig->generarMovHolder(mh->sig);
+        sig->generarMovHolder(mh->sig,h);
     else
         mh->sig=nullptr;
 }
@@ -356,10 +378,11 @@ bool normal::operar(movHolder* mh,Holder* h){
     }
     //h->valido=true;
     //accs en holder ya esta generado
-    for(int i=0;i<accs.size();i++){
+    for(int i=0;i<accs.size();i++)
         nh->accs[i]->pos=accs[i]->pos+h->pos;
         //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
-    }
+    for(int i=0;i<colors.size();i++)
+        nh->colors[i]->pos=colors[i]->pos+h->pos;
     return true;
 }
 
@@ -658,6 +681,6 @@ bool operador::then(){
 
 void crearClicker(){
 //    if(cambios) new Clicker(true);
-    cambios=false;
+//    cambios=false;
 }
 

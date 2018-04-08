@@ -46,7 +46,7 @@ bool Humano::turno(){
         if(input->inGameRange(_tablero.tam)){
             Holder* act=_tablero(input->get().show());
             if(act&&act->bando==bando){
-                act->pieza->calcularMovimientos(input->get());
+                //act->show(); ///los movimientos ya estan cargados, se muestran los clickers
             }
         }
     }
