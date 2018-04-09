@@ -44,8 +44,6 @@ extern list<Pieza*> piezas;
 #include <lector.h>
 extern lector lect;
 
-struct acm;
-
 struct drawable{
     drawable(int t,void* o)
     {tipo=t;obj=o;}
@@ -54,7 +52,6 @@ struct drawable{
 };
 
 extern list<int> tokens;
-extern list<acm*> buffer;
 extern list<pair<drawable,v>> bufferColores;
 extern list<v> limites;
 extern list<Clicker*> clickers;

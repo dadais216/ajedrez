@@ -47,7 +47,7 @@ SelJugador::SelJugador(int bando_){
     cuadrado.setOutlineColor(Color::White);
     cuadrado.setOutlineThickness(1);
 
-    selected=2;
+    selected=1;
 }
 void SelJugador::clicked(){
     for(Boton* b:botones){

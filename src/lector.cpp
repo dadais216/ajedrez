@@ -113,10 +113,10 @@ void lector::mostrar(){
     }
 }
 
-Holder* lector::crearPieza(int n){
+Holder* lector::crearPieza(int n,v pos){
     for(Pieza* p:piezas){
         if(p->id==abso(n))
-            return new Holder(sgn(n),p);
+            return new Holder(sgn(n),p,pos);
     }
 
 
@@ -254,7 +254,7 @@ Holder* lector::crearPieza(int n){
         cout<<"|"<<s<<"|";
     cout<<endl;
 
-    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn));
+    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn),pos);
     tokens.clear();
     return h;
 }

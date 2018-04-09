@@ -58,11 +58,11 @@ void resetearValores(){
     */
 }
 
-Holder::Holder(int _bando,Pieza* p){
+Holder::Holder(int _bando,Pieza* p,v pos_){
     bando=_bando;
     inicial=true;
     pieza=p;
-
+    pos=pos_;
 
     for(operador* op:pieza->movs){
         movHolder* mh;
@@ -135,9 +135,12 @@ void normalHolder::generar(){
     op->operar(this,h);
 }
 void normalHolder::accionar(){
-    for(acct* ac:accs){
+    for(acct* ac:accs)
         ac->func(h);
-    }
+}
+void normalHolder::draw(){
+    for(colort* c:colors)
+        c->draw();
 }
 
 
