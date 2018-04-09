@@ -1,6 +1,8 @@
 #ifndef JUGADOR_H
 #define JUGADOR_H
 
+#include <global.h>
+
 struct tablero;
 
 struct Jugador{
@@ -19,6 +21,7 @@ struct Nadie:public Jugador{
 struct Humano:public Jugador{
     Humano(int,tablero&);
     virtual bool turno();
+    list<Clicker*> clickers;
 };
 
 struct Aleatorio:public Jugador{

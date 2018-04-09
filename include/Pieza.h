@@ -37,11 +37,11 @@ struct normalHolder:public movHolder{
     virtual void generar();
 
     void accionar();///desencadena los acct, solo de normal
-    void dibujar();///dibuja los colores, solo de normal
+    void draw();///dibuja los colores, solo de normal
 };
 
 struct Holder{
-    Holder(int,Pieza*);
+    Holder(int,Pieza*,v);
     void draw();///dibuja la pieza
     void draw(int);///dibuja la pieza en la lista de capturados
     void show(list<Clicker*>& clk);///arma los clickers

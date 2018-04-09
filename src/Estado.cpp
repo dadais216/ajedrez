@@ -81,10 +81,14 @@ Proper::Proper(int id,int sel1,int sel2)
     for(int i=0;i<lect.matriz.size();i++){
         for(int j=0;j<lect.matriz[i].size();j++){
             int n=lect.matriz[i][j];
-            if(n)
-                tablero(v(j,i),lect.crearPieza(n));
+            v pos(i,j);
+            if(n){
+                tablero(pos,lect.crearPieza(n,pos));
+            }else
+                tablero(pos,nullptr);
         }
     }
+    cout<<endl;
     //construir piezas adicionales
 
     auto selec=[&](int sel,int bando)->Jugador*{
@@ -112,18 +116,22 @@ Proper::Proper(int id,int sel1,int sel2)
 
     for(int i=0;i<lect.matriz.size();i++){
         for(int j=0;j<lect.matriz[i].size();j++){
+            ///a veces hay basura en el tablero, no se por que
+            //cout<<tablero(v(i,j).show())<<endl;
+
             Holder* act;
             if(act=tablero(v(i,j)))
                 act->generar();
+
         }
     }
 }
 
 void Proper::draw(){
     tablero.drawTiles();
-    if(Clicker::drawClickers)
-        for(Clicker* cli:clickers)
-            cli->draw();
+    //if(Clicker::drawClickers)
+    //    for(Clicker* cli:clickers)
+    //        cli->draw();
     tablero.drawPieces();
     if(turno1)
         window->draw(turnoBlanco);

@@ -15,16 +15,7 @@ opt exc ww s mover or del w opt spawn 2 sprt 2 or spawn 3 sprt 3 or spawn 4 sprt
 w{a,d} captura 
 
 :1 1 #torre
-#desliz t w mover end w captura
-#desliz t a mover end a captura
-#desliz t s mover end s captura
-#desliz t d mover end d captura
-desliz d estandar a spawnu 1 d end
-desliz a estandar d spawnu 1 a end
-desliz w estandar s spawnu 1 w end
-desliz s estandar w spawnu 1 s end
-
-
+w mover
 
 :2 2 #caballo
 {ww,ss}{a,d} estandar
