@@ -194,10 +194,11 @@ struct NOMB:public TIPO{\
     v pos;\
     NOMB(v pos_){\
         pos=pos_;\
+        pos.show();\
     };\
     Func(TIPO,FUNC)\
     virtual void debug(){\
-        cout<<#NOMB<<" ";\
+        cout<<#NOMB<<" "<<&pos;pos.show();\
     } \
     Clone(TIPO,NOMB)\
 }\
@@ -320,7 +321,7 @@ normal::normal(){
         acc(del);
 
         case lector::color:
-        colors.push_back(crearColor(pos));
+        colors.push_back(crearColor(pos));cout<<"color\n";break;
  //       colorr(sprt);
  //       colorr(numShow);
 
@@ -347,7 +348,7 @@ normal::normal(){
     }
 }
 
-void normal::generarMovHolder(movHolder* mh,Holder* h){
+void normal::generarMovHolder(movHolder*& mh,Holder* h){
     mh=new normalHolder(h,this);//podría pasarle el vector de accs si es lo unico que necesita
     if(sig)
         sig->generarMovHolder(mh->sig,h);
@@ -371,6 +372,11 @@ bool normal::operar(movHolder* mh,Holder* h){
     for(condt* c:conds){
         v posAct=c->pos+h->pos;
         nh->triggs.push_back(posAct);
+
+        cout<<&c->pos;
+        c->pos.show();
+        c->debug();
+
         if(!c->check(h,posAct)){
             //h->valido=false;
             return false;
@@ -378,8 +384,11 @@ bool normal::operar(movHolder* mh,Holder* h){
     }
     //h->valido=true;
     //accs en holder ya esta generado
-    for(int i=0;i<accs.size();i++)
-        nh->accs[i]->pos=accs[i]->pos+h->pos;
+
+    for(int i=0;i<accs.size();i++){
+        nh->accs[i]->pos.show();cout<<" == ";
+        nh->accs[i]->pos=accs[i]->pos+h->pos.show();
+    }
         //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
     for(int i=0;i<colors.size();i++)
         nh->colors[i]->pos=colors[i]->pos+h->pos;

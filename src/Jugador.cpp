@@ -15,6 +15,7 @@ int dt=0;
 int clickI=0;
 bool confirm;
 bool Humano::turno(){
+    /*
     dt++;//se podría mover adentro del if?
     if(!clickers.empty()){
         if(dt>20){
@@ -42,11 +43,21 @@ bool Humano::turno(){
             return any;
         }
     }
+    */
+    for(Clicker* cli:clickers){
+        cli->clickPos.show();
+        cli->draw();
+        if(cli->update()){
+            clickers.clear();
+            break;
+        }
+    }
     if(input->click()){
         if(input->inGameRange(_tablero.tam)){
+            clickers.clear();
             Holder* act=_tablero(input->get().show());
             if(act&&act->bando==bando){
-                //act->show(); ///los movimientos ya estan cargados, se muestran los clickers
+                act->show(clickers); ///armar los clickers
             }
         }
     }

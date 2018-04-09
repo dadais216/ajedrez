@@ -6,7 +6,7 @@ using namespace std;
 struct v{
     int x;
     int y;
-    v(){};
+    v(){x=216;y=216;};
     v(int x,int y)
     :x(x),y(y){}
     v show(){

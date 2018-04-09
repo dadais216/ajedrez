@@ -4,9 +4,9 @@
 #include<vector>
 #include<list>
 #include<map>
+#include <vec.h>
 using namespace std;
 struct Holder;
-
 
 struct lector
 {
@@ -18,7 +18,7 @@ struct lector
     void mostrar();
     int stringToIntR(string&);
 
-    Holder* crearPieza(int);
+    Holder* crearPieza(int,v);
     enum token{def,llaveizq,llaveder,coma,lineJoin,
     W,A,S,D,N,posRemember,posRestore,numSet,numAdd,numSeti,numAddi,ori,
     mov,capt,spwn,pausa,del,

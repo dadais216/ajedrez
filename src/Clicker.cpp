@@ -12,6 +12,17 @@ Clicker::Clicker(vector<normalHolder*>* normales_){
     normalHolder* lastN=normales->operator[](normales->size()-1);
     clickPos=lastN->accs[lastN->accs.size()-1]->pos;
 
+    cout<<"############";
+    for(normalHolder* n:*normales){
+        for(acct* a:n->accs)
+            a->pos.show();
+    }
+
+    cout<<"!!";
+    clickPos.show();
+    cout<<"#########################";
+    Sleep(4000);
+
     //clickPos??
     ///solapamientos
     val=0;
@@ -30,6 +41,11 @@ Clicker::Clicker(vector<normalHolder*>* normales_){
 }
 
 void Clicker::draw(){
+    for(normalHolder* n:*normales){
+        n->draw();
+    }
+
+
     /*
     if(!activo) return;
     for(pair<drawable,v> c:colores){
@@ -55,6 +71,8 @@ void Clicker::draw(){
 
 bool Clicker::update(){
     if(activo&&input->get()==clickPos){
+        /*
+        //esto era para confirmar el toque
         if(mod>1){
             clickers.clear();
             clickers.push_back(this);
@@ -63,7 +81,8 @@ bool Clicker::update(){
             mod=1;
             return true;
         }
-        drawClickers=false;
+        */
+        //drawClickers=false;
         accionar();
         return true;
     }

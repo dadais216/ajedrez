@@ -58,7 +58,7 @@ struct numShow:public acm{
 struct movHolder;
 struct operador{
     virtual bool operar(movHolder*,Holder*)=0;
-    virtual void generarMovHolder(movHolder*,Holder*)=0;
+    virtual void generarMovHolder(movHolder*&,Holder*)=0;
     virtual void debug(){};
     bool then();
     operador* sig;
@@ -67,7 +67,7 @@ struct normalHolder;
 struct normal:public operador{
     normal();
     virtual bool operar(movHolder*,Holder*);
-    virtual void generarMovHolder(movHolder*,Holder*);
+    virtual void generarMovHolder(movHolder*&,Holder*);
     virtual void debug();
     vector<acct*> accs;
     vector<condt*> conds;
