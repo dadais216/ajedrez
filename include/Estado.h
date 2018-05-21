@@ -1,9 +1,9 @@
 #ifndef ESTADO_H
 #define ESTADO_H
 
-#include <global.h>
-#include <tablero.h>
-#include <boton.h>
+#include "global.h"
+#include "tablero.h"
+#include "Boton.h"
 
 struct Boton;
 struct Pieza;
@@ -14,20 +14,23 @@ struct Jugador;
 using namespace std;
 using namespace sf;
 
-struct Estado{
+struct Estado
+{
     Estado();
     virtual void update()=0;
     virtual void draw()=0;
 };
 
-struct Arranque:public Estado{
+struct Arranque:public Estado
+{
     Arranque();
     virtual void update();
     virtual void draw();
     Sprite portada;
 };
 
-struct Selector:public Estado{
+struct Selector:public Estado
+{
     Selector();
     vector<Boton*> botones;
     SelJugador sel1,sel2;
@@ -35,12 +38,13 @@ struct Selector:public Estado{
     virtual void draw();
 };
 
-struct Proper:public Estado{
+struct Proper:public Estado
+{
     Proper(int,int,int);
     virtual void update();
     virtual void draw();
     bool inRange(v a); //uso esto?
-    tablero tablero;
+    tabl tablero;
     int dt,clickI;
     bool turno1,antTurno;
     Jugador* primero;
