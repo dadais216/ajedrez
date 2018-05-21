@@ -7,11 +7,12 @@ using namespace std;
 using namespace sf;
 
 
-#include <Input.h>
-#include <Manager.h>
+#include "Input.h"
+#include "Manager.h"
 struct Estado;
 
-struct Juego{
+struct Juego
+{
     Estado* actual;
     Clock clock;
     Font font;

@@ -1,4 +1,3 @@
-
 #ifndef GLOBAL_H
 #define GLOBAL_H
 
@@ -10,12 +9,13 @@
 #include <utility>
 #include <iostream>
 #include <SFML/Graphics.hpp>
-#include <Manager.h>
+#include "Manager.h"
 #include <assert.h>
-#include <vec.h>
+#include "vec.h"
 #include <string>
 #include <sstream>
-#include <windows.h>
+#include <random>
+#include <memory>
 
 using namespace std;
 using namespace sf;
@@ -25,7 +25,7 @@ struct Input;
 template<typename T>
 struct Manager;
 struct Holder;
-struct tablero;
+struct tabl;
 struct Clicker;
 struct Pieza;
 
@@ -35,18 +35,22 @@ extern RenderWindow* window;
 extern Manager<Texture>* imagen;
 
 extern float escala;
-extern tablero* tabl;
+extern tabl* tablptr;
 extern list<Pieza*> piezas;
 //extern Holder* act;
 //extern v pos;
 //extern v org;
 
-#include <lector.h>
+#include "lector.h"
 extern lector lect;
 
-struct drawable{
+struct drawable
+{
     drawable(int t,void* o)
-    {tipo=t;obj=o;}
+    {
+        tipo=t;
+        obj=o;
+    }
     int tipo;
     void* obj;
 };

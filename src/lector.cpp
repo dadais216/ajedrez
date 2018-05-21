@@ -1,12 +1,13 @@
-#include "lector.h"
-#include <Pieza.h>
-#include <global.h>
+#include "../include/lector.h"
+#include "../include/Pieza.h"
+#include "../include/global.h"
 
 list<int> tokens;
 
-lector::lector(){
+lector::lector()
+{
     extra=0;
-    #define rel(T) tabla[#T]=T
+#define rel(T) tabla[#T]=T
     rel(def);
     rel(color);
     rel(sprt);
@@ -63,14 +64,18 @@ lector::lector(){
     lista=nullptr;
 }
 
-int lector::stringToIntR(string& s){
+int lector::stringToIntR(string& s)
+{
     int a=0,sig=1;
-    for(int i=0;i<s.length();i++){
-        if(s[i]=='-'){
+    for(int i=0; i<s.length(); i++)
+    {
+        if(s[i]=='-')
+        {
             sig=-1;
             continue;
         }
-        if(s[i]==' '||s[i]=='\n'||s[i]=='\0'){
+        if(s[i]==' '||s[i]=='\n'||s[i]=='\0')
+        {
             s=s.substr(i+1);
             return a*sig;
         }
@@ -80,17 +85,22 @@ int lector::stringToIntR(string& s){
     return a*sig;
 }
 
-void lector::leer(int n){
+void lector::leer(int n)
+{
     string linea;
     int i=0;
-    while(getline(archTablero,linea)){
+    while(getline(archTablero,linea))
+    {
         if(linea.empty()) continue;
-        if(linea[0]=='"'){
-            if(i!=n){
+        if(linea[0]=='"')
+        {
+            if(i!=n)
+            {
                 i++;
                 continue;
             }
-            while(getline(archTablero,linea)){
+            while(getline(archTablero,linea))
+            {
                 if(linea=="") continue;
                 if(linea[0]=='"'||linea[0]==':') break;
                 vector<int> vec;
@@ -103,18 +113,23 @@ void lector::leer(int n){
     }
 }
 
-void lector::mostrar(){
+void lector::mostrar()
+{
     //cout<<matriz[0].size()<<" "<<matriz.size()<<endl;
-    for(int j=0;j<matriz.size();j++){
-        for(int i=0;i<matriz[j].size();i++){
+    for(int j=0; j<matriz.size(); j++)
+    {
+        for(int i=0; i<matriz[j].size(); i++)
+        {
             cout<<matriz[j][i];
         }
         cout<<endl;
     }
 }
 
-Holder* lector::crearPieza(int n,v pos){
-    for(Pieza* p:piezas){
+Holder* lector::crearPieza(int n,v pos)
+{
+    for(Pieza* p:piezas)
+    {
         if(p->id==abso(n))
             return new Holder(sgn(n),p,pos);
     }
@@ -124,13 +139,16 @@ Holder* lector::crearPieza(int n,v pos){
     archPiezas.seekg(0, ios::beg);
     string linea;
     int sn;
-    while(getline(archPiezas,linea)){
+    while(getline(archPiezas,linea))
+    {
         if(linea.empty()) continue;
-        if(linea[0]==':'){
+        if(linea[0]==':')
+        {
             int j;
-            for(j=1;j<linea.length()&&linea[j]!='"';j++);
+            for(j=1; j<linea.length()&&linea[j]!='"'; j++);
             linea=linea.substr(1,j-1);
-            if(stringToIntR(linea)==abso(n)){
+            if(stringToIntR(linea)==abso(n))
+            {
                 sn=stringToIntR(linea);
                 goto enPieza;
             }
@@ -138,10 +156,11 @@ Holder* lector::crearPieza(int n,v pos){
     }
     cout<<"una pieza no esta";
     exit(EXIT_FAILURE);
-    enPieza:
+enPieza:
     doEsp=hayAtras=false;
     cout<<"p"<<n<<endl;
-    while(getline(archPiezas,linea)){
+    while(getline(archPiezas,linea))
+    {
         //cout<<">"<<linea<<endl;
         if(linea.empty()) continue;
         if(linea[0]==':') break;
@@ -160,9 +179,12 @@ Holder* lector::crearPieza(int n,v pos){
 //    }
 
     //aplicar def
-    for(auto it=tokens.begin();it!=tokens.end();it++){
-        for(auto ent:defs){
-            if(ent.first==*it){
+    for(auto it=tokens.begin(); it!=tokens.end(); it++)
+    {
+        for(auto ent:defs)
+        {
+            if(ent.first==*it)
+            {
                 it=tokens.erase(it);
                 auto aux=it;
                 aux--;
@@ -174,29 +196,37 @@ Holder* lector::crearPieza(int n,v pos){
     }
     //aplicar llaves
     bool loop=true;
-    while(loop){
+    while(loop)
+    {
         loop=false;
         list<int>::iterator bizq=tokens.begin(),pos;
-        for(auto izq=tokens.begin();izq!=tokens.end();izq++){
-            if(*izq==eol){
+        for(auto izq=tokens.begin(); izq!=tokens.end(); izq++)
+        {
+            if(*izq==eol)
+            {
                 bizq=izq;
                 bizq++;
-            }else if(*izq==llaveizq){
+            }
+            else if(*izq==llaveizq)
+            {
                 loop=true;
                 int anid=0;
                 izq++;
-                for(auto der=izq;der!=tokens.end();der++){
+                for(auto der=izq; der!=tokens.end(); der++)
+                {
                     if(*der==llaveizq)
                         anid++;
-                    else if(*der==llaveder){
+                    else if(*der==llaveder)
+                    {
                         if(anid)
                             anid--;
-                        else{
+                        else
+                        {
                             pos=bizq;
                             pos--;
                             der++;
                             auto bder=der;
-                            for(;*bder!=eol&&bder!=tokens.end();bder++);
+                            for(; *bder!=eol&&bder!=tokens.end(); bder++);
                             if(*bder==eol) bder++;
                             list<int> act,pre,post;
                             act.splice(act.begin(),tokens,bizq,bder);
@@ -208,13 +238,15 @@ Holder* lector::crearPieza(int n,v pos){
                             auto jt=act.begin(),it=act.begin();
                             pos++;
                             it--;
-                            do{
+                            do
+                            {
                                 it++;
                                 if(*it==llaveizq)
                                     anid++;
                                 else if(*it==llaveder)
                                     anid--;
-                                else if(*it==coma&&anid==0||it==act.end()){
+                                else if(*it==coma&&anid==0||it==act.end())
+                                {
                                     list<int> exp;
                                     exp.assign(pre.begin(),pre.end());
                                     exp.insert(exp.end(),jt,it);
@@ -223,7 +255,8 @@ Holder* lector::crearPieza(int n,v pos){
                                     jt++;
                                     tokens.splice(pos,exp,exp.begin(),exp.end());
                                 }
-                            }while(it!=act.end());
+                            }
+                            while(it!=act.end());
                             break;
                         }
                     }
@@ -235,9 +268,12 @@ Holder* lector::crearPieza(int n,v pos){
 
     //aplicar reglas especiales, como limpiar los eol con \
 
-    for(list<int>::iterator it=tokens.begin();it!=tokens.end();++it){
-        list<int>::iterator jt=it;++jt;
-        if(*it==N&&*jt==esp||*it==lineJoin&&*jt==eol){
+    for(list<int>::iterator it=tokens.begin(); it!=tokens.end(); ++it)
+    {
+        list<int>::iterator jt=it;
+        ++jt;
+        if(*it==N&&*jt==esp||*it==lineJoin&&*jt==eol)
+        {
             tokens.erase(jt);
             it=tokens.erase(it);
             ----it;
@@ -259,9 +295,11 @@ Holder* lector::crearPieza(int n,v pos){
     return h;
 }
 
-void lector::tokenizarLinea(string linea){
+void lector::tokenizarLinea(string linea)
+{
     i=0,j=0;
-    for(;j<linea.length()+1;j++){
+    for(; j<linea.length()+1; j++)
+    {
         if(token(linea,'#')) break;
         if(token(linea,' ')) continue;
         if(token(linea,'{')) continue;
@@ -274,9 +312,12 @@ void lector::tokenizarLinea(string linea){
     }
 }
 
-bool lector::token(string linea,char c){
-    if(linea[j]==c){
-        if(hayAtras){
+bool lector::token(string linea,char c)
+{
+    if(linea[j]==c)
+    {
+        if(hayAtras)
+        {
             token(linea);
             hayAtras=false;
         }
@@ -287,72 +328,109 @@ bool lector::token(string linea,char c){
     return false;
 }
 
-void lector::token(string linea){
+void lector::token(string linea)
+{
     string palabra=linea.substr(i,j-i);
 
     //cout<<"++"<<palabra<<"++"<<i<<" "<<j<<"\n";
     i=j;
 
     bool esMov=true,esNum=true;
-    for(int k=0;k<palabra.length();k++){
+    for(int k=0; k<palabra.length(); k++)
+    {
         if(palabra[k]!='w'&&palabra[k]!='a'&&palabra[k]!='s'&&palabra[k]!='d'&&palabra[k]!='n')
             esMov=false;
         if(palabra[k]<'0'||palabra[k]>'9')
             esNum=false;
     }
-    if(esMov){
-        for(int k=0;k<palabra.length();k++)
+    if(esMov)
+    {
+        for(int k=0; k<palabra.length(); k++)
             token(palabra[k]);
         doEsp=true;
         return;
     }
-    if(esNum){
+    if(esNum)
+    {
         lista->push_back(stringToIntR(palabra)+1000);
         return;
     }
 
     for(auto i:tabla)
-        if(palabra==i.first){
+        if(palabra==i.first)
+        {
             lista->push_back(i.second);
             return;
         }
-    if(lista!=&tokens){
+    if(lista!=&tokens)
+    {
         cout<<"palabra nueva: "<<palabra<<endl;
         tabla[palabra]=last+extra;
         lista->push_back(last+extra);
         extra++;
-    }else{
+    }
+    else
+    {
         cout<<"palabra no reconocida: "<<palabra;
         exit(EXIT_FAILURE);
     }
 }
 
-void lector::token(char c){
-    switch(c){
-    case '{':lista->push_back(llaveizq);break;
-    case ',':lista->push_back(coma);break;
-    case '}':lista->push_back(llaveder);break;
-    case 'w':lista->push_back(W);break;
-    case 'a':lista->push_back(A);break;
-    case 's':lista->push_back(S);break;
-    case 'd':lista->push_back(D);break;
-    case 'n':lista->push_back(N);break;
-    case '\\':lista->push_back(lineJoin);break;
-    case ' ':if(doEsp){
-        lista->push_back(esp);
-        doEsp=false;
-        } break;
-    case '\0':if(doEsp){
-        lista->push_back(esp);
-        doEsp=false;}
-        lista->push_back(eol);break;
+void lector::token(char c)
+{
+    switch(c)
+    {
+    case '{':
+        lista->push_back(llaveizq);
+        break;
+    case ',':
+        lista->push_back(coma);
+        break;
+    case '}':
+        lista->push_back(llaveder);
+        break;
+    case 'w':
+        lista->push_back(W);
+        break;
+    case 'a':
+        lista->push_back(A);
+        break;
+    case 's':
+        lista->push_back(S);
+        break;
+    case 'd':
+        lista->push_back(D);
+        break;
+    case 'n':
+        lista->push_back(N);
+        break;
+    case '\\':
+        lista->push_back(lineJoin);
+        break;
+    case ' ':
+        if(doEsp)
+        {
+            lista->push_back(esp);
+            doEsp=false;
+        }
+        break;
+    case '\0':
+        if(doEsp)
+        {
+            lista->push_back(esp);
+            doEsp=false;
+        }
+        lista->push_back(eol);
+        break;
     }
 }
 
-void lector::cargarDefs(){
+void lector::cargarDefs()
+{
     doEsp=hayAtras=false;
     string linea;
-    while(getline(archPiezas,linea)){
+    while(getline(archPiezas,linea))
+    {
         if(linea.empty()) continue;
         if(linea[0]==':') break;
         if(!lista)
@@ -360,7 +438,8 @@ void lector::cargarDefs(){
         tokenizarLinea(linea);
 
         if(lista->empty()) continue;
-        if(lista->front()==def){
+        if(lista->front()==def)
+        {
             lista->pop_front();
             if(lista->back()==eol)
                 lista->pop_back();
@@ -368,7 +447,9 @@ void lector::cargarDefs(){
             lista->pop_front();
             defs[defval]=*lista;
             lista=nullptr;
-        }else{
+        }
+        else
+        {
             lista->clear();
             continue;
         }

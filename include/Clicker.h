@@ -1,11 +1,11 @@
 #ifndef CLICKER_H
 #define CLICKER_H
-#include <vec.h>
+#include "vec.h"
 #include <SFML/Graphics.hpp>
 
 using namespace sf;
 
-#include <global.h>
+#include "global.h"
 
 struct normalHolder;
 struct Clicker

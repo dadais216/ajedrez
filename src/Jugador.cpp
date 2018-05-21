@@ -1,15 +1,15 @@
-#include "Jugador.h"
-#include "global.h"
-#include "Juego.h"
-#include "Clicker.h"
-#include "tablero.h"
-#include "Estado.h"
-#include "Pieza.h"
+#include "../include/Jugador.h"
+#include "../include/global.h"
+#include "../include/Juego.h"
+#include "../include/Clicker.h"
+#include "../include/tablero.h"
+#include "../include/Estado.h"
+#include "../include/Pieza.h"
 #include <stdlib.h>
 #include <time.h>
 
-Humano::Humano(int bando_,tablero& tablero_)
-:Jugador(bando_,tablero_){}
+Humano::Humano(int bando_,tabl& tablero_)
+    :Jugador(bando_,tablero_) {}
 
 int dt=0;
 int clickI=0;
@@ -45,38 +45,41 @@ bool Humano::turno(){
     }
     */
     for(Clicker* cli:clickers){
-        cli->clickPos.show();
+        ///no debería dibujar aca no?
         cli->draw();
         if(cli->update()){
             clickers.clear();
             break;
         }
     }
-    if(input->click()){
-        if(input->inGameRange(_tablero.tam)){
-            clickers.clear();
-            Holder* act=_tablero(input->get().show());
-            if(act&&act->bando==bando){
-                act->show(clickers); ///armar los clickers
-            }
+    if(input->click()&&input->inGameRange(_tablero.tam)){
+        clickers.clear();
+
+        cout<<"("<<input->get()<<")"<<endl;
+
+        Holder* act=_tablero(input->get());
+        if(act&&act->bando==bando){
+            act->show(clickers); ///armar los clickers
         }
     }
     return false;
 }
 
-Aleatorio::Aleatorio(int bando_,tablero& tablero_)
-:Jugador(bando_,tablero_){
+Aleatorio::Aleatorio(int bando_,tabl& tablero_)
+    :Jugador(bando_,tablero_){
     srand(time(NULL));
 }
 
 bool Aleatorio::turno(){
-    for(int i=0;i<_tablero.tam.x;i++)
-        for(int j=0;j<_tablero.tam.y;j++){
+    for(int i=0; i<_tablero.tam.x; i++)
+        for(int j=0; j<_tablero.tam.y; j++)
+        {
             Holder* act=_tablero(v(i,j));
             if(act&&act->bando==bando)
                 act->pieza->calcularMovimientos(v(i,j));
         }
-    if(clickers.size()>0){
+    if(clickers.size()>0)
+    {
         auto it=clickers.begin();
         advance(it,rand()%clickers.size());
         (*it)->accionar();
