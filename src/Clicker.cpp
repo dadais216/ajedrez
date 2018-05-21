@@ -1,30 +1,20 @@
-#include "Clicker.h"
-#include "global.h"
-#include <operador.h>
-#include <Pieza.h>
+#include "../include/Clicker.h"
+#include "../include/global.h"
+#include "../include/operador.h"
+#include "../include/Pieza.h"
+#include "../include/Juego.h"
 
 bool Clicker::drawClickers;
 
 Clicker::Clicker(vector<normalHolder*>* normales_){
-    ///con la estructura de movimiento hecha se arman listas de normales y se pasan a clickers
     normales=normales_;
 
     normalHolder* lastN=normales->operator[](normales->size()-1);
     clickPos=lastN->accs[lastN->accs.size()-1]->pos;
 
-    cout<<"############";
-    for(normalHolder* n:*normales){
-        for(acct* a:n->accs)
-            a->pos.show();
-    }
-
-    cout<<"!!";
     clickPos.show();
-    cout<<"#########################";
-    Sleep(4000);
-
-    //clickPos??
     ///solapamientos
+    /*
     val=0;
     mod=1;
     int conflictos=0;
@@ -37,6 +27,7 @@ Clicker::Clicker(vector<normalHolder*>* normales_){
         val=conflictos;
         mod=conflictos+1;
     }
+    */
     clickers.push_back(this);
 }
 
@@ -70,9 +61,10 @@ void Clicker::draw(){
 }
 
 bool Clicker::update(){
-    if(activo&&input->get()==clickPos){
+    //activo&&
+    if(input->get()==clickPos){
         /*
-        //esto era para confirmar el toque
+        //esto es para confirmar el toque
         if(mod>1){
             clickers.clear();
             clickers.push_back(this);
@@ -90,12 +82,14 @@ bool Clicker::update(){
 }
 
 void Clicker::accionar(){
+    cout<<"AYE BOY";
     for(normalHolder* n:*normales){
         n->accionar();
     }
 }
 
-void Clicker::activacion(int clickI){
+void Clicker::activacion(int clickI)
+{
     activo=val==clickI%mod;
 }
 

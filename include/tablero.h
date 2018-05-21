@@ -1,14 +1,15 @@
 #ifndef TABLERO_H
 #define TABLERO_H
 
-#include <global.h>
+#include "global.h"
 
 using namespace std;
 using namespace sf;
 
 struct Holder;
-struct tablero{
-    tablero();
+struct tabl
+{
+    tabl();
     void armar(v);
     Sprite b,n;
     v tam;
@@ -21,5 +22,4 @@ struct tablero{
 };
 
 
-#include <Juego.h>
 #endif // TABLERO_H

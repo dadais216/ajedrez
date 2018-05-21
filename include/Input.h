@@ -1,10 +1,11 @@
 #ifndef INPUT_H
 #define INPUT_H
 #include <SFML/Graphics.hpp>
-#include <vec.h>
+#include "vec.h"
 using namespace std;
 using namespace sf;
-struct Input{
+struct Input
+{
     RenderWindow* window;
     Input(RenderWindow*);
     void check();
