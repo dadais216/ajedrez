@@ -1,14 +1,15 @@
 #ifndef PIEZA_H
 #define PIEZA_H
 //#include <cstdarg>
-#include <tablero.h>
-#include <global.h>
-#include <operador.h>
+#include "tablero.h"
+#include "global.h"
+#include "operador.h"
 using namespace std;
 using namespace sf;
 struct operador;
 
-struct Pieza{
+struct Pieza
+{
     Sprite spriteb,spriten;
     int id; //para hacer copias
     int sn;
@@ -40,7 +41,8 @@ struct normalHolder:public movHolder{
     void draw();///dibuja los colores, solo de normal
 };
 
-struct Holder{
+struct Holder
+{
     Holder(int,Pieza*,v);
     void draw();///dibuja la pieza
     void draw(int);///dibuja la pieza en la lista de capturados

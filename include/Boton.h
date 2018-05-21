@@ -1,10 +1,11 @@
 #ifndef BOTON_H
 #define BOTON_H
-#include <global.h>
+#include "global.h"
 
 using namespace sf;
 using namespace std;
-struct Boton{
+struct Boton
+{
     Text text;
     Sprite sprite;
     int n,x,y,escala;
@@ -13,7 +14,8 @@ struct Boton{
     void draw();
 };
 
-struct SelJugador{
+struct SelJugador
+{
     int bando;
     list<Boton*> botones;
     RectangleShape cuadrado;

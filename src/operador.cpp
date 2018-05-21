@@ -1,37 +1,47 @@
-#include "operador.h"
-#include "lector.h"
-#include <Clicker.h>
-#include <tablero.h>
-#include <Pieza.h>
+#include "../include/operador.h"
+#include "../include/lector.h"
+#include "../include/Clicker.h"
+#include "../include/tablero.h"
+#include "../include/Pieza.h"
 
 
 
-color::color(RectangleShape* rs_,v pos_){
+color::color(RectangleShape* rs_,v pos_)
+{
     rs=rs_;
     pos=pos_;
 }
-void color::draw(){
+void color::draw()
+{
     window->draw(*rs);///no se si aca se hace una copia, haciendo todo el tema del vector de colores al pedo
 }
-void color::debug(){
+void color::debug()
+{
     cout<<"color ";
 }
-color* color::clone(){
+color* color::clone()
+{
     return new color(rs,pos);
 }
 list<RectangleShape*> colores;
-colort* normal::crearColor(v pos){
+colort* normal::crearColor(v pos)
+{
     ///se crea una instancia del sprite y cada colort la guarda en un puntero, se diferencia por tipo
     ///en un parametro de esta funcion, por ahora solo manejo colores
 
-    int r=tokens.front()-1000;tokens.pop_front();
-    int g=tokens.front()-1000;tokens.pop_front();
-    int b=tokens.front()-1000;tokens.pop_front();
+    int r=tokens.front()-1000;
+    tokens.pop_front();
+    int g=tokens.front()-1000;
+    tokens.pop_front();
+    int b=tokens.front()-1000;
+    tokens.pop_front();
 
 
 
-    for(RectangleShape* c:colores){
-        if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b){
+    for(RectangleShape* c:colores)
+    {
+        if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b)
+        {
             return new color(c,pos);
         }
     }
@@ -171,7 +181,6 @@ struct spwn:public acm{
 };
 */
 
-///parece que hay un pos global en algun lado
 //usando herencia podría evitar tener 800 constructores iguales, pero de todas formas va a haber 800 clone
 //y con esto puedo hacer lo de debug
 #define Func(TIPO,FUNC) Func##TIPO(FUNC)
@@ -191,81 +200,83 @@ struct spwn:public acm{
 #define Clonecondt(NOMB)
 #define fabMov(NOMB,TIPO,FUNC)\
 struct NOMB:public TIPO{\
-    v pos;\
     NOMB(v pos_){\
         pos=pos_;\
         pos.show();\
     };\
     Func(TIPO,FUNC)\
     virtual void debug(){\
-        cout<<#NOMB<<" "<<&pos;pos.show();\
+        cout<<#NOMB<<" "<<pos<<endl;\
     } \
     Clone(TIPO,NOMB)\
 }\
 
 
 fabMov(mov,acct,
-       (*tabl)(h->ori.show(),nullptr);
-       (*tabl)(h->pos.show(),h);
+       (*tablptr)(h->ori,nullptr);
+       (*tablptr)(h->pos,h);
        h->ori=h->pos;
-);
+      );
 
 fabMov(pausa,acct,
-        drawScreen();
-        Sleep(60);
-);
+       drawScreen();
+//       Sleep(60);
+      );
 vector<Holder*> capturados;
 fabMov(capt,acct,
-        capturados.push_back((*tabl)(pos));
-        (*tabl)(pos,nullptr);
-);
+       capturados.push_back((*tablptr)(pos));
+       (*tablptr)(pos,nullptr);
+      );
 fabMov(del,acct,
-        delete (*tabl)(pos);
-        (*tabl)(pos,nullptr);
-);
+       delete (*tablptr)(pos);
+       (*tablptr)(pos,nullptr);
+      );
 
 
 fabMov(vacio,condt,
-        return (*tabl)(pos)==nullptr;
-);
+       return (*tablptr)(pos)==nullptr;
+      );
 fabMov(pieza,condt,
-       return (*tabl)(pos);
-);
+       return (*tablptr)(pos);
+      );
 fabMov(enemigo,condt,
-        if((*tabl)(pos))
-            return (*tabl)(pos)->bando==h->bando*-1;
-        return false;
-);
+       if((*tablptr)(pos))
+       return (*tablptr)(pos)->bando==h->bando*-1;
+       return false;
+      );
 ///list<v> limites;
 fabMov(esp,condt,
-        if(pos.x>=0&&pos.x<tabl->tam.x&&pos.y>=0&&pos.y<tabl->tam.y){
-            h->outbounds=false;
-            /*
-            for(v vec:limites){ //si realentiza mover a otra cond
-                if(pos==vec){
-                    return false;
-                }
-            }
-            */
-            ///mirar el tema de los limites, ahora tienen que ser locales
-            ///probablemente esten en holder y listo
-            return true;
-        }else{
-            h->outbounds=true;
-            return false;
-        }
-);
+       if(pos.x>=0&&pos.x<tablptr->tam.x&&pos.y>=0&&pos.y<tablptr->tam.y)
+{
+h->outbounds=false;
+/*
+for(v vec:limites){ //si realentiza mover a otra cond
+    if(pos==vec){
+        return false;
+    }
+}
+*/
+///mirar el tema de los limites, ahora tienen que ser locales
+///probablemente esten en holder y listo
+return true;
+}
+else
+{
+h->outbounds=true;
+return false;
+}
+      );
 /*
 fabMov(prob,condt,
         limites.emplace_back(pos);
 );
 */
 fabMov(outbounds,condt,
-        return h->outbounds;
-);
+       return h->outbounds;
+      );
 fabMov(inicial,condt,
-        return h->inicial;
-);
+       return h->inicial;
+      );
 /*
 fabMov(ori,movt,
         pos=org;
@@ -273,24 +284,31 @@ fabMov(ori,movt,
 */
 bool separator;
 ///mirar este tema, por ahi se puede hacer una variable de normal y listo
-normal::normal(){
+normal::normal()
+{
     v pos(0,0);
     sig=nullptr;
-    while(true){
+    while(true)
+    {
         if(tokens.empty()) return;
-        int tok=tokens.front();tokens.pop_front();
-        switch(tok){
+        int tok=tokens.front();
+        tokens.pop_front();
+        switch(tok)
+        {
         case lector::W:
             pos.y++; //el espejado se va a tener que hacer cuando se construyan las absolutas
-        break;case lector::S:
+            break;
+        case lector::S:
             pos.y--;
-        break;case lector::D:
+            break;
+        case lector::D:
             pos.x++;
-        break;case lector::A:
+            break;
+        case lector::A:
             pos.x--;
-        break;
-        #define caseT(TIPO,TOKEN)  case lector::TOKEN: cout<<#TOKEN<<endl;TIPO.push_back(new TOKEN(pos));break
-        #define cond(TOKEN) caseT(conds,TOKEN)
+            break;
+#define caseT(TIPO,TOKEN)  case lector::TOKEN: cout<<#TOKEN<<endl;TIPO.push_back(new TOKEN(pos));break
+#define cond(TOKEN) caseT(conds,TOKEN)
 
 //        cond(posRemember);
 //        cond(numSet);
@@ -304,31 +322,33 @@ normal::normal(){
 //        cond(numLess);
 //        cond(numLessi);
 
-        cond(esp);
-        cond(outbounds);
-        cond(vacio);
-        cond(pieza);
-        cond(enemigo);
+            cond(esp);
+            cond(outbounds);
+            cond(vacio);
+            cond(pieza);
+            cond(enemigo);
 //        cond(prob);
-        cond(inicial);
+            cond(inicial);
 
-        #define acc(TOKEN) caseT(accs,TOKEN)
+#define acc(TOKEN) caseT(accs,TOKEN)
 
-        acc(mov);
-        acc(capt);
-        acc(pausa);
+            acc(mov);
+            acc(capt);
+            acc(pausa);
 //        acc(spwn);
-        acc(del);
+            acc(del);
 
         case lector::color:
-        colors.push_back(crearColor(pos));cout<<"color\n";break;
- //       colorr(sprt);
- //       colorr(numShow);
+            colors.push_back(crearColor(pos));
+            cout<<"color\n";
+            break;
+//       colorr(sprt);
+//       colorr(numShow);
 
-        #undef acc(TOKEN)
-        #undef cond(TOKEN)
-        #undef colorr(TOKEN)
-        #undef caseT(TIPO,TOKEN)
+#undef acc(TOKEN)
+#undef cond(TOKEN)
+#undef colorr(TOKEN)
+#undef caseT(TIPO,TOKEN)
 
         case lector::sep:
             cout<<"sep"<<endl;
@@ -348,7 +368,8 @@ normal::normal(){
     }
 }
 
-void normal::generarMovHolder(movHolder*& mh,Holder* h){
+void normal::generarMovHolder(movHolder*& mh,Holder* h)
+{
     mh=new normalHolder(h,this);//podría pasarle el vector de accs si es lo unico que necesita
     if(sig)
         sig->generarMovHolder(mh->sig,h);
@@ -356,7 +377,8 @@ void normal::generarMovHolder(movHolder*& mh,Holder* h){
         mh->sig=nullptr;
 }
 
-bool normal::operar(movHolder* mh,Holder* h){
+bool normal::operar(movHolder* mh,Holder* h)
+{
 //    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
 //    list<pair<drawable,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
 //    list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
@@ -369,15 +391,16 @@ bool normal::operar(movHolder* mh,Holder* h){
 
     nh->triggs.clear(); //no libera memoria
     ///habria que distinguir a los cond que no son posicionales, creo que son los de memoria nomas
-    for(condt* c:conds){
+    for(condt* c:conds)
+    {
         v posAct=c->pos+h->pos;
         nh->triggs.push_back(posAct);
 
-        cout<<&c->pos;
-        c->pos.show();
+        cout<<&c->pos<<c->pos<<endl;
         c->debug();
 
-        if(!c->check(h,posAct)){
+        if(!c->check(h,posAct))
+        {
             //h->valido=false;
             return false;
         }
@@ -385,17 +408,20 @@ bool normal::operar(movHolder* mh,Holder* h){
     //h->valido=true;
     //accs en holder ya esta generado
 
-    for(int i=0;i<accs.size();i++){
-        nh->accs[i]->pos.show();cout<<" == ";
+    for(int i=0; i<accs.size(); i++)
+    {
+        nh->accs[i]->pos.show();
+        cout<<" == ";
         nh->accs[i]->pos=accs[i]->pos+h->pos.show();
     }
-        //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
-    for(int i=0;i<colors.size();i++)
+    //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
+    for(int i=0; i<colors.size(); i++)
         nh->colors[i]->pos=colors[i]->pos+h->pos;
     return true;
 }
 
-void normal::debug(){
+void normal::debug()
+{
     /*
     for(acm* a:acms){
         a->debug();
@@ -650,10 +676,12 @@ bool contr::operar(v pos){
 }
 */
 
-operador* keepOn(){
+operador* keepOn()
+{
     if(tokens.empty())
         return nullptr;
-    switch(tokens.front()){
+    switch(tokens.front())
+    {
     case lector::sep:
         separator=true;
     case lector::eol:
@@ -664,11 +692,14 @@ operador* keepOn(){
     return tomar();
 }
 
-operador* tomar(){
+operador* tomar()
+{
     if(tokens.empty()) return nullptr;
-    int tok=tokens.front();tokens.pop_front();
-    #define caseTomar(TOKEN) case lector::TOKEN: cout<<#TOKEN<<endl;return new TOKEN
-    switch(tok){
+    int tok=tokens.front();
+    tokens.pop_front();
+#define caseTomar(TOKEN) case lector::TOKEN: cout<<#TOKEN<<endl;return new TOKEN
+    switch(tok)
+    {
 //    caseTomar(desliz);
 //    caseTomar(opt);
 //    caseTomar(bloque);
@@ -680,7 +711,8 @@ operador* tomar(){
     }
 }
 
-bool operador::then(){
+bool operador::then()
+{
     if(!sig)
         return true;
     return false;
@@ -688,7 +720,8 @@ bool operador::then(){
     //return sig->operar();
 }
 
-void crearClicker(){
+void crearClicker()
+{
 //    if(cambios) new Clicker(true);
 //    cambios=false;
 }

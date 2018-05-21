@@ -1,10 +1,10 @@
-#include <random>
-#include <memory>
-#include <Juego.h>
+
+#include "include/Juego.h"
 using namespace std;
 
 
-int main(){
+int main()
+{
     Juego juego;
     juego.gameloop();
 }

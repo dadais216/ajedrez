@@ -4,7 +4,7 @@
 #include<vector>
 #include<list>
 #include<map>
-#include <vec.h>
+#include "vec.h"
 using namespace std;
 struct Holder;
 
@@ -19,15 +19,16 @@ struct lector
     int stringToIntR(string&);
 
     Holder* crearPieza(int,v);
-    enum token{def,llaveizq,llaveder,coma,lineJoin,
-    W,A,S,D,N,posRemember,posRestore,numSet,numAdd,numSeti,numAddi,ori,
-    mov,capt,spwn,pausa,del,
-    vacio,pieza,enemigo,esp,outbounds,prob,numCmp,numDst,numCmpi,numDsti,numLess,numLessi,inicial,
-    desliz,opt,bloque,
-    nc,t,exc,
-    click,contr,
-    color,sprt,numShow,
-    eol,sep,lim,last};
+    enum token {def,llaveizq,llaveder,coma,lineJoin,
+                W,A,S,D,N,posRemember,posRestore,numSet,numAdd,numSeti,numAddi,ori,
+                mov,capt,spwn,pausa,del,
+                vacio,pieza,enemigo,esp,outbounds,prob,numCmp,numDst,numCmpi,numDsti,numLess,numLessi,inicial,
+                desliz,opt,bloque,
+                nc,t,exc,
+                click,contr,
+                color,sprt,numShow,
+                eol,sep,lim,last
+               };
     bool hayAtras,doEsp;
     int i,j;
     map<int,list<int>> defs;

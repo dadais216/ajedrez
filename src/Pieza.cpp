@@ -1,11 +1,12 @@
-#include "Pieza.h"
-#include <global.h>
-#include <operador.h>
-#include <Clicker.h>
+#include "../include/Pieza.h"
+#include "../include/global.h"
+#include "../include/operador.h"
+#include "../include/Clicker.h"
 
 list<Pieza*> piezas;
 
-Pieza::Pieza(int _id,int _sn){
+Pieza::Pieza(int _id,int _sn)
+{
     id=_id;
     sn=_sn;
     spriteb.setTexture(imagen->get("sprites.png"));
@@ -15,14 +16,16 @@ Pieza::Pieza(int _id,int _sn){
     spriten.setTextureRect(IntRect(64+sn*64+32,0,32,32));
     spriten.setScale(escala,escala);
 
-    while(!tokens.empty()){
+    while(!tokens.empty())
+    {
 //        for(int tok:tokens){
 //            cout<<tok<<"-";
 //        }
 //        cout<<endl;
         movs.push_back(tomar());
     }
-    for(operador* o:movs){
+    for(operador* o:movs)
+    {
         o->debug();
         cout<<endl;
     }
@@ -31,7 +34,8 @@ Pieza::Pieza(int _id,int _sn){
 
 list<Clicker*> clickers;
 
-void Pieza::calcularMovimientos(v posAct){
+void Pieza::calcularMovimientos(v posAct)
+{
     /*
     for(operador* op:movs){
         if(op->operar(posAct)&&cambios){
@@ -46,7 +50,8 @@ void Pieza::calcularMovimientos(v posAct){
     */
 }
 
-void resetearValores(){
+void resetearValores()
+{
     /*
     if(memcambios){ //no es necesario
         numeros.fill(0);
@@ -58,29 +63,36 @@ void resetearValores(){
     */
 }
 
-Holder::Holder(int _bando,Pieza* p,v pos_){
+Holder::Holder(int _bando,Pieza* p,v pos_)
+{
     bando=_bando;
     inicial=true;
     pieza=p;
     pos=pos_;
 
-    for(operador* op:pieza->movs){
+    for(operador* op:pieza->movs)
+    {
         movHolder* mh;
         op->generarMovHolder(mh,this);
         movs.push_back(mh);
     }
 }
-void Holder::draw(){
+void Holder::draw()
+{
     ///el sprite debería actualizarse cada vez que se mueve en lugar de cada vez que se dibuja, pero bueno
-    if(bando==1){
+    if(bando==1)
+    {
         pieza->spriten.setPosition(pos.x*escala*32,pos.y*escala*32);
         window->draw(pieza->spriten);
-    }else{
+    }
+    else
+    {
         pieza->spriteb.setPosition(pos.x*escala*32,pos.y*escala*32);
         window->draw(pieza->spriteb);
     }
 }
-void Holder::draw(int n){ //pos en capturados
+void Holder::draw(int n)  //pos en capturados
+{
     Sprite* sp;
     if(bando==1)
         sp=&pieza->spriten;
@@ -92,8 +104,8 @@ void Holder::draw(int n){ //pos en capturados
     sp->setScale(escala,escala);
 }
 void Holder::show(list<Clicker*>& clk){
+    ///aca habria una funcion polimorfica que toma normales y le mete su lista de normales
     vector<normalHolder*>* normales=new vector<normalHolder*>;
-    ///esto se pasa a la funcion que va devolviendo listas, las carga aca
     for(movHolder* mh:movs){
         normales->push_back(static_cast<normalHolder*>(mh));
         clk.push_back(new Clicker(normales));
@@ -101,7 +113,7 @@ void Holder::show(list<Clicker*>& clk){
 }
 
 
-void Holder::procesar(vector<v>& pisados){ //vectores que potencialmente tocaron triggers
+void Holder::procesar(vector<v>& pisados){  //vectores que potencialmente tocaron triggers
     for(movHolder* mh:movs)
         mh->procesar(pisados);
 }
@@ -122,23 +134,23 @@ normalHolder::normalHolder(Holder* h_,normal* org){
     triggs.reserve(org->conds.size()*sizeof(v));
 }
 void normalHolder::procesar(vector<v>& pisados){
-    for(v trig:triggs){
-        for(v pis:pisados){
+    for(v trig:triggs)
+        for(v pis:pisados)
             if(trig==pis){
                 op->operar(this,h);
                 return;
             }
-        }
-    }
 }
 void normalHolder::generar(){
     op->operar(this,h);
 }
-void normalHolder::accionar(){
+void normalHolder::accionar()
+{
     for(acct* ac:accs)
         ac->func(h);
 }
-void normalHolder::draw(){
+void normalHolder::draw()
+{
     for(colort* c:colors)
         c->draw();
 }

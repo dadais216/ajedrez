@@ -1,6 +1,6 @@
-#include "Juego.h"
-#include "Estado.h"
-#include <global.h>
+#include "../include/Juego.h"
+#include "../include/Estado.h"
+#include "../include/global.h"
 
 Juego* j;
 Input* input;
@@ -8,12 +8,12 @@ RenderWindow* window;
 Manager<Texture>* imagen;
 
 Juego::Juego()
-:_window(VideoMode(640, 512), "ajedrez")
-,_input(&_window)
+    :_window(VideoMode(640, 512), "ajedrez")
+    ,_input(&_window)
 {
-    _imagen.adddir("sprites\\");
+    _imagen.adddir("sprites/");
     _input.check();
-    font.loadFromFile("sprites\\VL-PGothic-Regular.ttf");
+    font.loadFromFile("sprites/VL-PGothic-Regular.ttf");
 
     j=this;
     input=&this->_input;
@@ -22,17 +22,22 @@ Juego::Juego()
     actual= new Arranque();
     drawScreen();
 }
-void Juego::gameloop(){
+void Juego::gameloop()
+{
     clock.restart();
     float dt=0;
-    while(true){
+    while(true)
+    {
         dt+=clock.restart().asSeconds();
-        while(dt>1./60.){
+        while(dt>1./60.)
+        {
             dt-=1./60.;
             _input.check();
             actual->update();
-            while (_window.pollEvent(event)){
-                if (event.type == Event::Closed){
+            while (_window.pollEvent(event))
+            {
+                if (event.type == Event::Closed)
+                {
                     _window.close();
                     return;
                 }
@@ -42,18 +47,21 @@ void Juego::gameloop(){
     }
 }
 
-void Juego::change(Estado* est){
+void Juego::change(Estado* est)
+{
     delete actual;
     actual=est;
     drawScreen();
 }
 
-void Juego::draw(){
+void Juego::draw()
+{
     _window.clear(Color(209,177,158));
     actual->draw();
     _window.display();
 }
 
-void drawScreen(){
+void drawScreen()
+{
     j->draw();
 }
