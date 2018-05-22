@@ -25,6 +25,7 @@ struct movHolder{
     operador* org;
     virtual void procesar(vector<v>&)=0; ///mirar triggers, si hay fallos llamar a recalcular
     virtual void generar()=0;///se llama solo al inicio
+    virtual void debug(){};
     movHolder* sig;
 };
 struct normalHolder:public movHolder{
@@ -36,6 +37,7 @@ struct normalHolder:public movHolder{
     vector<v> triggs; //en el constructor hacer que reserven algo de memoria
     virtual void procesar(vector<v>&);
     virtual void generar();
+    virtual void debug();
 
     void accionar();///desencadena los acct, solo de normal
     void draw();///dibuja los colores, solo de normal
@@ -46,14 +48,12 @@ struct Holder
     Holder(int,Pieza*,v);
     void draw();///dibuja la pieza
     void draw(int);///dibuja la pieza en la lista de capturados
-    void show(list<Clicker*>& clk);///arma los clickers
+    void makeCli(list<Clicker*>& clk);
     Pieza* pieza;
     v pos;
     void procesar(vector<v>&);
     void generar();
     vector<movHolder*> movs;
-
-    v ori;//se setea cuando se crea y por los movs
     int bando;
     bool inicial;
     bool outbounds;

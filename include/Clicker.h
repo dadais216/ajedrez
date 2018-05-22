@@ -19,6 +19,7 @@ struct Clicker
     bool activo;
     void activacion(int);
     void accionar();
+    void debug();
     int val,mod;
     Holder* pieza;
     v bOrg;
