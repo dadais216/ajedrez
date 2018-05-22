@@ -6,45 +6,38 @@
 
 
 
-color::color(RectangleShape* rs_,v pos_)
-{
+color::color(RectangleShape* rs_,v pos_){
     rs=rs_;
     pos=pos_;
 }
-void color::draw()
-{
-    window->draw(*rs);///no se si aca se hace una copia, haciendo todo el tema del vector de colores al pedo
+void color::draw(){
+    rs->setPosition(pos.x*32*escala,pos.y*32*escala);
+    window->draw(*rs);
+    //hacer un buffer en vez de esto
 }
-void color::debug()
-{
-    cout<<"color ";
+void color::debug(){
+    cout<<"color "<<(int)rs->getFillColor().r<<" "<<(int)rs->getFillColor().g<<" "<<(int)rs->getFillColor().b<<" "<<pos<<endl;
 }
 color* color::clone()
 {
     return new color(rs,pos);
 }
 list<RectangleShape*> colores;
-colort* normal::crearColor(v pos)
-{
+colort* normal::crearColor(v pos){
     ///se crea una instancia del sprite y cada colort la guarda en un puntero, se diferencia por tipo
     ///en un parametro de esta funcion, por ahora solo manejo colores
 
+    //el motivo de manejarme con rectangleshapes es que es lo que comparten todos, total la pos se va a tener
+    //que setear en cada dibujo sea compartida o no
     int r=tokens.front()-1000;
     tokens.pop_front();
     int g=tokens.front()-1000;
     tokens.pop_front();
     int b=tokens.front()-1000;
     tokens.pop_front();
-
-
-
     for(RectangleShape* c:colores)
-    {
         if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b)
-        {
             return new color(c,pos);
-        }
-    }
     RectangleShape* rs=new RectangleShape(Vector2f(32*escala,32*escala));
     rs->setFillColor(sf::Color(r,g,b,40));
     colores.push_back(rs);
@@ -202,7 +195,6 @@ struct spwn:public acm{
 struct NOMB:public TIPO{\
     NOMB(v pos_){\
         pos=pos_;\
-        pos.show();\
     };\
     Func(TIPO,FUNC)\
     virtual void debug(){\
@@ -213,14 +205,14 @@ struct NOMB:public TIPO{\
 
 
 fabMov(mov,acct,
-       (*tablptr)(h->ori,nullptr);
-       (*tablptr)(h->pos,h);
-       h->ori=h->pos;
+       (*tablptr)(h->pos,nullptr);
+       (*tablptr)(pos,h);
+       h->pos=pos;
       );
 
 fabMov(pausa,acct,
        drawScreen();
-//       Sleep(60);
+       sleep(seconds(1));
       );
 vector<Holder*> capturados;
 fabMov(capt,acct,
@@ -307,7 +299,8 @@ normal::normal()
         case lector::A:
             pos.x--;
             break;
-#define caseT(TIPO,TOKEN)  case lector::TOKEN: cout<<#TOKEN<<endl;TIPO.push_back(new TOKEN(pos));break
+            //cout<<#TOKEN<<endl;
+#define caseT(TIPO,TOKEN)  case lector::TOKEN: TIPO.push_back(new TOKEN(pos));break
 #define cond(TOKEN) caseT(conds,TOKEN)
 
 //        cond(posRemember);
@@ -340,25 +333,24 @@ normal::normal()
 
         case lector::color:
             colors.push_back(crearColor(pos));
-            cout<<"color\n";
             break;
 //       colorr(sprt);
 //       colorr(numShow);
 
-#undef acc(TOKEN)
-#undef cond(TOKEN)
-#undef colorr(TOKEN)
-#undef caseT(TIPO,TOKEN)
+#undef acc //(TOKEN)
+#undef cond //(TOKEN)
+#undef colorr //(TOKEN)
+#undef caseT //(TIPO,TOKEN)
 
         case lector::sep:
-            cout<<"sep"<<endl;
+            //cout<<"sep"<<endl;
             separator=true;
             return;
         case lector::eol:
-            cout<<"eol"<<endl;
+            //cout<<"eol"<<endl;
             return;
         case lector::lim:
-            cout<<"lim"<<endl;
+            //cout<<"lim"<<endl;
             return;
         default:
             tokens.push_front(tok);
@@ -368,8 +360,7 @@ normal::normal()
     }
 }
 
-void normal::generarMovHolder(movHolder*& mh,Holder* h)
-{
+void normal::generarMovHolder(movHolder*& mh,Holder* h){
     mh=new normalHolder(h,this);//podría pasarle el vector de accs si es lo unico que necesita
     if(sig)
         sig->generarMovHolder(mh->sig,h);
@@ -377,30 +368,27 @@ void normal::generarMovHolder(movHolder*& mh,Holder* h)
         mh->sig=nullptr;
 }
 
-bool normal::operar(movHolder* mh,Holder* h)
-{
+bool normal::operar(movHolder* mh,Holder* h){
 //    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
 //    list<pair<drawable,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
 //    list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
 //
 
-    ///se determino que se necesita calcular este movimiento, se lo llama desde holder pasandose a si mismo como
-    ///parametro, un elemento de holder indica el espacio de memoria del movimiento actual
+    ///se determino que se necesita calcular este movimiento, se lo llama desde un holder pasandose a si mismo
 
     normalHolder* nh=static_cast<normalHolder*>(mh);
 
     nh->triggs.clear(); //no libera memoria
     ///habria que distinguir a los cond que no son posicionales, creo que son los de memoria nomas
-    for(condt* c:conds)
-    {
+    for(condt* c:conds){
         v posAct=c->pos+h->pos;
         nh->triggs.push_back(posAct);
 
-        cout<<&c->pos<<c->pos<<endl;
-        c->debug();
+        //todo podría hacerse que cuando el mov es falso se tenga en cuenta solo
+        //el trigger final, el que hizo falso al mov. Creo que funcionaria para todos
+        //los casos. Habria que meter el concepto de normalholders verdaderas y falsas, no se si lo valga
 
-        if(!c->check(h,posAct))
-        {
+        if(!c->check(h,posAct)){
             //h->valido=false;
             return false;
         }
@@ -408,26 +396,26 @@ bool normal::operar(movHolder* mh,Holder* h)
     //h->valido=true;
     //accs en holder ya esta generado
 
-    for(int i=0; i<accs.size(); i++)
-    {
-        nh->accs[i]->pos.show();
-        cout<<" == ";
-        nh->accs[i]->pos=accs[i]->pos+h->pos.show();
-    }
     //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
+    for(int i=0; i<accs.size(); i++)
+        nh->accs[i]->pos=accs[i]->pos+h->pos;
     for(int i=0; i<colors.size(); i++)
         nh->colors[i]->pos=colors[i]->pos+h->pos;
     return true;
 }
 
-void normal::debug()
-{
-    /*
-    for(acm* a:acms){
+void normal::debug(){
+    cout<<"normal: conds:\n";
+    for(condt* c:conds)
+        c->debug();
+    cout<<"accs:\n";
+    for(acct* a:accs)
         a->debug();
-    }
+    cout<<"colors:\n";
+    for(colort* c:colors)
+        c->debug();
+    cout<<endl;
     if(sig) sig->debug();
-    */
 }
 
 /*

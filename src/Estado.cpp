@@ -168,7 +168,7 @@ void Proper::update()
 {
     if(antTurno!=turno1)
     {
-        drawScreen();
+        //drawScreen();
         antTurno=turno1;
     }
     if(turno1)

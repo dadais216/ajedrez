@@ -5,8 +5,7 @@
 
 list<Pieza*> piezas;
 
-Pieza::Pieza(int _id,int _sn)
-{
+Pieza::Pieza(int _id,int _sn){
     id=_id;
     sn=_sn;
     spriteb.setTexture(imagen->get("sprites.png"));
@@ -16,16 +15,14 @@ Pieza::Pieza(int _id,int _sn)
     spriten.setTextureRect(IntRect(64+sn*64+32,0,32,32));
     spriten.setScale(escala,escala);
 
-    while(!tokens.empty())
-    {
+    while(!tokens.empty()){
 //        for(int tok:tokens){
 //            cout<<tok<<"-";
 //        }
 //        cout<<endl;
         movs.push_back(tomar());
     }
-    for(operador* o:movs)
-    {
+    for(operador* o:movs){
         o->debug();
         cout<<endl;
     }
@@ -70,8 +67,7 @@ Holder::Holder(int _bando,Pieza* p,v pos_)
     pieza=p;
     pos=pos_;
 
-    for(operador* op:pieza->movs)
-    {
+    for(operador* op:pieza->movs){
         movHolder* mh;
         op->generarMovHolder(mh,this);
         movs.push_back(mh);
@@ -79,7 +75,7 @@ Holder::Holder(int _bando,Pieza* p,v pos_)
 }
 void Holder::draw()
 {
-    ///el sprite debería actualizarse cada vez que se mueve en lugar de cada vez que se dibuja, pero bueno
+    //todo el sprite debería actualizarse cada vez que se mueve en lugar de cada vez que se dibuja, pero bueno
     if(bando==1)
     {
         pieza->spriten.setPosition(pos.x*escala*32,pos.y*escala*32);
@@ -103,10 +99,10 @@ void Holder::draw(int n)  //pos en capturados
     window->draw(*sp);
     sp->setScale(escala,escala);
 }
-void Holder::show(list<Clicker*>& clk){
+void Holder::makeCli(list<Clicker*>& clk){
     ///aca habria una funcion polimorfica que toma normales y le mete su lista de normales
-    vector<normalHolder*>* normales=new vector<normalHolder*>;
     for(movHolder* mh:movs){
+        vector<normalHolder*>* normales=new vector<normalHolder*>;
         normales->push_back(static_cast<normalHolder*>(mh));
         clk.push_back(new Clicker(normales));
     }
@@ -144,16 +140,23 @@ void normalHolder::procesar(vector<v>& pisados){
 void normalHolder::generar(){
     op->operar(this,h);
 }
-void normalHolder::accionar()
-{
+void normalHolder::accionar(){
     for(acct* ac:accs)
         ac->func(h);
 }
-void normalHolder::draw()
-{
+void normalHolder::draw(){
     for(colort* c:colors)
         c->draw();
 }
-
+void normalHolder::debug(){
+    cout<<"normalHolder:\n";
+    cout<<"accs:\n";
+    for(acct* a:accs)
+        a->debug();
+    cout<<"colors:\n";
+    for(colort* c:colors)
+        c->debug();
+    //if(sig) sig->debug();
+}
 
 
