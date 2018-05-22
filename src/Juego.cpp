@@ -54,14 +54,12 @@ void Juego::change(Estado* est)
     drawScreen();
 }
 
-void Juego::draw()
-{
+void Juego::draw(){
     _window.clear(Color(209,177,158));
     actual->draw();
     _window.display();
 }
 
-void drawScreen()
-{
+void drawScreen(){
     j->draw();
 }

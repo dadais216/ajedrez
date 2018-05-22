@@ -21,7 +21,7 @@ Boton::Boton(string nomb,int n_,int x_,int y_,int escala_)
     sprite.setPosition(x,y);
     text.setPosition(x+5,y+10);
     n=n_+1;
-    cout<<n<<" "<<x<<" "<<y<<endl;
+    //cout<<n<<" "<<x<<" "<<y<<endl;
 }
 int Boton::clicked()
 {
@@ -61,7 +61,7 @@ void SelJugador::clicked()
         if(n=b->clicked())
         {
             selected=n-1;
-            cout<<selected<<endl;
+            //cout<<selected<<endl;
             drawScreen();
             return;
         }

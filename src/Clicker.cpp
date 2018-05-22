@@ -35,6 +35,7 @@ void Clicker::draw(){
     for(normalHolder* n:*normales){
         n->draw();
     }
+    window->display(); //todo borrar
 
 
     /*
@@ -82,7 +83,6 @@ bool Clicker::update(){
 }
 
 void Clicker::accionar(){
-    cout<<"AYE BOY";
     for(normalHolder* n:*normales){
         n->accionar();
     }
@@ -91,6 +91,11 @@ void Clicker::accionar(){
 void Clicker::activacion(int clickI)
 {
     activo=val==clickI%mod;
+}
+
+void Clicker::debug(){
+    for(normalHolder* n:*normales)
+        n->debug();
 }
 
 
