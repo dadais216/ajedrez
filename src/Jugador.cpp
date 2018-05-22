@@ -44,22 +44,29 @@ bool Humano::turno(){
         }
     }
     */
-    for(Clicker* cli:clickers){
-        ///no debería dibujar aca no?
-        cli->draw();
-        if(cli->update()){
-            clickers.clear();
-            break;
-        }
-    }
+
     if(input->click()&&input->inGameRange(_tablero.tam)){
+        for(Clicker* cli:clickers){
+        ///esto se pregunta 60hz
+        ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
+        ///vuelva a meter solapamiento
+            if(cli->update()){
+                clickers.clear();
+                return false; //true
+            }
+        }
         clickers.clear();
 
         cout<<"("<<input->get()<<")"<<endl;
 
         Holder* act=_tablero(input->get());
         if(act&&act->bando==bando){
-            act->show(clickers); ///armar los clickers
+            act->makeCli(clickers); ///armar los clickers
+            for(Clicker* cli:clickers){
+                cli->debug();
+                cli->draw();
+                cout<<"---";
+            }
         }
     }
     return false;
