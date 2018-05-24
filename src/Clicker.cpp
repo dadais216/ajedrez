@@ -6,6 +6,8 @@
 
 bool Clicker::drawClickers;
 
+vector<Clicker*> clickers;
+
 Clicker::Clicker(vector<normalHolder*>* normales_){
     normales=normales_;
 
@@ -28,16 +30,12 @@ Clicker::Clicker(vector<normalHolder*>* normales_){
         mod=conflictos+1;
     }
     */
-    clickers.push_back(this);
 }
 
 void Clicker::draw(){
     for(normalHolder* n:*normales){
         n->draw();
     }
-    window->display(); //todo borrar
-
-
     /*
     if(!activo) return;
     for(pair<drawable,v> c:colores){
@@ -83,6 +81,7 @@ bool Clicker::update(){
 }
 
 void Clicker::accionar(){
+    Clicker::drawClickers=false;
     for(normalHolder* n:*normales){
         n->accionar();
     }

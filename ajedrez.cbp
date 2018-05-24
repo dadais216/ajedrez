@@ -13,6 +13,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory="include" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
@@ -22,6 +23,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
+					<Add directory="include" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -43,6 +45,7 @@
 		<Unit filename="include/Pieza.h" />
 		<Unit filename="include/global.h" />
 		<Unit filename="include/lector.h" />
+		<Unit filename="include/movs.h" />
 		<Unit filename="include/operador.h" />
 		<Unit filename="include/tablero.h" />
 		<Unit filename="include/vec.h" />
@@ -55,6 +58,10 @@
 		<Unit filename="src/Jugador.cpp" />
 		<Unit filename="src/Pieza.cpp" />
 		<Unit filename="src/lector.cpp" />
+		<Unit filename="src/movs.cpp">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
 		<Unit filename="src/operador.cpp" />
 		<Unit filename="src/tablero.cpp" />
 		<Extensions>
