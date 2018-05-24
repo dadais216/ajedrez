@@ -58,7 +58,7 @@ void SelJugador::clicked()
     for(Boton* b:botones)
     {
         int n;
-        if(n=b->clicked())
+        if((n=b->clicked()))
         {
             selected=n-1;
             //cout<<selected<<endl;

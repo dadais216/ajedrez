@@ -12,8 +12,8 @@
   <line>Command: /home/daniel/Desktop/ajedrez/bin/Debug/ajedrez </line>
 </preamble>
 
-<pid>21495</pid>
-<ppid>5501</ppid>
+<pid>2021</pid>
+<ppid>4724</ppid>
 <tool>memcheck</tool>
 
 <args>
@@ -32,7 +32,7 @@
 
 <status>
   <state>RUNNING</state>
-  <time>00:00:00:00.193 </time>
+  <time>00:00:00:00.169 </time>
 </status>
 
 <error>
@@ -255,311 +255,18 @@
   </stack>
 </error>
 
-<error>
-  <unique>0x4</unique>
-  <tid>1</tid>
-  <kind>InvalidRead</kind>
-  <what>Invalid read of size 8</what>
-  <stack>
-    <frame>
-      <ip>0x421A20</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>std::vector&lt;Holder*, std::allocator&lt;Holder*&gt; &gt;::operator[](unsigned long)</fn>
-      <dir>/usr/include/c++/5/bits</dir>
-      <file>stl_vector.h</file>
-      <line>780</line>
-    </frame>
-    <frame>
-      <ip>0x420B48</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>tabl::operator()(v, Holder*)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>tablero.cpp</file>
-      <line>48</line>
-    </frame>
-    <frame>
-      <ip>0x417E94</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>mov::func(Holder*)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>operador.cpp</file>
-      <line>215</line>
-    </frame>
-    <frame>
-      <ip>0x41D45A</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>normalHolder::accionar()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Pieza.cpp</file>
-      <line>150</line>
-    </frame>
-    <frame>
-      <ip>0x407910</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Clicker::accionar()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Clicker.cpp</file>
-      <line>87</line>
-    </frame>
-    <frame>
-      <ip>0x407876</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Clicker::update()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Clicker.cpp</file>
-      <line>78</line>
-    </frame>
-    <frame>
-      <ip>0x40C189</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Humano::turno()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Jugador.cpp</file>
-      <line>50</line>
-    </frame>
-    <frame>
-      <ip>0x408F0F</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Proper::update()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>175</line>
-    </frame>
-    <frame>
-      <ip>0x40B91C</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Juego::gameloop()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Juego.cpp</file>
-      <line>36</line>
-    </frame>
-    <frame>
-      <ip>0x403CBE</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>main</fn>
-      <dir>/home/daniel/Desktop/ajedrez</dir>
-      <file>main.cpp</file>
-      <line>9</line>
-    </frame>
-  </stack>
-  <auxwhat>Address 0xcd66660 is 5 bytes after a block of size 43 free'd</auxwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2F24B</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>operator delete(void*)</fn>
-    </frame>
-    <frame>
-      <ip>0x40FAB9</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>lector::tokenizarLinea(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>lector.cpp</file>
-      <line>305</line>
-    </frame>
-    <frame>
-      <ip>0x4106BE</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>lector::cargarDefs()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>lector.cpp</file>
-      <line>438</line>
-    </frame>
-    <frame>
-      <ip>0x4088F5</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Proper::Proper(int, int, int)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>84</line>
-    </frame>
-    <frame>
-      <ip>0x408693</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Selector::update()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>66</line>
-    </frame>
-    <frame>
-      <ip>0x40B91C</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Juego::gameloop()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Juego.cpp</file>
-      <line>36</line>
-    </frame>
-    <frame>
-      <ip>0x403CBE</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>main</fn>
-      <dir>/home/daniel/Desktop/ajedrez</dir>
-      <file>main.cpp</file>
-      <line>9</line>
-    </frame>
-  </stack>
-  <auxwhat>Block was alloc'd at</auxwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2E0EF</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>operator new(unsigned long)</fn>
-    </frame>
-    <frame>
-      <ip>0x55C996C</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.21</obj>
-      <fn>void std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;::_M_construct&lt;char*&gt;(char*, char*, std::forward_iterator_tag)</fn>
-    </frame>
-    <frame>
-      <ip>0x55C99CE</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.21</obj>
-      <fn>std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;::basic_string(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt; const&amp;)</fn>
-    </frame>
-    <frame>
-      <ip>0x40FA93</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>lector::tokenizarLinea(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>lector.cpp</file>
-      <line>305</line>
-    </frame>
-    <frame>
-      <ip>0x4106BE</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>lector::cargarDefs()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>lector.cpp</file>
-      <line>438</line>
-    </frame>
-    <frame>
-      <ip>0x4088F5</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Proper::Proper(int, int, int)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>84</line>
-    </frame>
-    <frame>
-      <ip>0x408693</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Selector::update()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>66</line>
-    </frame>
-    <frame>
-      <ip>0x40B91C</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Juego::gameloop()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Juego.cpp</file>
-      <line>36</line>
-    </frame>
-    <frame>
-      <ip>0x403CBE</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>main</fn>
-      <dir>/home/daniel/Desktop/ajedrez</dir>
-      <file>main.cpp</file>
-      <line>9</line>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x5</unique>
-  <tid>1</tid>
-  <kind>InvalidWrite</kind>
-  <what>Invalid write of size 8</what>
-  <stack>
-    <frame>
-      <ip>0x420B50</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>tabl::operator()(v, Holder*)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>tablero.cpp</file>
-      <line>48</line>
-    </frame>
-    <frame>
-      <ip>0x417E94</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>mov::func(Holder*)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>operador.cpp</file>
-      <line>215</line>
-    </frame>
-    <frame>
-      <ip>0x41D45A</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>normalHolder::accionar()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Pieza.cpp</file>
-      <line>150</line>
-    </frame>
-    <frame>
-      <ip>0x407910</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Clicker::accionar()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Clicker.cpp</file>
-      <line>87</line>
-    </frame>
-    <frame>
-      <ip>0x407876</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Clicker::update()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Clicker.cpp</file>
-      <line>78</line>
-    </frame>
-    <frame>
-      <ip>0x40C189</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Humano::turno()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Jugador.cpp</file>
-      <line>50</line>
-    </frame>
-    <frame>
-      <ip>0x408F0F</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Proper::update()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>175</line>
-    </frame>
-    <frame>
-      <ip>0x40B91C</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Juego::gameloop()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Juego.cpp</file>
-      <line>36</line>
-    </frame>
-    <frame>
-      <ip>0x403CBE</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>main</fn>
-      <dir>/home/daniel/Desktop/ajedrez</dir>
-      <file>main.cpp</file>
-      <line>9</line>
-    </frame>
-  </stack>
-  <auxwhat>Address 0x6c0 is not stack'd, malloc'd or (recently) free'd</auxwhat>
-</error>
-
 
 <status>
   <state>FINISHED</state>
-  <time>00:00:00:20.419 </time>
+  <time>00:00:00:26.112 </time>
 </status>
 
 <error>
-  <unique>0x303</unique>
+  <unique>0x49</unique>
   <tid>1</tid>
   <kind>Leak_DefinitelyLost</kind>
   <xwhat>
-    <text>120 bytes in 1 blocks are definitely lost in loss record 766 of 1,120</text>
+    <text>120 bytes in 1 blocks are definitely lost in loss record 70 of 127</text>
     <leakedbytes>120</leakedbytes>
     <leakedblocks>1</leakedblocks>
   </xwhat>
@@ -590,7 +297,7 @@
       <fn>sf::RectangleShape::RectangleShape(sf::Vector2&lt;float&gt; const&amp;)</fn>
     </frame>
     <frame>
-      <ip>0x404758</ip>
+      <ip>0x4047A4</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>SelJugador::SelJugador(int)</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -598,7 +305,7 @@
       <line>40</line>
     </frame>
     <frame>
-      <ip>0x4081FC</ip>
+      <ip>0x4081C4</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Selector::Selector()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -606,7 +313,7 @@
       <line>31</line>
     </frame>
     <frame>
-      <ip>0x40815B</ip>
+      <ip>0x408123</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Arranque::update()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -614,7 +321,7 @@
       <line>27</line>
     </frame>
     <frame>
-      <ip>0x40B91C</ip>
+      <ip>0x40BA98</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Juego::gameloop()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -622,7 +329,7 @@
       <line>36</line>
     </frame>
     <frame>
-      <ip>0x403CBE</ip>
+      <ip>0x403D6E</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>main</fn>
       <dir>/home/daniel/Desktop/ajedrez</dir>
@@ -633,11 +340,11 @@
 </error>
 
 <error>
-  <unique>0x304</unique>
+  <unique>0x4a</unique>
   <tid>1</tid>
   <kind>Leak_DefinitelyLost</kind>
   <xwhat>
-    <text>120 bytes in 1 blocks are definitely lost in loss record 767 of 1,120</text>
+    <text>120 bytes in 1 blocks are definitely lost in loss record 71 of 127</text>
     <leakedbytes>120</leakedbytes>
     <leakedblocks>1</leakedblocks>
   </xwhat>
@@ -668,7 +375,7 @@
       <fn>sf::RectangleShape::RectangleShape(sf::Vector2&lt;float&gt; const&amp;)</fn>
     </frame>
     <frame>
-      <ip>0x404758</ip>
+      <ip>0x4047A4</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>SelJugador::SelJugador(int)</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -676,7 +383,7 @@
       <line>40</line>
     </frame>
     <frame>
-      <ip>0x408216</ip>
+      <ip>0x4081DE</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Selector::Selector()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -684,7 +391,7 @@
       <line>31</line>
     </frame>
     <frame>
-      <ip>0x40815B</ip>
+      <ip>0x408123</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Arranque::update()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -692,7 +399,7 @@
       <line>27</line>
     </frame>
     <frame>
-      <ip>0x40B91C</ip>
+      <ip>0x40BA98</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Juego::gameloop()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -700,7 +407,7 @@
       <line>36</line>
     </frame>
     <frame>
-      <ip>0x403CBE</ip>
+      <ip>0x403D6E</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>main</fn>
       <dir>/home/daniel/Desktop/ajedrez</dir>
@@ -711,12 +418,12 @@
 </error>
 
 <error>
-  <unique>0x34e</unique>
+  <unique>0x4e</unique>
   <tid>1</tid>
   <kind>Leak_DefinitelyLost</kind>
   <xwhat>
-    <text>200 bytes in 1 blocks are definitely lost in loss record 841 of 1,120</text>
-    <leakedbytes>200</leakedbytes>
+    <text>168 (24 direct, 144 indirect) bytes in 1 blocks are definitely lost in loss record 75 of 127</text>
+    <leakedbytes>168</leakedbytes>
     <leakedblocks>1</leakedblocks>
   </xwhat>
   <stack>
@@ -726,163 +433,7 @@
       <fn>operator new(unsigned long)</fn>
     </frame>
     <frame>
-      <ip>0x4E6C2A9</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>std::vector&lt;sf::Vertex, std::allocator&lt;sf::Vertex&gt; &gt;::_M_fill_insert(__gnu_cxx::__normal_iterator&lt;sf::Vertex*, std::vector&lt;sf::Vertex, std::allocator&lt;sf::Vertex&gt; &gt; &gt;, unsigned long, sf::Vertex const&amp;)</fn>
-    </frame>
-    <frame>
-      <ip>0x4E6BD03</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>sf::VertexArray::resize(unsigned long)</fn>
-    </frame>
-    <frame>
-      <ip>0x4E68DC7</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>sf::Shape::updateOutline()</fn>
-    </frame>
-    <frame>
-      <ip>0x4E69515</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>sf::RectangleShape::RectangleShape(sf::Vector2&lt;float&gt; const&amp;)</fn>
-    </frame>
-    <frame>
-      <ip>0x404758</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>SelJugador::SelJugador(int)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Boton.cpp</file>
-      <line>40</line>
-    </frame>
-    <frame>
-      <ip>0x4081FC</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Selector::Selector()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>31</line>
-    </frame>
-    <frame>
-      <ip>0x40815B</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Arranque::update()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>27</line>
-    </frame>
-    <frame>
-      <ip>0x40B91C</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Juego::gameloop()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Juego.cpp</file>
-      <line>36</line>
-    </frame>
-    <frame>
-      <ip>0x403CBE</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>main</fn>
-      <dir>/home/daniel/Desktop/ajedrez</dir>
-      <file>main.cpp</file>
-      <line>9</line>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x34f</unique>
-  <tid>1</tid>
-  <kind>Leak_DefinitelyLost</kind>
-  <xwhat>
-    <text>200 bytes in 1 blocks are definitely lost in loss record 842 of 1,120</text>
-    <leakedbytes>200</leakedbytes>
-    <leakedblocks>1</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2E0EF</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>operator new(unsigned long)</fn>
-    </frame>
-    <frame>
-      <ip>0x4E6C2A9</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>std::vector&lt;sf::Vertex, std::allocator&lt;sf::Vertex&gt; &gt;::_M_fill_insert(__gnu_cxx::__normal_iterator&lt;sf::Vertex*, std::vector&lt;sf::Vertex, std::allocator&lt;sf::Vertex&gt; &gt; &gt;, unsigned long, sf::Vertex const&amp;)</fn>
-    </frame>
-    <frame>
-      <ip>0x4E6BD03</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>sf::VertexArray::resize(unsigned long)</fn>
-    </frame>
-    <frame>
-      <ip>0x4E68DC7</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>sf::Shape::updateOutline()</fn>
-    </frame>
-    <frame>
-      <ip>0x4E69515</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>sf::RectangleShape::RectangleShape(sf::Vector2&lt;float&gt; const&amp;)</fn>
-    </frame>
-    <frame>
-      <ip>0x404758</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>SelJugador::SelJugador(int)</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Boton.cpp</file>
-      <line>40</line>
-    </frame>
-    <frame>
-      <ip>0x408216</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Selector::Selector()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>31</line>
-    </frame>
-    <frame>
-      <ip>0x40815B</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Arranque::update()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Estado.cpp</file>
-      <line>27</line>
-    </frame>
-    <frame>
-      <ip>0x40B91C</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Juego::gameloop()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>Juego.cpp</file>
-      <line>36</line>
-    </frame>
-    <frame>
-      <ip>0x403CBE</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>main</fn>
-      <dir>/home/daniel/Desktop/ajedrez</dir>
-      <file>main.cpp</file>
-      <line>9</line>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x39f</unique>
-  <tid>1</tid>
-  <kind>Leak_DefinitelyLost</kind>
-  <xwhat>
-    <text>432 (72 direct, 360 indirect) bytes in 3 blocks are definitely lost in loss record 922 of 1,120</text>
-    <leakedbytes>432</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2E0EF</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>operator new(unsigned long)</fn>
-    </frame>
-    <frame>
-      <ip>0x415AA8</ip>
+      <ip>0x415C38</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>__gnu_cxx::new_allocator&lt;std::_List_node&lt;int&gt; &gt;::allocate(unsigned long, void const*)</fn>
       <dir>/usr/include/c++/5/ext</dir>
@@ -890,7 +441,7 @@
       <line>104</line>
     </frame>
     <frame>
-      <ip>0x414F3F</ip>
+      <ip>0x4150CF</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::__cxx11::_List_base&lt;int, std::allocator&lt;int&gt; &gt;::_M_get_node()</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -898,39 +449,39 @@
       <line>392</line>
     </frame>
     <frame>
-      <ip>0x413CCA</ip>
+      <ip>0x413DC8</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>std::_List_node&lt;int&gt;* std::__cxx11::list&lt;int, std::allocator&lt;int&gt; &gt;::_M_create_node&lt;int const&amp;&gt;(int const&amp;)</fn>
+      <fn>std::_List_node&lt;int&gt;* std::__cxx11::list&lt;int, std::allocator&lt;int&gt; &gt;::_M_create_node&lt;int&gt;(int&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
       <file>stl_list.h</file>
       <line>571</line>
     </frame>
     <frame>
-      <ip>0x412821</ip>
+      <ip>0x4128AD</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>void std::__cxx11::list&lt;int, std::allocator&lt;int&gt; &gt;::_M_insert&lt;int const&amp;&gt;(std::_List_iterator&lt;int&gt;, int const&amp;)</fn>
+      <fn>void std::__cxx11::list&lt;int, std::allocator&lt;int&gt; &gt;::_M_insert&lt;int&gt;(std::_List_iterator&lt;int&gt;, int&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
       <file>stl_list.h</file>
       <line>1763</line>
     </frame>
     <frame>
-      <ip>0x41148B</ip>
+      <ip>0x411540</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>std::__cxx11::list&lt;int, std::allocator&lt;int&gt; &gt;::push_back(int const&amp;)</fn>
+      <fn>std::__cxx11::list&lt;int, std::allocator&lt;int&gt; &gt;::push_back(int&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
       <file>stl_list.h</file>
-      <line>1089</line>
+      <line>1094</line>
     </frame>
     <frame>
-      <ip>0x41017E</ip>
+      <ip>0x410262</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>lector::token(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;)</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
       <file>lector.cpp</file>
-      <line>362</line>
+      <line>355</line>
     </frame>
     <frame>
-      <ip>0x40FDB0</ip>
+      <ip>0x40FF40</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>lector::token(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, char)</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -938,7 +489,7 @@
       <line>321</line>
     </frame>
     <frame>
-      <ip>0x40FBAF</ip>
+      <ip>0x40FD3F</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>lector::tokenizarLinea(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;)</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -946,7 +497,7 @@
       <line>309</line>
     </frame>
     <frame>
-      <ip>0x4106BE</ip>
+      <ip>0x41084E</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>lector::cargarDefs()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -954,7 +505,7 @@
       <line>438</line>
     </frame>
     <frame>
-      <ip>0x4088F5</ip>
+      <ip>0x4088C3</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Proper::Proper(int, int, int)</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -962,7 +513,7 @@
       <line>84</line>
     </frame>
     <frame>
-      <ip>0x408693</ip>
+      <ip>0x40865B</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Selector::update()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -973,695 +524,13 @@
 </error>
 
 <error>
-  <unique>0x3a2</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>501 bytes in 3 blocks are possibly lost in loss record 925 of 1,120</text>
-    <leakedbytes>501</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C4C5</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3a3</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>501 bytes in 3 blocks are possibly lost in loss record 926 of 1,120</text>
-    <leakedbytes>501</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C5A9</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3a4</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>501 bytes in 3 blocks are possibly lost in loss record 927 of 1,120</text>
-    <leakedbytes>501</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C5CD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3a5</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>501 bytes in 3 blocks are possibly lost in loss record 928 of 1,120</text>
-    <leakedbytes>501</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C5F1</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3a6</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>501 bytes in 3 blocks are possibly lost in loss record 929 of 1,120</text>
-    <leakedbytes>501</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C615</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3a7</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>501 bytes in 3 blocks are possibly lost in loss record 930 of 1,120</text>
-    <leakedbytes>501</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C639</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3a8</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>501 bytes in 3 blocks are possibly lost in loss record 931 of 1,120</text>
-    <leakedbytes>501</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C65D</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3a9</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>501 bytes in 3 blocks are possibly lost in loss record 932 of 1,120</text>
-    <leakedbytes>501</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C681</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3aa</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>501 bytes in 3 blocks are possibly lost in loss record 933 of 1,120</text>
-    <leakedbytes>501</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C6A5</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3e9</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>861 bytes in 3 blocks are possibly lost in loss record 996 of 1,120</text>
-    <leakedbytes>861</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2DB8F</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>malloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBBE48</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x91389F6</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x935C573</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9369B85</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914ADA6</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x508FB19</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-window.so.2.3.2</obj>
-    </frame>
-    <frame>
-      <ip>0x508346B</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-window.so.2.3.2</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x3ea</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>933 bytes in 3 blocks are possibly lost in loss record 997 of 1,120</text>
-    <leakedbytes>933</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C585</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x401</unique>
+  <unique>0x53</unique>
   <tid>1</tid>
   <kind>Leak_DefinitelyLost</kind>
   <xwhat>
-    <text>1,176 (168 direct, 1,008 indirect) bytes in 7 blocks are definitely lost in loss record 1,020 of 1,120</text>
-    <leakedbytes>1176</leakedbytes>
-    <leakedblocks>7</leakedblocks>
+    <text>200 bytes in 1 blocks are definitely lost in loss record 80 of 127</text>
+    <leakedbytes>200</leakedbytes>
+    <leakedblocks>1</leakedblocks>
   </xwhat>
   <stack>
     <frame>
@@ -1670,31 +539,51 @@
       <fn>operator new(unsigned long)</fn>
     </frame>
     <frame>
-      <ip>0x410682</ip>
-      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>lector::cargarDefs()</fn>
-      <dir>/home/daniel/Desktop/ajedrez/src</dir>
-      <file>lector.cpp</file>
-      <line>437</line>
+      <ip>0x4E6C2A9</ip>
+      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
+      <fn>std::vector&lt;sf::Vertex, std::allocator&lt;sf::Vertex&gt; &gt;::_M_fill_insert(__gnu_cxx::__normal_iterator&lt;sf::Vertex*, std::vector&lt;sf::Vertex, std::allocator&lt;sf::Vertex&gt; &gt; &gt;, unsigned long, sf::Vertex const&amp;)</fn>
     </frame>
     <frame>
-      <ip>0x4088F5</ip>
+      <ip>0x4E6BD03</ip>
+      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
+      <fn>sf::VertexArray::resize(unsigned long)</fn>
+    </frame>
+    <frame>
+      <ip>0x4E68DC7</ip>
+      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
+      <fn>sf::Shape::updateOutline()</fn>
+    </frame>
+    <frame>
+      <ip>0x4E69515</ip>
+      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
+      <fn>sf::RectangleShape::RectangleShape(sf::Vector2&lt;float&gt; const&amp;)</fn>
+    </frame>
+    <frame>
+      <ip>0x4047A4</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Proper::Proper(int, int, int)</fn>
+      <fn>SelJugador::SelJugador(int)</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Boton.cpp</file>
+      <line>40</line>
+    </frame>
+    <frame>
+      <ip>0x4081C4</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Selector::Selector()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
       <file>Estado.cpp</file>
-      <line>84</line>
+      <line>31</line>
     </frame>
     <frame>
-      <ip>0x408693</ip>
+      <ip>0x408123</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
-      <fn>Selector::update()</fn>
+      <fn>Arranque::update()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
       <file>Estado.cpp</file>
-      <line>66</line>
+      <line>27</line>
     </frame>
     <frame>
-      <ip>0x40B91C</ip>
+      <ip>0x40BA98</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Juego::gameloop()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -1702,7 +591,7 @@
       <line>36</line>
     </frame>
     <frame>
-      <ip>0x403CBE</ip>
+      <ip>0x403D6E</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>main</fn>
       <dir>/home/daniel/Desktop/ajedrez</dir>
@@ -1713,136 +602,311 @@
 </error>
 
 <error>
-  <unique>0x411</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>1,797 bytes in 3 blocks are possibly lost in loss record 1,036 of 1,120</text>
-    <leakedbytes>1797</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C4A4</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x420</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>3,381 bytes in 3 blocks are possibly lost in loss record 1,051 of 1,120</text>
-    <leakedbytes>3381</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2DB8F</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>malloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBBE48</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x91389F6</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9369695</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9369756</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1D507</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914DAA8</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912AAC5</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E64308</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E91D26</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E95349</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E8CB40</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-      <fn>glXCreateContext</fn>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x42d</unique>
+  <unique>0x54</unique>
   <tid>1</tid>
   <kind>Leak_DefinitelyLost</kind>
   <xwhat>
-    <text>4,844 (24 direct, 4,820 indirect) bytes in 1 blocks are definitely lost in loss record 1,064 of 1,120</text>
+    <text>200 bytes in 1 blocks are definitely lost in loss record 81 of 127</text>
+    <leakedbytes>200</leakedbytes>
+    <leakedblocks>1</leakedblocks>
+  </xwhat>
+  <stack>
+    <frame>
+      <ip>0x4C2E0EF</ip>
+      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
+      <fn>operator new(unsigned long)</fn>
+    </frame>
+    <frame>
+      <ip>0x4E6C2A9</ip>
+      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
+      <fn>std::vector&lt;sf::Vertex, std::allocator&lt;sf::Vertex&gt; &gt;::_M_fill_insert(__gnu_cxx::__normal_iterator&lt;sf::Vertex*, std::vector&lt;sf::Vertex, std::allocator&lt;sf::Vertex&gt; &gt; &gt;, unsigned long, sf::Vertex const&amp;)</fn>
+    </frame>
+    <frame>
+      <ip>0x4E6BD03</ip>
+      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
+      <fn>sf::VertexArray::resize(unsigned long)</fn>
+    </frame>
+    <frame>
+      <ip>0x4E68DC7</ip>
+      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
+      <fn>sf::Shape::updateOutline()</fn>
+    </frame>
+    <frame>
+      <ip>0x4E69515</ip>
+      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
+      <fn>sf::RectangleShape::RectangleShape(sf::Vector2&lt;float&gt; const&amp;)</fn>
+    </frame>
+    <frame>
+      <ip>0x4047A4</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>SelJugador::SelJugador(int)</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Boton.cpp</file>
+      <line>40</line>
+    </frame>
+    <frame>
+      <ip>0x4081DE</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Selector::Selector()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Estado.cpp</file>
+      <line>31</line>
+    </frame>
+    <frame>
+      <ip>0x408123</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Arranque::update()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Estado.cpp</file>
+      <line>27</line>
+    </frame>
+    <frame>
+      <ip>0x40BA98</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Juego::gameloop()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Juego.cpp</file>
+      <line>36</line>
+    </frame>
+    <frame>
+      <ip>0x403D6E</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>main</fn>
+      <dir>/home/daniel/Desktop/ajedrez</dir>
+      <file>main.cpp</file>
+      <line>9</line>
+    </frame>
+  </stack>
+</error>
+
+<error>
+  <unique>0x5a</unique>
+  <tid>1</tid>
+  <kind>Leak_DefinitelyLost</kind>
+  <xwhat>
+    <text>320 (192 direct, 128 indirect) bytes in 4 blocks are definitely lost in loss record 87 of 127</text>
+    <leakedbytes>320</leakedbytes>
+    <leakedblocks>4</leakedblocks>
+  </xwhat>
+  <stack>
+    <frame>
+      <ip>0x4C2E0EF</ip>
+      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
+      <fn>operator new(unsigned long)</fn>
+    </frame>
+    <frame>
+      <ip>0x41D13F</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Holder::makeCli()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Pieza.cpp</file>
+      <line>106</line>
+    </frame>
+    <frame>
+      <ip>0x40C43D</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Humano::turno()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Jugador.cpp</file>
+      <line>69</line>
+    </frame>
+    <frame>
+      <ip>0x408F5E</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Proper::update()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Estado.cpp</file>
+      <line>176</line>
+    </frame>
+    <frame>
+      <ip>0x40BA98</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Juego::gameloop()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Juego.cpp</file>
+      <line>36</line>
+    </frame>
+    <frame>
+      <ip>0x403D6E</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>main</fn>
+      <dir>/home/daniel/Desktop/ajedrez</dir>
+      <file>main.cpp</file>
+      <line>9</line>
+    </frame>
+  </stack>
+</error>
+
+<error>
+  <unique>0x5b</unique>
+  <tid>1</tid>
+  <kind>Leak_DefinitelyLost</kind>
+  <xwhat>
+    <text>336 (72 direct, 264 indirect) bytes in 3 blocks are definitely lost in loss record 88 of 127</text>
+    <leakedbytes>336</leakedbytes>
+    <leakedblocks>3</leakedblocks>
+  </xwhat>
+  <stack>
+    <frame>
+      <ip>0x4C2E0EF</ip>
+      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
+      <fn>operator new(unsigned long)</fn>
+    </frame>
+    <frame>
+      <ip>0x415C38</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>__gnu_cxx::new_allocator&lt;std::_List_node&lt;int&gt; &gt;::allocate(unsigned long, void const*)</fn>
+      <dir>/usr/include/c++/5/ext</dir>
+      <file>new_allocator.h</file>
+      <line>104</line>
+    </frame>
+    <frame>
+      <ip>0x4150CF</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>std::__cxx11::_List_base&lt;int, std::allocator&lt;int&gt; &gt;::_M_get_node()</fn>
+      <dir>/usr/include/c++/5/bits</dir>
+      <file>stl_list.h</file>
+      <line>392</line>
+    </frame>
+    <frame>
+      <ip>0x413E5A</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>std::_List_node&lt;int&gt;* std::__cxx11::list&lt;int, std::allocator&lt;int&gt; &gt;::_M_create_node&lt;int const&amp;&gt;(int const&amp;)</fn>
+      <dir>/usr/include/c++/5/bits</dir>
+      <file>stl_list.h</file>
+      <line>571</line>
+    </frame>
+    <frame>
+      <ip>0x4129B1</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>void std::__cxx11::list&lt;int, std::allocator&lt;int&gt; &gt;::_M_insert&lt;int const&amp;&gt;(std::_List_iterator&lt;int&gt;, int const&amp;)</fn>
+      <dir>/usr/include/c++/5/bits</dir>
+      <file>stl_list.h</file>
+      <line>1763</line>
+    </frame>
+    <frame>
+      <ip>0x41161B</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>std::__cxx11::list&lt;int, std::allocator&lt;int&gt; &gt;::push_back(int const&amp;)</fn>
+      <dir>/usr/include/c++/5/bits</dir>
+      <file>stl_list.h</file>
+      <line>1089</line>
+    </frame>
+    <frame>
+      <ip>0x41030E</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>lector::token(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;)</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>lector.cpp</file>
+      <line>362</line>
+    </frame>
+    <frame>
+      <ip>0x40FF40</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>lector::token(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;, char)</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>lector.cpp</file>
+      <line>321</line>
+    </frame>
+    <frame>
+      <ip>0x40FD3F</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>lector::tokenizarLinea(std::__cxx11::basic_string&lt;char, std::char_traits&lt;char&gt;, std::allocator&lt;char&gt; &gt;)</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>lector.cpp</file>
+      <line>309</line>
+    </frame>
+    <frame>
+      <ip>0x41084E</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>lector::cargarDefs()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>lector.cpp</file>
+      <line>438</line>
+    </frame>
+    <frame>
+      <ip>0x4088C3</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Proper::Proper(int, int, int)</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Estado.cpp</file>
+      <line>84</line>
+    </frame>
+    <frame>
+      <ip>0x40865B</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Selector::update()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Estado.cpp</file>
+      <line>66</line>
+    </frame>
+  </stack>
+</error>
+
+<error>
+  <unique>0x71</unique>
+  <tid>1</tid>
+  <kind>Leak_DefinitelyLost</kind>
+  <xwhat>
+    <text>1,080 (144 direct, 936 indirect) bytes in 6 blocks are definitely lost in loss record 110 of 127</text>
+    <leakedbytes>1080</leakedbytes>
+    <leakedblocks>6</leakedblocks>
+  </xwhat>
+  <stack>
+    <frame>
+      <ip>0x4C2E0EF</ip>
+      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
+      <fn>operator new(unsigned long)</fn>
+    </frame>
+    <frame>
+      <ip>0x410812</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>lector::cargarDefs()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>lector.cpp</file>
+      <line>437</line>
+    </frame>
+    <frame>
+      <ip>0x4088C3</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Proper::Proper(int, int, int)</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Estado.cpp</file>
+      <line>84</line>
+    </frame>
+    <frame>
+      <ip>0x40865B</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Selector::update()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Estado.cpp</file>
+      <line>66</line>
+    </frame>
+    <frame>
+      <ip>0x40BA98</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>Juego::gameloop()</fn>
+      <dir>/home/daniel/Desktop/ajedrez/src</dir>
+      <file>Juego.cpp</file>
+      <line>36</line>
+    </frame>
+    <frame>
+      <ip>0x403D6E</ip>
+      <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
+      <fn>main</fn>
+      <dir>/home/daniel/Desktop/ajedrez</dir>
+      <file>main.cpp</file>
+      <line>9</line>
+    </frame>
+  </stack>
+</error>
+
+<error>
+  <unique>0x7c</unique>
+  <tid>1</tid>
+  <kind>Leak_DefinitelyLost</kind>
+  <xwhat>
+    <text>4,844 (24 direct, 4,820 indirect) bytes in 1 blocks are definitely lost in loss record 121 of 127</text>
     <leakedbytes>4844</leakedbytes>
     <leakedblocks>1</leakedblocks>
   </xwhat>
@@ -1853,7 +917,7 @@
       <fn>operator new(unsigned long)</fn>
     </frame>
     <frame>
-      <ip>0x406E50</ip>
+      <ip>0x406E76</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>__gnu_cxx::new_allocator&lt;std::_List_node&lt;Boton*&gt; &gt;::allocate(unsigned long, void const*)</fn>
       <dir>/usr/include/c++/5/ext</dir>
@@ -1861,7 +925,7 @@
       <line>104</line>
     </frame>
     <frame>
-      <ip>0x406827</ip>
+      <ip>0x40684D</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::__cxx11::_List_base&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::_M_get_node()</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -1869,7 +933,7 @@
       <line>392</line>
     </frame>
     <frame>
-      <ip>0x405FC4</ip>
+      <ip>0x405FEA</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::_List_node&lt;Boton*&gt;* std::__cxx11::list&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::_M_create_node&lt;Boton*&gt;(Boton*&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -1877,7 +941,7 @@
       <line>571</line>
     </frame>
     <frame>
-      <ip>0x405B1D</ip>
+      <ip>0x405B43</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>void std::__cxx11::list&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::_M_insert&lt;Boton*&gt;(std::_List_iterator&lt;Boton*&gt;, Boton*&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -1885,7 +949,7 @@
       <line>1763</line>
     </frame>
     <frame>
-      <ip>0x40543E</ip>
+      <ip>0x405464</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::__cxx11::list&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::push_back(Boton*&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -1893,7 +957,7 @@
       <line>1094</line>
     </frame>
     <frame>
-      <ip>0x4048AC</ip>
+      <ip>0x4048F8</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>SelJugador::SelJugador(int)</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -1901,7 +965,7 @@
       <line>45</line>
     </frame>
     <frame>
-      <ip>0x408216</ip>
+      <ip>0x4081DE</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Selector::Selector()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -1909,7 +973,7 @@
       <line>31</line>
     </frame>
     <frame>
-      <ip>0x40815B</ip>
+      <ip>0x408123</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Arranque::update()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -1917,7 +981,7 @@
       <line>27</line>
     </frame>
     <frame>
-      <ip>0x40B91C</ip>
+      <ip>0x40BA98</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Juego::gameloop()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -1925,7 +989,7 @@
       <line>36</line>
     </frame>
     <frame>
-      <ip>0x403CBE</ip>
+      <ip>0x403D6E</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>main</fn>
       <dir>/home/daniel/Desktop/ajedrez</dir>
@@ -1936,11 +1000,11 @@
 </error>
 
 <error>
-  <unique>0x434</unique>
+  <unique>0x7d</unique>
   <tid>1</tid>
   <kind>Leak_DefinitelyLost</kind>
   <xwhat>
-    <text>6,144 (24 direct, 6,120 indirect) bytes in 1 blocks are definitely lost in loss record 1,071 of 1,120</text>
+    <text>6,144 (24 direct, 6,120 indirect) bytes in 1 blocks are definitely lost in loss record 122 of 127</text>
     <leakedbytes>6144</leakedbytes>
     <leakedblocks>1</leakedblocks>
   </xwhat>
@@ -1951,7 +1015,7 @@
       <fn>operator new(unsigned long)</fn>
     </frame>
     <frame>
-      <ip>0x406E50</ip>
+      <ip>0x406E76</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>__gnu_cxx::new_allocator&lt;std::_List_node&lt;Boton*&gt; &gt;::allocate(unsigned long, void const*)</fn>
       <dir>/usr/include/c++/5/ext</dir>
@@ -1959,7 +1023,7 @@
       <line>104</line>
     </frame>
     <frame>
-      <ip>0x406827</ip>
+      <ip>0x40684D</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::__cxx11::_List_base&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::_M_get_node()</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -1967,7 +1031,7 @@
       <line>392</line>
     </frame>
     <frame>
-      <ip>0x405FC4</ip>
+      <ip>0x405FEA</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::_List_node&lt;Boton*&gt;* std::__cxx11::list&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::_M_create_node&lt;Boton*&gt;(Boton*&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -1975,7 +1039,7 @@
       <line>571</line>
     </frame>
     <frame>
-      <ip>0x405B1D</ip>
+      <ip>0x405B43</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>void std::__cxx11::list&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::_M_insert&lt;Boton*&gt;(std::_List_iterator&lt;Boton*&gt;, Boton*&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -1983,7 +1047,7 @@
       <line>1763</line>
     </frame>
     <frame>
-      <ip>0x40543E</ip>
+      <ip>0x405464</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::__cxx11::list&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::push_back(Boton*&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -1991,7 +1055,7 @@
       <line>1094</line>
     </frame>
     <frame>
-      <ip>0x4047FC</ip>
+      <ip>0x404848</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>SelJugador::SelJugador(int)</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -1999,7 +1063,7 @@
       <line>44</line>
     </frame>
     <frame>
-      <ip>0x4081FC</ip>
+      <ip>0x4081C4</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Selector::Selector()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -2007,7 +1071,7 @@
       <line>31</line>
     </frame>
     <frame>
-      <ip>0x40815B</ip>
+      <ip>0x408123</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Arranque::update()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -2015,7 +1079,7 @@
       <line>27</line>
     </frame>
     <frame>
-      <ip>0x40B91C</ip>
+      <ip>0x40BA98</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Juego::gameloop()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -2023,7 +1087,7 @@
       <line>36</line>
     </frame>
     <frame>
-      <ip>0x403CBE</ip>
+      <ip>0x403D6E</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>main</fn>
       <dir>/home/daniel/Desktop/ajedrez</dir>
@@ -2034,73 +1098,11 @@
 </error>
 
 <error>
-  <unique>0x444</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>13,893 bytes in 3 blocks are possibly lost in loss record 1,087 of 1,120</text>
-    <leakedbytes>13893</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C483</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x44c</unique>
+  <unique>0x81</unique>
   <tid>1</tid>
   <kind>Leak_DefinitelyLost</kind>
   <xwhat>
-    <text>25,064 (128 direct, 24,936 indirect) bytes in 1 blocks are definitely lost in loss record 1,095 of 1,120</text>
+    <text>25,064 (128 direct, 24,936 indirect) bytes in 1 blocks are definitely lost in loss record 126 of 127</text>
     <leakedbytes>25064</leakedbytes>
     <leakedblocks>1</leakedblocks>
   </xwhat>
@@ -2111,7 +1113,7 @@
       <fn>operator new(unsigned long)</fn>
     </frame>
     <frame>
-      <ip>0x40A02B</ip>
+      <ip>0x40A1A7</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>__gnu_cxx::new_allocator&lt;Boton*&gt;::allocate(unsigned long, void const*)</fn>
       <dir>/usr/include/c++/5/ext</dir>
@@ -2119,7 +1121,7 @@
       <line>104</line>
     </frame>
     <frame>
-      <ip>0x409EA0</ip>
+      <ip>0x40A01C</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::allocator_traits&lt;std::allocator&lt;Boton*&gt; &gt;::allocate(std::allocator&lt;Boton*&gt;&amp;, unsigned long)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -2127,7 +1129,7 @@
       <line>491</line>
     </frame>
     <frame>
-      <ip>0x409C6D</ip>
+      <ip>0x409DE9</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::_Vector_base&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::_M_allocate(unsigned long)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -2135,7 +1137,7 @@
       <line>170</line>
     </frame>
     <frame>
-      <ip>0x409811</ip>
+      <ip>0x40998D</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>void std::vector&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::_M_emplace_back_aux&lt;Boton*&gt;(Boton*&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -2143,7 +1145,7 @@
       <line>412</line>
     </frame>
     <frame>
-      <ip>0x40954A</ip>
+      <ip>0x40969A</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>void std::vector&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::emplace_back&lt;Boton*&gt;(Boton*&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -2151,7 +1153,7 @@
       <line>101</line>
     </frame>
     <frame>
-      <ip>0x4091D5</ip>
+      <ip>0x409223</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>std::vector&lt;Boton*, std::allocator&lt;Boton*&gt; &gt;::push_back(Boton*&amp;&amp;)</fn>
       <dir>/usr/include/c++/5/bits</dir>
@@ -2159,7 +1161,7 @@
       <line>932</line>
     </frame>
     <frame>
-      <ip>0x4083F0</ip>
+      <ip>0x4083B8</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Selector::Selector()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -2167,7 +1169,7 @@
       <line>43</line>
     </frame>
     <frame>
-      <ip>0x40815B</ip>
+      <ip>0x408123</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Arranque::update()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -2175,7 +1177,7 @@
       <line>27</line>
     </frame>
     <frame>
-      <ip>0x40B91C</ip>
+      <ip>0x40BA98</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>Juego::gameloop()</fn>
       <dir>/home/daniel/Desktop/ajedrez/src</dir>
@@ -2183,7 +1185,7 @@
       <line>36</line>
     </frame>
     <frame>
-      <ip>0x403CBE</ip>
+      <ip>0x403D6E</ip>
       <obj>/home/daniel/Desktop/ajedrez/bin/Debug/ajedrez</obj>
       <fn>main</fn>
       <dir>/home/daniel/Desktop/ajedrez</dir>
@@ -2193,217 +1195,7 @@
   </stack>
 </error>
 
-<error>
-  <unique>0x453</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>35,112 bytes in 24 blocks are possibly lost in loss record 1,102 of 1,120</text>
-    <leakedbytes>35112</leakedbytes>
-    <leakedblocks>24</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1C53C</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8F1D3FD</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E1CAA0</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9148824</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x914A9AA</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912DEAB</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6357F</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E6372B</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E96948</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x45c</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>260,287 bytes in 1 blocks are possibly lost in loss record 1,111 of 1,120</text>
-    <leakedbytes>260287</leakedbytes>
-    <leakedblocks>1</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2FB55</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>calloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBC2B1</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x9138A60</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8E23290</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E91B0C</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E98ADD</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x5E9961D</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x4010679</ip>
-      <obj>/lib/x86_64-linux-gnu/ld-2.23.so</obj>
-      <fn>call_init.part.0</fn>
-      <dir>/build/glibc-Cl5G7W/glibc-2.23/elf</dir>
-      <file>dl-init.c</file>
-      <line>58</line>
-    </frame>
-    <frame>
-      <ip>0x40107CA</ip>
-      <obj>/lib/x86_64-linux-gnu/ld-2.23.so</obj>
-      <fn>call_init</fn>
-      <dir>/build/glibc-Cl5G7W/glibc-2.23/elf</dir>
-      <file>dl-init.c</file>
-      <line>30</line>
-    </frame>
-    <frame>
-      <ip>0x40107CA</ip>
-      <obj>/lib/x86_64-linux-gnu/ld-2.23.so</obj>
-      <fn>_dl_init</fn>
-      <dir>/build/glibc-Cl5G7W/glibc-2.23/elf</dir>
-      <file>dl-init.c</file>
-      <line>120</line>
-    </frame>
-    <frame>
-      <ip>0x4000C69</ip>
-      <obj>/lib/x86_64-linux-gnu/ld-2.23.so</obj>
-    </frame>
-    <frame>
-      <ip>0x1</ip>
-    </frame>
-    <frame>
-      <ip>0xFFF0007B6</ip>
-    </frame>
-  </stack>
-</error>
-
-<error>
-  <unique>0x465</unique>
-  <tid>1</tid>
-  <kind>Leak_PossiblyLost</kind>
-  <xwhat>
-    <text>1,450,053 bytes in 3 blocks are possibly lost in loss record 1,120 of 1,120</text>
-    <leakedbytes>1450053</leakedbytes>
-    <leakedblocks>3</leakedblocks>
-  </xwhat>
-  <stack>
-    <frame>
-      <ip>0x4C2DB8F</ip>
-      <obj>/usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so</obj>
-      <fn>malloc</fn>
-    </frame>
-    <frame>
-      <ip>0x5EBBE48</ip>
-      <obj>/usr/lib/nvidia-340/libGL.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x91389F6</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x912AB54</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x91EB895</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x91ECDE9</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8EC279E</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8EC9F72</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8ED1555</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x8ED1EF2</ip>
-      <obj>/usr/lib/nvidia-340/libnvidia-glcore.so.340.104</obj>
-    </frame>
-    <frame>
-      <ip>0x4E6580C</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>sf::Texture::create(unsigned int, unsigned int)</fn>
-    </frame>
-    <frame>
-      <ip>0x4E65EF2</ip>
-      <obj>/usr/lib/x86_64-linux-gnu/libsfml-graphics.so.2.3.2</obj>
-      <fn>sf::Texture::loadFromImage(sf::Image const&amp;, sf::Rect&lt;int&gt; const&amp;)</fn>
-    </frame>
-  </stack>
-</error>
-
 <errorcounts>
-  <pair>
-    <count>1</count>
-    <unique>0x5</unique>
-  </pair>
-  <pair>
-    <count>1</count>
-    <unique>0x4</unique>
-  </pair>
   <pair>
     <count>2</count>
     <unique>0x1</unique>

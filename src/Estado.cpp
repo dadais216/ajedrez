@@ -61,7 +61,7 @@ void Selector::update()
         for(Boton* b:botones)
         {
             int n;
-            if(n=b->clicked())
+            if((n=b->clicked()))
             {
                 j->change(new Proper(n-1,sel1.selected,sel2.selected));
                 return;
@@ -91,9 +91,9 @@ Proper::Proper(int id,int sel1,int sel2)
 //        cout<<endl;
 //    }
 
-    for(int i=0; i<lect.matriz.size(); i++)
+    for(uint i=0; i<lect.matriz.size(); i++)
     {
-        for(int j=0; j<lect.matriz[i].size(); j++)
+        for(uint j=0; j<lect.matriz[i].size(); j++)
         {
             int n=lect.matriz[i][j];
             v pos(i,j);
@@ -120,6 +120,7 @@ Proper::Proper(int id,int sel1,int sel2)
             return new Aleatorio(bando,tablero);
             //case 3: return new IA(bando,tablero);
         }
+        return nullptr;
     };
 
     primero=selec(sel1,-1);
@@ -136,15 +137,15 @@ Proper::Proper(int id,int sel1,int sel2)
     turnoBlanco.setPosition(510,0);
     turnoNegro.setPosition(510,0);
 
-    for(int i=0; i<lect.matriz.size(); i++)
+    for(uint i=0; i<lect.matriz.size(); i++)
     {
-        for(int j=0; j<lect.matriz[i].size(); j++)
+        for(uint j=0; j<lect.matriz[i].size(); j++)
         {
             ///a veces hay basura en el tablero, no se por que
             //cout<<tablero(v(i,j).show())<<endl;
 
             Holder* act;
-            if(act=tablero(v(i,j)))
+            if((act=tablero(v(i,j))))
                 act->generar();
 
         }
@@ -154,9 +155,9 @@ Proper::Proper(int id,int sel1,int sel2)
 void Proper::draw()
 {
     tablero.drawTiles();
-    //if(Clicker::drawClickers)
-    //    for(Clicker* cli:clickers)
-    //        cli->draw();
+    if(Clicker::drawClickers)
+        for(Clicker* cli:clickers)
+            cli->draw();
     tablero.drawPieces();
     if(turno1)
         window->draw(turnoBlanco);

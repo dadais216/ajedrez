@@ -5,10 +5,10 @@
 
 struct tablero;
 
-struct Jugador
-{
+struct Jugador{
     int bando;
     tabl& _tablero;
+    Holder* act;
     Jugador(int bando_,tabl& tablero_)
         :bando(bando_),_tablero(tablero_) {}
     virtual bool turno()=0;
@@ -27,7 +27,6 @@ struct Humano:public Jugador
 {
     Humano(int,tabl&);
     virtual bool turno();
-    list<Clicker*> clickers;
 };
 
 struct Aleatorio:public Jugador
