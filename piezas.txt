@@ -1,4 +1,4 @@
-def mover vacio mov color 20 200 115 pausa
+def mover vacio mov color 20 200 115
 def moverc vacio mov color 200 0 0 pausa
 def movera vacio mov color 0 0 200 pausa
 def moverb vacio mov color 200 120 0 pausa

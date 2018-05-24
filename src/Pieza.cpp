@@ -29,8 +29,6 @@ Pieza::Pieza(int _id,int _sn){
     piezas.push_back(this);
 }
 
-list<Clicker*> clickers;
-
 void Pieza::calcularMovimientos(v posAct)
 {
     /*
@@ -99,13 +97,16 @@ void Holder::draw(int n)  //pos en capturados
     window->draw(*sp);
     sp->setScale(escala,escala);
 }
-void Holder::makeCli(list<Clicker*>& clk){
+void Holder::makeCli(){
     ///aca habria una funcion polimorfica que toma normales y le mete su lista de normales
+    cout<<clickers.size()<<"-";
     for(movHolder* mh:movs){
         vector<normalHolder*>* normales=new vector<normalHolder*>;
         normales->push_back(static_cast<normalHolder*>(mh));
-        clk.push_back(new Clicker(normales));
+        clickers.push_back(new Clicker(normales));
+        cout<<clickers.size()<<"-";
     }
+    Clicker::drawClickers=true;
 }
 
 

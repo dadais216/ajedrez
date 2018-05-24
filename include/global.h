@@ -21,6 +21,8 @@
 using namespace std;
 using namespace sf;
 
+typedef unsigned int uint;
+
 struct Juego;
 struct Input;
 template<typename T>
@@ -59,7 +61,7 @@ struct drawable
 extern list<int> tokens;
 extern list<pair<drawable,v>> bufferColores;
 extern list<v> limites;
-extern list<Clicker*> clickers;
+extern vector<Clicker*> clickers;
 extern bool bOutbounds;
 extern bool cambios;
 
