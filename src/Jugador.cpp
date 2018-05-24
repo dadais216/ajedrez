@@ -44,7 +44,6 @@ bool Humano::turno(){
         }
     }
     */
-
     if(input->click()&&input->inGameRange(_tablero.tam)){
         for(Clicker* cli:clickers){
         ///esto se pregunta 60hz
@@ -52,21 +51,27 @@ bool Humano::turno(){
         ///vuelva a meter solapamiento
             if(cli->update()){
                 clickers.clear();
+                drawScreen();
+                act->generar();
+                //for pieces-act procesar
                 return false; //true
             }
         }
-        clickers.clear();
-
+        if(!clickers.empty()){
+            clickers.clear();
+            drawScreen();
+        }
         cout<<"("<<input->get()<<")"<<endl;
 
-        Holder* act=_tablero(input->get());
+
+        act=_tablero(input->get());
         if(act&&act->bando==bando){
-            act->makeCli(clickers); ///armar los clickers
+            act->makeCli();
             for(Clicker* cli:clickers){
                 cli->debug();
-                cli->draw();
                 cout<<"---";
             }
+            drawScreen();
         }
     }
     return false;

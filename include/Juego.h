@@ -26,8 +26,6 @@ struct Juego
     void change(Estado*);
 };
 
-void auxDraw();
-
 
 
 #endif // JUEGO_H

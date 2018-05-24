@@ -2,19 +2,19 @@
 1524111679 source:/home/daniel/Desktop/ajedrez/main.cpp
 	"include/Juego.h"
 
-1526945765 source:/home/daniel/Desktop/ajedrez/src/Boton.cpp
+1527141583 source:/home/daniel/Desktop/ajedrez/src/Boton.cpp
 	"../include/Boton.h"
 	"../include/global.h"
 	"../include/Juego.h"
 
-1526959052 source:/home/daniel/Desktop/ajedrez/src/Clicker.cpp
+1527132037 source:/home/daniel/Desktop/ajedrez/src/Clicker.cpp
 	"../include/Clicker.h"
 	"../include/global.h"
 	"../include/operador.h"
 	"../include/Pieza.h"
 	"../include/Juego.h"
 
-1526958533 source:/home/daniel/Desktop/ajedrez/src/Estado.cpp
+1527141629 source:/home/daniel/Desktop/ajedrez/src/Estado.cpp
 	"../include/Estado.h"
 	<SFML/Graphics.hpp>
 	"../include/Boton.h"
@@ -36,7 +36,7 @@
 	"../include/Estado.h"
 	"../include/global.h"
 
-1526948444 source:/home/daniel/Desktop/ajedrez/src/Jugador.cpp
+1527142284 source:/home/daniel/Desktop/ajedrez/src/Jugador.cpp
 	"../include/Jugador.h"
 	"../include/global.h"
 	"../include/Juego.h"
@@ -52,14 +52,15 @@
 	"../include/Pieza.h"
 	"../include/global.h"
 
-1526958533 source:/home/daniel/Desktop/ajedrez/src/operador.cpp
+1527132986 source:/home/daniel/Desktop/ajedrez/src/operador.cpp
 	"../include/operador.h"
 	"../include/lector.h"
 	"../include/Clicker.h"
 	"../include/tablero.h"
 	"../include/Pieza.h"
+	"movs.cpp"
 
-1526956444 source:/home/daniel/Desktop/ajedrez/src/Pieza.cpp
+1527132037 source:/home/daniel/Desktop/ajedrez/src/Pieza.cpp
 	"../include/Pieza.h"
 	"../include/global.h"
 	"../include/operador.h"
@@ -75,7 +76,7 @@
 	"tablero.h"
 	"Boton.h"
 
-1526947621 /home/daniel/Desktop/ajedrez/include/global.h
+1527141533 /home/daniel/Desktop/ajedrez/include/global.h
 	<fstream>
 	<vector>
 	<list>
@@ -112,30 +113,40 @@
 1524074758 /home/daniel/Desktop/ajedrez/include/Boton.h
 	"global.h"
 
-1526943441 /home/daniel/Desktop/ajedrez/include/Clicker.h
+1527128443 /home/daniel/Desktop/ajedrez/include/Clicker.h
 	"vec.h"
 	<SFML/Graphics.hpp>
 	"global.h"
 
-1526947764 /home/daniel/Desktop/ajedrez/include/Pieza.h
+1527132650 /home/daniel/Desktop/ajedrez/include/Pieza.h
 	"tablero.h"
 	"global.h"
 	"operador.h"
+	"movs.h"
 
-1524074910 /home/daniel/Desktop/ajedrez/include/operador.h
+1527132926 /home/daniel/Desktop/ajedrez/include/operador.h
 	"global.h"
 
-1524074917 /home/daniel/Desktop/ajedrez/include/Jugador.h
+1527143468 /home/daniel/Desktop/ajedrez/include/Jugador.h
 	"global.h"
 
 1524074924 /home/daniel/Desktop/ajedrez/include/Input.h
 	<SFML/Graphics.hpp>
 	"vec.h"
 
-1524074934 /home/daniel/Desktop/ajedrez/include/Juego.h
+1527129119 /home/daniel/Desktop/ajedrez/include/Juego.h
 	<SFML/Graphics.hpp>
 	<SFML/Audio.hpp>
 	<vector>
 	"Input.h"
 	"Manager.h"
+
+1527132584 /home/daniel/Desktop/ajedrez/include/movs.h
+	"Pieza.h"
+
+1527132850 source:/home/daniel/Desktop/ajedrez/src/movs.cpp
+	"movs.h"
+
+1527141405 /home/daniel/Desktop/ajedrez/src/movs.cpp
+	"movs.h"
 

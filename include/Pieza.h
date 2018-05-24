@@ -4,9 +4,13 @@
 #include "tablero.h"
 #include "global.h"
 #include "operador.h"
+#include "movs.h"
 using namespace std;
 using namespace sf;
 struct operador;
+struct normal;
+struct acct;
+struct colort;
 
 struct Pieza
 {
@@ -48,7 +52,7 @@ struct Holder
     Holder(int,Pieza*,v);
     void draw();///dibuja la pieza
     void draw(int);///dibuja la pieza en la lista de capturados
-    void makeCli(list<Clicker*>& clk);
+    void makeCli();
     Pieza* pieza;
     v pos;
     void procesar(vector<v>&);
