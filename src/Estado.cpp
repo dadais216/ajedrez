@@ -90,22 +90,19 @@ Proper::Proper(int id,int sel1,int sel2)
 //        }
 //        cout<<endl;
 //    }
-
-    for(uint i=0; i<lect.matriz.size(); i++)
-    {
-        for(uint j=0; j<lect.matriz[i].size(); j++)
-        {
+    cout<<"-----"<<endl;
+    for(uint i=0; i<lect.matriz.size(); i++){
+        for(uint j=0; j<lect.matriz[0].size(); j++){
             int n=lect.matriz[i][j];
-            v pos(i,j);
+            v pos(j,i);
+            cout<<pos<<"  "<<tablero.tam<<endl;
             if(n)
-            {
                 tablero(pos,lect.crearPieza(n,pos));
-            }
             else
                 tablero(pos,nullptr);
         }
     }
-    cout<<endl;
+    cout<<"nv"<<endl;
     //construir piezas adicionales
 
     auto selec=[&](int sel,int bando)->Jugador*
@@ -137,17 +134,13 @@ Proper::Proper(int id,int sel1,int sel2)
     turnoBlanco.setPosition(510,0);
     turnoNegro.setPosition(510,0);
 
-    for(uint i=0; i<lect.matriz.size(); i++)
-    {
-        for(uint j=0; j<lect.matriz[i].size(); j++)
-        {
+    for(uint i=0; i<lect.matriz.size(); i++){
+        for(uint j=0; j<lect.matriz[0].size(); j++){
             ///a veces hay basura en el tablero, no se por que
             //cout<<tablero(v(i,j).show())<<endl;
-
             Holder* act;
-            if((act=tablero(v(i,j))))
+            if((act=tablero(v(j,i))))
                 act->generar();
-
         }
     }
 }
