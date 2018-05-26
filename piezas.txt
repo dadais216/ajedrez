@@ -22,10 +22,8 @@ w{a,d} captura
 {aa,dd}{w,s} estandar
 
 :3 3 #alfil
-desliz t wa mover end wa captura
-desliz t wd mover end wd captura
-desliz t sa mover end sa captura
-desliz t sd mover end sd captura
+w mover w mover w mover w mover
+{a,s,d} mover
 
 
 :4 4 #reina

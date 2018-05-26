@@ -3,7 +3,7 @@
 #include "../include/operador.h"
 #include "../include/Clicker.h"
 
-list<Pieza*> piezas;
+vector<Pieza*> piezas;
 
 Pieza::Pieza(int _id,int _sn){
     id=_id;
@@ -58,8 +58,8 @@ void resetearValores()
     */
 }
 
-Holder::Holder(int _bando,Pieza* p,v pos_)
-{
+vector<Holder*> holders; ///piezas en tablero
+Holder::Holder(int _bando,Pieza* p,v pos_){
     bando=_bando;
     inicial=true;
     pieza=p;
@@ -70,6 +70,7 @@ Holder::Holder(int _bando,Pieza* p,v pos_)
         op->generarMovHolder(mh,this);
         movs.push_back(mh);
     }
+    holders.push_back(this);
 }
 void Holder::draw()
 {
@@ -99,12 +100,11 @@ void Holder::draw(int n)  //pos en capturados
 }
 void Holder::makeCli(){
     ///aca habria una funcion polimorfica que toma normales y le mete su lista de normales
-    cout<<clickers.size()<<"-";
     for(movHolder* mh:movs){
+        if(!mh->valido) continue;
         vector<normalHolder*>* normales=new vector<normalHolder*>;
         normales->push_back(static_cast<normalHolder*>(mh));
-        clickers.push_back(new Clicker(normales));
-        cout<<clickers.size()<<"-";
+        clickers.push_back(new Clicker(normales,this));
     }
     Clicker::drawClickers=true;
 }
@@ -134,11 +134,13 @@ void normalHolder::procesar(vector<v>& pisados){
     for(v trig:triggs)
         for(v pis:pisados)
             if(trig==pis){
+                cout<<"PROCESANDO"<<endl;
                 op->operar(this,h);
                 return;
             }
 }
 void normalHolder::generar(){
+    cout<<"GENERANDO"<<endl;
     op->operar(this,h);
 }
 void normalHolder::accionar(){

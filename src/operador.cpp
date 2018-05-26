@@ -20,10 +20,10 @@ normal::normal()
         switch(tok)
         {
         case lector::W:
-            pos.y++; //el espejado se va a tener que hacer cuando se construyan las absolutas
+            pos.y--; //el espejado se va a tener que hacer cuando se construyan las absolutas
             break;
         case lector::S:
-            pos.y--;
+            pos.y++;
             break;
         case lector::D:
             pos.x++;
@@ -121,13 +121,12 @@ bool normal::operar(movHolder* mh,Holder* h){
         //los casos. Habria que meter el concepto de normalholders verdaderas y falsas, no se si lo valga
 
         if(!c->check(h,posAct)){
-            //h->valido=false;
+            nh->valido=false;
             return false;
         }
     }
-    //h->valido=true;
+    nh->valido=true;
     //accs en holder ya esta generado
-
     //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
     for(int i=0; i<accs.size(); i++)
         nh->accs[i]->pos=accs[i]->pos+h->pos;
