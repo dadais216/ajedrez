@@ -212,7 +212,10 @@ fabMov(pausa,acct,
 vector<Holder*> capturados;
 fabMov(capt,acct,
        capturados.push_back((*tablptr)(pos));
+       holders.erase(std::find(holders.begin(),holders.end(),(*tablptr)(pos)));
+
        (*tablptr)(pos,nullptr);
+       h->pisados.push_back(pos);
       );
 fabMov(del,acct,
        delete (*tablptr)(pos);

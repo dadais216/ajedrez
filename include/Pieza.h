@@ -31,6 +31,7 @@ struct movHolder{
     virtual void generar()=0;///se llama solo al inicio
     virtual void debug(){};
     movHolder* sig;
+    bool valido; //por ahora solo de normal
 };
 struct normalHolder:public movHolder{
     normalHolder(Holder*,normal*);//supongo que ni bien se crea el op le copias las accs
@@ -58,6 +59,7 @@ struct Holder
     void procesar(vector<v>&);
     void generar();
     vector<movHolder*> movs;
+    vector<v> pisados; ///para triggers, guarda todos los capt + pos
     int bando;
     bool inicial;
     bool outbounds;

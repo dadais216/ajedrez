@@ -8,21 +8,19 @@ using namespace sf;
 #include "global.h"
 
 struct normalHolder;
-struct Clicker
-{
-    Clicker(vector<normalHolder*>*);
+struct Clicker{
+    Clicker(vector<normalHolder*>*,Holder*);
     vector<normalHolder*>* normales;
     v clickPos;
     void draw();
-    bool update();
     static bool drawClickers;
-    bool activo;
-    void activacion(int);
+    bool update();
+    //bool activo;
+    //void activacion(int);
+    //int val,mod;
     void accionar();
     void debug();
-    int val,mod;
-    Holder* pieza;
-    v bOrg;
+    Holder* h;
 };
 
 #endif // CLICKER_H
