@@ -200,9 +200,10 @@ struct NOMB:public TIPO{\
 
 
 fabMov(mov,acct,
-       (*tablptr)(h->pos,nullptr);
-       (*tablptr)(pos,h);
-       h->pos=pos;
+       h->tile->step++;
+       h->tile->holder=nullptr;
+       h->tile=tablptr->tile(pos);
+       h->tile->holder=h;
       );
 
 fabMov(pausa,acct,
@@ -211,24 +212,23 @@ fabMov(pausa,acct,
       );
 vector<Holder*> capturados;
 fabMov(capt,acct,
-       capturados.push_back((*tablptr)(pos));
-       (*tablptr)(pos,nullptr);
-      );
-fabMov(del,acct,
-       delete (*tablptr)(pos);
-       (*tablptr)(pos,nullptr);
+       Tile* captT=tablptr->tile(pos);
+       delete captT->holder;
+       captT->holder=nullptr;
+       captT->step++;
+       h->pisados.push_back(captT);
       );
 
 
 fabMov(vacio,condt,
-       return (*tablptr)(pos)==nullptr;
+       return tablptr->tile(pos)->holder==nullptr;
       );
 fabMov(pieza,condt,
-       return (*tablptr)(pos);
+       return tablptr->tile(pos)->holder;
       );
 fabMov(enemigo,condt,
-       if((*tablptr)(pos))
-       return (*tablptr)(pos)->bando==h->bando*-1;
+       if(tablptr->tile(pos)->holder)
+       return tablptr->tile(pos)->holder->bando!=h->bando;
        return false;
       );
 ///list<v> limites;

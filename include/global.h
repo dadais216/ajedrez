@@ -16,7 +16,7 @@
 #include <sstream>
 #include <random>
 #include <memory>
-
+#include <algorithm>
 
 using namespace std;
 using namespace sf;
@@ -39,7 +39,8 @@ extern Manager<Texture>* imagen;
 
 extern float escala;
 extern tabl* tablptr;
-extern list<Pieza*> piezas;
+extern vector<Pieza*> piezas;
+extern vector<int> uniqueIds;
 //extern Holder* act;
 //extern v pos;
 //extern v org;

@@ -36,3 +36,7 @@
 *.depend
 *.layout
 *.xml
+
+bin/*
+obj/*
+bin/Debug/ajedrez

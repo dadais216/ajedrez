@@ -329,7 +329,156 @@ de otra y cosas como every cambien esa propiedad. En estos casos especificos se 
 active los triggers que esten sobre esa pieza
 
 
+estaria bueno llegar a un nivel de abstraccion donde el jaque puede
+armarse desde el lenguaje.
+El rey tendría un every que prohibe movimientos aliados que lo dejen
+amenazado.
+Lo unico que habría que hacer es darle a every la capacidad de invalidar
+el movimiento anterior, el resto debería venir solo con el segundo orden
+
+
+actualmente los triggers estan en vectores en cada movimiento de cada
+pieza. Cuando se hace un movimiento se genera un vector de pisados, si
+alguna coordenada de ese vector coincide con alguna coordenada de un trigger
+se recalcula el movimiento del trigger
+La IA tiene que hacer este proceso de contraste de vectores por cada movimiento,
+por lo que puede terminar siendo lento. Aun asi es mas rapido que recalcular
+todos los movimientos
+Otra forma de hacerlo sería por señales. En cada pos se deja un struct, que
+simboliza el trigger. Este struct contiene un puntero al movimiento de la
+pieza que lo causo. A su vez la pieza tiene un puntero al struct. 
+Entonces, cuando se genera el vector de pisados nomas hay que mirar en esos
+pisados. Si hay triggers se activan.
+Por otro lado, cada vez que una pieza se actualiza (por ahora solo moviendose,
+pero tambien esta el caso de que cambie) se tienen que sacar sus triggers y
+poner otros. Supongo que todo se hace usando mapas en el tablero
+No sé si va a terminar siendo mas eficiente, y es mas complejo. A la larga
+puede que lo sea. Igual por ahora mantenerlo como esta, si mas adelante
+veo que lo necesito lo meto.
+Como segundo orden va a usar un sistema parecido podría meterlo ahora
+
+
+segundo orden
+La IA necesita crear todos los tableros posibles dentro de un turno, por
+lo que necesita calcular todos los movimientos despues de cada movimiento.
+Se ahorran muchos calculos guardando los movimientos basicos en memoria,
+por lo que lo unico que se necesita recalcular por movimiento son los movimientos de la pieza que se movio y lo que haya levantado triggers.
+
+Se podría calcular esto al aire y listo, aunque sería util guardar los
+movimientos de segundo orden tambien para no tener que recalcularlos si se
+necesitan.
+Comparando:
+si se calcula al aire, una pieza quieta tendría que recalcular sus movimientos de segundo orden cada turno. 
+Si se guarda en memoria, solo debería recalcular cuando se levante un trigger
+de segundo orden. 
+
+Los triggers de segundo orden se guardan en los movimientos de primer orden. Cuando se activan se recalcula directamente. Es mucho mas rapido que recalcular todos los movimientos todos los turnos, con el costo de meter un trigger hell.
+
+Hay que tener en cuenta que el segundo orden solo va a ser usado por la IA y algunas piezas especiales (como el rey), si ninguna de las dos esta presente entonces no se arma. Nada simple debería depender de que exista. Tambien, como la carga de movimientos tiene dos fuentes hay que mirar que lo que se necesite calcular no haya sido calculado por la otra
+Thredear no debería ser demasiado complejo, cada thread maneja el recalculo de 
+movimientos distintos en tableros distintos. El tablero original se tiene en comun, pero solo se lee. Los cambios de segundo orden son unicos de cada movimiento de primer orden, y se guardan en estos, no hay conflicto.
+
+
+
+
+
+aclaracion sobre every:
+Dependiendo como este configurado, un every puede correr al finalizar el turno de un jugador, o en cada turno de los dos jugadores. 
+Para que las cosas anden bien el segundo orden tiene que tener en cuenta que los efectos de every pueden pasar antes y despues de los movimientos enemigos (no hace explosion combinatronica porque no hay ramificaciones, es solo cosas que se procesan antes y despues de cada movimiento)
+
 
 !mirar el tema del copyrigth con las fuentes
+
+Hacer el juego para mas de 2 jugadores es hacible, pero no vale la pena.
+Bando dejaria de ser un bool, los colores de las piezas deberían determinarse con una funcion y ser un efecto arriba del sprite, se necesitaria agregar un prefijo al tablero de texto. 
+Internet se complicaria un poco pero no demasiado. 
+El problema esta en la IA. Para actuar bien tendría que no solo calcular el movimiento del proximo jugador, sino de toda la cadena de jugadores. Y eso hace una explosion combinatronica.
+Tambien esta el tema de que no entendería muy bien alianzas ni cosas por el estilo.
+Se podría agregar el modo de mas de 2 jugadores para solo humanos, pero es mucho trabajo por algo que no creo que se use mucho. A demas, muchos juegos de mas de dos personas usan tableros no cuadrados, y eso es algo que no pienso agregar.
+
+
+
+%%% memoria
+Hay 4 memorias: movimiento, pieza, tile y global
+
+Agregar boton que muestre las memorias. La global se vería todo el tiempo. Si se toca un espacio se dibuja la memoria de tile y la de pieza si hay una pieza en esa pos.
+En modo debug se dibuja la memoria de movimiento mientras este se calcula, y se redibujan todas en cada paso
+
+Tamaño: todas las memorias arrancan siendo 0. La operacion de escribir antes de escribir mira si da el tamaño, y si no da agranda.
+Con esto se pueden tener memorias de cualquier tamaño, incluso variable sin tener que especificar nada
+Lo malo es que si se lee antes de escribir se rompe todo pero es esperable, aclarar en el instructivo. No creo que cuelgue el juego 
+
+
+
+
+
+
+%%%
+
+### IA
+aparentemente el segundo orden es solo usado por la IA. Ya que lo estoy haciendo podría agregar comandos que lo aprovechen, pero la verdad es que no hay mucho que se pueda hacer que no se pueda hacer usando memoria y triggers o every, y esas soluciones suelen ser mas limpias y eficientes. 
+
+Los triggers de segundo orden son necesarios porque aumentan mucho la eficiencia, pero habria que ver como agregarlos sin molestar a los juegos que no lo usen. Supongo que si son iguales a los triggers de primer orden no habria problema
+
+
+
+hacer modo debug donde se muestre el movimiento elegido medio transparentado. Cuando se elige una pieza se muestra el valor que se le dio a cada movimiento sobre su clicker. Se puede mover cualquier pieza.
+
+Hay un espacio de memoria que la IA lee y limpia al final de cada movimiento, antes de dar la valoracion final. El valor leido se suma directamente al valor. Sirve para que se pueda influir artificialmente en la valorizacion. Agregar una IA que solo se maneja con esto
+
+
+###
+
+/// threads
+Agregan mucha complejidad y puede que no sean muy necesarios, ver
+
+Alguna opcion visual para ver que piezas se estan calculando actualmente
+
+
+
+///
+
+---mas cosas
+
+por ahi agregar funciones para no blotear tanto con macros. No creo que cambie la eficiencia pero bueno. No debería ser muy complejo ya que no tienen parametros, si se les necesita pasar algo se pasa por memorias
+
+una matriz extra del tablero para sprites solo esteticos
+
+una matriz extra del lector para valores iniciales de la memoria tile, y otra para sprites esteticos
+
+neg, operador que tiene una normal y retorna el valor opuesto. Hace un chequeo que mira que la normal solo contenga condiciones
+
+forma mas simple de dar doble turno y cosas asi, preferiblemente sin agregar nada
+
+agregar un break a desliz, se usaria bastante. Por ejemplo en la torre:
+desliz {w,a,s,d} exc mover or captura break end
+
+checkid a, comando que da verdadero si el id de la pieza en esa pos es a
+
+Modo debug, se elige en la pantalla del tablero.
+Hace que se hagan pausas en el calculo de movimientos, que se avanzan de a una apretando una tecla. Sirve para debuggear movimientos y para explicar como funciona el sistema. Se marca la pieza actual, se dibuja el movimiento parcial y donde esta el puntero de posicion. 
+No estoy seguro de que determina las pausas
+Cuando se esta en este modo solo hay un thread
+-
+En la implementacion supongo que voy a hacer otro calcular, para no meter un if(debug) en el calcular normal
+
+opcion de ver todos los movimientos de un bando
+
+Se podría agregar un operador rand que es una especie de opt, pero solo
+corre una rama elegida aleatoriamente
+En el lenguaje se tendría que escribir un porcentaje en cada rama, y todas
+las ramas tienen que sumar 100
+Dentro de todo es simple y da bastante juego.
+En la IA se puede implementar haciendo una cuenta que tome el valor y riesgo de 
+hacer cada movimiento, pesados por su probabilidad
+Un problema de generalizacion es este: Hay dos ramas, una verdadera y una
+falsa. Debería descartarse la falsa y solo tener en cuenta la verdadera, o
+elegir aleatoriamente entre las dos y si cae la falsa no hacer nada?
+Como se puede abstraer para tener los dos casos? Una forma sería con un
+flag y ya esta
+
+
+
+
 
 

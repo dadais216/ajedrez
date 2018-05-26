@@ -1,0 +1,467 @@
+lenguaje
+
+cada movimiento es una linea y esta compuesto por condiciones y acciones, todas juntas en cualquier orden
+
+las condiciones y acciones se acumulan en listas separadas y si todas las condiciones se cumplen se genera un clicker
+que puede ejecutar todas las acciones, o la IA hace sus cosas
+
+las posiciones son relativas, se tiene una posicion actual sobre la que se efectuan los chequeos y se realizan las acciones
+por default es la posicion de la pieza, 0, aunque puede ser una esquina del tablero, e
+
+para mover la posicion actual se usan las letras w a s d, siendo w y s adelante y atras relativos, dependen del bando
+un movimiento afuera del tablero hace invalido el movimiento (supongo)
+
+def mover: vacio mov
+def captura: enemigo capt mov
+def estandar: {captura,mover}
+def around: {w,wa,a,as,s,sd,d,dw}
+rey:
+around estandar
+
+caballo plano:
+turn (x,y)=[(w,{a,d}),(d,{w,s}),(s,{a,d}),(a,{w,s})]<
+x vacio x vacio y estandar
+y vacio x vacio x estandar
+> 
+
+def, {} y turn son metaoperadores que hacen reemplazos
+{} crea una copia de la linea por cada miembro que tenga
+turn crea copias del codigo entre <> seteando las variables a los valores que se le pasen, en este caso haría
+x=w y y={a,d} y haría 3 copias mas con los otros codigos. Despues las llaves duplicarían todo
+
+primero se reemplazan todos los def, despues los turn hacen sus cosas y por ultimo se resuelven las {}, si hay anidacion
+se va a tener que correr todo varias veces
+en principio las llaves no deberían contener metaoperadores
+
+las funciones son formas de efectuar muchos movimientos, cuando estos dependen de la situacion actual del tablero. Tienen
+logica propia y suelen crear muchos clickers
+
+
+def then lim
+def end lim
+torre-que-solo-captura:
+desliz {w,a,s,d} mover then captura
+
+desliz efectua su contenido, lo que este entre desliz y lim, repitiendo hasta que las condiciones den falso. 
+Cuando pase, si no se seteo outbounds, se lee el codigo despues del lim
+
+El lim es necesario porque actua como el parentesis de cierre
+
+Es necesario que haya algun movimiento en el contenido, sino va a hacer el mismo chequeo en el mismo casillero continuamente
+
+torre:
+desliz {w,a,s,d} mover click then captura
+
+click crea un clicker con los movimientos acumulados hasta ahora (es un operador). Al principio pensaba hacerlo parte
+de desliz para que quede todo mas limpio, pero tener click suelto es mas poderoso y ahorra tener que crear un opt especial
+y ahorra problemas que habría entre un desliz y un opt que crean clickers
+
+
+Parametros:
+
+out : cuando se falla por outbounds, restaura la pos a la anterior a salirse del mapa y corta el bucle. En el then
+se puede diferenciar entre un fallo por alguna condicion cualquiera y un fallo por outbounds usando opt y la condicion outbounds
+(esta devuelve el valor actual de outbounds y lo setea a falso)
+
+restore: guardar la pos antes de la primera iteracion y la restaura despues de que termine el then 
+(podría hacerse con comandos posRemember posRestore tambien, pero como solo es util en deslices lo delego a esto y listo)
+
+for num : itera solo num veces
+
+pieza que que se mueve en una linea vertical de la que salen lineas diagonales:
+{desliz w,} desliz restore {a,d}w mover then captura then pass
+
+
+grasshopper:
+turn x=[w,wa,a,as,s,sd,d,dw]<
+desliz x vacio then {enemigo,aliado} x estandar
+>
+
+opt
+bif:
+www mover opt a captura or d captura then sss mover
+
+opt sirve para crear bifurcaciones en movimientos, es util mas que nada cuando esta adentro de un desliz
+o para evitar hacer tantos movimientos si se acumulan muchos {}
+cada vez que opera ramifica una vez por cada opcion que sea verdadera, guardando la pos y un iterador del buffer de acciones
+
+para aprovechar las llaves se puede escribir algo como
+
+bif:
+www mover opt \
+{a,d} captura or\
+pass then sss mover
+
+\ sirve para indicar que varias lineas forman parte de la misma. Estas desaparecen y se llevan consigo el eol despues
+de la aplicacion de llaves.
+Esto sirve para poder escribir en muchas lineas si el movimiento se hace muy largo, y para poder aprovechar las llaves.
+or then se transforma en then
+
+
+Tambien podría escribirse esto:
+bif:
+www mover opt \
+{a,d} or\
+then captura sss mover
+
+ya que cuando no hay condiciones siempre se retorna verdadero, si la captura no se puede realizar el movimiento se cancelaria
+despues del or, en la rama, por lo que sería un poco mas lento pero tendría el mismo efecto
+
+parametros:
+ord : en lugar de ramificar hace solo una rama con el primer movimiento que de verdadero, evaluando de arriba a abajo
+
+input : crea un clicker por cada rama verdadera y espera a que se toque uno. Cuando se elija uno, se ejecuta su lista
+de acciones y se sigue con then
+Este es el mas complejo porque va a necesitar avanzar todas las ramas hasta que todas lleguen a un clicker final o
+un clicker input. Esto incluye ramas creadas por llamadas anteriores a opt, en caso de anidacion de operadores
+Se va a necesitar tener un control sobre las ramas, que de todas formas necesitaria para hacer los multi mas raros
+
+
+
+
+
+
+def estandar opt ord mover or captura lim
+podría quedar asi para evitar hacer duplicados innecesarios con {}
+
+
+#hacer que sea parte de multi
+#leon:
+#limite[ewwww,ewwwwa,ewwwwaa,ewwwwaaa,etc]<
+#desliz around mover then captura
+#>
+
+#limite mira que no se generen clickers en las pos marcadas, marca como invalidos movimientos que pisen esas pos
+#podría hacer uno que sea como este pero lista blanca en vez de negra
+#podría hacer que tome pos relativas en lugar de absolutas (basadas en la pos original de la pieza)
+
+dama:
+multi[
+turn x=[wa,as,sd,dw]<
+x captura x mover
+nonFirst doNothing
+>
+]
+
+multi toma una lista de movimientos. Cuando se hace alguno de estos, en lugar de terminar el turno permite volver
+a jugar, dada la misma lista de movimientos. Siempre que haya un movimiento valido se va a poder seguir
+
+hay una version de multi que solo permite repetir n veces
+
+hay un accion especial que se puede agregar a movimientos para hacer que, si se eligen, no se pueda repetir mas
+
+hay que tener cuidado con las acciones muy libres, por ejemplo un rey que se mueva 3 veces ya son 512 calculos de
+tablero que hay que tirarle a la IA
+
+
+alfil reflectante:
+turn x=[wa,as,sd,dw]<
+loop [(wa,{wd,as}),(wd,{ds,wa}),(as,{aw,ad}),(sd,{sa,sw})] x deslizOut l nonOrg mover then nonOrg captura thenOut nonFirst loopBack
+>
+
+esta es la pieza mas compleja hasta ahora, intente no crear funciones especificas para ella, esto
+es lo mas general que me salió. Viendo un caso solo
+
+loop [(wa,{wd,as}),(wd,{ds,wa}),(as,{aw,ad}),(sd,{sa,sw})] wa deslizOut l nonOrg mover then nonOrg captura thenOut nonFirst loopBack 
+
+loop [(wa,wd),(wd,ds),(as,aw),(sd,sa})] wa deslizOut l nonOrg mover then nonOrg captura thenOut nonFirst loopBack
+
+loop es una forma de iterar haciendo transformaciones sobre una variable l. (si hay anidacion se refieren como l 1, l 2, etc)
+en esta linea se va a iterar transformando wa->wd, luego wd->ds y asi. Como use muchas llaves se van a terminar generando
+16 lineas para cada una de las 4 direcciones iniciales, cada una con una setencia loop distinta. Seguramente haya formas
+mas eficientes de hacer esto, pero esta es una forma de mantener la abstraccion y funciona. Si termina siendo algo muy pesado
+cambiarlo, aunque no creo. La mayoria de estas lineas van a dar falso ni bien arrancan, solo habría que tener en cuenta el
+costo de creacion y destruccion de sus estructuras
+
+nonOrg es una condicion que mira que la pos actual no sea la pos original
+deslizOut es un desliz que corre codigo cuando se sale del tablero, en lugar de terminar. Cuando sale del tablero
+no avanza la pos a un lugar invalido, solo se da cuenta
+nonFirst es un comando de desliz que ve que esta no sea la primera iteracion del mismo
+
+hay comandos especiales tambien para multi, asi que va a ser algo que tenga que agregar. nonFirst puede ser util en otros
+casos
+
+
+para lograr el rebote pasa por el bucle las dos direcciones posibles en las que podría rebotar. Solo una de estas es
+valida en cada caso, la otra va a fallar ya que va a ser Outbounds inmediatamente y nonFirst va a dar falso
+los clickers generados por la version invalida (los del camino inicial hasta la pared) son iguales a los de la version
+valida, asi que no va a haber problema
+
+torre bordeadora:
+loop [(w,{d,a}),(d,{w,s}),(a,{w,s}),(s,{a,d})] {w,d,a,s} deslizOut l pNotContains mover then pNotContains captura thenOut nonFirst pRemember loopBack
+
+pRemember es una estructura que guarda la pos actual en una lista
+pNotContains mira si la pos esta en la lista
+nonOrg y limite usan el mismo mecanismo
+
+
+en este caso se usa para guardar la pos de cuando choca contra la primera pared, tambien guarda los siguientes choques,
+aunque solo el primero es importante. En cada paso mira si esta en esa misma posicion, lo que indicaria que dio la vuelta
+
+una alternativa a loop es hacer un multi especial que haga que todos los procesos se hagan en un turno,
+y que a demas mire que nunca se pase por la misma pos dos veces.
+hay que tener cuidado con este porque podría terminar haciendo superposiciones raras o bucles infinitos, igual el otro
+tiene los mismos problemas
+
+torre bordeadora 2:
+multi2[
+deslizOut {w,d,a,s} pNotContains mover then pNotContains captura thenOut nonFirst pRemember loopBack
+]
+
+es mas facil de leer pero tiene mas carga
+funciona mirando los movimientos disponibles, si tiene mas de uno se va ramificando
+cuando llegue a una sentencia loopback repite todo el proceso
+Tiene mas carga porque en cada ramificacion va por el camino sobre el que vino tambien. En este caso especifico no pasa
+nada, pero en muchos otros podría hacer cosas raras
+
+otra opcion sería hacer un multi3 que ademas de las cosas de multi2 tenga la restriccion de nunca pasar por la misma pos
+dos veces
+
+torre bordeadora 3:
+multi3[
+deslizOut {w,a,s,d} mover then captura thenOut loopBack
+]
+
+alfil reflectante 3:
+multi3[
+deslizOut {wa,as,sd,dw} mover then captura thenOut loopBack
+]
+
+hay que tener en cuenta que la restriccion solo tiene en cuenta movimientos anteriores de la misma rama,
+osea, no hay interferencia entre los movimientos originales.
+Podría ser util para que sea mas rapido hacer un multi4 en el que si se compartan los puntos acumulados entre
+ramas, aunque en el caso del alfil reflectante haría que deje de funcionar como debería (un segundo movimiento inicial
+sería cortado por el primero)
+multi4 sería util en la torre bordeadora para evitar movimientos redundantes. El codigo sería igual.
+
+estos multis hacen el codigo mas simple pero traen la carga de manejar una lista de posiciones y hacer comparaciones
+en cada movimiento. Aunque, si se usan bien, ahorran hacer movimientos redudantes, dentro de todo compensan
+
+podría hacerse un multi5 que a demas de las funciones de multi4 recorra el arbol de forma distinta, rotando entre cada
+rama en vez de hacer cada rama por vez
+con eso se podría implementar el ubi ubi
+pareciera que el ubi ubi tambien se puede implementar con multi4, no sé si habría interferencias en algun caso raro.
+
+peon:
+inicial w spawn fantasma w mover
+{wa,wd} captura
+w mover
+
+
+bomba:
+{w,a,s,d} mover
+in wa -> d d w a a w d d do capt
+
+in->do sirve para marcar muchos casilleros donde se va a realizar un movimiento. A diferencia de desliz todas las acciones
+son independientes entre si. Si se marca un espacio fuera del tablero no se hace nada
+
+lo que esta antes de la flecha es para decidir desde donde empezar a marcar casilleros
+
+se pueden combinar movimientos para hacer saltos importantes, como a sssss d, para crear zonas no conexas
+
+si se hace que se mueva la pieza va a hacer terminar en la ultima pos que se marque
+
+la bomba se captura a si misma aca. Junto con el capt se podría poner un comando que muestre una animacion
+
+crooked bishop:
+deslizr {[wa,wd],[wd,wa],[aw,as],[as,aw],[sa,sd],[sd,sa],[dw,ds],[ds,dw]} mover then captura
+
+deslizr toma una lista de movimientos y va rotando
+Rose se puede hacer con esto tambien
+
+
+tanque:
+turn x=[w,a,s,d]<
+x mover
+queuePush deslizOut x pieza queuePush queuePop then queuePop end thenOut queueCapt end 
+>
+
+las funciones de queue solo guardan y sacan piezas. En el chequeo siempre devuelven verdadero,
+asi que lo unico que se esta mirando es que haya piezas ortogonalmente. 
+Los end estan para crear el clicker, ya que pieza es solo un chequeo y las funciones queue no forman el clicker solas
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--operador v
+
+si hay dos clickers en un mismo casillero para una pieza, y estos tienen la misma lista de acciones, se deja uno. Si son
+distintos, los clickers se van a ir alternando cada medio segundo
+
+puede que un clicker que trabaje en varios casilleros pueda aparecer en todos ellos en lugar de uno. No sería complicado de
+hacer, no sé que quedaría mejor.
+Si voy por multicasilleros tendría que haber una accion pintar que no hace nada más que pintar casilleros, para casos donde
+en codigo no se hace una accion especifica pero pintar quedaría bien (por ejemplo el hop de una pieza)
+
+los movimientos (w a s d) que se usan en la oracion se guardan tambien en el clicker para hacer la animacion, desliz tambien
+va guardando estas cosas
+
+----
+aparte de los movimientos, las piezas tienen booleanos falsos por default que se hacen verdaderos al escribir su nombre
+
+atrb: real waterproof
+
+tambien pueden tener mecanicas especiales, como hacer una accion al morir o cada cierto tiempo
+
+fantasma:
+onDeath w cpt
+every 1 del
+
+every toma un numero y corre el codigo que le sigue. Si no hay muchas mas piezas que la usen hacer algo mas simple
+cuando se esta por mover una pieza a la zona de capturados se mira si tiene una accion onDeath
+
+del elimina la pieza en la pos actual. Es distinto de capturar porque no manda la pieza a la zona de capturados
+
+existe una lista de piezas con acciones every que maneja la cantidad de turnos que faltan para dispararse alguna. Cuando
+pasa se salta a esa pieza directamente. Osea, no se recorre en cada turno cada pieza para ver si tiene acciones every
+
+
+
+promociones
+
+existe una funcion isPos que recibe dos numeros y devuelve verdadero si se esta en esos numeros. Es util para tableros
+especificos. Asi se puede hacer esa pieza de mierda que cambia segun la fila. En lugar de un numero
+se puede pasar x, que sería un any. Tambien l, que representa la fila mas lejana
+los valores de y estan espejados dependiendo del bando. Si no se quiere eso podría haber otra funcion
+
+
+se pueden meter las promociones con every, por ejemplo el peon:
+every 1 isPos x f promote-nonReal
+
+y para las piezas que promocionan por la mitad del tablero se va a tener que especificar bien.
+Esto ahorra tener que hacer una matriz de promocion, y es mas flexible porque se pueden tener piezas que
+promocionen en lugares distintos o con cosas que no dependen de la ubicacion, como el paso de turnos
+usando el contador de every o alguna condicion especifica hecha con comandos
+
+
+posRemember 0 1 forEach isPieza 4 isAlly posRemember 2 3 numDist 0 2 numDist 1 3 setNum 4 1 break end numCmp 4 1 optord\
+{wa,as,sd,dw} posRemember 4 5 numGreater 0 4 numGreater 4 2 desliz ... 
+
+
+
+
+
+
+
+
+multibloques
+el sistema multibloques estaría para poder definir piezas que ocupen mas de un bloque que interactuen bien con las
+otras mecanicas, asi como tambien agregar campos
+Los campos podrían agregarse como un sistema aparte, pero hacer que sean piezas unidas por multibloque es mejor porque
+da mucha mas libertad
+Habría que plantearse bien el problema de tener mas de una pieza por casillero, supongo que con punteros proxy 
+y algunos controles sería suficiente. Por ahí usando piezas proxy es suficiente
+
+
+las piezas proxy permiten a otras piezas ocupar el mismo casillero que ellas, tienen un puntero a pieza dentro suyo
+donde guardar a la otra pieza. Pueden darle libertad total a la pieza, o manipular sus movimientos con comandos
+una pieza queda en proxy de la otra cuando la otra entra en el mismo casillero, o la pieza proxy se mueve al casillero
+de la otra
+si atrapa a otra proxy, la otra puede atrapar otra pieza, podiendo entonces tener n piezas en un casillero
+Si el orden de proxys es importante se puede agregar unos niveles de prioridad
+
+Congelamiento es una pieza proxy que hace que la pieza atrapada no tenga movimientos disponibles
+y asi se podrían hacer campos de captura, conversion, y cosas raras.
+
+No se limita a piezas que hagan de campo, se puede hacer una pieza proxy que sea como una pieza comun.
+una pieza que si ocupa el mismo espacio que otra como ella promociona a una pieza mas fuerte
+
+el ariete es una pieza que atrapa otra de su bando, solo puede moverse ortogonalmente. La pieza atrapada
+tiene sus movimientos disponibles y puede moverse fuera cuando quiera. (supongo que va a tener algo mas que 
+lo haga util)
+
+cuando se clique una pieza proxy aparecen disponibles los movimientos de todas las piezas. En el caso del
+congelamiento este no tiene movimientos y bloquea explicitamente los de su atrapada, asi que no se muestra nada.
+En el caso del ariete aparecen sus movimientos y los de la pieza. El ariete pinta sus clickers de otro color
+para que no haya confusion
+
+
+
+
+Las piezas multibloques se definen como tales en el tablero, agregando * y un numero a cada una que forme un grupo.
+Una notacion parecida se puede usar para piezas que necesitan saber de otras cuando arrancan, como los coordinadores
+
+si una pieza es capturada las demas tambien, y una pieza solo puede moverse si todas pueden (se guardan las posiciones
+actuales aparte. Se remueven del tablero todas las piezas, y se intentan colocar en la nueva pos. Si alguna no entra se
+vuelve a la actual y se marca como false)
+para lograr que un multibloque se transforme en otra formacion hay que hacer que promocione en el otro. 
+
+
+
+mecanicas de jaque
+hay un bool que determina que una pieza tiene jaque, aparte de real. Asi puede haber piezas reales no jaqueables y
+piezas no reales con jaque
+en un tablero determinado hay un mapa de los casilleros amenazados. 
+
+Si una pieza con jaque esta amenazada es obligatorio que se mueva esa pieza.
+Una pieza con jaque no puede moverse a un espacio amenazado.
+Si una pieza esta en un espacio amenazado y solo puede moverse a espacios amenazados, se va a tener que mover a uno
+de todas formas. Si la pieza es real y es la unica que queda, se termina el juego
+
+Si hay mas de una pieza con jaque amenazadas, se elige una. No sé si el otro jugador tiene obligacion de matar a la otra
+pieza en jaque o no
+
+
+piezas invisibles y campos de bloqueo se pueden agregar pero blotean desliz. Una vez que tenga todo andando agregarlos y
+ver si efectivamente realentizan el juego
+
+
+
+las píezas tardias van a estar mas harcodeadas. Se tienen que tratar aparte por como funcionan
+van a tener funciones como listTreateners listFriends getLastPiece que cargan el buffer de piezas, y ahí usan 
+copyMovements 
+
+
+
+--va a ser necesario tener variables numericas? en caso de que si hacer varset varadd varrst varcmp-else, todas de ariedad 2
+--tambien se podrian meter flags, igual hasta que no aparezca alguien que lo necesite no pensarlo. Tampoco no se hasta que
+--punto quiero expandir esto
+
+
+procesado del lenguaje
+
+w v d mover,a mover,captura |v desliz w captura then multi0<
+{w,a,s,d} mover
+> in around congelar then pass
+
+se parsea llamando a los parsers de los operadores respectivos.
+Se comienza con el parser normal, toma w. Despues mira v y llama al parser de v
+
+el parser de v llamar al parser normal por cada parametro que tenga.
+
+si todavia hay texto y el parser no tiene nada mas que hacer llama al parser normal devuelta,
+este inmediatamente llama a desliz
+
+desliz llama al parser normal pasandole todo lo que tenga desde desliz hasta el proximo then (o el proximo proximo si
+ve otro desliz), y lo mismo para multi e in
+
+Cada parser puede interpretar a los eol distinto. El parser normal lo toma como el fin de movimiento, multi los 
+usa como delimitadores de cada movimiento y los demas deberían ignorar o marcar error
+
+Cada operador termina el movimiento cuando decide que su estado es falso.
+normal carga el buffer de acciones cuando sus condiciones son verdaderas. El buffer se aplica solo si no hay nada mas que hacer
+de acciones y pasa el control al siguiente operador, este pudiendo decidir entre dar falso, cargar mas el buffer o otra cosa
+
+desliz aplica las acciones del buffer directamente si su condicion es verdadera, y despues sigue haciendo cosas
+
+multi tambien aplica acciones de forma explicita y sigue funcionando
+
+
+podría hacer que then, ; y todos los delimitadores sean el mismo token. Creo que no causaría problemas
+normal retorna en eol y delimitador, y sigue el control es el manejador de movimientos o en el operador que llamó
+
+
+agregar algun simbolo a multi que sea alternativa al eol, asi se lo puede meter en un def
+
+
+

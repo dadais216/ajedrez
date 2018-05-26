@@ -20,10 +20,10 @@ normal::normal()
         switch(tok)
         {
         case lector::W:
-            pos.y++; //el espejado se va a tener que hacer cuando se construyan las absolutas
+            pos.y--; //el espejado se va a tener que hacer cuando se construyan las absolutas
             break;
         case lector::S:
-            pos.y--;
+            pos.y++;
             break;
         case lector::D:
             pos.x++;
@@ -61,7 +61,6 @@ normal::normal()
             acc(capt);
             acc(pausa);
 //        acc(spwn);
-            acc(del);
 
         case lector::color:
             colors.push_back(crearColor(pos));
@@ -110,29 +109,27 @@ bool normal::operar(movHolder* mh,Holder* h){
 
     normalHolder* nh=static_cast<normalHolder*>(mh);
 
-    nh->triggs.clear(); //no libera memoria
     ///habria que distinguir a los cond que no son posicionales, creo que son los de memoria nomas
     for(condt* c:conds){
-        v posAct=c->pos+h->pos;
-        nh->triggs.push_back(posAct);
+        v posAct=c->pos+h->tile->pos;
+        tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
 
         //todo podría hacerse que cuando el mov es falso se tenga en cuenta solo
         //el trigger final, el que hizo falso al mov. Creo que funcionaria para todos
         //los casos. Habria que meter el concepto de normalholders verdaderas y falsas, no se si lo valga
 
         if(!c->check(h,posAct)){
-            //h->valido=false;
+            //nh->valido=false;
             return false;
         }
     }
-    //h->valido=true;
+    //nh->valido=true;
     //accs en holder ya esta generado
-
     //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
     for(int i=0; i<accs.size(); i++)
-        nh->accs[i]->pos=accs[i]->pos+h->pos;
+        nh->accs[i]->pos=accs[i]->pos+h->tile->pos;///podria mandar el tile en vez de la pos, pero como no todas las acciones lo usan mientras menos procesado se haga antes mejor
     for(int i=0; i<colors.size(); i++)
-        nh->colors[i]->pos=colors[i]->pos+h->pos;
+        nh->colors[i]->pos=colors[i]->pos+h->tile->pos;
     return true;
 }
 

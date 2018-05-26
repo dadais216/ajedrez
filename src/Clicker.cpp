@@ -8,8 +8,9 @@ bool Clicker::drawClickers;
 
 vector<Clicker*> clickers;
 
-Clicker::Clicker(vector<normalHolder*>* normales_){
+Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
     normales=normales_;
+    h=h_;
 
     normalHolder* lastN=normales->operator[](normales->size()-1);
     clickPos=lastN->accs[lastN->accs.size()-1]->pos;
@@ -73,8 +74,15 @@ bool Clicker::update(){
             return true;
         }
         */
-        //drawClickers=false;
-        accionar();
+        h->pisados.push_back(h->tile);
+        accionar(); //por ahora solo capt agrega a pisados
+        h->pisados.push_back(h->tile);
+
+        for(Tile* tile:h->pisados)
+            tile->activateTriggers();
+
+
+
         return true;
     }
     return false;
@@ -87,15 +95,15 @@ void Clicker::accionar(){
     }
 }
 
+/*
 void Clicker::activacion(int clickI)
 {
     activo=val==clickI%mod;
 }
 
+*/
 void Clicker::debug(){
     for(normalHolder* n:*normales)
         n->debug();
 }
-
-
 

@@ -1,0 +1,212 @@
+
+Paredes. Necesarias para hacer tableros no rectangulares. Todas las piezas deberian preguntar si es una pared antes de capturar. Podría agregarse al codigo directamente, pero como es algo que no esta en la mayoria de los tableros y puede que haya otras piezas con la misma condicion, prefiero agregarlo como algo de lenguaje.
+
+Una pieza que se mueva y pueda invocar orbes ortogonalmente, los orbes son piezas sin movimiento propio que se mueven en la misma direccion un casillero
+por turno, con every. Desaparecen al salir del tablero o capturar una pieza,
+de cualquier bando
+
+Torre 2x2, solo frena si pisa dos piezas a la vez. 
+Se le puede meter varias pausas para que se mueva mas lento
+En realidad son 4 piezas, 3 que no generan clickers y una que tiene todo el codigo de procesado.
+Entonces la pieza solo funcionaria al tocar una de sus 4. Se podría hacer un workaround haciendo que las otras piezas llamen al movimiento de la verdadera, pero la IA haría el calculo de movimientos de todo el conjunto 4 veces.
+Las 4 piezas tendrían un onCapture que autocaptura las demas
+
+Pieza que congela otras. Escribe en la memoria de las tiles un valor, que limpia y reescribe cada vez que se mueve o cuando sea capturada.
+Todas las piezas usan every en cada turno, y si leen este valor o bloquean todos sus movimientos o se reemplazan por una pieza sin movimientos.
+La primera solucion es mas simple pero tiene codigo mas feo, la segunda es mas complicada pero da la opcion de meter un sprite de la pieza congelada.
+Esta segunda pieza miraría en cada turno para saber si debería descongelarse.
+La ventaja de usar la memoria de tiles en lugar de realizar reemplazos directamente desde la pieza es que no va a haber problemas por superposicion de campos y que las piezas pueden mirar el espacio congelado antes de moverse, y pintarlo de otro color.
+---
+Anteriormente pensaba agregar una especie de vector de piezas y guardar las piezas ahi, en caso de que alguna tenga memoria esta no se pierda al hacer el reemplazo. Me parece que es agregar mucha complejidad al pedo, es un caso raro y si se da se puede escribir a memoria la memoria que no se quiera perder y listo.
+---
+El manejo de memoria tiene que ser flexible y va a serlo, porque abre muchas posibilidades.
+Entonces, va a haber una memoria en cada pieza, en cada tile y una memoria global. Estas deben poder ser accedidias por cualquier pieza, preferiblemente sin necesidad de pasar el control
+
+La memoria en tiles permite agregar agua, campos que frenen piezas que se deslizan, etc
+algo malo es que en la mayoria de los casos todas las piezas van a tener un codigo de reaccion, que se pone con macros. Se podría dejar asi y listo.
+Otra opcion es agregar codigo a la tile, que esta haga el efecto sobre la pieza. Pero esto va a ser mas o menos igual de eficiente que lo otro, porque tiene que hacer chequeos en cada turno. Puede que complique el segundo orden, no sé. Hace el lenguaje un poco mas lindo pero agrega un nuevo concepto. Con los macros esta bien.
+
+Una pieza que, una vez activada, congela todas las piezas fuera de un radio
+
+Una pieza que absorve todas las piezas aliadas que se muevan a su posicion. Todas las piezas hacen un checkid antes de hacer los chequeos de captura para ver si es esta pieza. Si es, escriben en la memoria de la absorvente su id y se autocapturan.
+En cada turno recorre su vector de piezas, un desliz entre 0 y la cantidad de piezas que tenga, un contador que va aumentando cada vez que absorbe.
+Se debería hacer llamar a algun comando que calcule artificialemente los clickers de la pieza seleccionada en esta pos, con este bando (lo mismo que hacen las tardias), haciendo spawns y capts en cada interacion.
+La memoria de absorvente debería hacerse global antes de calcular sus movimientos, porque la pieza se autocaptura para spawnear a las otras en su lugar y cuando se respawnee va a tener la memoria limpia, que se va a reescribir con la memoria global.
+Es una forma de hacerlo. Otra opcion sería mover la pieza a un espacio tecnico y traerla, pero si es algo que solo va a usar esta pieza no vale la pena.
+Puede que cambie calc para hacer lo de spawn y capt automaticamente, desde codigo. Va a ser mas rapido y casi todas las piezas tardias van a hacer algo parecido.
+
+Pieza vibora. Cada vez que come una pieza le crece la cola, que tiene las mismas propiedades que la pared. 
+El movimiento se haria guardando informacion de la ubicacion relativa de la siguiente cola, la ultima cola indicando que es la ultima.
+Esa informacion podría estar en una memoria de pieza, o mejor todavia, como piezas distintas. Que sean piezas distintas permitiria que tengan distintos dibujos y que una serpiente pueda tener cola en el tablero inicial
+
+Pieza controlable por ambos jugadores, implementada con un every que la cambie de bando en cada turno
+Tambien podría metersele la restriccion de que no pueda moverse a la pos anterior, para evitar que la IA haga siempre lo mismo
+Esto se haria con memoria, mirando que valores sean distintos. La memoria se copia de una pieza a otra pasando por la memoria global
+
+Pieza que solo puede ser capturada por reales, la forma mas simple es que antes de capturar se haga un checkid por esta pieza en las no reales.
+
+Pieza que transforma las que tenga en un radio, de cualquier bando, en torres. Transforma al rey en una torre real
+
+Pieza acorazada, al ser capturada vuelve al tablero capturando a la que capturo. Solo lo hace una vez.
+Es un capt spawn en onCapture, aprovechando que la pos sigue siendo la misma en piezas que se sacaron del tablero. Debería haber un chequeo de si la que capturo esta ahi igual, por si paso de largo o capturo a distancia
+
+Pieza con pieza hermana, entre las dos forman un area. Cualquiera puede saltar a cualquier punto de esta area. Si se las lleva a las esquinas del tablero se tendría un universal leaper
+Tambien si se logra avanzarla se tiene un campo defensivo importante
+Habría que decidir que pasa cuando se captura a una de las dos
+
+Otro par de piezas que arme un campo que captura cualquier cosa que entre
+
+el bufon. Pieza que arranca fuera del tablero y puede saltar a cualquier casillero vacio. De ahi en adelante copia los movimientos de la ultima pieza enemiga que se haya movido.
+Agregar un espacio fuera de tablero para piezas clickeables es mucho esfuerzo para esta pieza nomas. Se puede agregar poniendola en un espacio del tablero inaccesible, atras de unas paredes, y listo.
+Cada pieza al moverse escribe su id en una memoria global, el bufon la lee para llamar a calc
+
+no creo que agregue al antirey porque no es una pieza buena, pero es agregable ahora
+
+alguna pieza que ponga en jaque al rey enemigo antes de que arranque la partida. Como tu rey esta en jaque a la vez hay una regla que no te permite capturar hasta que saques a tu rey del rango de esta pieza
+
+
+portal: tiene que haber 2 como minimo. No es una pieza, se maneja todo desde la memoria de tiles y hay un sprite. Cuando una pieza esta parada en un portal se hace calc en cada portal. Si hay una pieza parada en algun portal cuando esta se mueve esa pieza es capturada.
+En caso de piezas deslizandose hay codigo especial que chequea cada iteracion si se trata de un portal. Si lo es en memoria global va a haber una lista de todos los portales, y se va a recorrer siguiendo el desliz desde cada uno. Si en alguno se llega a un portal, se corta el movimiento (ya que ya se hizo o se va a hacer despues)
+Pieza que pone portales de su bando
+
+
+
+Jaque:
+Hay tres opciones para implementar el jaque, las tres son mas o menos igual de complejas, no hacen uso de segundo orden pero necesitan escribir memoria no local en calculos y un every capaz de cancelar el movimiento anterior.  
+La primera es la que trae mas cosas porque necesita meter el after, asi que dejarla de lado a menos que haya mas motivos para meter un after
+La segunda es la mas limpia para uso general
+Opcion #1
+After es una propiedad como every, que se agrega a la pieza y le permite correr codigo. Este codigo se corre despues de cada movimiento, y se puede usar para implementar parte del mecanismo del jaque.
+Lo importante que tiene es que corre despues de que se haya hecho el movimiento y se hayan recalculado las piezas enemigas que se triggerearon. Esto permite reaccionar a estos recalculos. (antes pense en hacer un mecanismo reaccion, pero after es lo mismo y es mas amplio)
+Tambien tiene un comando especial que le permite volver falso el movimiento que se acaba de hacer.
+-
+la diferencia entre after y every es que every corre en todos los turnos, muevase la pieza o no.
+Tambien podría agregar un before que corre antes de algun movimiento de la pieza, si la pieza se mueve
+-
+hay un rey defendido por un alfil de la amenaza de una torre. Si el alfil se mueve, la torre puede amenazar al rey. Entonces, el alfil no se puede mover. Esto es parte del problema de jaque que se soluciona con after.
+El recorrido sería: el alfil se mueve, activa trigger de torre, la torre amenaza al rey, escribe en memoria que el rey esta en jaque. El control vuelve al alfil por after. El alfil mira el espacio de memoria que escribio la torre y decide cancelar todo el movimiento.
+Es comodo porque a la torre no le importa como reaccione el alfil, no tiene que actuar de forma explicita sobre él ni necesita actuar de forma distinta cuando calcula o recalcula.
+-
+Un segundo caso es cuando una pieza enemiga amenaza al rey en su turno. En este caso se tienen que prohibir todos los movimientos que no saquen al rey del estado de amenaza.
+Esta solucion aplica a los dos casos:
+Cuando una pieza amenaza a una real, aumentar un contador global de jaque a ese bando y setea un bool propio. Cuando recalcula, si deja de amenazar y tiene el bool resta (tambien si es capturada). En otros casos no hace nada.
+Todos los movimientos de todas las piezas tienen un after que mira si el contador de jaque es positivo, y si lo es, cancela el movimiento.
+
+Que una pieza que esta amenazando se de cuenta que dejo de amenazar es complejo. Podría tener un movimiento amenazando y otro no, y que el segundo sea el que recalcule. Al final de ese turno no tiene forma de saber el estado del otro movimiento. Para que funcione el control debería ser por movimiento, si un movimiento recalcula es claro ver si amenaza o no. Se va a usar la memoria de movimiento para el bool.
+-
+After esta pensado principalmente para cosas como el jaque, que cancelan movimientos, o setear memoria. Si los comandos contienen movimientos, estos se hacen. 
+Podría agregarse un comando repeat que llama a after despues de after, para hacer bucles de moverse y calcular reaccion enemiga, para hacer piezas bizarras como una pieza que pueda moverse indefinidamente por espacio amenazado (aunque esta sería mas facil y mas eficiente implementada marcando las tiles amenazadas)
+-
+After no podría ser implementado como un doble turno raro porque este segundo turno tendría que invalidar el primero.
+-
+El emperador podría implememtarse poniendolo en cada pos, activando triggers y preguntando si es amenazado
+
+Opcion #2
+Con un every el rey hace los movimientos de todas las piezas para ver si hay una amenazandolo.
+Por ejemplo, primero hace el movimiento de la torre y si encuentra una torre enemiga en el recorrido sabe que esta torre lo esta amenazando.
+Lo mismo para el alfil y caballo. Se puede optimizar un poco preguntando por la reina cuando se hace el recorrido de la torre y alfil y cosas especificas asi, pero la idea general sirve para cualquier juego. 
+Si ve que lo estan amenazando pone el estado de jaque.
+Este every corre en cada turno, despues de los turnos enemigos setearía el flag y despues de los turnos propios cancelaria movimientos si esta el flag
+El fin del juego esta determinado cuando no hay movimientos posibles *
+
+Lo unico malo de este sistema es que el rey tiene que hacer todos estos movimientos en cada turno, no es eficiente. Se multiplica en segundo orden
+Lo malo de los every es que hacen acciones determinadas en cada turno, esto debería funcionar con un sistema mas parecido a los triggers.
+
+Se puede implementar directamente en el sistema de triggers si se permite escribir memoria no local durante los calculos del rey. Entonces, no se van a calcular todos los movimientos en todos los turnos. Solo los que pisen triggers.
+
+Un segundo problema es, una vez determinado que hay jaque, prohibir movimientos que no lo saquen. Una forma es que todos los movimientos se recalculen (con algun trigger de memoria) y se determine cuales sacan el jaque, lo que implica tambien recalcular el every. Es un metodo lento pero efectivo y general.
+La forma eficiente, en el caso de ajedrez normal, seria recalcular solo los movimientos del rey y los movimientos de piezas que puedan bloquear al que amenaza al rey. Estos son los que respondan a triggers en el recorrido entre el rey y el que amenaza.
+
+Hay que ver como estan implementados los triggers de memoria para que no hagan recalculos al pedo y cosas asi
+
+Se seguiría usando un every para cancelar movimientos, pero haria solo eso.
+
+La ventaja de este sistema es que esta todo adentro del rey
+
+
+* si el rey esta amenazado es derrota y sino tablas. No tengo claro si esto se va a mostrar de alguna forma o si el juego va a terminar, por ahora queda en softlock
+
+Opcion #3
+Cada pieza marca todas las tiles que esta amenazando en el calculo de movimiento. Antes de mover limpia, despues mueve y vuelve a escribir. Cuando es capturada limpia, cuando recalcula limpia y reescribe hasta donde llegue.
+Los movimientos se cancelarian con un every que pregunta si el rey esta en una tile amenazada al final del turno
+El emperador podría implementarse de forma mas comoda con esto
+
+Piezas tardias:
+En este caso huerfano, el amigo es parecido:
+cuando una pieza amenaza a una tardia guarda en su memoria su id y su pos
+La tardia en un every recorre esas pos preguntando por piezas del bando contrario, en caso de dar false borra el id correspondiente (por arrays amigos) (se asume que no hay piezas del mismo bando que puedan cambiar lugar en un turno, de haberlas habria que hacer un checkid correspondiente en cada pos)
+Cuando la tardia se mueve borra toda su memoria y deja que la reescriban por triggereos
+La tardia arma sus movimientos recorriendo las ids y spawneando y llamando a calc.
+-
+No tengo claro que hacer con la tardia, lo mas simple sería capturarla, guardando su memoria en espacio global, y spawnearla al final de todo. Tampoco tengo claro si las piezas del calculo son creadas y borradas o se quedan en algun lado, de todas formas son holders, no debería ser caro. Y esta el tema de que los movs calculados pertenecerian a las piezas, no a la tardia.
+La mejor solucion sería hacer que calc se encargue de calcula los movimientos de cierta id como si fuera tu pieza, dejandolos en tu pieza. Esto ahorra todo el tema del capt spawn, y no restringue nada. 
+-
+Mas de una tardia: Cuando una tardia amenaza a otra se copian todos los ids y pos, guardando en otro espacio a la tardia para evitar bucles infinitos.
+Las actualizaciones de una tardia deberían comunicarse a las demas tambien
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+podria tomarme el trabajo de agregar funciones. Lo unico que aportaria es un poco de eficiencia en comparacion a macros, asi que no vale mucho la pena, hacerlo si quiero.
+No tendrían parametros, accederian a la informacion con comandos de mem, podiendo acceder a la memoria de la pieza que llamo. Actuarían igual que un macro, solo que no estarian copiados en cada parte del codigo. No sería muy complejo de implementar. Hasta por ahi baste con esto y me salte hacer before y after, aunque estos agregan algo de eficiencia y eso
+
+--
+un tablero con una doble fila de amigo-huerfanos seria interesante
+
+un ajedrez como el comun, pero en cada turno se tienen que mover dos piezas distintas
+-variante donde se tienen que mover piezas de distinta clase (en el primer turno se movería un peon y un caballo)
+-variante donde se tienen que mover piezas de la misma clase
+
+ajedrez hecho unicamente de piezas bizarras, con propiedades raras y movimientos con efectos secundarios
+
+ajedrez donde todas las piezas tienen propiedades raras, la de la torre siendo que ahora ocupa 4 casilleros
+
+ajedrez donde varias piezas puedan replicarse, mecanicas alrededor de eso
+
+un tablero de islas, con plataformas que se mueven
+-las plataformas serian espacio vacio entre paredes, se manejaria con algun every que va moviendo las paredes
+se podría agregar plataformas que se mueven, como barcos. Estos tendrían una pieza tecnica que haga de control, que permita mover el barco y las piezas que esten arriba. Si el espacio de control esta ocupado este se mueve a un espacio no ocupado o se corre el codigo de control desde la pieza que lo ocupo
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
