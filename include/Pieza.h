@@ -48,7 +48,6 @@ struct normalHolder:public movHolder{
 struct Tile;
 struct Holder{
     Holder(int,Pieza*,v);
-    ~Holder();
     void draw();///dibuja la pieza
     void draw(int);///dibuja la pieza en la lista de capturados
     void makeCli();
@@ -58,7 +57,6 @@ struct Holder{
     void generar();
     vector<movHolder*> movs;
     int id;
-    int uniqueId,step;
     int bando;
     bool inicial;
     bool outbounds;

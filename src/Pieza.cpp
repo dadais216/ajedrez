@@ -58,24 +58,16 @@ void resetearValores()
     */
 }
 
-int idCount=0;
-vector<int> uniqueIds;
 Holder::Holder(int _bando,Pieza* p,v pos_){
     bando=_bando;
     inicial=true;
     pieza=p;
     tile=tablptr->tile(pos_);
-    uniqueId=idCount++;
-    uniqueIds.push_back(uniqueId);
-    step=0;
     for(operador* op:pieza->movs){
         movHolder* mh;
         op->generarMovHolder(mh,this);
         movs.push_back(mh);
     }
-}
-Holder::~Holder(){
-    uniqueIds.erase(find(uniqueIds.begin(),uniqueIds.end(),uniqueId));
 }
 void Holder::draw()
 {

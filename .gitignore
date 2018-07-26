@@ -36,7 +36,10 @@
 *.depend
 *.layout
 *.xml
+<<<<<<< HEAD
 
 bin/*
 obj/*
 bin/Debug/ajedrez
+=======
+>>>>>>> 86a93bd44502cb0b4fb0b3f564425ff32e7c03c0

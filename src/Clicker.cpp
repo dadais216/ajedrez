@@ -80,9 +80,6 @@ bool Clicker::update(){
 
         for(Tile* tile:h->pisados)
             tile->activateTriggers();
-
-
-
         return true;
     }
     return false;

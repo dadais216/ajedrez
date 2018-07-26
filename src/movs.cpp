@@ -228,7 +228,7 @@ fabMov(pieza,condt,
       );
 fabMov(enemigo,condt,
        if(tablptr->tile(pos)->holder)
-       return tablptr->tile(pos)->holder->bando!=h->bando;
+            return tablptr->tile(pos)->holder->bando!=h->bando;
        return false;
       );
 ///list<v> limites;

@@ -42,7 +42,9 @@ void tabl::drawTiles(){
             if(matriz[i][j]->color){
                 b.setPosition(i*escala*32,j*escala*32);
                 window->draw(b);
-            }else{
+            }
+            else
+            {
                 n.setPosition(i*escala*32,j*escala*32);
                 window->draw(n);
             }
