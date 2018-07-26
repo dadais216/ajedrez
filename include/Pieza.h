@@ -27,7 +27,6 @@ struct Pieza
 
 struct movHolder{
     operador* org;
-    virtual void procesar(vector<v>&)=0; ///mirar triggers, si hay fallos llamar a recalcular
     virtual void generar()=0;///se llama solo al inicio
     virtual void debug(){};
     movHolder* sig;
@@ -39,8 +38,6 @@ struct normalHolder:public movHolder{
     Holder* h;
     vector<acct*> accs;
     vector<colort*> colors;
-    vector<v> triggs; //en el constructor hacer que reserven algo de memoria
-    virtual void procesar(vector<v>&);
     virtual void generar();
     virtual void debug();
 
@@ -48,18 +45,20 @@ struct normalHolder:public movHolder{
     void draw();///dibuja los colores, solo de normal
 };
 
-struct Holder
-{
+struct Tile;
+struct Holder{
     Holder(int,Pieza*,v);
+    ~Holder();
     void draw();///dibuja la pieza
     void draw(int);///dibuja la pieza en la lista de capturados
     void makeCli();
     Pieza* pieza;
-    v pos;
-    void procesar(vector<v>&);
+    Tile* tile;
+    vector<Tile*> pisados;
     void generar();
     vector<movHolder*> movs;
-    vector<v> pisados; ///para triggers, guarda todos los capt + pos
+    int id;
+    int uniqueId,step;
     int bando;
     bool inicial;
     bool outbounds;

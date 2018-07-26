@@ -74,15 +74,12 @@ bool Clicker::update(){
             return true;
         }
         */
-        h->pisados.push_back(h->pos);
+        h->pisados.push_back(h->tile);
         accionar(); //por ahora solo capt agrega a pisados
-        h->pisados.push_back(h->pos);
-        for(Holder* p:holders)
-            if(p!=h)
-                p->procesar(h->pisados);
-        h->pisados.clear();
-        h->generar(); //se podría meter adentro del for pero queda sospechoso
-        //(habria que separar el caso de movs que no mueven con un bool)
+        h->pisados.push_back(h->tile);
+
+        for(Tile* tile:h->pisados)
+            tile->activateTriggers();
 
 
 

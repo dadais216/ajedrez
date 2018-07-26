@@ -40,7 +40,7 @@ extern Manager<Texture>* imagen;
 extern float escala;
 extern tabl* tablptr;
 extern vector<Pieza*> piezas;
-extern vector<Holder*> holders;
+extern vector<int> uniqueIds;
 //extern Holder* act;
 //extern v pos;
 //extern v org;

@@ -29,7 +29,6 @@ lector::lector()
     rel(pausa);
     rel(spwn);
     rel(capt);
-    rel(del);
 
     rel(esp);
     rel(vacio);
@@ -126,13 +125,10 @@ void lector::mostrar()
     }
 }
 
-Holder* lector::crearPieza(int n,v pos)
-{
+Holder* lector::crearPieza(int n,v pos){
     for(Pieza* p:piezas)
-    {
         if(p->id==abso(n))
             return new Holder(sgn(n),p,pos);
-    }
 
 
     archPiezas.clear();

@@ -63,7 +63,7 @@ bool Humano::turno(){
         cout<<"("<<input->get()<<")"<<endl;
 
 
-        act=_tablero(input->get());
+        act=_tablero.tile(input->get())->holder;
         if(act&&act->bando==bando){
             act->makeCli();
             for(Clicker* cli:clickers){
@@ -83,9 +83,8 @@ Aleatorio::Aleatorio(int bando_,tabl& tablero_)
 
 bool Aleatorio::turno(){
     for(int i=0; i<_tablero.tam.x; i++)
-        for(int j=0; j<_tablero.tam.y; j++)
-        {
-            Holder* act=_tablero(v(i,j));
+        for(int j=0; j<_tablero.tam.y; j++){
+            Holder* act=_tablero.tile(v(i,j))->holder;
             if(act&&act->bando==bando)
                 act->pieza->calcularMovimientos(v(i,j));
         }

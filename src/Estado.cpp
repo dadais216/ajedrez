@@ -97,9 +97,9 @@ Proper::Proper(int id,int sel1,int sel2)
             v pos(j,i);
             cout<<pos<<"  "<<tablero.tam<<endl;
             if(n)
-                tablero(pos,lect.crearPieza(n,pos));
+                tablero.tile(pos)->holder=lect.crearPieza(n,pos);
             else
-                tablero(pos,nullptr);
+                tablero.tile(pos)->holder=nullptr;
         }
     }
     cout<<"nv"<<endl;
@@ -139,7 +139,7 @@ Proper::Proper(int id,int sel1,int sel2)
             ///a veces hay basura en el tablero, no se por que
             //cout<<tablero(v(i,j).show())<<endl;
             Holder* act;
-            if((act=tablero(v(j,i))))
+            if((act=tablero.tile(v(j,i))->holder))
                 act->generar();
         }
     }

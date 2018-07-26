@@ -58,31 +58,36 @@ void resetearValores()
     */
 }
 
-vector<Holder*> holders; ///piezas en tablero
+int idCount=0;
+vector<int> uniqueIds;
 Holder::Holder(int _bando,Pieza* p,v pos_){
     bando=_bando;
     inicial=true;
     pieza=p;
-    pos=pos_;
-
+    tile=tablptr->tile(pos_);
+    uniqueId=idCount++;
+    uniqueIds.push_back(uniqueId);
+    step=0;
     for(operador* op:pieza->movs){
         movHolder* mh;
         op->generarMovHolder(mh,this);
         movs.push_back(mh);
     }
-    holders.push_back(this);
+}
+Holder::~Holder(){
+    uniqueIds.erase(find(uniqueIds.begin(),uniqueIds.end(),uniqueId));
 }
 void Holder::draw()
 {
     //todo el sprite debería actualizarse cada vez que se mueve en lugar de cada vez que se dibuja, pero bueno
     if(bando==1)
     {
-        pieza->spriten.setPosition(pos.x*escala*32,pos.y*escala*32);
+        pieza->spriten.setPosition(tile->pos.x*escala*32,tile->pos.y*escala*32);
         window->draw(pieza->spriten);
     }
     else
     {
-        pieza->spriteb.setPosition(pos.x*escala*32,pos.y*escala*32);
+        pieza->spriteb.setPosition(tile->pos.x*escala*32,tile->pos.y*escala*32);
         window->draw(pieza->spriteb);
     }
 }
@@ -110,10 +115,6 @@ void Holder::makeCli(){
 }
 
 
-void Holder::procesar(vector<v>& pisados){  //vectores que potencialmente tocaron triggers
-    for(movHolder* mh:movs)
-        mh->procesar(pisados);
-}
 void Holder::generar(){
     for(movHolder* mh:movs)
         mh->generar();
@@ -128,16 +129,6 @@ normalHolder::normalHolder(Holder* h_,normal* org){
     colors.reserve(org->colors.size()*sizeof(colort*));
     for(colort* c:org->colors)
         colors.push_back(c->clone());
-    triggs.reserve(org->conds.size()*sizeof(v));
-}
-void normalHolder::procesar(vector<v>& pisados){
-    for(v trig:triggs)
-        for(v pis:pisados)
-            if(trig==pis){
-                cout<<"PROCESANDO"<<endl;
-                op->operar(this,h);
-                return;
-            }
 }
 void normalHolder::generar(){
     cout<<"GENERANDO"<<endl;

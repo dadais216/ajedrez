@@ -5,30 +5,24 @@
 float escala;
 tabl* tablptr;
 
-tabl::tabl()
-{
+tabl::tabl(){
     tablptr=this;
 }
 
-void tabl::armar(v a)
-{
+void tabl::armar(v a){
     tam=a;
     matriz.resize(tam.x);
-    tiles.resize(tam.x);
     for(int i=0; i<tam.x; i++)
-    {
         matriz[i].resize(tam.y);
-        tiles[i].resize(tam.y);
-    }
     escala=16*(1/(float)(tam.x>tam.y?tam.x:tam.y));
     cout<<escala<<endl;
     for(int i=0; i<tam.x; i++)
-    {
-        for(int j=0; j<tam.y; j++)
-        {
-            tiles[i][j]=(i+j)%2;
+        for(int j=0; j<tam.y; j++){
+            Tile* tile=matriz[i][j];
+            tile->color=(i+j)%2;
+            tile->pos=v(i,j);
+            tile->step=0;
         }
-    }
 
     b.setTexture(imagen->get("sprites.png"));
     n.setTexture(imagen->get("sprites.png"));
@@ -38,49 +32,37 @@ void tabl::armar(v a)
     n.setTextureRect(IntRect(32,0,32,32));
 }
 
-Holder* tabl::operator()(v a)
-{
-    return matriz[a.x][a.y];
+Tile* tabl::tile(v pos){
+    return matriz[pos.x][pos.y];
 }
 
-void tabl::operator()(v a, Holder* p)
-{
-    matriz[a.x][a.y]=p;
-}
-
-void tabl::drawTiles()
-{
+void tabl::drawTiles(){
     for(int i=0; i<tam.x; i++)
-    {
         for(int j=0; j<tam.y; j++)
-        {
-            if(tiles[i][j])
-            {
+            if(matriz[i][j]->color){
                 b.setPosition(i*escala*32,j*escala*32);
                 window->draw(b);
-            }
-            else
-            {
+            }else{
                 n.setPosition(i*escala*32,j*escala*32);
                 window->draw(n);
             }
-        }
-    }
 }
 
-void tabl::drawPieces()
-{
+void tabl::drawPieces(){
     for(int i=0; i<tam.x; i++)
-    {
-        for(int j=0; j<tam.y; j++)
-        {
+        for(int j=0; j<tam.y; j++){
             Holder* p;
-            if(p=matriz[i][j])
-            {
+            if(p=matriz[i][j]->holder)
                 p->draw();
-            }
         }
-    }
-    for(int i=0; i<capturados.size(); i++)
-        capturados[i]->draw(i);
+}
+#include <unordered_set>
+void Tile::activateTriggers(){
+    unordered_set<movHolder*> mhs; //para llamar a todos los mh una vez, despues de procesar pisados
+    for(Trigger trig:triggers)
+        if(trig.step==trig.tile->step)//la pieza que puso el trigger no se movio desde que lo puso
+            mhs.insert(trig.mh);
+    for(movHolder* mh:mhs)
+        mh->generar();
+    triggers.clear();
 }
