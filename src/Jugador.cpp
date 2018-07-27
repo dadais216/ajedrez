@@ -66,10 +66,12 @@ bool Humano::turno(){
         act=_tablero.tile(input->get())->holder;
         if(act&&act->bando==bando){
             act->makeCli();
+            /*
             for(Clicker* cli:clickers){
                 cli->debug();
                 cout<<"---";
             }
+            */
             drawScreen();
         }
     }
@@ -86,7 +88,7 @@ bool Aleatorio::turno(){
         for(int j=0; j<_tablero.tam.y; j++){
             Holder* act=_tablero.tile(v(i,j))->holder;
             if(act&&act->bando==bando)
-                act->pieza->calcularMovimientos(v(i,j));
+                ;//act->pieza->calcularMovimientos(v(i,j));
         }
     if(clickers.size()>0)
     {

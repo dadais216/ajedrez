@@ -99,7 +99,7 @@ void normal::generarMovHolder(movHolder*& mh,Holder* h){
         mh->sig=nullptr;
 }
 
-bool normal::operar(movHolder* mh,Holder* h){
+void normal::operar(movHolder* mh,Holder* h){
 //    list<acm*>::iterator bufferRes=!buffer.empty()?--buffer.end():buffer.begin();
 //    list<pair<drawable,v>>::iterator bColorRes=!bufferColores.empty()?--bufferColores.end():bufferColores.begin();
 //    list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
@@ -112,25 +112,29 @@ bool normal::operar(movHolder* mh,Holder* h){
     ///habria que distinguir a los cond que no son posicionales, creo que son los de memoria nomas
     for(condt* c:conds){
         v posAct=c->pos+h->tile->pos;
-        tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
 
         //todo podría hacerse que cuando el mov es falso se tenga en cuenta solo
         //el trigger final, el que hizo falso al mov. Creo que funcionaria para todos
         //los casos. Habria que meter el concepto de normalholders verdaderas y falsas, no se si lo valga
 
+        ///no definitivo. lo de addTrigger esta para evitar que esp tire triggers, no sé si esp es algo final o se va
+        ///a sacar. Podría volver a ponerse la idea de que todos los conds tiren triggers, depende como implemente memoria
+        addTrigger=false;
         if(!c->check(h,posAct)){
-            //nh->valido=false;
-            return false;
+            nh->valido=false;
+            if(h->outbounds) return;
+            if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
+            return;
         }
+        if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
     }
-    //nh->valido=true;
+    nh->valido=true;
     //accs en holder ya esta generado
     //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
     for(int i=0; i<accs.size(); i++)
         nh->accs[i]->pos=accs[i]->pos+h->tile->pos;///podria mandar el tile en vez de la pos, pero como no todas las acciones lo usan mientras menos procesado se haga antes mejor
     for(int i=0; i<colors.size(); i++)
         nh->colors[i]->pos=colors[i]->pos+h->tile->pos;
-    return true;
 }
 
 void normal::debug(){

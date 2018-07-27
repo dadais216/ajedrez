@@ -102,7 +102,6 @@ Proper::Proper(int id,int sel1,int sel2)
                 tablero.tile(pos)->holder=nullptr;
         }
     }
-    cout<<"nv"<<endl;
     //construir piezas adicionales
 
     auto selec=[&](int sel,int bando)->Jugador*
@@ -142,6 +141,12 @@ Proper::Proper(int id,int sel1,int sel2)
             if((act=tablero.tile(v(j,i))->holder))
                 act->generar();
         }
+    }
+    for(int i=0; i<tablptr->tam.y; i++){
+        for(int j=0; j<tablptr->tam.x; j++){
+            cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
+        }
+        cout<<endl;
     }
 }
 
