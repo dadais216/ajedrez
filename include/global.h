@@ -65,6 +65,7 @@ extern list<v> limites;
 extern vector<Clicker*> clickers;
 extern bool bOutbounds;
 extern bool cambios;
+extern bool addTrigger;
 
 extern bool memcambios;
 extern array<int,20> numeros;

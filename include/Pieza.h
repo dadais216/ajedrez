@@ -12,8 +12,7 @@ struct normal;
 struct acct;
 struct colort;
 
-struct Pieza
-{
+struct Pieza{
     Sprite spriteb,spriten;
     int id; //para hacer copias
     int sn;
@@ -21,8 +20,6 @@ struct Pieza
     vector<operador*> movs;
 
     Pieza(int,int);
-
-    void calcularMovimientos(v);
 };
 
 struct movHolder{

@@ -12,7 +12,7 @@ struct colort;
 struct movHolder;
 struct operador
 {
-    virtual bool operar(movHolder*,Holder*)=0;
+    virtual void operar(movHolder*,Holder*)=0;
     virtual void generarMovHolder(movHolder*&,Holder*)=0;
     virtual void debug() {};
     bool then();
@@ -22,7 +22,7 @@ struct normalHolder;
 struct normal:public operador
 {
     normal();
-    virtual bool operar(movHolder*,Holder*);
+    virtual void operar(movHolder*,Holder*);
     virtual void generarMovHolder(movHolder*&,Holder*);
     virtual void debug();
     vector<acct*> accs;
@@ -32,6 +32,7 @@ struct normal:public operador
 };
 
 //repite un operador normal hasta que falle, creando clickers en cada paso, a menos que sea deslizcond
+/*
 struct desliz:public operador
 {
     desliz();
@@ -87,7 +88,7 @@ struct bloque:public operador
     virtual void debug();
     operador* inside;
 };
-
+*/
 operador* keepOn();
 operador* tomar();
 bool operarAislado(operador*,bool);

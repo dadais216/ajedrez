@@ -18,10 +18,11 @@ void tabl::armar(v a){
     cout<<escala<<endl;
     for(int i=0; i<tam.x; i++)
         for(int j=0; j<tam.y; j++){
-            Tile* tile=matriz[i][j];
+            Tile* tile=new Tile;
             tile->color=(i+j)%2;
             tile->pos=v(i,j);
             tile->step=0;
+            matriz[i][j]=tile;
         }
 
     b.setTexture(imagen->get("sprites.png"));
@@ -58,11 +59,13 @@ void tabl::drawPieces(){
 }
 #include <unordered_set>
 void Tile::activateTriggers(){
-    unordered_set<movHolder*> mhs; //para llamar a todos los mh una vez, despues de procesar pisados
+    unordered_set<movHolder*> mhs; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
     for(Trigger trig:triggers)
         if(trig.step==trig.tile->step)//la pieza que puso el trigger no se movio desde que lo puso
             mhs.insert(trig.mh);
-    for(movHolder* mh:mhs)
-        mh->generar();
     triggers.clear();
+    for(movHolder* mh:mhs){
+        cout<<"TRIGGERED ";
+        mh->generar();
+    }
 }

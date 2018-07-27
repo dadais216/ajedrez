@@ -29,37 +29,6 @@ Pieza::Pieza(int _id,int _sn){
     piezas.push_back(this);
 }
 
-void Pieza::calcularMovimientos(v posAct)
-{
-    /*
-    for(operador* op:movs){
-        if(op->operar(posAct)&&cambios){
-            new Clicker(false);
-        }else{
-            buffer.clear();
-            bufferColores.clear();
-        }
-        cout<<endl<<"FIN DE MOVIMIENTO"<<endl;
-        resetearValores();
-    }
-    */
-}
-
-void resetearValores()
-{
-    /*
-    if(memcambios){ //no es necesario
-        numeros.fill(0);
-        memcambios=false;
-    }
-    bOutbounds=false;
-    pos=org;
-    limites.clear();
-    */
-}
-
-int idCount=0;
-vector<int> uniqueIds;
 Holder::Holder(int _bando,Pieza* p,v pos_){
     bando=_bando;
     inicial=true;

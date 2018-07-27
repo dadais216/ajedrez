@@ -198,6 +198,7 @@ struct NOMB:public TIPO{\
     Clone(TIPO,NOMB)\
 }\
 
+bool addTrigger;
 
 fabMov(mov,acct,
        h->tile->step++;
@@ -221,9 +222,11 @@ fabMov(capt,acct,
 
 
 fabMov(vacio,condt,
+       addTrigger=true;
        return tablptr->tile(pos)->holder==nullptr;
       );
 fabMov(pieza,condt,
+       addTrigger=true;
        return tablptr->tile(pos)->holder;
       );
 fabMov(enemigo,condt,

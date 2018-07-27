@@ -78,11 +78,22 @@ bool Clicker::update(){
         accionar(); //por ahora solo capt agrega a pisados
         h->pisados.push_back(h->tile);
 
+
         for(Tile* tile:h->pisados)
             tile->activateTriggers();
+        h->pisados.clear();
+        h->generar();
+        ///una pieza nunca activa sus propios triggers porque al moverse los invalida
+        ///necesita generar todos sus movimientos devuelta de forma explicita
+        ///esto no es verdadero en movimientos que no mueven la pieza
 
 
-
+        for(int i=0; i<tablptr->tam.y; i++){
+            for(int j=0; j<tablptr->tam.x; j++){
+                cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
+            }
+            cout<<endl;
+        }
         return true;
     }
     return false;
