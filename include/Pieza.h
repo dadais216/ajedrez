@@ -24,7 +24,7 @@ struct Pieza{
 
 struct movHolder{
     operador* org;
-    virtual void generar()=0;///se llama solo al inicio
+    virtual void generar()=0;
     virtual void debug(){};
     movHolder* sig;
     bool valido; //por ahora solo de normal

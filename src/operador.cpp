@@ -32,9 +32,7 @@ normal::normal()
             pos.x--;
             break;
             //cout<<#TOKEN<<endl;
-#define caseT(TIPO,TOKEN)  case lector::TOKEN: TIPO.push_back(new TOKEN(pos));break
-#define cond(TOKEN) caseT(conds,TOKEN)
-
+#define cond(TOKEN)  case lector::TOKEN: if(debugMode) conds.push_back(new debugMov(new TOKEN(pos))); else conds.push_back(new TOKEN(pos));break
 //        cond(posRemember);
 //        cond(numSet);
 //        cond(numAdd);
@@ -48,14 +46,14 @@ normal::normal()
 //        cond(numLessi);
 
             cond(vacio);
-            cond(esp);
             cond(outbounds);
             cond(pieza);
             cond(enemigo);
 //        cond(prob);
             cond(inicial);
+            case lector::esp: conds.push_back(new esp(pos));break;
 
-#define acc(TOKEN) caseT(accs,TOKEN)
+#define acc(TOKEN) case lector::TOKEN: accs.push_back(new TOKEN(pos));break
 
             acc(mov);
             acc(capt);
@@ -133,6 +131,36 @@ void normal::operar(movHolder* mh,Holder* h){
     //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
     for(int i=0; i<accs.size(); i++)
         nh->accs[i]->pos=accs[i]->pos+h->tile->pos;///podria mandar el tile en vez de la pos, pero como no todas las acciones lo usan mientras menos procesado se haga antes mejor
+    for(int i=0; i<colors.size(); i++)
+        nh->colors[i]->pos=colors[i]->pos+h->tile->pos;
+}
+
+//eventualmente copiar usando macros
+void normal::operarDebug(movHolder* mh,Holder* h){
+    normalHolder* nh=static_cast<normalHolder*>(mh);
+    /**/
+    /*marcar pieza*/
+    /**/
+    for(condt* c:conds){
+        v posAct=c->pos+h->tile->pos;
+        addTrigger=false;
+        if(!c->check(h,posAct)){
+            /**/
+            /*marcar posAct, imprimir condicion a un costado*/
+            /**/
+            nh->valido=false;
+            if(h->outbounds) return;
+            if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
+            return;
+        }
+        /**/
+        /*marcar posAct, imprimir condicion a un costado, como fallada*/
+        /**/
+        if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
+    }
+    nh->valido=true;
+    for(int i=0; i<accs.size(); i++)
+        nh->accs[i]->pos=accs[i]->pos+h->tile->pos;
     for(int i=0; i<colors.size(); i++)
         nh->colors[i]->pos=colors[i]->pos+h->tile->pos;
 }

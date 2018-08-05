@@ -23,6 +23,7 @@ struct normal:public operador
 {
     normal();
     virtual void operar(movHolder*,Holder*);
+    virtual void operarDebug(movHolder*,Holder*);
     virtual void generarMovHolder(movHolder*&,Holder*);
     virtual void debug();
     vector<acct*> accs;
