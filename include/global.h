@@ -66,6 +66,13 @@ extern bool bOutbounds;
 extern bool cambios;
 extern bool addTrigger;
 
+extern bool debugMode;
+extern bool drawDebugTiles;
+extern RectangleShape* tileActDebug;
+extern RectangleShape posPieza;
+extern RectangleShape posActGood;
+extern RectangleShape posActBad;
+
 extern bool memcambios;
 extern array<int,20> numeros;
 extern vector<Holder*> capturados;

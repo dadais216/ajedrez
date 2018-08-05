@@ -15,7 +15,7 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
     normalHolder* lastN=normales->operator[](normales->size()-1);
     clickPos=lastN->accs[lastN->accs.size()-1]->pos;
 
-    clickPos.show();
+    //clickPos.show();
     ///solapamientos
     /*
     val=0;

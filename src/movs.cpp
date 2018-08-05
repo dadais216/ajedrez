@@ -169,8 +169,8 @@ struct spwn:public acm{
 };
 */
 
-//usando herencia podría evitar tener 800 constructores iguales, pero de todas formas va a haber 800 clone
-//y con esto puedo hacer lo de debug
+//puede que cambie a un sistema que no use herencia si lo necesito, el problema es que algunos movs toman parametros,
+//pero se podria poner un puntero a informacion extra en un struct generico y listo
 #define Func(TIPO,FUNC) Func##TIPO(FUNC)
 #define Funcacct(FUNC)\
     virtual void func(Holder* h){\
@@ -188,12 +188,13 @@ struct spwn:public acm{
 #define Clonecondt(NOMB)
 #define fabMov(NOMB,TIPO,FUNC)\
 struct NOMB:public TIPO{\
+    const string nomb=#NOMB;\
     NOMB(v pos_){\
         pos=pos_;\
     };\
     Func(TIPO,FUNC)\
     virtual void debug(){\
-        cout<<#NOMB<<" "<<pos<<endl;\
+        cout<<nomb<<" "<<pos<<endl;\
     } \
     Clone(TIPO,NOMB)\
 }\
@@ -269,3 +270,40 @@ fabMov(ori,movt,
         pos=org;
 );
 */
+
+RectangleShape posPieza;
+RectangleShape posActGood;
+RectangleShape posActBad;
+RectangleShape* tileActDebug;
+bool drawDebugTiles;
+struct debugMov:public condt{
+    const string nomb="debugMov";
+    condt* cond;
+    debugMov(condt* cond_){
+        cond=cond_;
+        pos=cond->pos; //necesita tener pos para no ser especial en la logica de operar
+    }
+    virtual bool check(Holder* h,v pos){
+        ///imprimir cond->nomb
+        bool ret=cond->check(h,pos);
+        if(ret){
+            posActGood.setPosition(pos.x*32*escala,pos.y*32*escala);
+            tileActDebug=&posActGood;
+        }else{
+            posActBad.setPosition(pos.x*32*escala,pos.y*32*escala);
+            tileActDebug=&posActBad;
+        }
+        posPieza.setPosition(h->tile->pos.x*32*escala,h->tile->pos.y*32*escala);
+        drawDebugTiles=true;
+        drawScreen();
+        drawDebugTiles=false;
+        sleep(milliseconds(200));
+        ///bloquear hasta recibir input
+        return ret;
+    }
+    virtual void debug(){
+        cout<<"esta funcion esta siendo reemplazada";
+    }
+};
+
+

@@ -13,23 +13,20 @@
 
 Estado::Estado() {}
 
-Arranque::Arranque()
-{
+Arranque::Arranque(){
     portada.setTexture(imagen->get("portada.png"));
 }
-void Arranque::draw()
-{
+void Arranque::draw(){
     window->draw(portada);
 }
-void Arranque::update()
-{
+void Arranque::update(){
     if(input->click()&&input->inRange())
-        j->change(new Selector());
+        new Selector();
 }
 
 Selector::Selector()
-    :sel1(1),sel2(-1)
-{
+    :sel1(1),sel2(-1){
+    j->change(this);
     fstream tableros;
     tableros.open("tableros.txt");
     string linea;
@@ -44,15 +41,16 @@ Selector::Selector()
             j++;
         }
     }
-
-
+    drawScreen();
 }
+bool debugMode;
 void Selector::draw()
 {
     for(Boton* b:botones)
         b->draw();
     sel1.draw();
     sel2.draw();
+    debugMode=false;
 }
 void Selector::update()
 {
@@ -63,7 +61,7 @@ void Selector::update()
             int n;
             if((n=b->clicked()))
             {
-                j->change(new Proper(n-1,sel1.selected,sel2.selected));
+                new Proper(n-1,sel1.selected,sel2.selected);
                 return;
             }
         }
@@ -74,8 +72,10 @@ void Selector::update()
 
 lector lect;
 Proper::Proper(int id,int sel1,int sel2)
-    :tablero()
-{
+    :tablero(){
+    j->change(this);
+    debugMode=true;
+
     lect.leer(id);
     lect.mostrar();
 
@@ -133,25 +133,53 @@ Proper::Proper(int id,int sel1,int sel2)
     turnoBlanco.setPosition(510,0);
     turnoNegro.setPosition(510,0);
 
+    ///tiles de debug
+    posPieza.setSize(Vector2f(32*escala,32*escala));
+    posActGood.setSize(Vector2f(32*escala,32*escala));
+    posActBad.setSize(Vector2f(32*escala,32*escala));
+    posPieza.setFillColor(sf::Color(250,240,190,150));
+    posActGood.setFillColor(sf::Color(180,230,100));
+    posActBad.setFillColor(sf::Color(240,70,40,100));
+
+    /*
+    esto esta con la intencion de separar la rama de debug de la otra
+    para que el modo debug no afecte la velocidad cuando se corre normalmente.
+    Por ahora separo las ramas adentro de generar porque es mucho quilombo sino,
+    pero eventualmente podría separarlas bien. A menos que no se necesite, ver que pasa
+    #define generarInicial(debug) \
+    for(uint i=0; i<lect.matriz.size(); i++){\
+        for(uint j=0; j<lect.matriz[0].size(); j++){\
+            Holder* act=tablero.tile(v(j,i))->holder;\
+            if(act) act->generar##debug##();\
+        }\
+    }
+    if(debugMode)
+        generarInicial(Debug)
+    else
+        generarInicial()
+    #undef generarInicial
+    */
     for(uint i=0; i<lect.matriz.size(); i++){
         for(uint j=0; j<lect.matriz[0].size(); j++){
-            ///a veces hay basura en el tablero, no se por que
-            //cout<<tablero(v(i,j).show())<<endl;
-            Holder* act;
-            if((act=tablero.tile(v(j,i))->holder))
-                act->generar();
+            Holder* act=tablero.tile(v(j,i))->holder;
+            if(act) act->generar();
         }
     }
+
+
+    /*
     for(int i=0; i<tablptr->tam.y; i++){
         for(int j=0; j<tablptr->tam.x; j++){
             cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
         }
         cout<<endl;
     }
+    */
+    drawScreen();
 }
 
-void Proper::draw()
-{
+
+void Proper::draw(){
     tablero.drawTiles();
     if(Clicker::drawClickers)
         for(Clicker* cli:clickers)
@@ -161,6 +189,10 @@ void Proper::draw()
         window->draw(turnoBlanco);
     else
         window->draw(turnoNegro);
+    if(drawDebugTiles){
+        window->draw(posPieza);
+        window->draw(*tileActDebug);
+    }
 }
 
 void Proper::update()

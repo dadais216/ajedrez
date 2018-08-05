@@ -47,11 +47,9 @@ void Juego::gameloop()
     }
 }
 
-void Juego::change(Estado* est)
-{
+void Juego::change(Estado* est){
     delete actual;
     actual=est;
-    drawScreen();
 }
 
 void Juego::draw(){
