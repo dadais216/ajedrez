@@ -135,36 +135,6 @@ void normal::operar(movHolder* mh,Holder* h){
         nh->colors[i]->pos=colors[i]->pos+h->tile->pos;
 }
 
-//eventualmente copiar usando macros
-void normal::operarDebug(movHolder* mh,Holder* h){
-    normalHolder* nh=static_cast<normalHolder*>(mh);
-    /**/
-    /*marcar pieza*/
-    /**/
-    for(condt* c:conds){
-        v posAct=c->pos+h->tile->pos;
-        addTrigger=false;
-        if(!c->check(h,posAct)){
-            /**/
-            /*marcar posAct, imprimir condicion a un costado*/
-            /**/
-            nh->valido=false;
-            if(h->outbounds) return;
-            if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
-            return;
-        }
-        /**/
-        /*marcar posAct, imprimir condicion a un costado, como fallada*/
-        /**/
-        if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
-    }
-    nh->valido=true;
-    for(int i=0; i<accs.size(); i++)
-        nh->accs[i]->pos=accs[i]->pos+h->tile->pos;
-    for(int i=0; i<colors.size(); i++)
-        nh->colors[i]->pos=colors[i]->pos+h->tile->pos;
-}
-
 void normal::debug(){
     cout<<"normal: conds:\n";
     for(condt* c:conds)

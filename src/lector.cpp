@@ -57,9 +57,6 @@ lector::lector()
     tabla[">>"]=lim;
     tabla["or"]=sep;
 
-    archPiezas.open("piezas.txt");
-    archTablero.open("tableros.txt");
-
     lista=nullptr;
 }
 
@@ -84,8 +81,12 @@ int lector::stringToIntR(string& s)
     return a*sig;
 }
 
-void lector::leer(int n)
-{
+void lector::leer(int n){
+    archTablero.open("tableros.txt");
+    for(int j=0; j<matriz.size(); j++)
+        matriz[j].clear();
+    matriz.clear();
+
     string linea;
     int i=0;
     while(getline(archTablero,linea))
@@ -162,7 +163,6 @@ enPieza:
         if(linea[0]==':') break;
         tokenizarLinea(linea);
     }
-
 //    for(int s:tokens)
 //        cout<<"|"<<s<<"|";
 //    cout<<endl;
@@ -421,10 +421,14 @@ void lector::token(char c)
     }
 }
 
-void lector::cargarDefs()
-{
+void lector::cargarDefs(){
+    defs.clear();
+    archPiezas.clear();
+    archPiezas.seekg(0, ios::beg);
+
     doEsp=hayAtras=false;
     string linea;
+    lista=new list<int>;
     while(getline(archPiezas,linea))
     {
         if(linea.empty()) continue;
@@ -453,4 +457,5 @@ void lector::cargarDefs()
     if(lista)
         delete lista;
     lista=&tokens;
+
 }

@@ -68,6 +68,7 @@ extern bool addTrigger;
 
 extern bool debugMode;
 extern bool drawDebugTiles;
+extern Text textDebug;
 extern RectangleShape* tileActDebug;
 extern RectangleShape posPieza;
 extern RectangleShape posActGood;

@@ -38,9 +38,10 @@ struct Selector:public Estado
     virtual void draw();
 };
 
-struct Proper:public Estado
-{
+struct Proper:public Estado{
     Proper(int,int,int);
+    int id;
+    void init();
     virtual void update();
     virtual void draw();
     bool inRange(v a); //uso esto?
