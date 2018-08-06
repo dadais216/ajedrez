@@ -4,8 +4,8 @@
 #include "Pieza.h"
 
 ///no uso herencia porque no me aporta casi nada
-struct acct
-{
+struct acct{
+    acct(string n):nomb(n){};
     virtual void func(Holder*)=0;
     //func se llama para realizar la accion, pos arranca siendo relativa y se hace absoluta desde afuera
     virtual void debug()=0;
@@ -13,12 +13,14 @@ struct acct
     v pos;
     ///la version en normal guarda las pos relativas, las copias en los normalHolder guardan
     ///las absolutas
+    const string nomb;
 };
-struct condt
-{
+struct condt{
+    condt(string n):nomb(n){};
     virtual bool check(Holder*,v)=0;
     virtual void debug()=0;
     v pos;
+    const string nomb; //espero que no ocupe memoria, si ocupa cambiarlo por un int
 };
 struct colort
 {

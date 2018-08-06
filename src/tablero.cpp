@@ -15,7 +15,6 @@ void tabl::armar(v a){
     for(int i=0; i<tam.x; i++)
         matriz[i].resize(tam.y);
     escala=16*(1/(float)(tam.x>tam.y?tam.x:tam.y));
-    cout<<escala<<endl;
     for(int i=0; i<tam.x; i++)
         for(int j=0; j<tam.y; j++){
             Tile* tile=new Tile;
@@ -27,8 +26,8 @@ void tabl::armar(v a){
 
     b.setTexture(imagen->get("sprites.png"));
     n.setTexture(imagen->get("sprites.png"));
-    b.scale(escala,escala);
-    n.scale(escala,escala);
+    b.setScale(escala,escala);
+    n.setScale(escala,escala);
     b.setTextureRect(IntRect(0,0,32,32));
     n.setTextureRect(IntRect(32,0,32,32));
 }

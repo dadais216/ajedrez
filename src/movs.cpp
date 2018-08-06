@@ -188,8 +188,7 @@ struct spwn:public acm{
 #define Clonecondt(NOMB)
 #define fabMov(NOMB,TIPO,FUNC)\
 struct NOMB:public TIPO{\
-    const string nomb=#NOMB;\
-    NOMB(v pos_){\
+    NOMB(v pos_):TIPO(#NOMB){\
         pos=pos_;\
     };\
     Func(TIPO,FUNC)\
@@ -275,34 +274,58 @@ RectangleShape posPieza;
 RectangleShape posActGood;
 RectangleShape posActBad;
 RectangleShape* tileActDebug;
+Text textDebug;
 bool drawDebugTiles;
+bool ZPressed=false;
+int mil=25;
 struct debugMov:public condt{
-    const string nomb="debugMov";
     condt* cond;
-    debugMov(condt* cond_){
+    debugMov(condt* cond_):condt("debugMov"){
         cond=cond_;
         pos=cond->pos; //necesita tener pos para no ser especial en la logica de operar
     }
     virtual bool check(Holder* h,v pos){
-        ///imprimir cond->nomb
         bool ret=cond->check(h,pos);
+        textDebug.setString(cond->nomb);
         if(ret){
             posActGood.setPosition(pos.x*32*escala,pos.y*32*escala);
             tileActDebug=&posActGood;
+            textDebug.setColor(sf::Color(78,84,68,100));
         }else{
             posActBad.setPosition(pos.x*32*escala,pos.y*32*escala);
             tileActDebug=&posActBad;
+            textDebug.setColor(sf::Color(240,70,40,240));
         }
         posPieza.setPosition(h->tile->pos.x*32*escala,h->tile->pos.y*32*escala);
         drawDebugTiles=true;
         drawScreen();
         drawDebugTiles=false;
-        sleep(milliseconds(200));
-        ///bloquear hasta recibir input
+
+        //como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
+        while(true){
+            sleep(milliseconds(mil));
+            if(!window->hasFocus()) continue;
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Z)){
+                if(!ZPressed){
+                    ZPressed=true;
+                    break;
+                }
+            }else
+                ZPressed=false;
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::X)){
+                if(mil>10) mil-=1;
+                break;
+            }else
+                mil=25;
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::C)){
+                mil=0;
+                break;
+            }
+        }
         return ret;
     }
     virtual void debug(){
-        cout<<"esta funcion esta siendo reemplazada";
+        cond->debug();
     }
 };
 
