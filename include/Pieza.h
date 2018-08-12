@@ -22,12 +22,19 @@ struct Pieza{
     Pieza(int,int);
 };
 
-struct movHolder{
+struct Base{
+    virtual void reaccionar()=0;
+};
+
+struct movHolder:public Base{
     operador* org;
     virtual void generar()=0;
+    virtual void cargar(vector<normalHolder*>*)=0;
     virtual void debug(){};
+    virtual void reaccionar(){};
     movHolder* sig;
-    bool valido; //por ahora solo de normal
+    Base* base;
+    bool valido;
 };
 struct normalHolder:public movHolder{
     normalHolder(Holder*,normal*);//supongo que ni bien se crea el op le copias las accs
@@ -36,10 +43,18 @@ struct normalHolder:public movHolder{
     vector<acct*> accs;
     vector<colort*> colors;
     virtual void generar();
+    virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
 
     void accionar();///desencadena los acct, solo de normal
     void draw();///dibuja los colores, solo de normal
+};
+
+struct mvBase:public Base{
+    movHolder* mov;
+    vector<int> mem;
+    bool valido;
+    virtual void reaccionar();
 };
 
 struct Tile;
@@ -52,14 +67,15 @@ struct Holder{
     Tile* tile;
     vector<Tile*> pisados;
     void generar();
-    vector<movHolder*> movs;
+
+    vector<mvBase> movs;
+    vector<int>* memMovAct;
     int id;
     int bando;
     bool inicial;
     bool outbounds;
     ///vector de limites
     ///tablero del thread
-    ///Holder* next;
 };
 
 

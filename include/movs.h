@@ -8,7 +8,9 @@ struct acct{
     acct(string n):nomb(n){};
     virtual void func(Holder*)=0;
     //func se llama para realizar la accion, pos arranca siendo relativa y se hace absoluta desde afuera
-    virtual void debug()=0;
+    void debug(){
+        cout<<nomb<<" "<<pos<<endl;
+    }
     virtual acct* clone()=0;
     v pos;
     ///la version en normal guarda las pos relativas, las copias en los normalHolder guardan
@@ -18,7 +20,9 @@ struct acct{
 struct condt{
     condt(string n):nomb(n){};
     virtual bool check(Holder*,v)=0;
-    virtual void debug()=0;
+    void debug(){
+        cout<<nomb<<" "<<pos<<endl;
+    }
     v pos;
     const string nomb; //espero que no ocupe memoria, si ocupa cambiarlo por un int
 };
@@ -57,4 +61,11 @@ struct numShow:public acm{
     virtual void debug();
 };
 */
+
+//esta en el header para que se reconozca en el constructor de pieza
+struct debugInicial:public condt{
+    debugInicial(v);
+    virtual bool check(Holder* h,v pos);
+};
+
 #endif // MOVS_H

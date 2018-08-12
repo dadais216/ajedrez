@@ -1,4 +1,5 @@
 #include "movs.h"
+#include "Pieza.h"
 
 ///este archivo se compila a traves de operador.cpp
 
@@ -192,9 +193,6 @@ struct NOMB:public TIPO{\
         pos=pos_;\
     };\
     Func(TIPO,FUNC)\
-    virtual void debug(){\
-        cout<<nomb<<" "<<pos<<endl;\
-    } \
     Clone(TIPO,NOMB)\
 }\
 
@@ -329,4 +327,13 @@ struct debugMov:public condt{
     }
 };
 
+Text asterisco;
+bool drawAsterisco=false;
+debugInicial::debugInicial(v pos_):condt("-"){
+    pos=pos_;
+}
+bool debugInicial::check(Holder* h,v pos_){
+    drawAsterisco=true;
+    return true;
+}
 

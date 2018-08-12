@@ -5,4 +5,3 @@ def mover vacio mov color 20 200 115
 :1 1 #torre
 {w,a,s,d} mover
 
-

@@ -112,7 +112,10 @@ Proper::Proper(int id_,int sel1,int sel2)
     posActBad.setFillColor(sf::Color(240,70,40,100));
     textDebug.setFont(j->font);
     textDebug.setPosition(520,465);
-
+    asterisco.setFont(j->font);
+    asterisco.setPosition(515,450);
+    asterisco.setColor(Color::Black);
+    asterisco.setString("*");
     init();
 }
 
@@ -178,6 +181,9 @@ void Proper::draw(){
         window->draw(posPieza);
         window->draw(*tileActDebug);
         window->draw(textDebug);
+        if(drawAsterisco)
+            window->draw(asterisco);
+            drawAsterisco=false;
     }
 }
 

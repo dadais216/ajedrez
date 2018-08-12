@@ -17,6 +17,7 @@
 #include <random>
 #include <memory>
 #include <algorithm>
+#include <unordered_set>
 
 using namespace std;
 using namespace sf;
@@ -31,6 +32,7 @@ struct Holder;
 struct tabl;
 struct Clicker;
 struct Pieza;
+struct Base;
 
 extern Juego* j;
 extern Input* input;
@@ -69,11 +71,14 @@ extern bool addTrigger;
 extern bool debugMode;
 extern bool drawDebugTiles;
 extern Text textDebug;
+extern Text asterisco;
+extern bool drawAsterisco;
 extern RectangleShape* tileActDebug;
 extern RectangleShape posPieza;
 extern RectangleShape posActGood;
 extern RectangleShape posActBad;
 
+extern unordered_set<Base*> basesAActualizar;
 extern bool memcambios;
 extern array<int,20> numeros;
 extern vector<Holder*> capturados;
