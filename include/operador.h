@@ -8,22 +8,31 @@ struct Holder;
 struct acct;
 struct condt;
 struct colort;
+struct Base;
 
 struct movHolder;
-struct operador
-{
+struct operador{
     virtual void operar(movHolder*,Holder*)=0;
-    virtual void generarMovHolder(movHolder*&,Holder*)=0;
-    virtual void debug() {};
-    bool then();
+    virtual void generarMovHolder(movHolder**,Holder*,Base*)=0;
+//    virtual void react(movHolder*,Holder*)=0;
+    void debugMovs(){
+        debug();
+        if(sig) sig->debugMovs();
+    }
+    virtual void debug(){};
+    //bool then();
     operador* sig;
+    ///no es necesario tener las bases, los holders se pueden acomodar solos porque uno construye al otro
+    ///sig si porque no esta especificado en el tipo
 };
 struct normalHolder;
 struct normal:public operador
 {
     normal();
+    normal(bool);
     virtual void operar(movHolder*,Holder*);
-    virtual void generarMovHolder(movHolder*&,Holder*);
+    virtual void generarMovHolder(movHolder**,Holder*,Base*);
+//    virtual void react(movHolder*,Holder*);
     virtual void debug();
     vector<acct*> accs;
     vector<condt*> conds;
@@ -89,7 +98,7 @@ struct bloque:public operador
     operador* inside;
 };
 */
-operador* keepOn();
+//operador* keepOn();
 operador* tomar();
 bool operarAislado(operador*,bool);
 void crearClicker();

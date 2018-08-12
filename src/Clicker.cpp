@@ -15,6 +15,10 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
     normalHolder* lastN=normales->operator[](normales->size()-1);
     clickPos=lastN->accs[lastN->accs.size()-1]->pos;
 
+    ///en caso de que la ultima normal no tenga acciones esto se rompe
+    ///se arregla con un chequeo, aunque no se si es algo que pueda llegar a pasar
+
+
     //clickPos.show();
     ///solapamientos
     /*

@@ -56,7 +56,6 @@ void tabl::drawPieces(){
                 p->draw();
         }
 }
-#include <unordered_set>
 void Tile::activateTriggers(){
     unordered_set<movHolder*> mhs; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
     for(Trigger trig:triggers)

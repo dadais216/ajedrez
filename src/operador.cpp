@@ -8,8 +8,7 @@
 
 bool separator;
 ///mirar este tema, por ahi se puede hacer una variable de normal y listo
-normal::normal()
-{
+normal::normal(){
     v pos(0,0);
     sig=nullptr;
     while(true)
@@ -51,7 +50,7 @@ normal::normal()
             cond(enemigo);
 //        cond(prob);
             cond(inicial);
-            case lector::esp: conds.push_back(new esp(pos));break;
+            case lector::esp: conds.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
 
 #define acc(TOKEN) case lector::TOKEN: accs.push_back(new TOKEN(pos));break
 
@@ -89,12 +88,23 @@ normal::normal()
     }
 }
 
-void normal::generarMovHolder(movHolder*& mh,Holder* h){
-    mh=new normalHolder(h,this);//podría pasarle el vector de accs si es lo unico que necesita
+normal::normal(bool a){ //por ahora solo usado para marcar mov inicial
+    v pos(0,0);
+    sig=nullptr;
+}
+
+void normal::generarMovHolder(movHolder** mh,Holder* h,Base* base_){
+    *mh=new normalHolder(h,this);//podría pasarle el vector de accs si es lo unico que necesita
+
+    ///desliz y exc pasarian sus propias bases a sus inside
+
+    ///esto es general, pasar a una funcion aparte
+    (*mh)->base=base_;
     if(sig)
-        sig->generarMovHolder(mh->sig,h);
+        sig->generarMovHolder(&((*mh)->sig),h,base_);
     else
-        mh->sig=nullptr;
+        (*mh)->sig=nullptr;
+
 }
 
 void normal::operar(movHolder* mh,Holder* h){
@@ -103,7 +113,8 @@ void normal::operar(movHolder* mh,Holder* h){
 //    list<v>::iterator limitRes=!limites.empty()?--limites.end():limites.begin();
 //
 
-    ///se determino que se necesita calcular este movimiento, se lo llama desde un holder pasandose a si mismo
+    ///se le avisa a la base del mov para que cuando este termine se actualice su estado de validez y haga sus cosas
+    basesAActualizar.insert(mh->base);
 
     normalHolder* nh=static_cast<normalHolder*>(mh);
 
@@ -120,19 +131,25 @@ void normal::operar(movHolder* mh,Holder* h){
         addTrigger=false;
         if(!c->check(h,posAct)){
             nh->valido=false;
+
             if(h->outbounds) return;
             if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
             return;
         }
         if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,mh,h->tile->step});
     }
-    nh->valido=true;
     //accs en holder ya esta generado
     //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
     for(int i=0; i<accs.size(); i++)
         nh->accs[i]->pos=accs[i]->pos+h->tile->pos;///podria mandar el tile en vez de la pos, pero como no todas las acciones lo usan mientras menos procesado se haga antes mejor
     for(int i=0; i<colors.size(); i++)
         nh->colors[i]->pos=colors[i]->pos+h->tile->pos;
+
+    nh->valido=true;
+
+    if(sig)
+        mh->sig->generar();
+        ///no estoy seguro de si generar es necesario. La llamada podría ser sig->operar(mh->sig,h)
 }
 
 void normal::debug(){
@@ -146,7 +163,6 @@ void normal::debug(){
     for(colort* c:colors)
         c->debug();
     cout<<endl;
-    if(sig) sig->debug();
 }
 
 /*
@@ -395,6 +411,7 @@ bool contr::operar(v pos){
 }
 */
 
+/*
 operador* keepOn()
 {
     if(tokens.empty())
@@ -410,9 +427,8 @@ operador* keepOn()
     }
     return tomar();
 }
-
-operador* tomar()
-{
+*/
+operador* tomar(){
     if(tokens.empty()) return nullptr;
     int tok=tokens.front();
     tokens.pop_front();
@@ -426,10 +442,11 @@ operador* tomar()
 //    caseTomar(contr);
     default:
         tokens.push_front(tok);
-        return new normal;
+        return new normal();
     }
 }
 
+/*
 bool operador::then()
 {
     if(!sig)
@@ -444,4 +461,4 @@ void crearClicker()
 //    if(cambios) new Clicker(true);
 //    cambios=false;
 }
-
+*/
