@@ -27,7 +27,7 @@ struct lector
                 nc,t,exc,
                 click,contr,
                 color,sprt,numShow,
-                eol,sep,lim,last
+                eol,sep,end,last
                };
     bool hayAtras,doEsp;
     int i,j;
