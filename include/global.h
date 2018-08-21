@@ -88,4 +88,6 @@ void drawScreen();
 
 extern bool confirm;
 
+enum{NORMAL,DESLIZ};
+
 #endif

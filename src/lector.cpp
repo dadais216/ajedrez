@@ -12,7 +12,7 @@ lector::lector()
     rel(color);
     rel(sprt);
     rel(numShow);
-    rel(lim);
+    rel(end);
 
 
     rel(posRestore);
@@ -54,7 +54,7 @@ lector::lector()
     rel(exc);
 
     tabla["<<"]=bloque;
-    tabla[">>"]=lim;
+    tabla[">>"]=end;
     tabla["or"]=sep;
 
     lista=nullptr;
@@ -275,7 +275,7 @@ enPieza:
             ----it;
             continue;
         }
-        if(*it==sep&&*jt==lim)
+        if(*it==sep&&*jt==end)
             it=tokens.erase(it);
 
     }

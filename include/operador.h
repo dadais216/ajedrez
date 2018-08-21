@@ -10,96 +10,37 @@ struct condt;
 struct colort;
 struct Base;
 
+///el motivo de separar los movimientos normales en el operador normal y el normalholder es que toda la informacion
+///normal (estructura de movimientos, posiciones relativas) se comparte entre todas las piezas del mismo tipo, como tambien
+///el arbol de operadores. No tiene sentido tenerla copiada.
+
 struct movHolder;
 struct operador{
-    virtual void operar(movHolder*,Holder*)=0;
-    virtual void generarMovHolder(movHolder**,Holder*,Base*)=0;
-//    virtual void react(movHolder*,Holder*)=0;
-    void debugMovs(){
-        debug();
-        if(sig) sig->debugMovs();
-    }
-    virtual void debug(){};
-    //bool then();
+    int tipo;
+    bool contGenCl;//@optim puede obviarse preguntando directamente por los tipos, los unicos true son desliz y paso
     operador* sig;
-    ///no es necesario tener las bases, los holders se pueden acomodar solos porque uno construye al otro
-    ///sig si porque no esta especificado en el tipo
 };
+
 struct normalHolder;
-struct normal:public operador
-{
-    normal();
+struct normal:public operador{
     normal(bool);
-    virtual void operar(movHolder*,Holder*);
-    virtual void generarMovHolder(movHolder**,Holder*,Base*);
-//    virtual void react(movHolder*,Holder*);
-    virtual void debug();
+    void operar(normalHolder*,Holder*);
+    void debug();
     vector<acct*> accs;
     vector<condt*> conds;
     vector<colort*> colors;
     colort* crearColor(v);
 };
-
-//repite un operador normal hasta que falle, creando clickers en cada paso, a menos que sea deslizcond
-/*
-struct desliz:public operador
-{
+///mover cosas de operar a generar, mantener normal como la base de datos de pos relativas y eso.
+///Supongo que la eficiencia es exactamente igual y hace el codigo menos bizarro
+struct desliz:public operador{
     desliz();
-    virtual void debug();
-    bool doDebug;
-    virtual bool operar(v pos);
-    virtual void generarMovHolder(movHolder*);
-    bool nc,t;
-    int i,backlash,ret;
-    v aux;
     operador* inside;
 };
 
-struct opt:public operador
-{
-    opt();
-    virtual bool operar(v pos);
-    virtual void debug();
-    virtual void generarMovHolder(movHolder*);
-    bool exc,nc;
-    list<operador*> ops;
-};
 
-struct joiner:public operador
-{
-    joiner();
-    //existe con el unico fin de manejar el caso de
-    // desliz < opt < ... > > , ya que desliz setea
-    // el sig de opt despues de que este haya armado sus ramas
-    // y puesto los sig de estas en nullptt
-    virtual bool operar(v pos);
-    virtual void debug();
-};
-
-struct click:public operador
-{
-    click(bool);
-    virtual bool operar(v pos);
-    virtual void debug();
-};
-
-struct contr:public operador
-{
-    contr();
-    virtual bool operar(v pos);
-    virtual void debug();
-};
-
-struct bloque:public operador
-{
-    bloque();
-    virtual bool operar(v pos);
-    virtual void debug();
-    operador* inside;
-};
-*/
-//operador* keepOn();
 operador* tomar();
+operador* keepOn();
 bool operarAislado(operador*,bool);
 void crearClicker();
 

@@ -9,6 +9,7 @@ using namespace std;
 using namespace sf;
 struct operador;
 struct normal;
+struct desliz;
 struct acct;
 struct colort;
 
@@ -22,38 +23,53 @@ struct Pieza{
     Pieza(int,int);
 };
 
+///TODO como ahora se que es cada cosa en cada contexto no tiene sentido usar funciones virtuales
 struct Base{
     virtual void reaccionar()=0;
+    movHolder* lim;
 };
-
+struct normalHolder;
 struct movHolder:public Base{
-    operador* org;
+    operador* op;
     virtual void generar()=0;
     virtual void cargar(vector<normalHolder*>*)=0;
-    virtual void debug(){};
-    virtual void reaccionar(){};
+    virtual void debug()=0;
+    virtual void draw()=0;
+    virtual void reaccionar()=0;
+    Holder* h;
     movHolder* sig;
     Base* base;
     bool valido;
 };
 struct normalHolder:public movHolder{
     normalHolder(Holder*,normal*);//supongo que ni bien se crea el op le copias las accs
-    operador* op;
-    Holder* h;
     vector<acct*> accs;
     vector<colort*> colors;
     virtual void generar();
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
-
+    virtual void draw();
+    virtual void reaccionar(){};
     void accionar();///desencadena los acct, solo de normal
-    void draw();///dibuja los colores, solo de normal
+};
+struct deslizHolder:public movHolder{
+    deslizHolder(Holder*,desliz*);
+    vector<movHolder*> movs;
+    virtual void generar();
+    virtual void cargar(vector<normalHolder*>*);
+    virtual void debug();
+    virtual void draw();
+    virtual void reaccionar();
+    bool ignoreRecalc;
 };
 
 struct mvBase:public Base{
+    mvBase(Holder*,operador*);
     movHolder* mov;
     vector<int> mem;
-    bool valido;
+    //lim reemplaza a validez en las bases, porque una base puede estar en distintos grados de validez si contiene
+    //operadores que generen clickers dentro suyo
+    //por ej desliz normal1 end normal2 genera clickers aunque normal2 sea falso
     virtual void reaccionar();
 };
 
