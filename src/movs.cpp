@@ -172,6 +172,7 @@ struct spwn:public acm{
 
 //puede que cambie a un sistema que no use herencia si lo necesito, el problema es que algunos movs toman parametros,
 //pero se podria poner un puntero a informacion extra en un struct generico y listo
+///@optim h en acciones podría estar fijado como esta pos
 #define Func(TIPO,FUNC) Func##TIPO(FUNC)
 #define Funcacct(FUNC)\
     virtual void func(Holder* h){\
@@ -194,7 +195,7 @@ struct NOMB:public TIPO{\
     };\
     Func(TIPO,FUNC)\
     Clone(TIPO,NOMB)\
-}\
+}
 
 bool addTrigger;
 
@@ -209,7 +210,6 @@ fabMov(pausa,acct,
        drawScreen();
        sleep(milliseconds(500));
       );
-vector<Holder*> capturados;
 fabMov(capt,acct,
        Tile* captT=tablptr->tile(pos);
        delete captT->holder;
@@ -236,37 +236,15 @@ fabMov(enemigo,condt,
 fabMov(esp,condt,
         if(pos.x>=0&&pos.x<tablptr->tam.x&&pos.y>=0&&pos.y<tablptr->tam.y){
             h->outbounds=false;
-            /*
-            for(v vec:limites){ //si realentiza mover a otra cond
-                if(pos==vec){
-                    return false;
-            }
-            }
-            */
-            ///mirar el tema de los limites, ahora tienen que ser locales
-            ///probablemente esten en holder y listo
             return true;
         }else{
             h->outbounds=true;
             return false;
         }
       );
-/*
-fabMov(prob,condt,
-        limites.emplace_back(pos);
-);
-*/
 fabMov(outbounds,condt,
        return h->outbounds;
       );
-fabMov(inicial,condt,
-       return h->inicial;
-      );
-/*
-fabMov(ori,movt,
-        pos=org;
-);
-*/
 
 RectangleShape posPieza;
 RectangleShape posActGood;

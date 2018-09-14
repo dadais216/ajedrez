@@ -12,6 +12,7 @@ struct normal;
 struct desliz;
 struct acct;
 struct colort;
+struct normalHolder;
 
 struct Pieza{
     Sprite spriteb,spriten;
@@ -23,55 +24,46 @@ struct Pieza{
     Pieza(int,int);
 };
 
-///TODO como ahora se que es cada cosa en cada contexto no tiene sentido usar funciones virtuales
-struct Base{
-    virtual void reaccionar()=0;
-    movHolder* lim;
+struct Base{ ///datos compartidos de un movimiento entero
+    movHolder* beg;
+    vector<int>* mem;
 };
 struct normalHolder;
-struct movHolder:public Base{
+struct movHolder{
     operador* op;
     virtual void generar()=0;
+    virtual void reaccionar(normalHolder*)=0;
     virtual void cargar(vector<normalHolder*>*)=0;
     virtual void debug()=0;
     virtual void draw()=0;
-    virtual void reaccionar()=0;
     Holder* h;
     movHolder* sig;
-    Base* base;
+    Base base;
     bool valido;
+    bool continuar;
 };
 struct normalHolder:public movHolder{
-    normalHolder(Holder*,normal*);//supongo que ni bien se crea el op le copias las accs
+    normalHolder(Holder*,normal*,Base*);//supongo que ni bien se crea el op le copias las accs
     vector<acct*> accs;
     vector<colort*> colors;
     virtual void generar();
+    virtual void reaccionar(normalHolder*);
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
     virtual void draw();
-    virtual void reaccionar(){};
     void accionar();///desencadena los acct, solo de normal
 };
 struct deslizHolder:public movHolder{
-    deslizHolder(Holder*,desliz*);
-    vector<movHolder*> movs;
+    deslizHolder(Holder*,desliz*,Base*);
     virtual void generar();
+    virtual void reaccionar(normalHolder*);
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
     virtual void draw();
-    virtual void reaccionar();
-    bool ignoreRecalc;
+    vector<movHolder*> movs;
+    int f;
 };
 
-struct mvBase:public Base{
-    mvBase(Holder*,operador*);
-    movHolder* mov;
-    vector<int> mem;
-    //lim reemplaza a validez en las bases, porque una base puede estar en distintos grados de validez si contiene
-    //operadores que generen clickers dentro suyo
-    //por ej desliz normal1 end normal2 genera clickers aunque normal2 sea falso
-    virtual void reaccionar();
-};
 
 struct Tile;
 struct Holder{
@@ -84,8 +76,9 @@ struct Holder{
     Tile* tile;
     vector<Tile*> pisados;
     void generar();
+    void reaccionar(normalHolder*);
 
-    vector<mvBase> movs;
+    vector<movHolder*> movs;
     vector<int>* memMovAct;
     int id;
     int uniqueId,step;

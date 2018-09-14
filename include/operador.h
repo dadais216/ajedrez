@@ -17,21 +17,20 @@ struct Base;
 struct movHolder;
 struct operador{
     int tipo;
-    bool contGenCl;//@optim puede obviarse preguntando directamente por los tipos, los unicos true son desliz y paso
+    bool contGenCl;///@optim puede obviarse preguntando directamente por los tipos, los unicos true son desliz y paso
     operador* sig;
 };
 
 struct normalHolder;
 struct normal:public operador{
     normal(bool);
-    void operar(normalHolder*,Holder*);
     void debug();
     vector<acct*> accs;
     vector<condt*> conds;
     vector<colort*> colors;
     colort* crearColor(v);
 };
-///mover cosas de operar a generar, mantener normal como la base de datos de pos relativas y eso.
+///@optim mover cosas de operar a generar, mantener normal como la base de datos de pos relativas y eso.
 ///Supongo que la eficiencia es exactamente igual y hace el codigo menos bizarro
 struct desliz:public operador{
     desliz();

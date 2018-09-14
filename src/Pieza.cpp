@@ -27,7 +27,7 @@ Pieza::Pieza(int _id,int _sn){
         operador* op=tomar();
         if(debugMode){
             normal* n=new normal(false);
-            n->conds.push_back(new debugInicial(v(5,5)));
+            n->conds.push_back(new debugInicial(v(0,0)));
             n->sig=op;
             movs.push_back(n);
         }else
@@ -41,32 +41,38 @@ Pieza::Pieza(int _id,int _sn){
     //}
     piezas.push_back(this);
 }
-movHolder* crearMovHolder(Holder* h,operador* op,Base* b){
+movHolder* crearMovHolder(Holder* h,operador* op,Base* base){
     movHolder* m;
     switch(op->tipo){
     case NORMAL:
-        m=new normalHolder(h,static_cast<normal*>(op));
+        m=new normalHolder(h,static_cast<normal*>(op),base);
     break;case DESLIZ:
-        m=new deslizHolder(h,static_cast<desliz*>(op));
+        m=new deslizHolder(h,static_cast<desliz*>(op),base);
     break;
     }
-    m->base=b;
     if(op->sig)
-        m->sig=crearMovHolder(h,op->sig,b);
+        m->sig=crearMovHolder(h,op->sig,base);
     else
         m->sig=nullptr;
+    return m;
 }
-mvBase::mvBase(Holder* h,operador* op){
+/*
+Base::Base(Holder* h,operador* op){
     mov=crearMovHolder(h,op,this);
+    lim=NOLIM;///asi no hay que hacer nada en caso de desliz por ej, que no llama a esta base nunca
 }
+*/
 Holder::Holder(int _bando,Pieza* p,v pos_){
     bando=_bando;
     inicial=true;
     pieza=p;
     tile=tablptr->tile(pos_);
-    movs.reserve(sizeof(mvBase)*pieza->movs.size());
+    movs.reserve(sizeof(movHolder*)*pieza->movs.size());
     for(operador* op:pieza->movs){
-        movs.emplace_back(this,op);
+        Base* base=new Base;
+        base->beg=nullptr;
+        movs.push_back(crearMovHolder(this,op,base));
+        delete base;
     }
 }
 Holder::~Holder(){
@@ -100,48 +106,71 @@ void Holder::draw(int n)  //pos en capturados
 }
 void Holder::makeCli(){
     ///aca habria una funcion polimorfica que toma normales y le mete su lista de normales
-    for(mvBase b:movs){
-        if(b.lim==BASE) continue;
+    for(movHolder* b:movs){
+        if(!b->continuar) continue;
         vector<normalHolder*>* normales=new vector<normalHolder*>;
-        b.mov->cargar(normales);
+        b->cargar(normales);
         clickers.push_back(new Clicker(normales,this));//va a haber un flag que desactive este para desliz
-        //por ahi es mejor un metodo no polimorfico a todo esto
     }
     Clicker::drawClickers=true;
 }
 
-unordered_set<Base*> basesAActualizar;
 void Holder::generar(){
-    for(mvBase b:movs){
-        b.mov->generar();
-        for(Base* ba:basesAActualizar)
-            ba->reaccionar();
-            ///este reaccionar puede agregar cosas al vector. Creo que no rompe nada
+    for(movHolder* m:movs){
+        offset=tile->pos;
+        m->generar();
     }
 }
-
-
-
-void mvBase::reaccionar(){
-    ///otros reaccionar actualizarian su base
+/*
+bool ended;
+void Base::reaccionar(normalHolder* nh){
+    ended=false;
     //lim==BASE es el equivalente a invalido
     lim=BASE;
     movHolder* i=mov;
-    do
+    do{
+        if(i==nh){
+            nh->generar();
+            while(i->sig&&i->valido&&!i->sig->valido){
+                i=i->sig;
+                i->generar();
+            }
+            return;
+        }else{
+            i->reaccionar(nh);///@optim en caso de normal se llama a una funcion vacia. Por ahi es mas rapido ignorar normales con un bool, no sé
+            if(ended)
+                return;
+        }
         if(i->valido){
             if(i->op->contGenCl)
                 lim=i;
         }else{
             return;
         }
-    while(i=i->sig);
+    }while(i=i->sig);
     lim=NOLIM;
 }
-
-normalHolder::normalHolder(Holder* h_,normal* org){
+void Base::generar(){
+    movHolder* i=mov;
+    lim=BASE;
+    do{
+        i->generar();
+        if(i->valido){
+            if(i->op->contGenCl)
+                lim=i;
+        }else
+            return;
+    }while(i=i->sig);
+    lim=NOLIM;
+}
+*/
+normalHolder::normalHolder(Holder* h_,normal* org,Base* base_){
+    if(!base_->beg)
+        base_->beg=this;
+    base=*base_;
     h=h_;
     op=org;
-    valido=true;
+    //valido=true;
     accs.reserve(org->accs.size()*sizeof(acct*));
     ///no es la mejor forma pero bueno
     for(acct* a:org->accs)
@@ -150,10 +179,54 @@ normalHolder::normalHolder(Holder* h_,normal* org){
     for(colort* c:org->colors)
         colors.push_back(c->clone());
 }
+v offset;
 void normalHolder::generar(){
     cout<<"GENERANDO"<<endl;
-    static_cast<normal*>(op)->operar(this,h);
-    //se hace esto en vez de tener un op para cada holdertype para que estos se puedan recorrer y acceder a la info de op
+    normal* n=static_cast<normal*>(op);
+    v posAct;
+    ///habria que distinguir a los cond que no son posicionales, creo que son los de memoria nomas
+    for(condt* c:n->conds){
+        posAct=c->pos+offset;
+        ///no definitivo. lo de addTrigger esta para evitar que esp tire triggers, no sé si esp es algo final o se va
+        ///a sacar. Podría volver a ponerse la idea de que todos los conds tiren triggers, depende como implemente memoria
+        addTrigger=false;
+        if(!c->check(h,posAct)){
+            valido=false;
+            continuar=false;
+
+            if(h->outbounds) return;
+            if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,this,h->tile->step});
+            return;
+        }
+        if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,this,h->tile->step});
+    }
+    //accs en holder ya esta generado
+    //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
+    for(int i=0; i<accs.size(); i++){
+        //cout<<n->accs[i]->pos<<" + "<<h->tile->pos<<" = ";
+        accs[i]->pos=n->accs[i]->pos+offset;///podria mandar el tile en vez de la pos, pero como no todas las acciones lo usan mientras menos procesado se haga antes mejor
+        //cout<<accs[i]->pos<<endl;
+    }
+    for(int i=0; i<colors.size(); i++)
+        colors[i]->pos=n->colors[i]->pos+offset;
+
+    offset=posAct;
+
+    valido=true;
+    continuar=true;
+    if(sig){
+        sig->generar();
+        if(!sig->continuar)
+            continuar=false;
+    }
+}
+void normalHolder::reaccionar(normalHolder* nh){
+    if(nh==this)
+        generar();
+    else if(sig){
+        sig->reaccionar(nh);
+        continuar=valido&&sig->continuar;
+    }
 }
 void normalHolder::accionar(){
     for(acct* ac:accs)
@@ -163,7 +236,6 @@ void normalHolder::cargar(vector<normalHolder*>* norms){
     norms->push_back(this);
     if(sig)
         sig->cargar(norms);
-    //otros holders preguntarian si base->lim==this. Como normal nunca tiene potencial de contener clickers no hace nada
 }
 
 void normalHolder::draw(){
@@ -188,29 +260,75 @@ void normalHolder::debug(){
         sig->debug();
     }
 }
-deslizHolder::deslizHolder(Holder* h_,desliz* org){
+deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_){
+    if(!base_->beg)
+        base_->beg=this;
+    base=*base_;
     h=h_;
     op=org;
-    movs.reserve(10*sizeof(movHolder));//temporal, eventualmente voy a usar buckets
-    movs[0]=crearMovHolder(h,static_cast<desliz*>(op)->inside,this);
-    valido=true;///desliz es siempre verdadero
+    movs.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
+    movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+    valido=true;///desliz es siempre valido
+    continuar=true;
 }
 void deslizHolder::generar(){
-    ///recalcular desde el principio
-    ignoreRecalc=true;
+    for(int i=0;;){
+        movHolder* act=movs[i];
+        act->generar();
+        if(!act->valido){
+            f=i;
+            break;
+        }
+        i++;
+        if(movs.size()==i)
+            movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+    }
+    if(sig)
+        sig->generar();
+}
+void deslizHolder::reaccionar(normalHolder* nh){
+    /*
+    for(int i=0;i<=f;i++)
+        if(movs[i]==nh){
+            ended=true;
+            nh->generar();
+            if(nh->valido){
+                for(int j=i;;){
+                    movHolder* act=movs[j];
+                    act->generar();
+                    if(!act->valido){
+                        f=j;
+                        break;
+                    }
+                    j++;
+                    if(movs.size()==j)
+                        movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&deslizBase));
+                }
+            }else
+                f=i;
+            if(sig){///acomodar cadena despues del if, si hay
+                movHolder* j=sig;
+                do{
+                    j->generar();
+                    if(j->valido){
+                        if(j->op->contGenCl)
+                            base->lim=j;
+                        }else
+                            return;
+                }while(j=j->sig);
+                base->lim=NOLIM;
+            }
+
+        }else{
+            movs[i]->reaccionar();
+            if(!movs[i]->valido)
+                return;
+        }
+        */
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
-
-}
-void deslizHolder::reaccionar(){
-    if(ignoreRecalc){
-        ignoreRecalc=false;
-        return;
-    }
-    for(movHolder* mh:movs){//@optim no es necesario preguntar por el final del vector en cada interacion
-        if(mh->valido&&mh!=lim)///pueden darse dos casos: que alguno en medio de la cadena se haya hecho falso, o que el ultimo actual, que siempre es falso, se haga verdadero
-            continue;
-        ///recalcular desde este
+    for(int i=0;i<f;i++){
+        movs[i]->cargar(norms);
     }
 }
 void deslizHolder::debug(){
@@ -223,4 +341,3 @@ void deslizHolder::draw(){
         if(m->valido)
             m->draw();
 }
-
