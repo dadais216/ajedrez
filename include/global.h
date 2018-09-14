@@ -87,6 +87,7 @@ void resetearValores();
 void drawScreen();
 
 extern bool confirm;
+extern v offset;
 
 enum{NORMAL,DESLIZ};
 

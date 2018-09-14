@@ -8,10 +8,10 @@ using namespace sf;
 
 struct Holder;
 struct Tile;
-struct movHolder;
+struct normalHolder;
 struct Trigger{
     Tile* tile; //pos donde estaria la pieza que puso el trigger
-    movHolder* mh; //puntero al movimiento a recalcular
+    normalHolder* nh; //puntero al movimiento a recalcular
     int step; //valor que se contrasta con el step de la tile. Si son el mismo la pieza que puso el trigger esta en el mismo lugar y no se movio, mh es valido
 };
 struct Tile{ //sería mejor usar vectores amigos supongo

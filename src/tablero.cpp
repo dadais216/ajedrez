@@ -59,13 +59,13 @@ void tabl::drawPieces(){
         }
 }
 void Tile::activateTriggers(){
-    unordered_set<movHolder*> mhs; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
+    unordered_set<normalHolder*> nhs; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
     for(Trigger trig:triggers)
         if(trig.step==trig.tile->step)//la pieza que puso el trigger no se movio desde que lo puso
-            mhs.insert(trig.mh);
+            nhs.insert(trig.nh);
     triggers.clear();
-    for(movHolder* mh:mhs){
+    for(normalHolder* nh:nhs){
         cout<<"TRIGGERED ";
-        mh->generar();
+        nh->base.beg->reaccionar(nh);
     }
 }

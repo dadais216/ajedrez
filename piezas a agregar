@@ -56,16 +56,18 @@ Habría que decidir que pasa cuando se captura a una de las dos
 
 Otro par de piezas que arme un campo que captura cualquier cosa que entre
 
+Torre que cuando se mueva genere otras 3 torres, que se mueven desde la misma pos inicial en las otras direcciones ortogonales. Estas otras 3 torres se mueven junto con la principal sincronizadamente, alejandose del centro cuando se aleja o haciendo esvasticas cuando se mueve para los costados. Puede rejuntarse en el centro. 
+Por ahi la capacidad de poder mover el centro cuando estan juntas
+
 el bufon. Pieza que arranca fuera del tablero y puede saltar a cualquier casillero vacio. De ahi en adelante copia los movimientos de la ultima pieza enemiga que se haya movido.
 Agregar un espacio fuera de tablero para piezas clickeables es mucho esfuerzo para esta pieza nomas. Se puede agregar poniendola en un espacio del tablero inaccesible, atras de unas paredes, y listo.
 Cada pieza al moverse escribe su id en una memoria global, el bufon la lee para llamar a calc
 
 no creo que agregue al antirey porque no es una pieza buena, pero es agregable ahora
 
-alguna pieza que ponga en jaque al rey enemigo antes de que arranque la partida. Como tu rey esta en jaque a la vez hay una regla que no te permite capturar hasta que saques a tu rey del rango de esta pieza
+alguna pieza que ponga en jaque al rey enemigo antes de que arranque la partida. Como tu rey esta en jaque a la vez se mete una regla que no te permite capturar hasta que saques a tu rey del rango de esta pieza
 
-
-portal: tiene que haber 2 como minimo. No es una pieza, se maneja todo desde la memoria de tiles y hay un sprite. Cuando una pieza esta parada en un portal se hace calc en cada portal. Si hay una pieza parada en algun portal cuando esta se mueve esa pieza es capturada.
+portal: tiene que haber 2 como minimo. No es una pieza, se maneja todo desde la memoria de tiles y hay un sprite. Cuando una pieza esta parada en un portal se recalcula en cada portal. Si hay una pieza parada en algun portal cuando esta se mueve esa pieza es capturada.
 En caso de piezas deslizandose hay codigo especial que chequea cada iteracion si se trata de un portal. Si lo es en memoria global va a haber una lista de todos los portales, y se va a recorrer siguiendo el desliz desde cada uno. Si en alguno se llega a un portal, se corta el movimiento (ya que ya se hizo o se va a hacer despues)
 Pieza que pone portales de su bando
 
