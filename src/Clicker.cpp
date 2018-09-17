@@ -9,14 +9,12 @@ bool Clicker::drawClickers;
 vector<Clicker*> clickers;
 
 Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
-    normales=normales_;
+    normales=*normales_;
+    ///@optim estaria bueno no copiar el ultimo vector, no sé si es hacible. No es muy importante
     h=h_;
 
-    normalHolder* lastN=normales->operator[](normales->size()-1);
+    normalHolder* lastN=normales[normales.size()-1];
     clickPos=lastN->accs[lastN->accs.size()-1]->pos;
-
-    ///en caso de que la ultima normal no tenga acciones esto se rompe
-    ///se arregla con un chequeo, aunque no se si es algo que pueda llegar a pasar
 
 
     //clickPos.show();
@@ -38,7 +36,7 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
 }
 
 void Clicker::draw(){
-    for(normalHolder* n:*normales){
+    for(normalHolder* n:normales){
         n->draw();
     }
     /*
@@ -105,7 +103,7 @@ bool Clicker::update(){
 
 void Clicker::accionar(){
     Clicker::drawClickers=false;
-    for(normalHolder* n:*normales){
+    for(normalHolder* n:normales){
         n->accionar();
     }
 }
@@ -118,7 +116,7 @@ void Clicker::activacion(int clickI)
 
 */
 void Clicker::debug(){
-    for(normalHolder* n:*normales)
+    for(normalHolder* n:normales)
         n->debug();
 }
 

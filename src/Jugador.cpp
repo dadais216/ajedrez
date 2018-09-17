@@ -46,7 +46,7 @@ bool Humano::turno(){
     */
     if(input->click()&&input->inGameRange(_tablero.tam)){
         for(Clicker* cli:clickers){
-        ///esto se pregunta 60hz
+        ///@todo @optim esto se pregunta 60hz
         ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
         ///vuelva a meter solapamiento
             if(cli->update()){ //accionar

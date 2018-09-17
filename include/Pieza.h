@@ -41,6 +41,7 @@ struct movHolder{
     Base base;
     bool valido;
     bool continuar;
+    bool makeClick;
 };
 struct normalHolder:public movHolder{
     normalHolder(Holder*,normal*,Base*);//supongo que ni bien se crea el op le copias las accs
@@ -52,6 +53,7 @@ struct normalHolder:public movHolder{
     virtual void debug();
     virtual void draw();
     void accionar();///desencadena los acct, solo de normal
+    bool makeClick;
 };
 struct deslizHolder:public movHolder{
     deslizHolder(Holder*,desliz*,Base*);

@@ -7,10 +7,13 @@
 
 
 bool separator;
+bool clickExplicit;///cuando se usa click explicitamente no se pone un click implicitamente
+///al final del movimiento si este termina en una no normal
+///@detail una condicion mejor sería no poner click implicito si el ultimo operador no normal contiene algun click explicito
 
 normal::normal(bool make){
     tipo=NORMAL;
-    contGenCl=false;
+    makeClick=false;
     sig=nullptr;
     if(make){
         v pos(0,0);
@@ -74,10 +77,16 @@ normal::normal(bool make){
                 separator=true;
                 return;
             case lector::eol:
-                //cout<<"eol"<<endl;
+                makeClick=true;
                 return;
             case lector::end:
                 //cout<<"lim"<<endl;
+                return;
+            case lector::click:
+                makeClick=true;
+                clickExplicit=true;
+                sig=tomar();
+                ///@todo mirar casos raros como dos clicks seguidos, cosas con separador, etc
                 return;
             default:
                 tokens.push_front(tok);
@@ -104,36 +113,13 @@ void normal::debug(){
 
 desliz::desliz(){
     tipo=DESLIZ;
-    contGenCl=true;
+    makeClick=false;
     inside=new normal(true);
-    sig=keepOn();
+    sig=keepOn(&makeClick);
 }
-
-
-
-/*
-void desliz::operar(deslizHolder* mh,Holder* h){
-    deslizHolder* dh=static_cast<deslizHolder*>(mh);
-    Tile* posAct=h->tile;
-    int i=dh->i;
-    while(true){
-
-        inside->operar(dh->movs[i],h);
-        if(!dh->movs[i]->valido)
-            break;
-        i++;
-        if(i==dh->movs.size()){
-            dh->movs.push_back();
-            dh->op->generarMovHolder();
-            ///akward af
-        }
-    }
-    dh->lim=dh->movs[i];
-}
-*/
 
 //mira si hay algun token adelante que genere un operador
-operador* keepOn(){
+operador* keepOn(bool* makeClick){
     if(tokens.empty())
         return nullptr;
     switch(tokens.front())
@@ -141,8 +127,10 @@ operador* keepOn(){
     case lector::sep:
         separator=true;
     case lector::eol:
+        if(!clickExplicit)
+            *makeClick=true;
     case lector::end:
-        tokens.pop_front(); //por ahi rompe todo
+        tokens.pop_front();
         return nullptr;
     }
     return tomar();
@@ -158,8 +146,9 @@ operador* tomar(){
     caseTomar(desliz);
 //    caseTomar(opt);
 //    caseTomar(bloque);
-//    caseTomar(click);
-//    caseTomar(contr);
+    case lector::eol:
+    case lector::end:
+        return nullptr;
     default:
         tokens.push_front(tok);
         return new normal(true);
