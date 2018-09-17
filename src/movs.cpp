@@ -218,7 +218,6 @@ fabMov(capt,acct,
        h->pisados.push_back(captT);
       );
 
-
 fabMov(vacio,condt,
        addTrigger=true;
        return tablptr->tile(pos)->holder==nullptr;
@@ -315,3 +314,12 @@ bool debugInicial::check(Holder* h,v pos_){
     return true;
 }
 
+pass::pass(v pos_):acct("pass"){
+    pos=pos_;///un numero alto para que el clicker generado por este no aparezca en el tablero
+}
+void pass::func(Holder* h){
+    cout<<"pass";
+}
+acct* pass::clone(){
+    return new pass(pos);
+}

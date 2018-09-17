@@ -46,13 +46,13 @@ lector::lector()
 
     rel(desliz);
     rel(opt);
-    rel(click);
     rel(contr);
 
     rel(nc);
     rel(t);
     rel(exc);
 
+    tabla["c"]=click;
     tabla["<<"]=bloque;
     tabla[">>"]=end;
     tabla["or"]=sep;

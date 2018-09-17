@@ -10,7 +10,7 @@ using namespace sf;
 struct normalHolder;
 struct Clicker{
     Clicker(vector<normalHolder*>*,Holder*);
-    vector<normalHolder*>* normales;
+    vector<normalHolder*> normales;
     v clickPos;
     void draw();
     static bool drawClickers;

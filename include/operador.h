@@ -17,8 +17,8 @@ struct Base;
 struct movHolder;
 struct operador{
     int tipo;
-    bool contGenCl;///@optim puede obviarse preguntando directamente por los tipos, los unicos true son desliz y paso
     operador* sig;
+    bool makeClick;
 };
 
 struct normalHolder;
@@ -39,7 +39,7 @@ struct desliz:public operador{
 
 
 operador* tomar();
-operador* keepOn();
+operador* keepOn(bool*);
 bool operarAislado(operador*,bool);
 void crearClicker();
 

@@ -86,6 +86,7 @@ extern vector<Holder*> capturados;
 void resetearValores();
 void drawScreen();
 
+extern bool clickExplicit;
 extern bool confirm;
 extern v offset;
 

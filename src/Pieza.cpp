@@ -3,10 +3,7 @@
 #include "../include/operador.h"
 #include "../include/Clicker.h"
 
-#define BASE nullptr
-#define NOLIM (movHolder*)1
 vector<Pieza*> piezas;
-
 Pieza::Pieza(int _id,int _sn){
     id=_id;
     sn=_sn;
@@ -23,11 +20,12 @@ Pieza::Pieza(int _id,int _sn){
 //        }
 //        cout<<endl;
 
-
+        clickExplicit=false;
         operador* op=tomar();
         if(debugMode){
             normal* n=new normal(false);
             n->conds.push_back(new debugInicial(v(0,0)));
+            n->accs.push_back(new pass(v(-9000,-9000))); ///placeholder para evitar crashes en casos raros donde queda un clicker solo con esta normal (antes de un desliz que no genera nada). Le pongo un numero alto para que el clicker no aparezca en el tablero
             n->sig=op;
             movs.push_back(n);
         }else
@@ -50,6 +48,7 @@ movHolder* crearMovHolder(Holder* h,operador* op,Base* base){
         m=new deslizHolder(h,static_cast<desliz*>(op),base);
     break;
     }
+    ///m->makeClick=op->makeClick; @??? este codigo dejaba m->makeClick sin setear y no entendi por que. Lo movi a los constructores y anda
     if(op->sig)
         m->sig=crearMovHolder(h,op->sig,base);
     else
@@ -107,7 +106,6 @@ void Holder::makeCli(){
         if(!b->continuar) continue;
         vector<normalHolder*>* normales=new vector<normalHolder*>;
         b->cargar(normales);
-        clickers.push_back(new Clicker(normales,this));//va a haber un flag que desactive este para desliz
     }
     Clicker::drawClickers=true;
 }
@@ -167,6 +165,7 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_){
     base=*base_;
     h=h_;
     op=org;
+    makeClick=op->makeClick;
     //valido=true;
     accs.reserve(org->accs.size()*sizeof(acct*));
     ///no es la mejor forma pero bueno
@@ -230,7 +229,11 @@ void normalHolder::accionar(){
         ac->func(h);
 }
 void normalHolder::cargar(vector<normalHolder*>* norms){
+    if(!continuar) return;
     norms->push_back(this);
+    cout<<makeClick<<"  ";
+    if(makeClick)
+        clickers.push_back(new Clicker(norms,h));
     if(sig)
         sig->cargar(norms);
 }
@@ -263,6 +266,7 @@ deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_){
     base=*base_;
     h=h_;
     op=org;
+    makeClick=op->makeClick;
     movs.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
     movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
     valido=true;///desliz es siempre valido
@@ -324,9 +328,11 @@ void deslizHolder::reaccionar(normalHolder* nh){
         */
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
-    for(int i=0;i<f;i++){
+    for(int i=0;i<f;i++)
         movs[i]->cargar(norms);
-    }
+    if(makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
+        clickers.push_back(new Clicker(norms,h));
+    cout<<endl;
 }
 void deslizHolder::debug(){
     for(movHolder* m:movs)
