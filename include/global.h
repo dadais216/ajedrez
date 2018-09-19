@@ -87,6 +87,7 @@ void resetearValores();
 void drawScreen();
 
 extern bool clickExplicit;
+extern bool switchToGen;
 extern bool confirm;
 extern v offset;
 

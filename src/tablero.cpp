@@ -66,6 +66,7 @@ void Tile::activateTriggers(){
     triggers.clear();
     for(normalHolder* nh:nhs){
         cout<<"TRIGGERED ";
+        switchToGen=false;
         nh->base.beg->reaccionar(nh);
     }
 }

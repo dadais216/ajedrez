@@ -208,7 +208,7 @@ fabMov(mov,acct,
 
 fabMov(pausa,acct,
        drawScreen();
-       sleep(milliseconds(500));
+       sleep(milliseconds(40));
       );
 fabMov(capt,acct,
        Tile* captT=tablptr->tile(pos);
@@ -315,10 +315,9 @@ bool debugInicial::check(Holder* h,v pos_){
 }
 
 pass::pass(v pos_):acct("pass"){
-    pos=pos_;///un numero alto para que el clicker generado por este no aparezca en el tablero
+    pos=pos_;
 }
 void pass::func(Holder* h){
-    cout<<"pass";
 }
 acct* pass::clone(){
     return new pass(pos);
