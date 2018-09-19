@@ -54,6 +54,7 @@ struct normalHolder:public movHolder{
     virtual void draw();
     void accionar();///desencadena los acct, solo de normal
     bool makeClick;
+    v offsetAct;
 };
 struct deslizHolder:public movHolder{
     deslizHolder(Holder*,desliz*,Base*);

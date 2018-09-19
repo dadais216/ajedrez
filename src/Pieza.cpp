@@ -182,6 +182,7 @@ v offset;
 void normalHolder::generar(){
     cout<<"GENERANDO"<<endl;
     normal* n=static_cast<normal*>(op);
+    offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
     v posAct;
     ///habria que distinguir a los cond que no son posicionales, creo que son los de memoria nomas
     for(condt* c:n->conds){
@@ -189,6 +190,7 @@ void normalHolder::generar(){
         ///no definitivo. lo de addTrigger esta para evitar que esp tire triggers, no sé si esp es algo final o se va
         ///a sacar. Podría volver a ponerse la idea de que todos los conds tiren triggers, depende como implemente memoria
         addTrigger=false;
+        cout<<c->nomb<<posAct;
         if(!c->check(h,posAct)){
             valido=false;
             continuar=false;
@@ -220,9 +222,11 @@ void normalHolder::generar(){
     }
 }
 void normalHolder::reaccionar(normalHolder* nh){
-    if(nh==this)
+    if(nh==this){
+        offset=nh->offsetAct;
+        switchToGen=true;
         generar();
-    else if(sig){
+    }else if(sig){
         sig->reaccionar(nh);
         continuar=valido&&sig->continuar;
     }
@@ -290,7 +294,37 @@ void deslizHolder::generar(){
     if(sig)
         sig->generar();
 }
+bool switchToGen;
 void deslizHolder::reaccionar(normalHolder* nh){
+    for(int i=0;i<=f;i++){
+        movHolder* act=movs[i];
+        act->reaccionar(nh);
+        if(switchToGen){
+            if(act->valido){
+                i++;
+                if(movs.size()==i)
+                        movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+                for(;;){
+                    act=movs[i];
+                    act->generar();
+                    if(!act->valido){
+                        f=i;
+                        break;
+                    }
+                    i++;
+                    if(movs.size()==i)
+                        movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+                }
+                if(sig)
+                    sig->generar();
+            }
+            else f=i;
+
+            return;
+        }
+    }
+    if(sig)
+        sig->reaccionar(nh);
     /*
     for(int i=0;i<=f;i++)
         if(movs[i]==nh){
