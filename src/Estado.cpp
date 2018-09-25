@@ -120,6 +120,8 @@ Proper::Proper(int id_,int sel1,int sel2)
 }
 
 void Proper::init(){
+    clickers.clear();
+
     if(lect.archPiezas.is_open())
         lect.archPiezas.close();
     lect.archPiezas.open("piezas.txt");

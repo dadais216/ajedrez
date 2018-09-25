@@ -30,12 +30,14 @@ struct Base{ ///datos compartidos de un movimiento entero
 };
 struct normalHolder;
 struct movHolder{
+    movHolder(Holder*,operador*,Base*);
     operador* op;
     virtual void generar()=0;
     virtual void reaccionar(normalHolder*)=0;
     virtual void cargar(vector<normalHolder*>*)=0;
     virtual void debug()=0;
     virtual void draw()=0;
+    void generarSig();
     Holder* h;
     movHolder* sig;
     Base base;
@@ -53,7 +55,6 @@ struct normalHolder:public movHolder{
     virtual void debug();
     virtual void draw();
     void accionar();///desencadena los acct, solo de normal
-    bool makeClick;
     v offsetAct;
 };
 struct deslizHolder:public movHolder{
@@ -65,6 +66,16 @@ struct deslizHolder:public movHolder{
     virtual void draw();
     vector<movHolder*> movs;
     int f;
+};
+struct excHolder:public movHolder{
+    excHolder(Holder*,exc*,Base*);
+    virtual void generar();
+    virtual void reaccionar(normalHolder*);
+    virtual void cargar(vector<normalHolder*>*);
+    virtual void debug();
+    virtual void draw();
+    vector<movHolder*> ops;
+    movHolder* actualBranch;
 };
 
 

@@ -92,6 +92,6 @@ extern bool switchToGen;
 extern bool confirm;
 extern v offset;
 
-enum{NORMAL,DESLIZ};
+enum{NORMAL,DESLIZ,EXC};
 
 #endif

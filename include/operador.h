@@ -30,11 +30,13 @@ struct normal:public operador{
     vector<colort*> colors;
     colort* crearColor(v);
 };
-///@optim mover cosas de operar a generar, mantener normal como la base de datos de pos relativas y eso.
-///Supongo que la eficiencia es exactamente igual y hace el codigo menos bizarro
 struct desliz:public operador{
     desliz();
     operador* inside;
+};
+struct exc:public operador{
+    exc();
+    vector<operador*> ops;
 };
 
 
