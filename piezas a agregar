@@ -71,7 +71,7 @@ portal: tiene que haber 2 como minimo. No es una pieza, se maneja todo desde la 
 En caso de piezas deslizandose hay codigo especial que chequea cada iteracion si se trata de un portal. Si lo es en memoria global va a haber una lista de todos los portales, y se va a recorrer siguiendo el desliz desde cada uno. Si en alguno se llega a un portal, se corta el movimiento (ya que ya se hizo o se va a hacer despues)
 Pieza que pone portales de su bando
 
-
+una pieza que se pueda mover sin gastar el turno. Esta va a traer bastante complejidad
 
 Jaque:
 Hay tres opciones para implementar el jaque, las tres son mas o menos igual de complejas, no hacen uso de segundo orden pero necesitan escribir memoria no local en calculos y un every capaz de cancelar el movimiento anterior.  

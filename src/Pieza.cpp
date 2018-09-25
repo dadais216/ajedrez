@@ -43,10 +43,11 @@ movHolder* crearMovHolder(Holder* h,operador* op,Base* base){
     movHolder* m;
     switch(op->tipo){
     case NORMAL:
-        m=new normalHolder(h,static_cast<normal*>(op),base);
-    break;case DESLIZ:
-        m=new deslizHolder(h,static_cast<desliz*>(op),base);
-    break;
+        m=new normalHolder(h,static_cast<normal*>(op),base);break;
+    case DESLIZ:
+        m=new deslizHolder(h,static_cast<desliz*>(op),base);break;
+    case EXC:
+        m=new excHolder(h,static_cast<exc*>(op),base);
     }
     ///m->makeClick=op->makeClick; @??? este codigo dejaba m->makeClick sin setear y no entendi por que. Lo movi a los constructores y anda
     if(op->sig)
@@ -116,57 +117,23 @@ void Holder::generar(){
         m->generar();
     }
 }
-/*
-bool ended;
-void Base::reaccionar(normalHolder* nh){
-    ended=false;
-    //lim==BASE es el equivalente a invalido
-    lim=BASE;
-    movHolder* i=mov;
-    do{
-        if(i==nh){
-            nh->generar();
-            while(i->sig&&i->valido&&!i->sig->valido){
-                i=i->sig;
-                i->generar();
-            }
-            return;
-        }else{
-            i->reaccionar(nh);///@optim en caso de normal se llama a una funcion vacia. Por ahi es mas rapido ignorar normales con un bool, no sé
-            if(ended)
-                return;
-        }
-        if(i->valido){
-            if(i->op->contGenCl)
-                lim=i;
-        }else{
-            return;
-        }
-    }while(i=i->sig);
-    lim=NOLIM;
-}
-void Base::generar(){
-    movHolder* i=mov;
-    lim=BASE;
-    do{
-        i->generar();
-        if(i->valido){
-            if(i->op->contGenCl)
-                lim=i;
-        }else
-            return;
-    }while(i=i->sig);
-    lim=NOLIM;
-}
-*/
-normalHolder::normalHolder(Holder* h_,normal* org,Base* base_){
+movHolder::movHolder(Holder* h_,operador* org,Base* base_){
     if(!base_->beg)
         base_->beg=this;
     base=*base_;
     h=h_;
     op=org;
     makeClick=op->makeClick;
-    //valido=true;
+}
+void movHolder::generarSig(){
+    if(sig){
+        sig->generar();
+        if(!makeClick&&!sig->continuar)
+            continuar=false;
+    }
+}
+normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
+:movHolder(h_,org,base_){
     accs.reserve(org->accs.size()*sizeof(acct*));
     ///no es la mejor forma pero bueno
     for(acct* a:org->accs)
@@ -189,8 +156,7 @@ void normalHolder::generar(){
         addTrigger=false;
         cout<<c->nomb<<posAct;
         if(!c->check(h,posAct)){
-            valido=false;
-            continuar=false;
+            continuar=valido=false;
 
             if(h->outbounds) return;
             if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,this,h->tile->step});
@@ -210,22 +176,17 @@ void normalHolder::generar(){
 
     offset=posAct;
 
-    valido=true;
-    continuar=true;
-    if(sig){
-        sig->generar();
-        if(!sig->continuar)
-            continuar=false;
-    }
+    continuar=valido=true;
+    generarSig();
 }
 void normalHolder::reaccionar(normalHolder* nh){
     if(nh==this){
         offset=nh->offsetAct;
         switchToGen=true;
         generar();
-    }else if(sig){
+    }else if(valido&&sig){
         sig->reaccionar(nh);
-        continuar=valido&&sig->continuar;
+        continuar=sig->continuar;
     }
 }
 void normalHolder::accionar(){
@@ -235,13 +196,12 @@ void normalHolder::accionar(){
 void normalHolder::cargar(vector<normalHolder*>* norms){
     if(!continuar) return;
     norms->push_back(this);
-    cout<<makeClick<<"  ";
+    cout<<"#"<<makeClick<<"  ";
     if(makeClick)
         clickers.push_back(new Clicker(norms,h));
     if(sig)
         sig->cargar(norms);
 }
-
 void normalHolder::draw(){
     for(colort* c:colors)
         c->draw();
@@ -264,23 +224,18 @@ void normalHolder::debug(){
         sig->debug();
     }
 }
-deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_){
-    if(!base_->beg)
-        base_->beg=this;
-    base=*base_;
-    h=h_;
-    op=org;
-    makeClick=op->makeClick;
+deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_)
+:movHolder(h_,org,base_){
     movs.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
-    movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+    movs.push_back(crearMovHolder(h,org->inside,&base));
     valido=true;///desliz es siempre valido
-    continuar=true;
 }
 void deslizHolder::generar(){
+    continuar=true;
     for(int i=0;;){
         movHolder* act=movs[i];
         act->generar();
-        if(!act->valido){
+        if(!act->continuar){
             f=i;
             break;
         }
@@ -288,8 +243,7 @@ void deslizHolder::generar(){
         if(movs.size()==i)
             movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
     }
-    if(sig)
-        sig->generar();
+    generarSig();
 }
 bool switchToGen;
 void deslizHolder::reaccionar(normalHolder* nh){
@@ -297,14 +251,14 @@ void deslizHolder::reaccionar(normalHolder* nh){
         movHolder* act=movs[i];
         act->reaccionar(nh);
         if(switchToGen){
-            if(act->valido){
+            if(act->continuar){
                 i++;
                 if(movs.size()==i)
-                        movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+                    movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
                 for(;;){
                     act=movs[i];
                     act->generar();
-                    if(!act->valido){
+                    if(!act->continuar){
                         f=i;
                         break;
                     }
@@ -322,59 +276,80 @@ void deslizHolder::reaccionar(normalHolder* nh){
     }
     if(sig)
         sig->reaccionar(nh);
-    /*
-    for(int i=0;i<=f;i++)
-        if(movs[i]==nh){
-            ended=true;
-            nh->generar();
-            if(nh->valido){
-                for(int j=i;;){
-                    movHolder* act=movs[j];
-                    act->generar();
-                    if(!act->valido){
-                        f=j;
-                        break;
-                    }
-                    j++;
-                    if(movs.size()==j)
-                        movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&deslizBase));
-                }
-            }else
-                f=i;
-            if(sig){///acomodar cadena despues del if, si hay
-                movHolder* j=sig;
-                do{
-                    j->generar();
-                    if(j->valido){
-                        if(j->op->contGenCl)
-                            base->lim=j;
-                        }else
-                            return;
-                }while(j=j->sig);
-                base->lim=NOLIM;
-            }
-
-        }else{
-            movs[i]->reaccionar();
-            if(!movs[i]->valido)
-                return;
-        }
-        */
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
+    if(!continuar) return;
     for(int i=0;i<f;i++)
         movs[i]->cargar(norms);
     if(makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
         clickers.push_back(new Clicker(norms,h));
     cout<<endl;
+    if(sig)
+        sig->cargar(norms);
 }
 void deslizHolder::debug(){
     for(movHolder* m:movs)
         if(m->valido)
             m->debug();
 }
-void deslizHolder::draw(){
+void deslizHolder::draw(){ ///@todo se usa esto?
     for(movHolder* m:movs)
         if(m->valido)
             m->draw();
+    ///@optim for i<f ?
+}
+excHolder::excHolder(Holder* h_,exc* org,Base* base_)
+:movHolder(h_,org,base_){
+    ops.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
+
+    for(operador* opos:org->ops)
+        ops.push_back(crearMovHolder(h,opos,&base));
+}
+void excHolder::generar(){
+    for(movHolder* mh:ops){
+        mh->generar();
+        if(mh->continuar){
+            continuar=valido=true;
+            actualBranch=mh; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que continuar==true
+            generarSig();
+            return;
+        }
+    }
+    continuar=valido=false;
+    actualBranch=nullptr; ///@optim creo que en ningun caso se pregunta por esto, no vale la pena nulificarlo
+}
+void excHolder::reaccionar(normalHolder* nh){
+    //actualBranch es valido porque se esta respondiendo a un trigger puesto por el
+    actualBranch->reaccionar(nh);
+    if(switchToGen){
+        if(!actualBranch->continuar){
+            ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
+            for(movHolder* mh:ops){
+                if(mh!=actualBranch){
+                    mh->generar();
+                    if(mh->continuar){
+                        continuar=valido=true;
+                        generarSig();
+                        return;
+                    }
+                }
+            }
+            continuar=valido=false;
+        }
+    }else if(valido&&sig)
+        sig->reaccionar(nh);
+}
+void excHolder::cargar(vector<normalHolder*>* norms){
+    if(!continuar) return;
+    actualBranch->cargar(norms);
+    if(makeClick)
+        clickers.push_back(new Clicker(norms,h));
+    if(sig)
+        sig->cargar(norms);
+}
+void excHolder::debug(){
+
+}
+void excHolder::draw(){
+
 }

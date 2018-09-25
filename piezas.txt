@@ -2,9 +2,15 @@
 def mover vacio mov pausa color 20 200 115
 
 
-:1 1 #torre
+:1 1 #ortog
 {w,a,s,d} mover
 
-:2 1 #alfil
+:2 1 #torre
 desliz {w,a,s,d} mover c end
+#desliz w mover desliz a mover c end end
 
+:3 3 #alfil
+desliz {aw,wd,sa,sd} mover c end
+
+:4 4 #excguy
+exc w mover or d mover end

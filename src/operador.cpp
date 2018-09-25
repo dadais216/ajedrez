@@ -114,7 +114,17 @@ void normal::debug(){
 desliz::desliz(){
     tipo=DESLIZ;
     makeClick=false;
-    inside=new normal(true);
+    inside=new normal(true); ///@todo debería ser un tomar() aca no?
+    sig=keepOn(&makeClick);
+}
+exc::exc(){
+    tipo=EXC;
+    makeClick=false;
+    do{
+        separator=false;
+        operador* op=tomar();
+        ops.push_back(op);
+    }while(separator);
     sig=keepOn(&makeClick);
 }
 
@@ -144,6 +154,7 @@ operador* tomar(){
     switch(tok)
     {
     caseTomar(desliz);
+    caseTomar(exc);
 //    caseTomar(opt);
 //    caseTomar(bloque);
     case lector::eol:
@@ -154,20 +165,3 @@ operador* tomar(){
         return new normal(true);
     }
 }
-
-/*
-bool operador::then()
-{
-    if(!sig)
-        return true;
-    return false;
-    ///no se si la seguidilla se va a hacer desde aca, no creo porque no tengo acceso a el movHolder, aunque podría conseguirlo
-    //return sig->operar();
-}
-
-void crearClicker()
-{
-//    if(cambios) new Clicker(true);
-//    cambios=false;
-}
-*/
