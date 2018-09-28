@@ -58,15 +58,32 @@ void tabl::drawPieces(){
                 p->draw();
         }
 }
-void Tile::activateTriggers(){
-    unordered_set<normalHolder*> nhs; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
+vector<normalHolder*> trigsC; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
+void Tile::chargeTriggers(){
     for(Trigger trig:triggers)
-        if(trig.step==trig.tile->step)//la pieza que puso el trigger no se movio desde que lo puso
-            nhs.insert(trig.nh);
+        if(trig.step==trig.tile->step){//la pieza que puso el trigger no se movio desde que lo puso
+            bool is=false;
+            for(normalHolder* n:trigsC)
+                if(n==trig.nh){
+                    is=true;
+                    break;
+                }
+            if(!is)
+                trigsC.push_back(trig.nh);
+        }
     triggers.clear();
-    for(normalHolder* nh:nhs){
-        cout<<"TRIGGERED ";
+}
+void activateTriggers(){
+    ///se cambio el unordered_set por un vector para poder recorrerlo en orden inverso y cargarlo explicitamente por orden de llegada
+    ///recorrerlo en orden inverso pareciera ser mas eficiente, es una heuristica pero es mejor que nada
+    ///por ejemplo si se tiene una pieza que se acerca a una torre, se carga primero el trigger del espacio vacio y
+    ///despues el de la nueva posicion de la pieza. La torre recalcula del espacio vacio para adelante,
+    ///para que el segundo trigger cancele todos los calculos
+
+    for(int i=trigsC.size()-1;i>=0;i--){
+        cout<<"TRIGGERED"<<endl;
         switchToGen=false;
-        nh->base.beg->reaccionar(nh);
+        trigsC[i]->base.beg->reaccionar(trigsC[i]);
     }
+    trigsC.clear();
 }

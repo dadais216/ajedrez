@@ -21,8 +21,9 @@ struct Tile{ //sería mejor usar vectores amigos supongo
     bool color;
     v pos;
     int step; //se actualiza por mov, capt y spawn
-    void activateTriggers();
+    void chargeTriggers();
 };
+void activateTriggers();
 
 struct tabl{
     tabl();
