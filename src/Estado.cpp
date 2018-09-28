@@ -163,7 +163,13 @@ void Proper::init(){
         }
     }
 
-
+    cout<<endl;
+    for(int i=0; i<tablptr->tam.y; i++){
+        for(int j=0; j<tablptr->tam.x; j++){
+            cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
+        }
+        cout<<endl;
+    }
 
     drawScreen();
 }

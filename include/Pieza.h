@@ -36,7 +36,6 @@ struct movHolder{
     virtual void reaccionar(normalHolder*)=0;
     virtual void cargar(vector<normalHolder*>*)=0;
     virtual void debug()=0;
-    virtual void draw()=0;
     void generarSig();
     Holder* h;
     movHolder* sig;
@@ -53,7 +52,7 @@ struct normalHolder:public movHolder{
     virtual void reaccionar(normalHolder*);
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
-    virtual void draw();
+    void draw();
     void accionar();///desencadena los acct, solo de normal
     v offsetAct;
 };
@@ -63,7 +62,6 @@ struct deslizHolder:public movHolder{
     virtual void reaccionar(normalHolder*);
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
-    virtual void draw();
     vector<movHolder*> movs;
     int f;
 };
@@ -73,7 +71,6 @@ struct excHolder:public movHolder{
     virtual void reaccionar(normalHolder*);
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
-    virtual void draw();
     vector<movHolder*> ops;
     movHolder* actualBranch;
 };

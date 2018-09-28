@@ -199,7 +199,7 @@ void normalHolder::accionar(){
 void normalHolder::cargar(vector<normalHolder*>* norms){
     if(!continuar) return;
     norms->push_back(this);
-    cout<<"#"<<makeClick<<"  ";
+    //cout<<"#"<<makeClick<<"  ";
     if(makeClick)
         clickers.push_back(new Clicker(norms,h));
     if(sig)
@@ -295,12 +295,6 @@ void deslizHolder::debug(){
         if(m->valido)
             m->debug();
 }
-void deslizHolder::draw(){ ///@todo se usa esto?
-    for(movHolder* m:movs)
-        if(m->valido)
-            m->draw();
-    ///@optim for i<f ?
-}
 excHolder::excHolder(Holder* h_,exc* org,Base* base_)
 :movHolder(h_,org,base_){
     ops.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
@@ -351,8 +345,5 @@ void excHolder::cargar(vector<normalHolder*>* norms){
         sig->cargar(norms);
 }
 void excHolder::debug(){
-
-}
-void excHolder::draw(){
 
 }
