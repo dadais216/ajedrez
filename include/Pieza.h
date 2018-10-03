@@ -72,7 +72,7 @@ struct excHolder:public movHolder{
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
     vector<movHolder*> ops;
-    movHolder* actualBranch;
+    int actualBranch;
 };
 
 
