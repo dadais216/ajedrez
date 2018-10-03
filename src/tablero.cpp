@@ -63,7 +63,7 @@ void Tile::chargeTriggers(){
     for(Trigger trig:triggers)
         if(trig.step==trig.tile->step){//la pieza que puso el trigger no se movio desde que lo puso
             bool is=false;
-            for(normalHolder* n:trigsC)
+            for(normalHolder* n:trigsC) ///@optim necesario?
                 if(n==trig.nh){
                     is=true;
                     break;

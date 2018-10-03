@@ -145,7 +145,7 @@ void Proper::init(){
         for(uint j=0; j<lect.matriz[0].size(); j++){
             int n=lect.matriz[i][j];
             v pos(j,i);
-            cout<<pos<<"  "<<tablero.tam<<endl;
+            //cout<<pos<<"  "<<tablero.tam<<endl;
             if(n)
                 tablero.tile(pos)->holder=lect.crearPieza(n,pos);
             else

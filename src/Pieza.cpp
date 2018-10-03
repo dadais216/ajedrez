@@ -32,11 +32,31 @@ Pieza::Pieza(int _id,int _sn){
             movs.push_back(op);
 
     }
-    //for(operador* o:movs){
-    //    o->debugMovs();
 
-    //    cout<<endl;
-    //}
+    function<void(operador*)> showOp=[&showOp](operador* op)->void{
+        switch(op->tipo){
+        case NORMAL:
+            cout<<"NORMAL ";break;
+        case DESLIZ:
+            cout<<"DESLIZ (";
+            showOp(static_cast<desliz*>(op)->inside);
+            cout<<") ";
+            break;
+        case EXC:
+            cout<<"EXC (";
+            for(operador* opi:static_cast<exc*>(op)->ops)
+                showOp(opi);
+            cout<<") ";
+            break;
+        }
+        if(op->sig)
+            showOp(op->sig);
+    };
+    cout<<endl;
+    for(operador* o:movs){
+        showOp(o);
+        cout<<endl;
+    }
     piezas.push_back(this);
 }
 movHolder* crearMovHolder(Holder* h,operador* op,Base* base){
@@ -184,6 +204,11 @@ void normalHolder::reaccionar(normalHolder* nh){
         offset=nh->offsetAct;
         switchToGen=true;
         generar();
+        ///@optim mecanismo para cortar todo si la validez no vario, un lngjmp
+        ///@optim si es verdadero hacerlo falso directamente? Creo que los unicos casos donde puede mantenerse verdadero es si
+        ///una pieza va y vuelve, y por ahi eso se puede manejar haciendo que active el trigger dos veces o alguna otra cosa.
+        ///en estos casos sería mas ineficiente porque se hace el recorrido dos veces, pero son casos muy raros. El general seria
+        ///mas eficiente porque se salta un recalculo de una normal entera
     }else if(valido&&sig){
         sig->reaccionar(nh);
         continuar=sig->continuar;
@@ -269,8 +294,11 @@ void deslizHolder::reaccionar(normalHolder* nh){
                 if(sig)
                     sig->generar();
             }
-            else f=i;
-
+            else{
+                f=i;
+                if(sig)
+                    sig->generar();
+            }
             return;
         }
     }
@@ -300,42 +328,57 @@ excHolder::excHolder(Holder* h_,exc* org,Base* base_)
         ops.push_back(crearMovHolder(h,opos,&base));
 }
 void excHolder::generar(){
-    for(movHolder* mh:ops){
-        mh->generar();
-        if(mh->continuar){
+    int i;
+    for(i=0;i<ops.size();i++){
+        movHolder* branch=ops[i];
+        branch->generar();
+        if(branch->continuar){
             continuar=valido=true;
-            actualBranch=mh; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que continuar==true
+            actualBranch=i; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que continuar==true
             generarSig();
             return;
         }
     }
     continuar=valido=false;
-    actualBranch=nullptr; ///@optim creo que en ningun caso se pregunta por esto, no vale la pena nulificarlo
+    actualBranch=i;
 }
 void excHolder::reaccionar(normalHolder* nh){
-    //actualBranch es valido porque se esta respondiendo a un trigger puesto por el
-    actualBranch->reaccionar(nh);
-    if(switchToGen){
-        if(!actualBranch->continuar){
-            ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
-            for(movHolder* mh:ops){
-                if(mh!=actualBranch){
-                    mh->generar();
-                    if(mh->continuar){
-                        continuar=valido=true;
-                        generarSig();
-                        return;
+    for(int i=0;i<=actualBranch;i++){
+        movHolder* branch=ops[i];
+        cout<<i<<"  "<<nh<<"  "<<branch<<endl;
+        branch->reaccionar(nh);
+        if(switchToGen){
+            if(!branch->continuar){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
+                int j;
+                for(j=0;j<ops.size();j++){
+                    movHolder* brancj=ops[j];
+                    cout<<i<<"  "<<j<<"  "<<brancj<<endl;
+                    if(brancj!=branch){
+                        brancj->generar();
+                        if(brancj->continuar){
+                            continuar=valido=true;
+                            actualBranch=j;
+                            generarSig();
+                            return;
+                        }
                     }
                 }
+                continuar=valido=false;
+                actualBranch=j;
+                return;
+            }else{ ///se valido una rama que era invalida
+                actualBranch=i;
+                continuar=valido=true;
+                break;
             }
-            continuar=valido=false;
         }
-    }else if(valido&&sig)
-        sig->reaccionar(nh);
+    }
+    if(valido&&sig)
+            sig->reaccionar(nh);
 }
 void excHolder::cargar(vector<normalHolder*>* norms){
     if(!continuar) return;
-    actualBranch->cargar(norms);
+    ops[actualBranch]->cargar(norms);
     if(makeClick)
         clickers.push_back(new Clicker(norms,h));
     if(sig)

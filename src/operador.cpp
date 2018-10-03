@@ -114,7 +114,7 @@ void normal::debug(){
 desliz::desliz(){
     tipo=DESLIZ;
     makeClick=false;
-    inside=new normal(true); ///@todo debería ser un tomar() aca no?
+    inside=tomar();
     sig=keepOn(&makeClick);
 }
 exc::exc(){
@@ -134,8 +134,14 @@ operador* keepOn(bool* makeClick){
         return nullptr;
     switch(tokens.front())
     {
+    case lector::click:
+        *makeClick=true;
+        tokens.pop_front();
+        return keepOn(makeClick);
     case lector::sep:
         separator=true;
+        tokens.pop_front();
+        return nullptr;
     case lector::eol:
         if(!clickExplicit)
             *makeClick=true;
