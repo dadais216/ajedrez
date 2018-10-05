@@ -74,16 +74,76 @@ void Tile::chargeTriggers(){
     triggers.clear();
 }
 void activateTriggers(){
-    ///se cambio el unordered_set por un vector para poder recorrerlo en orden inverso y cargarlo explicitamente por orden de llegada
-    ///recorrerlo en orden inverso pareciera ser mas eficiente, es una heuristica pero es mejor que nada
-    ///por ejemplo si se tiene una pieza que se acerca a una torre, se carga primero el trigger del espacio vacio y
-    ///despues el de la nueva posicion de la pieza. La torre recalcula del espacio vacio para adelante,
-    ///para que el segundo trigger cancele todos los calculos
-
+    /*
     for(int i=trigsC.size()-1;i>=0;i--){
         cout<<"TRIGGERED"<<endl;
         switchToGen=false;
         trigsC[i]->base.beg->reaccionar(trigsC[i]);
     }
+    */
+
+    if(trigsC.size()==0) return;
+    if(trigsC.size()==1){
+        switchToGen=false;
+        trigsC[0]->base.beg->reaccionar(trigsC[0]);
+    }
+    else{
+        sort(trigsC.begin(),trigsC.end());
+        int i=0;
+        while(i<trigsC.size()){
+            switchToGen=false;
+            movHolder* base=trigsC[i]->base.beg;
+            int j=i+1;
+            while(j<trigsC.size()&&trigsC[j]->base.beg==base)
+                j++;
+            if(j==i+1)
+                base->reaccionar(trigsC[i]);
+            else
+                base->reaccionar(vector<normalHolder*>(&trigsC[i],&trigsC[j-1]));//espero que no haga una copia
+            i=j;
+        }
+    }
     trigsC.clear();
 }
+
+/*
+MULTIPLES TRIGGERS
+cuando una pieza se mueve hacia una torre le activa dos triggers, primero el mas lejano por salir de ese espacio,
+y despues el mas cercano por llegar a ese espacio.
+Si se reacciona cada trigger individualmente en el orden que llegan primero se va a recalcular el del espacio vacio,
+que va a recalcular todo el recorrido despues de la pieza. Y esto es al pedo, porque el segundo trigger va a invalidar
+todo.
+Por ahora este problema se soluciona procesando los triggers en orden inverso, asi primero invalida y el segundo no se
+procesa. Pero esto es una heuristica, no va a servir para todos los casos.
+
+
+Un problema distinto pasa cuando se activan dos triggers en una pieza con un desliz exc, estando los dos triggers en ramas
+distintas.
+desliz exc tiene el mismo problema que desliz, pero a demas tiene un otro especifico
+Tenemos un desliz exc P , S end end
+la rama actual generada es SP...
+Una pieza activa el trigger que invalida P1, y tambien el trigger de P2.
+Si se recalcula primero P2 se va a armar todo un recorrido que despues se va a invalidar por el segundo
+trigger, que hace S1->P1 y recalcula todo el recorrido.
+
+Si se recalcula en el otro orden pasa algo mas raro. Se hace S1->P1, se arma todo el recorrido. Cuando se hace la segunda
+corrida buscando P2, que es de un trigger que pertenencia al recorrido que fue reemplazado, no deberia pasar nada. Pero
+como se busca por punteros, el nuevo P2 tiene la misma posicion en memoria que P2 viejo, y se va a encontrar y se va a
+recalcular al pedo.
+
+Las dos formas de recorrer hacen recalculos innecesarios. El segundo caso se puede solucionar preguntando por mas cosas
+a demas de el puntero, solo en exc.
+
+Pero esta pensando que estos dos casos surgen del mismo problema, tener mas de un trigger en un mismo movimiento, y recalcular
+uno por uno.
+Una solucion sería recalcular preguntando por todos los triggers al mismo tiempo. Cuando se encuentre alguno se pasa a
+generar, y el resto se ignora. Si hay partes del movimiento que no se regeneran y podrian tener triggers se revisan. Triggers
+en zonas que fueron regeneradas no se activan dos veces, triggers que hayan quedado sueltos se ignoran. Creo que no romperia
+nada.
+
+En casos de multiples triggers seria mas rapido porque solo se recorre una vez, y no tiene errores de regenerar al pedo.
+En casos de un solo trigger sería mas lento porque agrega manejo de vectores cuando no se necesita. Pero este caso podria
+separarse del otro con un if y listo.
+
+Lo unico malo de agregar esto es que hace al codigo mas bizarro, porque agregaria una version vector de reaccionar. Pero lo vale
+*/
