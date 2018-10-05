@@ -12,7 +12,8 @@ def mover vacio mov pausa color 20 200 115
 #desliz d mover c end desliz w mover c end
 #desliz s mover c end desliz d mover c end
 #desliz a mover c end desliz s mover c end
-desliz exc w mover or a mover end c end
+#desliz exc w mover or a mover w mover or d mover w mover end c end
+desliz exc w mover or d mover w mover or a mover w mover end c end
 
 :3 3 #alfil
 #desliz {aw,wd,sa,sd} mover c end

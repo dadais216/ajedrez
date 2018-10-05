@@ -34,6 +34,7 @@ struct movHolder{
     operador* op;
     virtual void generar()=0;
     virtual void reaccionar(normalHolder*)=0;
+    virtual void reaccionar(vector<normalHolder*>)=0;
     virtual void cargar(vector<normalHolder*>*)=0;
     virtual void debug()=0;
     void generarSig();
@@ -50,6 +51,7 @@ struct normalHolder:public movHolder{
     vector<colort*> colors;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
+    virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
     void draw();
@@ -60,6 +62,7 @@ struct deslizHolder:public movHolder{
     deslizHolder(Holder*,desliz*,Base*);
     virtual void generar();
     virtual void reaccionar(normalHolder*);
+    virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
     vector<movHolder*> movs;
@@ -69,6 +72,7 @@ struct excHolder:public movHolder{
     excHolder(Holder*,exc*,Base*);
     virtual void generar();
     virtual void reaccionar(normalHolder*);
+    virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
     vector<movHolder*> ops;

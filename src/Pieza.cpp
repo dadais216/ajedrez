@@ -217,6 +217,21 @@ void normalHolder::reaccionar(normalHolder* nh){
         continuar=sig->continuar;
     }
 }
+void normalHolder::reaccionar(vector<normalHolder*> nhs){
+    for(normalHolder* nh:nhs){
+        if(nh==this){
+            offset=nh->offsetAct;
+            switchToGen=true;
+            generar();
+            ///@optim sacar nh del vector?
+            return;
+        }
+    }
+    if(valido&&sig){
+        sig->reaccionar(nhs);
+        continuar=sig->continuar;
+    }
+}
 void normalHolder::accionar(){
     for(acct* ac:accs)
         ac->func(h);
@@ -308,6 +323,40 @@ void deslizHolder::reaccionar(normalHolder* nh){
     if(sig)
         sig->reaccionar(nh);
 }
+void deslizHolder::reaccionar(vector<normalHolder*> nhs){
+    for(int i=0;i<=f;i++){
+        movHolder* act=movs[i];
+        act->reaccionar(nhs);
+        if(switchToGen){
+            if(act->continuar){
+                i++;
+                if(movs.size()==i)
+                    movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+                for(;;){
+                    act=movs[i];
+                    act->generar();
+                    if(!act->continuar){
+                        f=i;
+                        break;
+                    }
+                    i++;
+                    if(movs.size()==i)
+                        movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+                }
+                if(sig)
+                    sig->generar();
+            }
+            else{
+                f=i;
+                if(sig)
+                    sig->generar();
+            }
+            return;
+        }
+    }
+    if(sig)
+        sig->reaccionar(nhs);
+}
 void deslizHolder::cargar(vector<normalHolder*>* norms){
     if(!continuar) return;
     for(int i=0;i<f;i++)
@@ -348,7 +397,7 @@ void excHolder::generar(){
 void excHolder::reaccionar(normalHolder* nh){
     for(int i=0;i<=actualBranch;i++){
         movHolder* branch=ops[i];
-        cout<<i<<"  "<<nh<<"  "<<branch<<endl;
+        cout<<actualBranch<<" "<<i<<"  "<<nh<<"  "<<branch<<endl;
         branch->reaccionar(nh);
         if(switchToGen){
             if(!branch->continuar){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
@@ -367,7 +416,7 @@ void excHolder::reaccionar(normalHolder* nh){
                     }
                 }
                 continuar=valido=false;
-                actualBranch=j;
+                actualBranch=j-1;
                 return;
             }else{ ///se valido una rama que era invalida
                 actualBranch=i;
@@ -378,6 +427,39 @@ void excHolder::reaccionar(normalHolder* nh){
     }
     if(valido&&sig)
             sig->reaccionar(nh);
+}
+void excHolder::reaccionar(vector<normalHolder*> nhs){
+    for(int i=0;i<=actualBranch;i++){
+        movHolder* branch=ops[i];
+        branch->reaccionar(nhs);
+        if(switchToGen){
+            if(!branch->continuar){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
+                int j;
+                for(j=0;j<ops.size();j++){
+                    movHolder* brancj=ops[j];
+                    cout<<i<<"  "<<j<<"  "<<brancj<<endl;
+                    if(brancj!=branch){
+                        brancj->generar();
+                        if(brancj->continuar){
+                            continuar=valido=true;
+                            actualBranch=j;
+                            generarSig();
+                            return;
+                        }
+                    }
+                }
+                continuar=valido=false;
+                actualBranch=j-1;
+                return;
+            }else{ ///se valido una rama que era invalida
+                actualBranch=i;
+                continuar=valido=true;
+                break;
+            }
+        }
+    }
+    if(valido&&sig)
+            sig->reaccionar(nhs);
 }
 void excHolder::cargar(vector<normalHolder*>* norms){
     if(!continuar) return;
