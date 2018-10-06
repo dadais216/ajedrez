@@ -167,7 +167,7 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
 }
 v offset;
 void normalHolder::generar(){
-    cout<<"GENERANDO"<<endl;
+    //cout<<"GENERANDO"<<endl;
     normal* n=static_cast<normal*>(op);
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
     v posAct;
@@ -177,7 +177,7 @@ void normalHolder::generar(){
         ///no definitivo. lo de addTrigger esta para evitar que esp tire triggers, no sé si esp es algo final o se va
         ///a sacar. Podría volver a ponerse la idea de que todos los conds tiren triggers, depende como implemente memoria
         addTrigger=false;
-        cout<<c->nomb<<posAct;
+        //cout<<c->nomb<<posAct;
         if(!c->check(h,posAct)){
             continuar=valido=false;
 
@@ -392,20 +392,18 @@ void excHolder::generar(){
         }
     }
     continuar=valido=false;
-    actualBranch=i;
+    actualBranch=i-1;
 }
 void excHolder::reaccionar(normalHolder* nh){
     for(int i=0;i<=actualBranch;i++){
         movHolder* branch=ops[i];
-        cout<<actualBranch<<" "<<i<<"  "<<nh<<"  "<<branch<<endl;
         branch->reaccionar(nh);
         if(switchToGen){
             if(!branch->continuar){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
                 int j;
                 for(j=0;j<ops.size();j++){
-                    movHolder* brancj=ops[j];
-                    cout<<i<<"  "<<j<<"  "<<brancj<<endl;
-                    if(brancj!=branch){
+                    if(i!=j){
+                        movHolder* brancj=ops[j];
                         brancj->generar();
                         if(brancj->continuar){
                             continuar=valido=true;
@@ -436,9 +434,8 @@ void excHolder::reaccionar(vector<normalHolder*> nhs){
             if(!branch->continuar){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
                 int j;
                 for(j=0;j<ops.size();j++){
-                    movHolder* brancj=ops[j];
-                    cout<<i<<"  "<<j<<"  "<<brancj<<endl;
-                    if(brancj!=branch){
+                    if(i!=j){
+                        movHolder* brancj=ops[j];
                         brancj->generar();
                         if(brancj->continuar){
                             continuar=valido=true;
