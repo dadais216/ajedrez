@@ -82,7 +82,7 @@ bool Clicker::update(){
 
 
         for(Tile* tile:h->pisados){
-            cout<<"<<<"<<tile->pos<<endl;
+            //cout<<"<<<"<<tile->pos<<endl;
             tile->chargeTriggers();
         }
         activateTriggers();
