@@ -7,13 +7,15 @@ def mover vacio mov pausa color 20 200 115
 
 :2 1 #torre
 #desliz {w,a,s,d} mover c end
-#desliz w mover exc w mover or a mover end c end
-#desliz w mover c end desliz a mover c end
-#desliz d mover c end desliz w mover c end
-#desliz s mover c end desliz d mover c end
-#desliz a mover c end desliz s mover c end
-#desliz exc w mover or a mover w mover or d mover w mover end c end
-desliz exc w mover or d mover w mover or a mover w mover end c end
+#desliz w mover c aa mover c end
+desliz w mover c isol desliz a mover c end end end
+desliz w mover c isol desliz d mover c end end end
+desliz a mover c isol desliz s mover c end end end
+desliz a mover c isol desliz w mover c end end end
+desliz s mover c isol desliz a mover c end end end
+desliz s mover c isol desliz d mover c end end end
+desliz d mover c isol desliz s mover c end end end
+desliz d mover c isol desliz w mover c end end end
 
 :3 3 #alfil
 #desliz {aw,wd,sa,sd} mover c end
@@ -24,3 +26,8 @@ desliz dw mover c end desliz wa mover c end
 
 :4 4 #excguy
 exc w mover or d mover end
+
+:5 5 #emperador
+desliz w end desliz a end desliz isol desliz isol mover end d pass end end s pass end
+
+

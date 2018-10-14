@@ -15,13 +15,10 @@ lector::lector()
     rel(end);
 
 
-    rel(posRestore);
-    rel(posRemember);
     rel(numSet);
     rel(numAdd);
     rel(numSeti);
     rel(numAddi);
-    rel(ori);
 
 
     rel(mov);
@@ -29,32 +26,26 @@ lector::lector()
     rel(pausa);
     rel(spwn);
     rel(capt);
+    rel(pass);
 
     rel(esp);
     rel(vacio);
     rel(enemigo);
     rel(pieza);
     rel(outbounds);
-    rel(prob);
     rel(numCmp);
     rel(numDst);
     rel(numCmpi);
     rel(numDsti);
     rel(numLess);
     rel(numLessi);
-    rel(inicial);
 
     rel(desliz);
-    rel(opt);
-    rel(contr);
-
-    rel(nc);
-    rel(t);
     rel(exc);
+    rel(isol);
+    rel(desopt);
 
     tabla["c"]=click;
-    tabla["<<"]=bloque;
-    tabla[">>"]=end;
     tabla["or"]=sep;
 
     lista=nullptr;

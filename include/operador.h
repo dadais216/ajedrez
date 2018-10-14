@@ -38,6 +38,10 @@ struct exc:public operador{
     exc();
     vector<operador*> ops;
 };
+struct isol:public operador{
+    isol();
+    operador* inside;
+};
 
 
 operador* tomar();

@@ -48,6 +48,11 @@ Pieza::Pieza(int _id,int _sn){
                 showOp(opi);
             cout<<") ";
             break;
+        case ISOL:
+            cout<<"ISOL (";
+            showOp(static_cast<isol*>(op)->inside);
+            cout<<") ";
+            break;
         }
         if(op->sig)
             showOp(op->sig);
@@ -67,7 +72,9 @@ movHolder* crearMovHolder(Holder* h,operador* op,Base* base){
     case DESLIZ:
         m=new deslizHolder(h,static_cast<desliz*>(op),base);break;
     case EXC:
-        m=new excHolder(h,static_cast<exc*>(op),base);
+        m=new excHolder(h,static_cast<exc*>(op),base);break;
+    case ISOL:
+        m=new isolHolder(h,static_cast<isol*>(op),base);
     }
     ///m->makeClick=op->makeClick; @??? este codigo dejaba m->makeClick sin setear y no entendi por que. Lo movi a los constructores y anda
     if(op->sig)
@@ -121,8 +128,9 @@ void Holder::draw(int n)  //pos en capturados
     window->draw(*sp);
     sp->setScale(escala,escala);
 }
+int isolCount=0;
 void Holder::makeCli(){
-    ///aca habria una funcion polimorfica que toma normales y le mete su lista de normales
+    isolCount++;
     for(movHolder* b:movs){
         if(!b->continuar) continue;
         vector<normalHolder*>* normales=new vector<normalHolder*>;
@@ -145,12 +153,14 @@ movHolder::movHolder(Holder* h_,operador* org,Base* base_){
     op=org;
     makeClick=op->makeClick;
 }
+bool allTheWay;
 void movHolder::generarSig(){
     if(sig){
         sig->generar();
         if(!makeClick&&!sig->continuar)
             continuar=false;
-    }
+    }else
+        allTheWay=true;
 }
 normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
 :movHolder(h_,org,base_){
@@ -273,10 +283,16 @@ deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_)
 void deslizHolder::generar(){
     continuar=true;
     for(int i=0;;){
+        cout<<".";
         movHolder* act=movs[i];
+        allTheWay=false;
         act->generar();
+        cout<<allTheWay<<endl;
         if(!act->continuar){
             f=i;
+            break;
+        }else if(!allTheWay){
+            f=i+1;
             break;
         }
         i++;
@@ -463,6 +479,44 @@ void excHolder::cargar(vector<normalHolder*>* norms){
     if(sig)
         sig->cargar(norms);
 }
-void excHolder::debug(){
-
+void excHolder::debug(){}
+isolHolder::isolHolder(Holder* h_,isol* org,Base* base_)
+:movHolder(h_,org,base_){
+    inside=crearMovHolder(h_,org->inside,base_);
+    selfCount=0;
+    valido=true;
+    continuar=true;
 }
+void isolHolder::generar(){
+    v tempPos=offset;
+    inside->generar();
+    offset=tempPos;
+    allTheWay=false;
+    if(sig)
+        sig->generar();
+    else
+        allTheWay=true;
+}
+void isolHolder::reaccionar(normalHolder* nh){
+    inside->reaccionar(nh);
+    if(!switchToGen&&sig)
+        sig->reaccionar(nh);
+}
+void isolHolder::reaccionar(vector<normalHolder*> nhs){
+    inside->reaccionar(nhs);
+    if(!switchToGen&&sig)
+        sig->reaccionar(nhs);
+}
+void isolHolder::cargar(vector<normalHolder*>* norms){
+    if(selfCount<isolCount){
+        selfCount=isolCount;
+
+        vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
+        inside->cargar(&normExt);
+        if(makeClick)
+            clickers.push_back(new Clicker(&normExt,h));
+    }
+    if(sig)
+        sig->cargar(norms);
+}
+void isolHolder::debug(){}

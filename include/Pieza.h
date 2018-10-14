@@ -78,6 +78,16 @@ struct excHolder:public movHolder{
     vector<movHolder*> ops;
     int actualBranch;
 };
+struct isolHolder:public movHolder{
+    isolHolder(Holder*,isol*,Base*);
+    virtual void generar();
+    virtual void reaccionar(normalHolder*);
+    virtual void reaccionar(vector<normalHolder*>);
+    virtual void cargar(vector<normalHolder*>*);
+    virtual void debug();
+    movHolder* inside;
+    int selfCount;
+};
 
 
 struct Tile;

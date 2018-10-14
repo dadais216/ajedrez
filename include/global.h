@@ -90,7 +90,8 @@ extern bool clickExplicit;
 extern bool switchToGen;
 extern bool confirm;
 extern v offset;
+extern int isolCount;
 
-enum{NORMAL,DESLIZ,EXC};
+enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 
 #endif
