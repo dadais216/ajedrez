@@ -59,6 +59,7 @@ normal::normal(bool make){
                 acc(mov);
                 acc(capt);
                 acc(pausa);
+                acc(pass);
     //        acc(spwn);
 
             case lector::color:
@@ -127,6 +128,12 @@ exc::exc(){
     }while(separator);
     sig=keepOn(&makeClick);
 }
+isol::isol(){
+    tipo=ISOL;
+    makeClick=true;
+    inside=tomar();
+    sig=keepOn(&makeClick);
+}
 
 //mira si hay algun token adelante que genere un operador
 operador* keepOn(bool* makeClick){
@@ -161,8 +168,7 @@ operador* tomar(){
     {
     caseTomar(desliz);
     caseTomar(exc);
-//    caseTomar(opt);
-//    caseTomar(bloque);
+    caseTomar(isol);
     case lector::eol:
     case lector::end:
         return nullptr;
