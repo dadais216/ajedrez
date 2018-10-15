@@ -231,7 +231,6 @@ fabMov(enemigo,condt,
             return tablptr->tile(pos)->holder->bando!=h->bando;
        return false;
       );
-///list<v> limites;
 fabMov(esp,condt,
         if(pos.x>=0&&pos.x<tablptr->tam.x&&pos.y>=0&&pos.y<tablptr->tam.y){
             h->outbounds=false;

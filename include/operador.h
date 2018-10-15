@@ -18,7 +18,7 @@ struct movHolder;
 struct operador{
     int tipo;
     operador* sig;
-    bool makeClick;
+    bool makeClick,hasClick;
 };
 
 struct normalHolder;

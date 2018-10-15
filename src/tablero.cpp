@@ -92,6 +92,11 @@ void activateTriggers(){
         sort(trigsC.begin(),trigsC.end(),[](normalHolder* a,normalHolder* b)->bool{return a->base.beg<=b->base.beg;});
         int i=0;
         while(i<trigsC.size()){
+
+            for(auto n:trigsC)
+                cout<<n->h->tile->pos;
+            cout<<"############\n";
+
             switchToGen=false;
             movHolder* base=trigsC[i]->base.beg;
             int j=i+1;
@@ -100,7 +105,7 @@ void activateTriggers(){
             if(j==i+1)
                 base->reaccionar(trigsC[i]);
             else
-                base->reaccionar(vector<normalHolder*>(&trigsC[i],&trigsC[j-1]));//espero que no haga una copia
+                base->reaccionar(vector<normalHolder*>(&trigsC[i],&trigsC[j]));//espero que no haga una copia
             i=j;
         }
     }

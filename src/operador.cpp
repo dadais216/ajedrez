@@ -13,7 +13,7 @@ bool clickExplicit;///cuando se usa click explicitamente no se pone un click imp
 
 normal::normal(bool make){
     tipo=NORMAL;
-    makeClick=false;
+    hasClick=makeClick=false;
     sig=nullptr;
     if(make){
         v pos(0,0);
@@ -78,13 +78,13 @@ normal::normal(bool make){
                 separator=true;
                 return;
             case lector::eol:
-                makeClick=true;
+                hasClick=makeClick=true;
                 return;
             case lector::end:
                 //cout<<"lim"<<endl;
                 return;
             case lector::click:
-                makeClick=true;
+                hasClick=makeClick=true;
                 clickExplicit=true;
                 sig=tomar();
                 ///@todo mirar casos raros como dos clicks seguidos, cosas con separador, etc
@@ -117,6 +117,7 @@ desliz::desliz(){
     makeClick=false;
     inside=tomar();
     sig=keepOn(&makeClick);
+    hasClick=makeClick||inside->hasClick;
 }
 exc::exc(){
     tipo=EXC;
@@ -127,10 +128,22 @@ exc::exc(){
         ops.push_back(op);
     }while(separator);
     sig=keepOn(&makeClick);
+    if(makeClick)
+        hasClick=makeClick;
+    else{
+        hasClick=false;
+        for(operador* op:ops)
+            if(op->hasClick){
+                hasClick=true;
+                break;
+            }
+    }
+
 }
 isol::isol(){
     tipo=ISOL;
-    makeClick=true;
+    hasClick=true;
+    makeClick=false;
     inside=tomar();
     sig=keepOn(&makeClick);
 }

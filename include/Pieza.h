@@ -43,7 +43,9 @@ struct movHolder{
     Base base;
     bool valido;
     bool continuar;
+    bool allTheWay;///@optim meter estos bools en una variable?
     bool makeClick;
+    bool hasClick;
 };
 struct normalHolder:public movHolder{
     normalHolder(Holder*,normal*,Base*);//supongo que ni bien se crea el op le copias las accs
@@ -67,6 +69,7 @@ struct deslizHolder:public movHolder{
     virtual void debug();
     vector<movHolder*> movs;
     int f;
+    bool lastNotFalse;
 };
 struct excHolder:public movHolder{
     excHolder(Holder*,exc*,Base*);
@@ -87,6 +90,7 @@ struct isolHolder:public movHolder{
     virtual void debug();
     movHolder* inside;
     int selfCount;
+    v tempPos;
 };
 
 
