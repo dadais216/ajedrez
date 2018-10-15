@@ -155,15 +155,17 @@ movHolder::movHolder(Holder* h_,operador* org,Base* base_){
     h=h_;
     op=org;
     makeClick=op->makeClick;
+    hasClick=op->hasClick;
 }
-bool allTheWay;
 void movHolder::generarSig(){
     if(sig){
         sig->generar();
-        if(!makeClick&&!sig->continuar)
-            continuar=false;
-    }else
+        continuar=hasClick||sig->continuar;
+        allTheWay=sig->continuar&&sig->allTheWay;
+    }else{
+        continuar=true;
         allTheWay=true;
+    }
 }
 normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
 :movHolder(h_,org,base_){
@@ -189,7 +191,7 @@ void normalHolder::generar(){
         addTrigger=false;
         //cout<<c->nomb<<posAct;
         if(!c->check(h,posAct)){
-            continuar=valido=false;
+            allTheWay=continuar=valido=false;
 
             if(h->outbounds) return;
             if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,this,h->tile->step});
@@ -209,7 +211,7 @@ void normalHolder::generar(){
 
     offset=posAct;
 
-    continuar=valido=true;
+    valido=true;
     generarSig();
 }
 void normalHolder::reaccionar(normalHolder* nh){
@@ -224,7 +226,10 @@ void normalHolder::reaccionar(normalHolder* nh){
         ///mas eficiente porque se salta un recalculo de una normal entera
     }else if(valido&&sig){
         sig->reaccionar(nh);
-        continuar=sig->continuar;
+        if(switchToGen){
+            continuar=hasClick||sig->continuar;
+            allTheWay=sig->continuar&&sig->allTheWay;
+        }
     }
 }
 void normalHolder::reaccionar(vector<normalHolder*> nhs){
@@ -239,9 +244,13 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
     }
     if(valido&&sig){
         sig->reaccionar(nhs);
-        continuar=sig->continuar;
+        if(switchToGen){
+            continuar=hasClick||sig->continuar;
+            allTheWay=sig->continuar&&sig->allTheWay;
+        }
     }
 }
+
 void normalHolder::accionar(){
     for(acct* ac:accs)
         ac->func(h);
@@ -282,20 +291,20 @@ deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_)
     movs.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
     movs.push_back(crearMovHolder(h,org->inside,&base));
     valido=true;///desliz es siempre valido
+    hasClick=org->inside->hasClick;
+    allTheWay=true;
 }
 void deslizHolder::generar(){
-    continuar=true;
+    lastNotFalse=false;
     for(int i=0;;){
-        cout<<".";
         movHolder* act=movs[i];
-        allTheWay=false;
         act->generar();
-        cout<<allTheWay<<endl;
         if(!act->continuar){
             f=i;
             break;
-        }else if(!allTheWay){
-            f=i+1;
+        }else if(!act->allTheWay){
+            lastNotFalse=true;
+            f=i;
             break;
         }
         i++;
@@ -304,82 +313,62 @@ void deslizHolder::generar(){
     }
     generarSig();
 }
+int x=0;
 bool switchToGen;
-void deslizHolder::reaccionar(normalHolder* nh){
-    for(int i=0;i<=f;i++){
-        movHolder* act=movs[i];
+template<typename T> void deslizReaccionar(T nh,deslizHolder* $){
+    for(int i=0;i<=$->f;i++){
+        movHolder* act=$->movs[i];
         act->reaccionar(nh);
         if(switchToGen){
-            if(act->continuar){
+            if(act->allTheWay){
                 i++;
-                if(movs.size()==i)
-                    movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+                if($->movs.size()==i)
+                    $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
                 for(;;){
-                    act=movs[i];
+                    act=$->movs[i];
                     act->generar();
                     if(!act->continuar){
-                        f=i;
+                        $->f=i;
+                        break;
+                    }else if(!act->allTheWay){
+                        $->f=i+1;
+                        if($->movs.size()==i+1)
+                            $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
+                        $->movs[i+1]->continuar=false;
                         break;
                     }
                     i++;
-                    if(movs.size()==i)
-                        movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+                    if($->movs.size()==i)
+                        $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
                 }
-                if(sig)
-                    sig->generar();
-            }
-            else{
-                f=i;
-                if(sig)
-                    sig->generar();
-            }
+            }else if(act->continuar){
+                $->f=i+1;
+                if($->movs.size()==i+1)
+                    $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
+                $->movs[i+1]->continuar=false;
+            }else
+                $->f=i;
+            $->generarSig();
             return;
         }
     }
-    if(sig)
-        sig->reaccionar(nh);
+    if($->sig)
+        $->sig->reaccionar(nh);
+}
+void deslizHolder::reaccionar(normalHolder* nh){
+    deslizReaccionar(nh,this);
 }
 void deslizHolder::reaccionar(vector<normalHolder*> nhs){
-    for(int i=0;i<=f;i++){
-        movHolder* act=movs[i];
-        act->reaccionar(nhs);
-        if(switchToGen){
-            if(act->continuar){
-                i++;
-                if(movs.size()==i)
-                    movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
-                for(;;){
-                    act=movs[i];
-                    act->generar();
-                    if(!act->continuar){
-                        f=i;
-                        break;
-                    }
-                    i++;
-                    if(movs.size()==i)
-                        movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
-                }
-                if(sig)
-                    sig->generar();
-            }
-            else{
-                f=i;
-                if(sig)
-                    sig->generar();
-            }
-            return;
-        }
-    }
-    if(sig)
-        sig->reaccionar(nhs);
+    deslizReaccionar(nhs,this);
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
     if(!continuar) return;
-    for(int i=0;i<f;i++)
+    int limit=lastNotFalse?f+1:f;
+    for(int i=0;i<limit;i++){
         movs[i]->cargar(norms);
+    }
     if(makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
         clickers.push_back(new Clicker(norms,h));
-    cout<<endl;
     if(sig)
         sig->cargar(norms);
 }
@@ -401,7 +390,7 @@ void excHolder::generar(){
         movHolder* branch=ops[i];
         branch->generar();
         if(branch->continuar){
-            continuar=valido=true;
+            valido=true;
             actualBranch=i; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que continuar==true
             generarSig();
             return;
@@ -410,69 +399,44 @@ void excHolder::generar(){
     continuar=valido=false;
     actualBranch=i-1;
 }
-void excHolder::reaccionar(normalHolder* nh){
-    for(int i=0;i<=actualBranch;i++){
-        movHolder* branch=ops[i];
+template<typename T> void excReaccionar(T nh,excHolder* $){
+    for(int i=0;i<=$->actualBranch;i++){
+        movHolder* branch=$->ops[i];
         branch->reaccionar(nh);
         if(switchToGen){
             if(!branch->continuar){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
                 int j;
-                for(j=0;j<ops.size();j++){
+                for(j=0;j<$->ops.size();j++){
                     if(i!=j){
-                        movHolder* brancj=ops[j];
+                        movHolder* brancj=$->ops[j];
                         brancj->generar();
                         if(brancj->continuar){
-                            continuar=valido=true;
-                            actualBranch=j;
-                            generarSig();
+                            $->valido=true;
+                            $->actualBranch=j;
+                            $->generarSig();
                             return;
                         }
                     }
                 }
-                continuar=valido=false;
-                actualBranch=j-1;
+                $->continuar=$->valido=false;
+                $->actualBranch=j-1;
                 return;
             }else{ ///se valido una rama que era invalida
-                actualBranch=i;
-                continuar=valido=true;
-                break;
+                $->actualBranch=i;
+                $->valido=true;
+                $->generarSig();
+                return;
             }
         }
     }
-    if(valido&&sig)
-            sig->reaccionar(nh);
+    if($->valido&&$->sig)
+        $->sig->reaccionar(nh);
+}
+void excHolder::reaccionar(normalHolder* nh){
+    excReaccionar(nh,this);
 }
 void excHolder::reaccionar(vector<normalHolder*> nhs){
-    for(int i=0;i<=actualBranch;i++){
-        movHolder* branch=ops[i];
-        branch->reaccionar(nhs);
-        if(switchToGen){
-            if(!branch->continuar){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
-                int j;
-                for(j=0;j<ops.size();j++){
-                    if(i!=j){
-                        movHolder* brancj=ops[j];
-                        brancj->generar();
-                        if(brancj->continuar){
-                            continuar=valido=true;
-                            actualBranch=j;
-                            generarSig();
-                            return;
-                        }
-                    }
-                }
-                continuar=valido=false;
-                actualBranch=j-1;
-                return;
-            }else{ ///se valido una rama que era invalida
-                actualBranch=i;
-                continuar=valido=true;
-                break;
-            }
-        }
-    }
-    if(valido&&sig)
-            sig->reaccionar(nhs);
+    excReaccionar(nhs,this);
 }
 void excHolder::cargar(vector<normalHolder*>* norms){
     if(!continuar) return;
@@ -487,28 +451,34 @@ isolHolder::isolHolder(Holder* h_,isol* org,Base* base_)
 :movHolder(h_,org,base_){
     inside=crearMovHolder(h_,org->inside,base_);
     selfCount=0;
-    valido=true;
-    continuar=true;
+    allTheWay=continuar=valido=true;
 }
 void isolHolder::generar(){
-    v tempPos=offset;
+    tempPos=offset;
     inside->generar();
     offset=tempPos;
-    allTheWay=false;
-    if(sig)
+    if(sig){
         sig->generar();
-    else
-        allTheWay=true;
+        allTheWay=sig->allTheWay;
+    }
+}
+template<typename T> void isolReaccionar(T nh,isolHolder* $){
+    $->inside->reaccionar(nh);
+    if(switchToGen){
+        ///@optim podria hacerse un lngjmp
+        //offset=$->tempPos;
+        //if($->sig)
+        //    $->sig->generar();
+        switchToGen=false;
+    }
+    else if($->sig)
+        $->sig->reaccionar(nh);
 }
 void isolHolder::reaccionar(normalHolder* nh){
-    inside->reaccionar(nh);
-    if(!switchToGen&&sig)
-        sig->reaccionar(nh);
+    isolReaccionar(nh,this);
 }
 void isolHolder::reaccionar(vector<normalHolder*> nhs){
-    inside->reaccionar(nhs);
-    if(!switchToGen&&sig)
-        sig->reaccionar(nhs);
+    isolReaccionar(nhs,this);
 }
 void isolHolder::cargar(vector<normalHolder*>* norms){
     if(selfCount<isolCount){

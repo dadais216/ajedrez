@@ -18,7 +18,46 @@ La memoria de movimiento esta en una base que todos los movholders conocen
 Esta estructura funciona y dentro de todo no es muy compleja, y hace todas las funcionalidades que necesito.
 De todas formas no me termina de cerrar porque es la parte critica del codigo y usa mucha indireccion, por un lado esta la estructura de movholders y ademas adentro de normal tenemos las cadenas de movs que tambien son polimorficas
 
-De todas formas voy a terminarla y probar que ande bien
+--
+
+A B c
+
+si A es valido pero B no no se carga nada. Esto se implemento poniendo un segundo booleano, continuar. A despues de generar B, si B tiene continuar falso, pasa a tener continuar falso.
+Esto tambien se podría haber implementando haciendo que se cargue A, y cuando se vaya a cargar B y se vea que es invalido, soltar lo cargado de A. Pero supongo que es mas lento, aunque es menos complejo
+
+A c B c
+A valido genera clicks sin importar si B es o no valido, porque cuando A genra clicks (o, si no fuera una normal, genera o contiene alguien que genere) no setea su continuar con el continuar del siguiente
+
+desliz A c B end
+exc A c B or C end
+
+en estos dos casos puede pasar que una iteracion o rama tenga continuar valido, pero no se haya completado (B falso). 
+Si se pregunta por continuar para validar exc tomaria la primera rama, y desliz seguiría iterando
+Puede que esto sea lo que se espera, pero se me hace medio raro. Yo interpreto que si la condicion no se realiza completa, por mas que genere clickers, se debería considerar como mala, al menos en desliz.
+la salida que uno esperaria de desliz es (AB)*(A| ) y no (AB|A)*
+
+por otro lado, con exc uno esperaria lo que pasa si se valida por continuar, que la salida sea {A|AB|C} y no lo que pasaria si se valida que se haga la condicion completa, que daria {AB|AC|C}
+
+Asi que lo voy a implementar como esperaria que fuese. Desliz entonces valida su iteracion por que se haya generado su cadena hasta el final, esto se hace metiendo un bool mas, allTheWay. Funciona igual que continuar, va cascadeando. Nomas que ignora hasClick.
+No me gusta tener que agregar otro booleano para este caso raro, pero suponiendo que todos los booleanos quedan dentro de una misma variable debería ser gratis
+
+desliz A c B c end C
+actualmente esto genera C sin importar si la ultima iteracion es completa o no. Esto sale de que desliz nunca corta un movimiento porque nunca es invalido, aunque puede que en este caso si se quiera eso. 
+
+
+De todas formas estas son cosas para determinar que pasaria en el estandar, uno desde el lenguaje puede escribir las cosas de forma distinta para hacer lo que quiera. 
+
+
+
+
+
+
+
+--
+
+
+
+De todas formas voy a terminarla y probar que ande bien, y va a ser suficiente para una primera version. La alternativa es lo mismo pero compilado, asi que debería conocer bien el codigo antes.
 
 
 La alternativa que sería mas rapida y mas flexible sería hacer que el lenguaje de piezas compile a codigo en c++
