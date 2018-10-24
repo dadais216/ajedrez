@@ -26,11 +26,11 @@ desliz sd mover c end desliz dw mover c end
 desliz dw mover c end desliz wa mover c end
 
 :4 4 #excguy
-#exc w mover c a mover or ss mover end c
-desliz {w,a,s,d} mover c end
+#desliz {w,a,s,d} mover end
+desopt wa mover c or wd mover c end
 
 :5 5 #emperador
-#desliz w end desliz a end \
+desliz w end desliz a end \
 desliz isol desliz isol da mover c end d pass end end s pass end
 #desliz a mover isol desliz w mover c end end end
 #desliz isol desliz w mover c end end a mover end

@@ -92,6 +92,21 @@ struct isolHolder:public movHolder{
     int selfCount;
     v tempPos;
 };
+struct node{
+    node(movHolder*);
+    movHolder* mh;
+    v offset;
+    vector<node*> nodes;
+};
+struct desoptHolder:public movHolder{
+    desoptHolder(Holder*,desopt*,Base*);
+    virtual void generar();
+    virtual void reaccionar(normalHolder*);
+    virtual void reaccionar(vector<normalHolder*>);
+    virtual void cargar(vector<normalHolder*>*);
+    virtual void debug();
+    vector<node> nodes;
+};
 
 
 struct Tile;

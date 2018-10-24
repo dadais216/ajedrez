@@ -42,6 +42,10 @@ struct isol:public operador{
     isol();
     operador* inside;
 };
+struct desopt:public operador{
+    desopt();
+    vector<operador*> ops;
+};
 
 
 operador* tomar();
