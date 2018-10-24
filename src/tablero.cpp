@@ -92,11 +92,6 @@ void activateTriggers(){
         sort(trigsC.begin(),trigsC.end(),[](normalHolder* a,normalHolder* b)->bool{return a->base.beg<=b->base.beg;});
         int i=0;
         while(i<trigsC.size()){
-
-            for(auto n:trigsC)
-                cout<<n->h->tile->pos;
-            cout<<"############\n";
-
             switchToGen=false;
             movHolder* base=trigsC[i]->base.beg;
             int j=i+1;

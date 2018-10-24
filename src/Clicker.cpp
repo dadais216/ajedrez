@@ -10,7 +10,7 @@ vector<Clicker*> clickers;
 
 Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
     normales=*normales_;
-    ///@optim estaria bueno no copiar el ultimo vector, no sé si es hacible. No es muy importante
+    ///@optim estaria bueno no copiar el ultimo vector
     h=h_;
 
     normalHolder* lastN=normales[normales.size()-1];

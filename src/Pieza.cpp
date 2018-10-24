@@ -53,6 +53,11 @@ Pieza::Pieza(int _id,int _sn){
             showOp(static_cast<isol*>(op)->inside);
             cout<<") ";
             break;
+        case DESOPT:
+            cout<<"DESOPT (";
+            for(operador* opi:static_cast<desopt*>(op)->ops)
+                showOp(opi);
+            cout<<") ";
         }
         if(op->sig)
             showOp(op->sig);
@@ -74,7 +79,9 @@ movHolder* crearMovHolder(Holder* h,operador* op,Base* base){
     case EXC:
         m=new excHolder(h,static_cast<exc*>(op),base);break;
     case ISOL:
-        m=new isolHolder(h,static_cast<isol*>(op),base);
+        m=new isolHolder(h,static_cast<isol*>(op),base);break;
+    case DESOPT:
+        m=new desoptHolder(h,static_cast<desopt*>(op),base);
     }
     ///m->makeClick=op->makeClick; @??? este codigo dejaba m->makeClick sin setear y no entendi por que. Lo movi a los constructores y anda
     if(op->sig)
@@ -289,7 +296,7 @@ deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_)
     movs.push_back(crearMovHolder(h,org->inside,&base));
     valido=true;///desliz es siempre valido
     hasClick=org->inside->hasClick;
-    allTheWay=true;
+    //allTheWay=true;
 }
 void deslizHolder::generar(){
     lastNotFalse=false;
@@ -317,6 +324,7 @@ template<typename T> void deslizReaccionar(T nh,deslizHolder* $){
         movHolder* act=$->movs[i];
         act->reaccionar(nh);
         if(switchToGen){
+            $->lastNotFalse=false;
             if(act->allTheWay){
                 i++;
                 if($->movs.size()==i)
@@ -328,10 +336,8 @@ template<typename T> void deslizReaccionar(T nh,deslizHolder* $){
                         $->f=i;
                         break;
                     }else if(!act->allTheWay){
-                        $->f=i+1;
-                        if($->movs.size()==i+1)
-                            $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
-                        $->movs[i+1]->continuar=false;
+                        $->lastNotFalse=true;
+                        $->f=i;
                         break;
                     }
                     i++;
@@ -339,10 +345,8 @@ template<typename T> void deslizReaccionar(T nh,deslizHolder* $){
                         $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
                 }
             }else if(act->continuar){
-                $->f=i+1;
-                if($->movs.size()==i+1)
-                    $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
-                $->movs[i+1]->continuar=false;
+                $->lastNotFalse=true;
+                $->f=i;
             }else
                 $->f=i;
             $->generarSig();
@@ -490,3 +494,145 @@ void isolHolder::cargar(vector<normalHolder*>* norms){
         sig->cargar(norms);
 }
 void isolHolder::debug(){}
+
+node::node(movHolder* m):mh(m){}
+desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
+:movHolder(h_,org,base_){
+    nodes.reserve(org->ops.size()*sizeof(node));///@todo @optim temporal, eventualmente voy a usar buckets
+    for(operador* opos:org->ops)
+        nodes.emplace_back(crearMovHolder(h,opos,&base));
+    valido=true;
+}
+struct dataPass{
+    vector<operador*>* ops;
+    Holder* h;
+    Base* b;
+};
+///abajo plantie como seria haciendo dp global, puede que sea ligeramente mas rapido pero por ahora era mucha optimizacion
+void generarNodos(vector<node*>& nodes,dataPass& dp){
+    if(nodes.empty())
+        for(operador* opos:*(dp.ops))
+            nodes.push_back(new node(crearMovHolder(dp.h,opos,dp.b)));
+    v offsetAct=offset;
+    for(node* n:nodes){
+        n->mh->generar();
+        if(n->mh->allTheWay)
+            generarNodos(n->nodes,dp);
+        offset=offsetAct;
+    }
+}
+void desoptHolder::generar(){
+    ///la iteracion inicial no necesita indireccion y no tiene un movimiento raiz
+    dataPass dp{&static_cast<desopt*>(op)->ops,h,&base};
+    v offsetAct=offset;
+    for(node& n:nodes){
+        n.mh->generar();
+        if(n.mh->allTheWay)
+            generarNodos(n.nodes,dp);
+        offset=offsetAct;
+    }
+    generarSig();
+}
+template<typename T> void reaccionarNodos(T nh,vector<node*>& nodes,dataPass& dp){
+    for(node* n:nodes){
+        n->mh->reaccionar(nh);
+        if(switchToGen){
+            if(n->mh->allTheWay)
+                generarNodos(n->nodes,dp);
+            switchToGen=false;
+            continue;
+        }
+        reaccionarNodos(nh,n->nodes,dp);
+    }
+}
+template<typename T> void desoptReaccionar(T nh,desoptHolder* $){
+    dataPass dp{&static_cast<desopt*>($->op)->ops,$->h,&$->base};
+    for(node n:$->nodes){
+        n.mh->reaccionar(nh);
+        if(switchToGen){
+            if(n.mh->allTheWay)
+                generarNodos(n.nodes,dp);
+            switchToGen=false;
+            continue;
+        }
+        reaccionarNodos(nh,n.nodes,dp);
+    }
+}
+void desoptHolder::reaccionar(normalHolder* nh){
+    desoptReaccionar(nh,this);
+}
+void desoptHolder::reaccionar(vector<normalHolder*> nhs){
+    desoptReaccionar(nhs,this);
+}
+void cargarNodos(vector<node*>& nodes,vector<normalHolder*>* norms){
+    int res=norms->size();
+    for(node* n:nodes){
+        n->mh->cargar(norms);
+        if(n->mh->allTheWay)
+            cargarNodos(n->nodes,norms);
+        norms->resize(res);
+    }
+}
+void desoptHolder::cargar(vector<normalHolder*>* norms){
+    int res=norms->size();
+    norms->reserve(100);///@todo buckets
+    int resSize=norms->size();
+    for(node& n:nodes){
+        n.mh->cargar(norms);
+        if(n.mh->allTheWay)
+            cargarNodos(n.nodes,norms);
+        norms->resize(res);
+    }
+}
+void desoptHolder::debug(){}
+
+
+
+/*
+struct dp{
+    vector<operador*>* ops;
+    Holder* h;
+    Base* b;
+};
+vector<dp> dataPass;
+int dpIndex=-1;
+node::node(movHolder* m):mh(m){}
+desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
+:movHolder(h_,org,base_){
+    nodes.reserve(org->ops.size()*sizeof(node));///@todo @optim temporal, eventualmente voy a usar buckets
+    for(operador* opos:org->ops)
+        nodes.emplace_back(crearMovHolder(h,opos,&base));
+    valido=true;
+
+    dataPass.resize(3); ///@todo setar a tamaño maximo de anidacion de desopts
+}
+void generarNodos(vector<node*>& nodes){
+    for(node* n:nodes){
+        n->mh->generar();
+        if(n->mh->allTheWay){
+            if(n->nodes.empty())
+                for(operador* opos:*(dataPass[dpIndex].ops))
+                    n->nodes.push_back(new node(crearMovHolder(dataPass[dpIndex].h,opos,dataPass[dpIndex].b)));
+            generarNodos(n->nodes);
+        }
+    }
+}
+void desoptHolder::generar(){
+    ///la iteracion inicial no necesita indireccion y no tiene un movimiento raiz
+    dpIndex++;
+    dataPass[dpIndex].ops=&static_cast<desopt*>(op)->ops;
+    dataPass[dpIndex].h=h;
+    dataPass[dpIndex].b=&base;
+    for(node n:nodes){
+        n.mh->generar();
+        if(n.mh->allTheWay){
+            if(n.nodes.empty())
+                for(operador* opos:static_cast<desopt*>(op)->ops)
+                    n.nodes.push_back(new node(crearMovHolder(h,opos,&base)));
+            generarNodos(n.nodes);
+        }
+    }
+    dpIndex--;
+    generarSig();
+}
+*/

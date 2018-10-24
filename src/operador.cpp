@@ -87,7 +87,7 @@ normal::normal(bool make){
                 hasClick=makeClick=true;
                 clickExplicit=true;
                 sig=tomar();
-                ///@todo mirar casos raros como dos clicks seguidos, cosas con separador, etc
+                ///@todo mirar casos raros como dos clicks seguidos
                 return;
             default:
                 tokens.push_front(tok);
@@ -121,12 +121,12 @@ desliz::desliz(){
 }
 exc::exc(){
     tipo=EXC;
-    makeClick=false;
     do{
         separator=false;
         operador* op=tomar();
         ops.push_back(op);
     }while(separator);
+    makeClick=false;
     sig=keepOn(&makeClick);
     if(makeClick)
         hasClick=makeClick;
@@ -146,6 +146,26 @@ isol::isol(){
     makeClick=false;
     inside=tomar();
     sig=keepOn(&makeClick);
+}
+desopt::desopt(){
+    tipo=DESOPT;
+    do{
+        separator=false;
+        operador* op=tomar();
+        ops.push_back(op);
+    }while(separator);
+    makeClick=false;
+    sig=keepOn(&makeClick);
+    if(makeClick)
+        hasClick=makeClick;
+    else{
+        hasClick=false;
+        for(operador* op:ops)
+            if(op->hasClick){
+                hasClick=true;
+                break;
+            }
+    }
 }
 
 //mira si hay algun token adelante que genere un operador
@@ -176,12 +196,15 @@ operador* tomar(){
     if(tokens.empty()) return nullptr;
     int tok=tokens.front();
     tokens.pop_front();
-#define caseTomar(TOKEN) case lector::TOKEN: cout<<#TOKEN<<endl;return new TOKEN
+#define caseTomar(TOKEN) case lector::TOKEN: return new TOKEN
     switch(tok)
     {
     caseTomar(desliz);
     caseTomar(exc);
     caseTomar(isol);
+    caseTomar(desopt);
+    case lector::sep:
+        separator=true;
     case lector::eol:
     case lector::end:
         return nullptr;
