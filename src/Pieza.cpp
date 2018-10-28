@@ -44,9 +44,11 @@ Pieza::Pieza(int _id,int _sn){
             break;
         case EXC:
             cout<<"EXC (";
-            for(operador* opi:static_cast<exc*>(op)->ops)
+            for(operador* opi:static_cast<exc*>(op)->ops){
                 showOp(opi);
-            cout<<") ";
+                cout<<" |";
+            }
+            cout<<"x)";
             break;
         case ISOL:
             cout<<"ISOL (";
@@ -55,9 +57,11 @@ Pieza::Pieza(int _id,int _sn){
             break;
         case DESOPT:
             cout<<"DESOPT (";
-            for(operador* opi:static_cast<desopt*>(op)->ops)
+            for(operador* opi:static_cast<desopt*>(op)->ops){
                 showOp(opi);
-            cout<<") ";
+                cout<<" |";
+            }
+            cout<<"x) ";
         }
         if(op->sig)
             showOp(op->sig);
@@ -98,7 +102,6 @@ Base::Base(Holder* h,operador* op){
 */
 Holder::Holder(int _bando,Pieza* p,v pos_){
     bando=_bando;
-    inicial=true;
     pieza=p;
     tile=tablptr->tile(pos_);
     movs.reserve(sizeof(movHolder*)*pieza->movs.size());
@@ -299,7 +302,16 @@ deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_)
     movs.push_back(crearMovHolder(h,org->inside,&base));
     valido=true;///desliz es siempre valido
     hasClick=org->inside->hasClick;
-    //allTheWay=true;
+}
+void deslizHolder::generarSig(){
+    if(sig){
+        sig->generar();
+        continuar=hasClick||sig->continuar;
+        allTheWay=sig->continuar&&sig->allTheWay;
+    }else{
+        continuar=f!=0;
+        allTheWay=f!=0; //salva algunos casos de bucles infinitos como desopt desliz A end or B end
+    }
 }
 void deslizHolder::generar(){
     lastNotFalse=false;
@@ -511,7 +523,7 @@ struct dataPass{
     Holder* h;
     Base* b;
 };
-///abajo plantie como seria haciendo dp global, puede que sea ligeramente mas rapido pero por ahora era mucha optimizacion
+///@optim stack dp global?
 void generarNodos(vector<node*>& nodes,dataPass& dp){
     if(nodes.empty())
         for(operador* opos:*(dp.ops))
@@ -586,56 +598,15 @@ void desoptHolder::cargar(vector<normalHolder*>* norms){
             cargarNodos(n.nodes,norms);
         norms->resize(res);
     }
+    if(sig)
+        sig->cargar(norms);
 }
 void desoptHolder::debug(){}
-
-
-
 /*
-struct dp{
-    vector<operador*>* ops;
-    Holder* h;
-    Base* b;
-};
-vector<dp> dataPass;
-int dpIndex=-1;
-node::node(movHolder* m):mh(m){}
-desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
-:movHolder(h_,org,base_){
-    nodes.reserve(org->ops.size()*sizeof(node));///@todo @optim temporal, eventualmente voy a usar buckets
-    for(operador* opos:org->ops)
-        nodes.emplace_back(crearMovHolder(h,opos,&base));
-    valido=true;
-
-    dataPass.resize(3); ///@todo setar a tamaño maximo de anidacion de desopts
-}
-void generarNodos(vector<node*>& nodes){
-    for(node* n:nodes){
-        n->mh->generar();
-        if(n->mh->allTheWay){
-            if(n->nodes.empty())
-                for(operador* opos:*(dataPass[dpIndex].ops))
-                    n->nodes.push_back(new node(crearMovHolder(dataPass[dpIndex].h,opos,dataPass[dpIndex].b)));
-            generarNodos(n->nodes);
-        }
-    }
-}
-void desoptHolder::generar(){
-    ///la iteracion inicial no necesita indireccion y no tiene un movimiento raiz
-    dpIndex++;
-    dataPass[dpIndex].ops=&static_cast<desopt*>(op)->ops;
-    dataPass[dpIndex].h=h;
-    dataPass[dpIndex].b=&base;
-    for(node n:nodes){
-        n.mh->generar();
-        if(n.mh->allTheWay){
-            if(n.nodes.empty())
-                for(operador* opos:static_cast<desopt*>(op)->ops)
-                    n.nodes.push_back(new node(crearMovHolder(h,opos,&base)));
-            generarNodos(n.nodes);
-        }
-    }
-    dpIndex--;
-    generarSig();
-}
+desopt actua como un isol respecto a lo que esta antes y despues.
+Si se quiere hacer algo como desliz A optar B , C end D c end se tiene que escribir
+A desopt BD c A , CD c A end
+Esto refleja lo que se hace y no oscurece la cantidad de calculos distintos que se hacen
+(de la otra forma se podría pensar que D y A se calculan una vez en lugar de por cada rama)
 */
+
