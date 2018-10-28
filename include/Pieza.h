@@ -62,6 +62,7 @@ struct normalHolder:public movHolder{
 };
 struct deslizHolder:public movHolder{
     deslizHolder(Holder*,desliz*,Base*);
+    void generarSig();
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
@@ -95,7 +96,6 @@ struct isolHolder:public movHolder{
 struct node{
     node(movHolder*);
     movHolder* mh;
-    v offset;
     vector<node*> nodes;
 };
 struct desoptHolder:public movHolder{
@@ -108,6 +108,7 @@ struct desoptHolder:public movHolder{
     vector<node> nodes;
 };
 
+//estos son todos los operadores. Püede que agregue uno más para movimientos no deterministicos
 
 struct Tile;
 struct Holder{
@@ -115,19 +116,16 @@ struct Holder{
     void draw();///dibuja la pieza
     void draw(int);///dibuja la pieza en la lista de capturados
     void makeCli();
-    Pieza* pieza;
+    Pieza* pieza; ///@sospechoso se usa?
     Tile* tile;
-    vector<Tile*> pisados;
+    vector<Tile*> pisados; ///@sospechoso es parte de holder por algun motivo?
     void generar();
     void reaccionar(normalHolder*);
 
     vector<movHolder*> movs;
-    vector<int>* memMovAct;
     int id;
     int bando;
-    bool inicial;
     bool outbounds;
-    ///vector de limites
     ///tablero del thread
 };
 
