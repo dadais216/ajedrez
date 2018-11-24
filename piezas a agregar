@@ -1,5 +1,5 @@
 
-Paredes. Necesarias para hacer tableros no rectangulares. Todas las piezas deberian preguntar si es una pared antes de capturar. Podría agregarse al codigo directamente, pero como es algo que no esta en la mayoria de los tableros y puede que haya otras piezas con la misma condicion, prefiero agregarlo como algo de lenguaje.
+Paredes. Necesarias para hacer tableros no rectangulares. Todas las piezas deberian preguntar si es una pared antes de vacio o pieza. Podría agregarse al codigo directamente, pero como es algo que no esta en la mayoria de los tableros y puede que se necesite flexibilidad, prefiero agregarlo como algo de lenguaje.
 
 Una pieza que se mueva y pueda invocar orbes ortogonalmente, los orbes son piezas sin movimiento propio que se mueven en la misma direccion un casillero
 por turno, con every. Desaparecen al salir del tablero o capturar una pieza,
@@ -71,7 +71,44 @@ portal: tiene que haber 2 como minimo. No es una pieza, se maneja todo desde la 
 En caso de piezas deslizandose hay codigo especial que chequea cada iteracion si se trata de un portal. Si lo es en memoria global va a haber una lista de todos los portales, y se va a recorrer siguiendo el desliz desde cada uno. Si en alguno se llega a un portal, se corta el movimiento (ya que ya se hizo o se va a hacer despues)
 Pieza que pone portales de su bando
 
-una pieza que se pueda mover sin gastar el turno. Esta va a traer bastante complejidad
+una pieza que se pueda mover sin gastar el turno. Esta va a traer bastante complejidad. 
+Una forma de hacerlo es hacer una explosion combinatronica en el lenguaje, programar cada movimiento de cada pieza como una seguida de cada movimiento y el no movimiento de esta pieza
+La pieza entonces no tendria movimientos propios, estarian en las demas. Si hay mas de una se puede hacer igual con bucles, pero la cantidad de movimientos crece rapido
+-
+Otra forma es hacer que la pieza se mueva y setee un flag que prohiba todos los movimientos enemigos, haciendo que este salte el turno. El flag prohibiria tambien volver a mover esta pieza. Esto funcionaria en un juego jugador contra jugador, podría tener algun conflicto con otros sistemas pero se puede resolver.
+El problema de esto es que una IA programada para ver n turnos futuros procesaria estos turnos de no hacer nada igual que turnos normales. Puede que esto se quiera para reducir la cantidad de movimientos, pero si no se quiere se va a necesitar un comando especial que le diga a la IA que calcule un turno más en ciertas cirscunstancias. No sé si este comando sería util en otros lados
+
+Pieza que promociona despues de capturar 3 veces
+
+Pieza cuyo rango dependa de la cantidad de piezas de cierto tipo en el tablero
+
+torre pegada a un borde, incapturable e incapturante, que al moverse (en la direccion que este limitada) deja una pared
+Otras piezas que dejen paredes, en un juego donde su mecanica principal sea esa. Puede que haya piezas que rompan paredes. Nada impide encerrar al rey. Los jugadores pueden votar haciendo un movimiento especial, y si los dos votan todas las paredes desaparecen.
+-
+Los mecanismos de votacion pueden ser complejos. Podría hacerse que al votar se pierda el turno, y ahi sería setear un flag nomas. Pero en caso que se pueda votar y jugar se tiene un problema de doble turno, que se puede solucionar con las dos formas esas
+
+pieza que rote entre ser torre y alfil en cada movimiento
+
+animaciones se pueden hacer usando spawns y pausas
+
+el cocodrilo para un cuerpo de agua aleatorio es un problema complicado? Habria que implementar un space fill desde el lenguaje, que tenga en cuenta las costas. No se que tan feo seria, ver
+El leon va a ser simple
+
+torre de rango dos que va marcando un camino por donde avance en el tablero. En cualquier momento puede volver hacia atras una distancia arbitraria por el camino, borrando su recorrido
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Jaque:
 Hay tres opciones para implementar el jaque, las tres son mas o menos igual de complejas, no hacen uso de segundo orden pero necesitan escribir memoria no local en calculos y un every capaz de cancelar el movimiento anterior.  
@@ -147,7 +184,15 @@ Mas de una tardia: Cuando una tardia amenaza a otra se copian todos los ids y po
 Las actualizaciones de una tardia deberían comunicarse a las demas tambien
 
 
-
+EVERY:
+Puede que no sea buena idea agregar every como un elemento del lenguaje, dejarlo como algo que se puede hacer desde adentro. Uno de los motivos es que se puede. Puede que sea un poco mas lento en la version interpretada, pero cuando pase a la compilada no deberia haber problema con eso. 
+Tiene el mismo problema que init y onCapture, agregan complejidad al lenguaje que no es necesaria, no es algo tan comun de usar y no todos van a necesitar saberlo. Y que se puedan programar cosas asi es una demostracion de la capacidades del lenguaje, y hacerlo desde el usuario da lugar a cosas mas flexibles y especificas.
+No es tan comun como pensaba, porque al final el rey y el peon no lo necesitan para funcionar
+-
+El tema del corte al paso se puede implementar dejando que el peon ponga una pieza tecnica. Todas antes de moverse preguntan si esta esta pieza. De estar, preguntan por su turno de nacimiento (guardado por el peon), y si no es el turno actual -1 la borran. Si es ese turno, y es una pieza enemiga, aparece la opcion de capturarla a ella y al peon. 
+Es bastante codigo para una regla especifica, pero creo que es lo mejor que puede hacerse.
+-
+Si se le quiere agregar un sprite a la pieza tecnica si se va a necesitar eliminarla de forma no perezosa. Se tiene que tener un registro global de si hay una pieza tecnica y en que posicion, este registro se tiene que mirar al final de cada movimiento y hacer lo que se necesite.
  
 
 

@@ -312,12 +312,20 @@ bool debugInicial::check(Holder* h,v pos_){
     drawAsterisco=true;
     return true;
 }
-
-pass::pass(v pos_):acct("pass"){
+passCond::passCond(v pos_):condt("passCond"){
     pos=pos_;
 }
-void pass::func(Holder* h){
+bool passCond::check(Holder* h,v pos_){
+    return true;
 }
-acct* pass::clone(){
-    return new pass(pos);
+
+
+
+passAcc::passAcc(v pos_):acct("passAcc"){
+    pos=pos_;
+}
+void passAcc::func(Holder* h){
+}
+acct* passAcc::clone(){
+    return new passAcc(pos);
 }

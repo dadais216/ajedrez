@@ -67,8 +67,12 @@ struct debugInicial:public condt{
     debugInicial(v);
     virtual bool check(Holder* h,v pos);
 };
-struct pass:public acct{
-    pass(v);
+struct passCond:public condt{
+    passCond(v);
+    virtual bool check(Holder* h,v pos);
+};
+struct passAcc:public acct{
+    passAcc(v);
     virtual void func(Holder* h);
     virtual acct* clone();
 };

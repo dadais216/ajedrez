@@ -25,7 +25,7 @@ Pieza::Pieza(int _id,int _sn){
         if(debugMode){
             normal* n=new normal(false);
             n->conds.push_back(new debugInicial(v(0,0)));
-            n->accs.push_back(new pass(v(-9000,-9000))); ///placeholder para evitar crashes en casos raros donde queda un clicker solo con esta normal (antes de un desliz que no genera nada). Le pongo un numero alto para que el clicker no aparezca en el tablero
+            n->accs.push_back(new passAcc(v(-9000,-9000))); ///placeholder para casos donde queda un clicker solo con esta normal (antes de un desliz que no genera nada). Le pongo un numero alto para que el clicker no aparezca en el tablero
             n->sig=op;
             movs.push_back(n);
         }else
@@ -192,12 +192,13 @@ void normalHolder::generar(){
     //cout<<"GENERANDO"<<endl;
     normal* n=static_cast<normal*>(op);
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
-    v posAct;
     ///habria que distinguir a los cond que no son posicionales, creo que son los de memoria nomas
+    v posAct;
     for(condt* c:n->conds){
         posAct=c->pos+offset;
         ///no definitivo. lo de addTrigger esta para evitar que esp tire triggers, no sé si esp es algo final o se va
         ///a sacar. Podría volver a ponerse la idea de que todos los conds tiren triggers, depende como implemente memoria
+        ///esp podria estar aparte con un flag, como pass y memoria
         addTrigger=false;
         //cout<<c->nomb<<posAct;
         if(!c->check(h,posAct)){
@@ -309,8 +310,8 @@ void deslizHolder::generarSig(){
         continuar=hasClick||sig->continuar;
         allTheWay=sig->continuar&&sig->allTheWay;
     }else{
-        continuar=f!=0;
-        allTheWay=f!=0; //salva algunos casos de bucles infinitos como desopt desliz A end or B end
+        continuar=lastNotFalse||f!=0;
+        allTheWay=continuar; //salva algunos casos de bucles infinitos como desopt desliz A end or B end
     }
 }
 void deslizHolder::generar(){
@@ -604,9 +605,16 @@ void desoptHolder::cargar(vector<normalHolder*>* norms){
 void desoptHolder::debug(){}
 /*
 desopt actua como un isol respecto a lo que esta antes y despues.
+De no hacerlo todo lo que venga despues tendria que agregarse al final de cada rama, lo que no
+es obvio por la forma en que se escribe
+
+
 Si se quiere hacer algo como desliz A optar B , C end D c end se tiene que escribir
 A desopt BD c A , CD c A end
 Esto refleja lo que se hace y no oscurece la cantidad de calculos distintos que se hacen
 (de la otra forma se podría pensar que D y A se calculan una vez en lugar de por cada rama)
+@testarVelocidad con A a la izquierda, sin partir con c
+
+
 */
 
