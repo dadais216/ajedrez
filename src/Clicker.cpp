@@ -14,6 +14,14 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
     h=h_;
 
     normalHolder* lastN=normales[normales.size()-1];
+    /*
+    caso para manejar cosas donde se genere un clicker donde la ultima normal no tenga acciones.
+    Lo dejo aparte porque no se me ocurre un caso donde sea util, y no me parece que valga la pena
+    Para funcionar se deberia hacer posAct una variable de normalHolder (ahora es local)
+    if(lastN->accs.empty())
+        clickPos=lastN->posAct;
+    else
+    */
     clickPos=lastN->accs[lastN->accs.size()-1]->pos;
 
 

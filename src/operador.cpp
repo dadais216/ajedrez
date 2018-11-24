@@ -59,7 +59,6 @@ normal::normal(bool make){
                 acc(mov);
                 acc(capt);
                 acc(pausa);
-                acc(pass);
     //        acc(spwn);
 
             case lector::color:
@@ -76,26 +75,30 @@ normal::normal(bool make){
             case lector::sep:
                 //cout<<"sep"<<endl;
                 separator=true;
-                return;
+                goto then;
             case lector::eol:
                 hasClick=makeClick=true;
-                return;
+                goto then;
             case lector::end:
                 //cout<<"lim"<<endl;
-                return;
+                goto then;
             case lector::click:
                 hasClick=makeClick=true;
                 clickExplicit=true;
                 sig=tomar();
                 ///@todo mirar casos raros como dos clicks seguidos
-                return;
+                goto then;
             default:
                 tokens.push_front(tok);
                 sig=tomar();
-                return;
+                goto then;
             }
         }
-
+        then:
+        if(conds.empty())
+            conds.push_back(new passCond(v(0,0)));
+        if(accs.empty())
+            accs.push_back(new passAcc(v(0,0)));
     }
 }
 
