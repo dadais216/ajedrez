@@ -3,12 +3,6 @@
 
 #include "global.h"
 
-using namespace std;
-using namespace sf;
-
-struct Holder;
-struct Tile;
-struct normalHolder;
 struct Trigger{
     Tile* tile; //pos donde estaria la pieza que puso el trigger
     normalHolder* nh; //puntero al movimiento a recalcular

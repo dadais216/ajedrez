@@ -7,7 +7,6 @@ using namespace sf;
 
 #include "global.h"
 
-struct normalHolder;
 struct Clicker{
     Clicker(vector<normalHolder*>*,Holder*);
     vector<normalHolder*> normales;

@@ -215,7 +215,7 @@ fabMov(capt,acct,
        delete captT->holder;
        captT->holder=nullptr;
        captT->step++;
-       h->pisados.push_back(captT);
+       pisados.push_back(captT);
       );
 
 fabMov(vacio,condt,

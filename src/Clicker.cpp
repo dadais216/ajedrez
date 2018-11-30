@@ -3,6 +3,7 @@
 #include "../include/operador.h"
 #include "../include/Pieza.h"
 #include "../include/Juego.h"
+#include "movHolders.h"
 
 bool Clicker::drawClickers;
 
@@ -70,6 +71,8 @@ void Clicker::draw(){
     */
 }
 
+vector<Tile*> pisados;
+
 bool Clicker::update(){
     //activo&&
     if(input->get()==clickPos){
@@ -84,17 +87,17 @@ bool Clicker::update(){
             return true;
         }
         */
-        h->pisados.push_back(h->tile);
+        pisados.push_back(h->tile);
         accionar(); //por ahora solo capt agrega a pisados
-        h->pisados.push_back(h->tile);
+        pisados.push_back(h->tile);
 
 
-        for(Tile* tile:h->pisados){
+        for(Tile* tile:pisados){
             //cout<<"<<<"<<tile->pos<<endl;
             tile->chargeTriggers();
         }
         activateTriggers();
-        h->pisados.clear();
+        pisados.clear();
         h->generar();
         ///una pieza nunca activa sus propios triggers porque al moverse los invalida
         ///necesita generar todos sus movimientos devuelta de forma explicita

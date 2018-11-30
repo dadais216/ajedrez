@@ -2,8 +2,6 @@
 #define BOTON_H
 #include "global.h"
 
-using namespace sf;
-using namespace std;
 struct Boton
 {
     Text text;

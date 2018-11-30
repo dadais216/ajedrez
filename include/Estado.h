@@ -5,11 +5,7 @@
 #include "tablero.h"
 #include "Boton.h"
 
-struct Boton;
-struct Pieza;
-struct Juego;
-struct Clicker;
-struct Jugador;
+
 
 using namespace std;
 using namespace sf;

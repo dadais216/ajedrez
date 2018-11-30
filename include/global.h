@@ -26,13 +26,28 @@ typedef unsigned int uint;
 
 struct Juego;
 struct Input;
-template<typename T>
-struct Manager;
-struct Holder;
-struct tabl;
+template<typename> struct Manager;
+struct Jugador;
+struct Boton;
+struct tablero;
+struct tabl; ///?
 struct Clicker;
+struct operador;
 struct Pieza;
+struct normal;
+struct desliz;
+struct exc;
+struct isol;
+struct desopt;
+struct Tile;
+struct Holder;
+struct movHolder;
+struct normalHolder;
 struct Base;
+struct acct;
+struct condt;
+struct colort;
+
 
 extern Juego* j;
 extern Input* input;

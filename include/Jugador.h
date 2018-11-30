@@ -3,7 +3,6 @@
 
 #include "global.h"
 
-struct tablero;
 
 struct Jugador{
     int bando;
