@@ -277,7 +277,7 @@ enPieza:
         cout<<"|"<<s<<"|";
     cout<<endl;
 
-    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn),pos);
+    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn,piezaSize,movSize),pos);
     tokens.clear();
     return h;
 }

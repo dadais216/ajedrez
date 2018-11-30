@@ -3,13 +3,6 @@
 
 #include "global.h"
 
-struct Pieza;
-struct Holder;
-struct acct;
-struct condt;
-struct colort;
-struct Base;
-
 ///el motivo de separar los movimientos normales en el operador normal y el normalholder es que toda la informacion
 ///normal (estructura de movimientos, posiciones relativas) se comparte entre todas las piezas del mismo tipo, como tambien
 ///el arbol de operadores. No tiene sentido tenerla copiada.

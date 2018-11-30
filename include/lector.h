@@ -34,6 +34,9 @@ struct lector
     list<int>* lista;
     map<string,int> tabla;
     int extra;
+
+    int piezaSize,movSize;
+
     bool token(string,char);
     void token(string);
     void token(char);
