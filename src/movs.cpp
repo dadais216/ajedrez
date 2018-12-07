@@ -75,8 +75,6 @@ void numShow::debug(){
 }
 */
 
-array<int,20> numeros;
-bool memcambios;
 /*
 struct posRemember:public acm{
     int index,jndex;
@@ -170,79 +168,75 @@ struct spwn:public acm{
 };
 */
 
-//puede que cambie a un sistema que no use herencia si lo necesito, el problema es que algunos movs toman parametros,
-//pero se podria poner un puntero a informacion extra en un struct generico y listo
-///@optim h en acciones podría estar fijado como esta pos
-#define Func(TIPO,FUNC) Func##TIPO(FUNC)
-#define Funcacct(FUNC)\
-    virtual void func(Holder* h){\
-        FUNC\
+template<void(*funct)(v,Holder*),string& nomb> struct acc:public acct{
+    acc(v pos_):acct(pos_,nomb){}
+    virtual void func(){
+        funct(pos,h);
     }
-#define Funccondt(FUNC)\
-    virtual bool check(Holder* h,v pos){\
-        FUNC\
+    virtual acct* clone(Holder* h_){
+        acct* a=new acc(pos);
+        a->h=h_;
+        return a;
     }
-#define Clone(TIPO,NOMB) Clone##TIPO(NOMB)
-#define Cloneacct(NOMB) \
-    virtual NOMB* clone(){\
-        return new NOMB(pos);\
+};
+template<bool(*chck)(v,Holder*),string& nomb> struct cond:public condt{
+    cond(v pos_):condt(pos_,nomb){}
+    virtual bool check(Holder* h){
+        return chck(pos,h);
     }
-#define Clonecondt(NOMB)
-#define fabMov(NOMB,TIPO,FUNC)\
-struct NOMB:public TIPO{\
-    NOMB(v pos_):TIPO(#NOMB){\
-        pos=pos_;\
-    };\
-    Func(TIPO,FUNC)\
-    Clone(TIPO,NOMB)\
-}
+};
+#define fabAcc(NAME,FUNC) \
+void NAME##func(v pos,Holder* h){ \
+    FUNC \
+}\
+string str##NAME=#NAME;\
+typedef acc<NAME##func,str##NAME> NAME;
 
-bool addTrigger;
+fabAcc(mov,
+    h->tile->step++;
+    h->tile->holder=nullptr;
+    h->tile=tablptr->tile(pos);
+    h->tile->holder=h;
+)
+fabAcc(pausa,
+    drawScreen();
+    sleep(milliseconds(40));
+)
+fabAcc(capt,
+    Tile* captT=tablptr->tile(pos);
+    delete captT->holder;
+    captT->holder=nullptr;
+    captT->step++;
+    pisados.push_back(captT);
+);
 
-fabMov(mov,acct,
-       h->tile->step++;
-       h->tile->holder=nullptr;
-       h->tile=tablptr->tile(pos);
-       h->tile->holder=h;
-      );
+#define fabCond(NAME,FUNC)\
+bool NAME##check(v pos,Holder* h){ \
+    FUNC \
+}\
+string str##NAME=#NAME;\
+typedef cond<NAME##check,str##NAME> NAME;
 
-fabMov(pausa,acct,
-       drawScreen();
-       sleep(milliseconds(40));
-      );
-fabMov(capt,acct,
-       Tile* captT=tablptr->tile(pos);
-       delete captT->holder;
-       captT->holder=nullptr;
-       captT->step++;
-       pisados.push_back(captT);
-      );
 
-fabMov(vacio,condt,
-       addTrigger=true;
-       return tablptr->tile(pos)->holder==nullptr;
-      );
-fabMov(pieza,condt,
-       addTrigger=true;
-       return tablptr->tile(pos)->holder;
-      );
-fabMov(enemigo,condt,
-       if(tablptr->tile(pos)->holder)
-       return tablptr->tile(pos)->holder->bando!=h->bando;
-       return false;
-      );
-fabMov(esp,condt,
-        if(pos.x>=0&&pos.x<tablptr->tam.x&&pos.y>=0&&pos.y<tablptr->tam.y){
-            h->outbounds=false;
-            return true;
-        }else{
-            h->outbounds=true;
-            return false;
-        }
-      );
-fabMov(outbounds,condt,
-       return h->outbounds;
-      );
+fabCond(vacio,
+    return tablptr->tile(pos+offset)->holder==nullptr;
+)
+fabCond(pieza,
+    return tablptr->tile(pos+offset)->holder;
+)
+fabCond(enemigo,
+    if(tablptr->tile(pos+offset)->holder)
+        return tablptr->tile(pos+offset)->holder->bando!=h->bando;
+    return false;
+)
+fabCond(esp,
+    v posAct=pos+offset;
+    h->outbounds=!(posAct.x>=0&&posAct.x<tablptr->tam.x&&posAct.y>=0&&posAct.y<tablptr->tam.y);
+    return !h->outbounds;
+)
+fabCond(outbounds,
+    return h->outbounds;
+)
 
 RectangleShape posPieza;
 RectangleShape posActGood;
@@ -254,19 +248,20 @@ bool ZPressed=false;
 int mil=25;
 struct debugMov:public condt{
     condt* cond;
-    debugMov(condt* cond_):condt("debugMov"){
+    debugMov(condt* cond_):condt(v(0,0),"-"){
         cond=cond_;
-        pos=cond->pos; //necesita tener pos para no ser especial en la logica de operar
+        pos=cond->pos;
     }
-    virtual bool check(Holder* h,v pos){
-        bool ret=cond->check(h,pos);
+    virtual bool check(Holder* h){
+        v posAct=pos+offset;
+        bool ret=cond->check(h);
         textDebug.setString(cond->nomb);
         if(ret){
-            posActGood.setPosition(pos.x*32*escala,pos.y*32*escala);
+            posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
             tileActDebug=&posActGood;
             textDebug.setColor(sf::Color(78,84,68,100));
         }else{
-            posActBad.setPosition(pos.x*32*escala,pos.y*32*escala);
+            posActBad.setPosition(posAct.x*32*escala,posAct.y*32*escala);
             tileActDebug=&posActBad;
             textDebug.setColor(sf::Color(240,70,40,240));
         }
@@ -305,27 +300,20 @@ struct debugMov:public condt{
 
 Text asterisco;
 bool drawAsterisco=false;
-debugInicial::debugInicial(v pos_):condt("-"){
-    pos=pos_;
-}
-bool debugInicial::check(Holder* h,v pos_){
+debugInicial::debugInicial():condt(v(0,0),"-"){}
+bool debugInicial::check(Holder* h){
     drawAsterisco=true;
     return true;
 }
-passCond::passCond(v pos_):condt("passCond"){
-    pos=pos_;
-}
-bool passCond::check(Holder* h,v pos_){
+
+passCond::passCond(v pos_):condt(pos_,"pass"){}
+bool passCond::check(Holder* h){
     return true;
 }
 
-
-
-passAcc::passAcc(v pos_):acct("passAcc"){
-    pos=pos_;
+passAcc::passAcc(v pos_):acct(pos_,"pass"){}
+void passAcc::func(){
 }
-void passAcc::func(Holder* h){
-}
-acct* passAcc::clone(){
+acct* passAcc::clone(Holder* h){
     return new passAcc(pos);
 }

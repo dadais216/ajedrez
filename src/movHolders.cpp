@@ -26,48 +26,49 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
     accs.reserve(org->accs.size()*sizeof(acct*));
     ///no es la mejor forma pero bueno
     for(acct* a:org->accs)
-        accs.push_back(a->clone());
+        accs.push_back(a->clone(h));
     colors.reserve(org->colors.size()*sizeof(colort*));
     for(colort* c:org->colors)
         colors.push_back(c->clone());
+
+    //memAct.resize(base.movSize);
 }
 v offset;
+vector<int> memMov;
 void normalHolder::generar(){
     //cout<<"GENERANDO"<<endl;
-    normal* n=static_cast<normal*>(op);
+    const normal* n=static_cast<normal*>(op);
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
+    //memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
 
-    memAct=h->mem.mov;
-    ///@optim copiar lo necesario para este en lugar de todo memCpy(memAct->data(),base->memMov->data(),movSize);
-    ///habria que distinguir a los cond que no son posicionales, creo que son los de memoria nomas
-    v posAct;
-    for(condt* c:n->conds){
-        posAct=c->pos+offset;
-        ///no definitivo. lo de addTrigger esta para evitar que esp tire triggers, no sé si esp es algo final o se va
-        ///a sacar. Podría volver a ponerse la idea de que todos los conds tiren triggers, depende como implemente memoria
-        ///esp podria estar aparte con un flag, como pass y memoria
-        addTrigger=false;
-        //cout<<c->nomb<<posAct;
-        if(!c->check(h,posAct)){
+    for(condt* cn:n->condsN){///sin triggers
+        if(!cn->check(h)){
             allTheWay=continuar=valido=false;
-
-            if(h->outbounds) return;
-            if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,this,h->tile->step});
             return;
         }
-        if(addTrigger) tablptr->tile(posAct)->triggers.push_back({h->tile,this,h->tile->step});
     }
-    //accs en holder ya esta generado
+    for(condt* cm:n->condsM){///triggers de memoria
+        ///mem trig
+        if(!cm->check(h)){
+            allTheWay=continuar=valido=false;
+            return;
+        }
+    }
+    for(condt* cp:n->condsP){///triggers posicionales
+        tablptr->tile(cp->pos+offset)->triggers.push_back({h->tile,this,h->tile->step});
+        if(!cp->check(h)){
+            allTheWay=continuar=valido=false;
+            return;
+        }
+    }
     //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
-    for(int i=0; i<accs.size(); i++){
-        //cout<<n->accs[i]->pos<<" + "<<h->tile->pos<<" = ";
+    for(int i=0; i<accs.size(); i++)
         accs[i]->pos=n->accs[i]->pos+offset;///podria mandar el tile en vez de la pos, pero como no todas las acciones lo usan mientras menos procesado se haga antes mejor
-        //cout<<accs[i]->pos<<endl;
-    }
+    ///@optim ver si vale la pena separar accs no pos
     for(int i=0; i<colors.size(); i++)
         colors[i]->pos=n->colors[i]->pos+offset;
 
-    offset=posAct;
+    offset=n->lastPos+offset;
 
     valido=true;
     generarSig();
@@ -75,7 +76,7 @@ void normalHolder::generar(){
 void normalHolder::reaccionar(normalHolder* nh){
     if(nh==this){
         offset=nh->offsetAct;
-        h->mem.mov=memAct;
+        //memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
         switchToGen=true;
         generar();
         ///@optim mecanismo para cortar todo si la validez no vario, un lngjmp
@@ -95,7 +96,7 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
     for(normalHolder* nh:nhs){
         if(nh==this){
             offset=nh->offsetAct;
-            h->mem.mov=memAct;
+            memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
             switchToGen=true;
             generar();
             ///@optim sacar nh del vector?
@@ -113,7 +114,7 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
 
 void normalHolder::accionar(){
     for(acct* ac:accs)
-        ac->func(h);
+        ac->func();
 }
 void normalHolder::cargar(vector<normalHolder*>* norms){
     if(!continuar) return;
@@ -367,6 +368,7 @@ desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
     for(operador* opos:org->ops)
         nodes.emplace_back(crearMovHolder(h,opos,&base));
     valido=true;
+    memAct.resize(base.movSize);
 }
 struct dataPass{
     vector<operador*>* ops;
@@ -390,13 +392,13 @@ void desoptHolder::generar(){
     ///la iteracion inicial no necesita indireccion y no tiene un movimiento raiz
     dataPass dp{&static_cast<desopt*>(op)->ops,h,&base};
     v offsetAct=offset;
-    vector<int> memAct=h->mem.mov;
+    memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
     for(node& n:nodes){
         n.mh->generar();
         if(n.mh->allTheWay)
             generarNodos(n.nodes,dp);
         offset=offsetAct;
-        h->mem.mov=memAct;
+        memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
     }
     generarSig();
 }
@@ -443,7 +445,6 @@ void cargarNodos(vector<node*>& nodes,vector<normalHolder*>* norms){
 void desoptHolder::cargar(vector<normalHolder*>* norms){
     int res=norms->size();
     norms->reserve(100);///@todo buckets
-    int resSize=norms->size();
     for(node& n:nodes){
         n.mh->cargar(norms);
         if(n.mh->allTheWay)

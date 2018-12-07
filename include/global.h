@@ -18,6 +18,7 @@
 #include <memory>
 #include <algorithm>
 #include <unordered_set>
+#include <string.h>
 
 using namespace std;
 using namespace sf;
@@ -57,10 +58,13 @@ extern Manager<Texture>* imagen;
 extern float escala;
 extern tabl* tablptr;
 extern vector<Pieza*> piezas;
+<<<<<<< HEAD
 extern vector<int> uniqueIds;
 //extern Holder* act;
 //extern v pos;
 //extern v org;
+=======
+>>>>>>> f4ac213... movimientos en templates, memoria 2
 
 #include "lector.h"
 extern lector lect;
@@ -107,6 +111,8 @@ extern bool switchToGen;
 extern bool confirm;
 extern v offset;
 extern int isolCount;
+
+extern vector<int> memMov;
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 

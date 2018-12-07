@@ -117,6 +117,7 @@ Proper::Proper(int id_,int sel1,int sel2)
     asterisco.setColor(Color::Black);
     asterisco.setString("*");
     init();
+
 }
 
 void Proper::init(){
@@ -172,6 +173,8 @@ void Proper::init(){
     }
 
     drawScreen();
+
+
 }
 
 
@@ -200,6 +203,7 @@ void Proper::update(){
         init();//leaks obviamente
         while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
     }
+
     if(antTurno!=turno1)
     {
         //drawScreen();

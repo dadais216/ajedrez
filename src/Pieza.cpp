@@ -4,7 +4,7 @@
 #include "../include/Clicker.h"
 
 vector<Pieza*> piezas;
-Pieza::Pieza(int _id,int _sn,int piezaSize,int movSize){
+Pieza::Pieza(int _id,int _sn,int piezaSize){
     id=_id;
     sn=_sn;
     spriteb.setTexture(imagen->get("sprites.png"));
@@ -24,16 +24,16 @@ Pieza::Pieza(int _id,int _sn,int piezaSize,int movSize){
         operador* op=tomar();
         if(debugMode){
             normal* n=new normal(false);
-            n->conds.push_back(new debugInicial(v(0,0)));
+            n->condsN.push_back(new debugInicial());
             n->accs.push_back(new passAcc(v(-9000,-9000))); ///placeholder para casos donde queda un clicker solo con esta normal (antes de un desliz que no genera nada). Le pongo un numero alto para que el clicker no aparezca en el tablero
             n->sig=op;
+            n->lastPos=v(0,0);
             movs.push_back(n);
         }else
             movs.push_back(op);
     }
 
-    memInfo.piezaSize=piezaSize;
-    memInfo.movSize=movSize;
+    memPiezaSize=piezaSize;
 
     function<void(operador*)> showOp=[&showOp](operador* op)->void{
         switch(op->tipo){
@@ -105,12 +105,12 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     for(operador* op:pieza->movs){
         Base* base=new Base;
         base->beg=nullptr;
+        base->movSize=0;
         movs.push_back(crearMovHolder(this,op,base));
         delete base;
     }
 
-    mem.pieza.resize(p->memInfo.piezaSize);
-    mem.mov.resize(p->memInfo.movSize);
+    memPieza.resize(p->memPiezaSize);
 }
 Holder::~Holder(){
     uniqueIds.erase(find(uniqueIds.begin(),uniqueIds.end(),uniqueId));
@@ -156,6 +156,7 @@ void Holder::generar(){
     for(movHolder* m:movs){
         offset=tile->pos;
         ///ver si resulta comodo para el lenguaje hacer que la memoria de movimiento arranque en 0
+        ///memset(memMov.data(),0,m->base.movSize);
         m->generar();
     }
 }

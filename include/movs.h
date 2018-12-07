@@ -5,21 +5,22 @@
 
 ///no uso herencia porque no me aporta casi nada
 struct acct{
-    acct(string n):nomb(n){};
-    virtual void func(Holder*)=0;
+    acct(v pos_,const string& n):pos(pos_){};
+    virtual void func()=0;
     //func se llama para realizar la accion, pos arranca siendo relativa y se hace absoluta desde afuera
     void debug(){
         cout<<nomb<<" "<<pos<<endl;
     }
-    virtual acct* clone()=0;
+    virtual acct* clone(Holder*)=0;
     v pos;
+    Holder* h;
     ///la version en normal guarda las pos relativas, las copias en los normalHolder guardan
     ///las absolutas
     const string nomb;
 };
 struct condt{
-    condt(string n):nomb(n){};
-    virtual bool check(Holder*,v)=0;
+    condt(v pos_,const string& n):pos(pos_){};
+    virtual bool check(Holder*)=0;
     void debug(){
         cout<<nomb<<" "<<pos<<endl;
     }
@@ -63,18 +64,19 @@ struct numShow:public acm{
 */
 
 //esta en el header para que se reconozca en el constructor de pieza
+///no sé si sigue siendo necesario, por ahi puedo mover los templates aca
 struct debugInicial:public condt{
-    debugInicial(v);
-    virtual bool check(Holder* h,v pos);
+    debugInicial();
+    virtual bool check(Holder*);
 };
 struct passCond:public condt{
     passCond(v);
-    virtual bool check(Holder* h,v pos);
+    virtual bool check(Holder*);
 };
 struct passAcc:public acct{
     passAcc(v);
-    virtual void func(Holder* h);
-    virtual acct* clone();
+    virtual void func();
+    virtual acct* clone(Holder*);
 };
 
 #endif // MOVS_H

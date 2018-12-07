@@ -19,9 +19,12 @@ struct normal:public operador{
     normal(bool);
     void debug();
     vector<acct*> accs;
-    vector<condt*> conds;
+    vector<condt*> condsN;
+    vector<condt*> condsM;
+    vector<condt*> condsP;
     vector<colort*> colors;
     colort* crearColor(v);
+    v lastPos;
 };
 struct desliz:public operador{
     desliz();

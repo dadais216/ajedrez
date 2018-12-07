@@ -401,17 +401,41 @@ Se podría agregar el modo de mas de 2 jugadores para solo humanos, pero es mucho
 %%% memoria
 Hay 4 memorias: movimiento, pieza, tile y global
 
+La de movimiento se entiende como local, las otras 3 globales.
+
+La local se guarda en cada normalHolder para poder restaurarla cuando se recalcula. 
+
+Las operaciones de lectura se hacen durante el chequeo de condiciones, mientras que las de escritura se hacen solo si es sobre memoria local. 
+Las escrituras sobre memoria global son acciones
+
+Hay casos raros donde es util escribir espacio global durante el chequeo de condiciones, asi que se va a agregar una notacion especial para eso. Aunque es algo raro de pensar porque los chequeos pueden pasar en momentos inesperados, asi que se tiene que usar sabiendo que se esta haciendo
+
+
+mcpm
+mset
+madd
+
+reciben dos numeros, cada uno con un identificador de donde vienen
+
+l - local
+p - pieza
+t - tile
+g - global
+
+se puede acceder a la posicion actual del puntero / numero de turno poniendo px,py,t
+(una forma garca de implementar esto seria reemplazandolos por g-1,g-2,g-3, pero eso requeriria actualizar ese espacio de memoria para cada cambio de posicion)
+
+
+
+mgrw - toma un valor. Si ese valor es mas grande que la memoria, la agranda
+Con esto se pueden tener memorias de tamaño variable sin tener que especificar nada
+Lo malo es que si se lee antes de escribir se rompe todo pero es esperable, aclarar en el instructivo. No creo que cuelgue el juego 
+Manejarse con un comando aparte hace que no se haga este chequeo en la escritura normal, y en la version compilada permite usar arrays en vez de vectores cuando se vea que no esta
+
+
+Graficos
 Agregar boton que muestre las memorias. La global se vería todo el tiempo. Si se toca un espacio se dibuja la memoria de tile y la de pieza si hay una pieza en esa pos.
 En modo debug se dibuja la memoria de movimiento mientras este se calcula, y se redibujan todas en cada paso
-
-Tamaño: todas las memorias arrancan siendo 0. La operacion de escribir antes de escribir mira si da el tamaño, y si no da agranda.
-Con esto se pueden tener memorias de cualquier tamaño, incluso variable sin tener que especificar nada
-Lo malo es que si se lee antes de escribir se rompe todo pero es esperable, aclarar en el instructivo. No creo que cuelgue el juego 
-
-
-
-
-
 
 %%%
 

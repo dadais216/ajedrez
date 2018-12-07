@@ -81,6 +81,7 @@ bool Humano::turno(){
 Aleatorio::Aleatorio(int bando_,tabl& tablero_)
     :Jugador(bando_,tablero_){
     srand(time(NULL));
+    cout<<" uWu ";
 }
 
 bool Aleatorio::turno(){
