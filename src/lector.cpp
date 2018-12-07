@@ -277,7 +277,10 @@ enPieza:
         cout<<"|"<<s<<"|";
     cout<<endl;
 
-    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn,piezaSize,movSize),pos);
+    ///cada mov tiene que guardar su movSize en su base
+    ///el lector es el encargado de agrandar el memMov al max de todos los movs
+
+    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn,piezaSize),pos);
     tokens.clear();
     return h;
 }

@@ -5,7 +5,7 @@
 
 struct Base{ ///datos compartidos de un movimiento entero
     movHolder* beg;
-    ///tamaño mov
+    int movSize;
 };
 
 struct movHolder{
@@ -88,6 +88,7 @@ struct desoptHolder:public movHolder{
     virtual void cargar(vector<normalHolder*>*);
     virtual void debug();
     vector<node> nodes;
+    vector<int> memAct;
 };
 
 //estos son todos los operadores. Püede que agregue uno más para movimientos no deterministicos

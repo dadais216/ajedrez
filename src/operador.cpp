@@ -35,7 +35,7 @@ normal::normal(bool make){
                 pos.x--;
                 break;
                 //cout<<#TOKEN<<endl;
-    #define cond(TOKEN)  case lector::TOKEN: if(debugMode) conds.push_back(new debugMov(new TOKEN(pos))); else conds.push_back(new TOKEN(pos));break
+    #define cond(TOKEN)  case lector::TOKEN: if(debugMode) condsP.push_back(new debugMov(new TOKEN(pos))); else condsP.push_back(new TOKEN(pos));break
     //        cond(posRemember);
     //        cond(numSet);
     //        cond(numAdd);
@@ -49,11 +49,10 @@ normal::normal(bool make){
     //        cond(numLessi);
 
                 cond(vacio);
-                cond(outbounds);
                 cond(pieza);
                 cond(enemigo);
-                case lector::esp: conds.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
-
+                case lector::esp: condsN.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
+                case lector::outbounds: condsN.push_back(new outbounds(pos));break;
     #define acc(TOKEN) case lector::TOKEN: accs.push_back(new TOKEN(pos));break
 
                 acc(mov);
@@ -95,16 +94,17 @@ normal::normal(bool make){
             }
         }
         then:
-        if(conds.empty())
-            conds.push_back(new passCond(v(0,0)));
+        if(condsP.empty()&&condsM.empty()&&condsN.empty())
+            condsN.push_back(new passCond(v(0,0)));
         if(accs.empty())
             accs.push_back(new passAcc(v(0,0)));
+        lastPos=pos;
     }
 }
 
 void normal::debug(){
     cout<<"normal: conds:\n";
-    for(condt* c:conds)
+    for(condt* c:condsP)
         c->debug();
     cout<<"accs:\n";
     for(acct* a:accs)

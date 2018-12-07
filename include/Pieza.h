@@ -15,12 +15,9 @@ struct Pieza{
 
     vector<operador*> movs;
 
-    struct{
-        int piezaSize;
-        int movSize; ///la memoria de todos los movimientos se comparte, como si fuera una union
-    }memInfo;
+    int memPiezaSize;
 
-    Pieza(int,int,int,int);
+    Pieza(int,int,int);
 };
 
 extern vector<Tile*> pisados;
@@ -37,10 +34,8 @@ struct Holder{
     Pieza* pieza; ///@optim pasar cosas especificas que se usen
     Tile* tile;
 
-    struct{
-        vector<int> pieza;
-        vector<int> mov;
-    }mem;
+    vector<int> memPieza;
+    int movSize;
 
     vector<movHolder*> movs;
     int id;

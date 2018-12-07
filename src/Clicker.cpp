@@ -23,7 +23,7 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
         clickPos=lastN->posAct;
     else
     */
-    clickPos=lastN->accs[lastN->accs.size()-1]->pos;
+    clickPos=static_cast<normal*>(lastN->op)->lastPos+lastN->offsetAct;
 
 
     //clickPos.show();
