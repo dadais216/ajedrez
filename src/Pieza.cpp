@@ -25,7 +25,6 @@ Pieza::Pieza(int _id,int _sn,int piezaSize){
         if(debugMode){
             normal* n=new normal(false);
             n->condsN.push_back(new debugInicial());
-            n->accs.push_back(new passAcc(v(-9000,-9000))); ///placeholder para casos donde queda un clicker solo con esta normal (antes de un desliz que no genera nada). Le pongo un numero alto para que el clicker no aparezca en el tablero
             n->sig=op;
             n->lastPos=v(0,0);
             movs.push_back(n);

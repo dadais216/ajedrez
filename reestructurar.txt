@@ -427,6 +427,9 @@ se puede acceder a la posicion actual del puntero / numero de turno poniendo px,
 
 
 
+
+
+
 mgrw - toma un valor. Si ese valor es mas grande que la memoria, la agranda
 Con esto se pueden tener memorias de tamaño variable sin tener que especificar nada
 Lo malo es que si se lee antes de escribir se rompe todo pero es esperable, aclarar en el instructivo. No creo que cuelgue el juego 
