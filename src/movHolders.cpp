@@ -41,14 +41,14 @@ void normalHolder::generar(){
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
     //memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
 
-    for(condt* cn:n->condsN){///sin triggers
+    for(condt* cn:n->condsN){///sin triggers (por ahora son condt porque son todos posicionales)
         if(!cn->check(h)){
             allTheWay=continuar=valido=false;
             return;
         }
     }
     for(condt* cm:n->condsM){///triggers de memoria
-        ///mem trig
+
         if(!cm->check(h)){
             allTheWay=continuar=valido=false;
             return;
@@ -130,22 +130,6 @@ void normalHolder::draw(){
         c->draw();
 }
 void normalHolder::debug(){
-    cout<<"normalHolder:\n";
-    //cout<<"base: "<<base<<endl;
-    if(!valido){
-        cout<<"invalido\n";
-        return;
-    }
-    cout<<"accs:\n";
-    for(acct* a:accs)
-        a->debug();
-    cout<<"colors:\n";
-    for(colort* c:colors)
-        c->debug();
-    if(sig){
-        cout<<endl;
-        sig->debug();
-    }
 }
 deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_)
 :movHolder(h_,org,base_){

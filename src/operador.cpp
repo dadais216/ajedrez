@@ -94,25 +94,12 @@ normal::normal(bool make){
             }
         }
         then:
-        if(condsP.empty()&&condsM.empty()&&condsN.empty())
-            condsN.push_back(new passCond(v(0,0)));
-        if(accs.empty())
-            accs.push_back(new passAcc(v(0,0)));
         lastPos=pos;
     }
 }
 
 void normal::debug(){
-    cout<<"normal: conds:\n";
-    for(condt* c:condsP)
-        c->debug();
-    cout<<"accs:\n";
-    for(acct* a:accs)
-        a->debug();
-    cout<<"colors:\n";
-    for(colort* c:colors)
-        c->debug();
-    cout<<endl;
+
 }
 
 desliz::desliz(){

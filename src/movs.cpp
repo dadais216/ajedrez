@@ -11,11 +11,12 @@ void color::draw(){
     rs->setPosition(pos.x*32*escala,pos.y*32*escala);
     window->draw(*rs);
 }
+/*
 void color::debug(){
     cout<<"color "<<(int)rs->getFillColor().r<<" "<<(int)rs->getFillColor().g<<" "<<(int)rs->getFillColor().b<<" "<<pos<<endl;
 }
-color* color::clone()
-{
+*/
+color* color::clone(){
     return new color(rs,pos);
 }
 list<RectangleShape*> colores;
@@ -40,8 +41,6 @@ colort* normal::crearColor(v pos){
     return new color(rs,pos);
 }
 
-
-
 /*
 sprt::sprt(){
     int sn=tokens.front()-1000;tokens.pop_front();
@@ -57,7 +56,6 @@ void sprt::func(){
 void sprt::debug(){
     cout<<"sprt ";
 }
-
 numShow::numShow(){
     txt.setFont(j->font);
     index=tokens.front()-1000;tokens.pop_front();
@@ -75,81 +73,43 @@ void numShow::debug(){
 }
 */
 
-/*
-struct posRemember:public acm{
-    int index,jndex;
-    posRemember(){
-        tipo=movt;
-        if(!tokens.empty()&&tokens.front()>=1000){
-            index=tokens.front()-1000; tokens.pop_front();
-            jndex=tokens.front()-1000; tokens.pop_front();
-        }else{
-            index=0;
-            jndex=1;
-        }
-    }
-    virtual void func(){
-        memcambios=true;
-        numeros[index]=pos.x;
-        numeros[jndex]=pos.y;
-    }
-    virtual void debug(){
-        cout<<"posRemember ";
+///si tarda mucho en compilar hacerlo por polimorfismo, total esta no va a ser la version definitiva
+///mirar de que deberian heredar las acc m
+template<typename T,typename ma1,typename ma2,T(*chck)(ma1,ma2),string* n> struct mcond:public mcondt{
+    ma1 i1;
+    ma2 i2;
+    mcond(ma1 i1_,ma2 i2_):mcondt(n),i1(i1_),i2(i2_){}
+    virtual bool check(){
+        return chck(i1,i2);
     }
 };
-
-struct posRestore:public acm{
-    int index,jndex;
-    posRestore(){
-        tipo=movt;
-        if(!tokens.empty()&&tokens.front()>=1000){
-            index=tokens.front()-1000; tokens.pop_front();
-            jndex=tokens.front()-1000; tokens.pop_front();
-        }else
-            index=0;
-            jndex=1;
-    }
-    virtual void func(){
-        if(memcambios){
-            pos.x=numeros[index];
-            pos.y=numeros[jndex];
-        }
-    }
-    virtual void debug(){
-        cout<<"posRestore ";pos.show();cout<<" -> ";v(numeros[index],numeros[jndex]).show();
-    }
-};
-*/
-/*
-#define numFab(NOMB,TIPO,FUNC) \
-struct NOMB:public acm{ \
-    int val,index; \
-    NOMB(){ \
-        tipo=TIPO; \
-        index=tokens.front()-1000; tokens.pop_front();  \
-        val=tokens.front()-1000; tokens.pop_front(); \
-    } \
-    virtual void func(){ \
-        FUNC \
-    } \
-    virtual void debug(){ \
-        cout<<#NOMB<<" "<<index<<" "<<val<<" "; \
-    } \
+template<typename ma1,typename ma2> bool mcmp(ma1 a1,ma2 a2){
+    return *a1.val()==*a2.val();
+}
+template<typename ma1,typename ma2> void mset(ma1 a1,ma2 a2){
+    *a1.val()=*a2.val();
 }
 
-numFab(numSet,movt,numeros[index]=val;);
-numFab(numAdd,movt,numeros[index]+=val;);
-numFab(numCmp,condt,cond=numeros[index]==val;);
-numFab(numDst,condt,cond=numeros[index]!=val;);
-numFab(numLess,condt,cond=numeros[index]<val;);
+struct locala{
+    int ind;
+    locala(int ind_):ind(ind_){}
+    int* val(){
+        return &memMov[ind];
+    }
+};
+struct piezaa{
+    int ind;
+    Holder* h;
+    piezaa(int ind_,Holder* h_):ind(ind_),h(h_){}
+    int* val(){
+        //asumo que h es valida
+        return &h->memPieza[ind];
+    }
+};
 
-numFab(numSeti,movt,numeros[index]=numeros[val];);
-numFab(numAddi,movt,numeros[index]+=numeros[val];);
-numFab(numCmpi,condt,cond=numeros[index]==numeros[val];);
-numFab(numDsti,condt,cond=numeros[index]!=numeros[val];);
-numFab(numLessi,condt,cond=numeros[index]<numeros[val];);
+string mcondstr="mcond";
+typedef mcond<bool,locala,piezaa,mcmp<locala,piezaa>,&mcondstr> mcmplp;
 
-*/
 /*
 struct spwn:public acm{
     int n;
@@ -168,8 +128,8 @@ struct spwn:public acm{
 };
 */
 
-template<void(*funct)(v,Holder*),string& nomb> struct acc:public acct{
-    acc(v pos_):acct(pos_,nomb){}
+template<void(*funct)(v,Holder*),string* n> struct acc:public acct{
+    acc(v pos_):acct(pos_,n){}
     virtual void func(){
         funct(pos,h);
     }
@@ -179,25 +139,23 @@ template<void(*funct)(v,Holder*),string& nomb> struct acc:public acct{
         return a;
     }
 };
-template<bool(*chck)(v,Holder*),string& nomb> struct cond:public condt{
-    cond(v pos_):condt(pos_,nomb){}
-    virtual bool check(Holder* h){
-        return chck(pos,h);
-    }
-};
 #define fabAcc(NAME,FUNC) \
-void NAME##func(v pos,Holder* h){ \
+inline void NAME##func(v pos,Holder* h){ \
     FUNC \
 }\
-string str##NAME=#NAME;\
-typedef acc<NAME##func,str##NAME> NAME;
+extern string str##NAME=#NAME;\
+typedef acc<NAME##func,&str##NAME> NAME;
 
-fabAcc(mov,
+void movfunc(v pos,Holder* h){
     h->tile->step++;
     h->tile->holder=nullptr;
     h->tile=tablptr->tile(pos);
     h->tile->holder=h;
-)
+}
+extern string strmov="mov";
+typedef acc<movfunc,&strmov> mov;
+
+
 fabAcc(pausa,
     drawScreen();
     sleep(milliseconds(40));
@@ -210,13 +168,19 @@ fabAcc(capt,
     pisados.push_back(captT);
 );
 
+
+template<bool(*chck)(v,Holder*),string* n> struct cond:public condt{
+    cond(v pos_):condt(pos_,n){}
+    virtual bool check(Holder* h){
+        return chck(pos,h);
+    }
+};
 #define fabCond(NAME,FUNC)\
-bool NAME##check(v pos,Holder* h){ \
+inline bool NAME##check(v pos,Holder* h){ \
     FUNC \
 }\
-string str##NAME=#NAME;\
-typedef cond<NAME##check,str##NAME> NAME;
-
+extern string str##NAME=#NAME;\
+typedef cond<NAME##check,&str##NAME> NAME;
 
 fabCond(vacio,
     return tablptr->tile(pos+offset)->holder==nullptr;
@@ -246,16 +210,17 @@ Text textDebug;
 bool drawDebugTiles;
 bool ZPressed=false;
 int mil=25;
+extern string strNil="-";
 struct debugMov:public condt{
     condt* cond;
-    debugMov(condt* cond_):condt(v(0,0),"-"){
+    debugMov(condt* cond_):condt(v(0,0),&strNil){
         cond=cond_;
         pos=cond->pos;
     }
     virtual bool check(Holder* h){
         v posAct=pos+offset;
         bool ret=cond->check(h);
-        textDebug.setString(cond->nomb);
+        textDebug.setString(*cond->nomb);
         if(ret){
             posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
             tileActDebug=&posActGood;
@@ -294,26 +259,14 @@ struct debugMov:public condt{
         return ret;
     }
     virtual void debug(){
-        cond->debug();
     }
 };
 
 Text asterisco;
 bool drawAsterisco=false;
-debugInicial::debugInicial():condt(v(0,0),"-"){}
+debugInicial::debugInicial():condt(v(0,0),&strNil){}
 bool debugInicial::check(Holder* h){
     drawAsterisco=true;
     return true;
 }
 
-passCond::passCond(v pos_):condt(pos_,"pass"){}
-bool passCond::check(Holder* h){
-    return true;
-}
-
-passAcc::passAcc(v pos_):acct(pos_,"pass"){}
-void passAcc::func(){
-}
-acct* passAcc::clone(Holder* h){
-    return new passAcc(pos);
-}
