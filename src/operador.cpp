@@ -51,8 +51,8 @@ normal::normal(bool make){
                 cond(vacio);
                 cond(pieza);
                 cond(enemigo);
-                case lector::esp: condsN.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
-                case lector::outbounds: condsN.push_back(new outbounds(pos));break;
+                case lector::esp: condsNP.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
+                case lector::outbounds: condsNP.push_back(new outbounds(pos));break;
     #define acc(TOKEN) case lector::TOKEN: accs.push_back(new TOKEN(pos));break
 
                 acc(mov);

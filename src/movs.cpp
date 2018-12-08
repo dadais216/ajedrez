@@ -146,16 +146,12 @@ inline void NAME##func(v pos,Holder* h){ \
 extern string str##NAME=#NAME;\
 typedef acc<NAME##func,&str##NAME> NAME;
 
-void movfunc(v pos,Holder* h){
+fabAcc(mov,
     h->tile->step++;
     h->tile->holder=nullptr;
     h->tile=tablptr->tile(pos);
     h->tile->holder=h;
-}
-extern string strmov="mov";
-typedef acc<movfunc,&strmov> mov;
-
-
+)
 fabAcc(pausa,
     drawScreen();
     sleep(milliseconds(40));

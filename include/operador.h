@@ -7,21 +7,20 @@
 ///normal (estructura de movimientos, posiciones relativas) se comparte entre todas las piezas del mismo tipo, como tambien
 ///el arbol de operadores. No tiene sentido tenerla copiada.
 
-struct movHolder;
 struct operador{
     int tipo;
     operador* sig;
     bool makeClick,hasClick;
 };
 
-struct normalHolder;
 struct normal:public operador{
     normal(bool);
     void debug();
     vector<acct*> accs;
-    vector<condt*> condsN;
-    vector<condt*> condsM;
+    vector<condt*> condsNP;
+    vector<mcondt*> condsNM;
     vector<condt*> condsP;
+    vector<mcondt*> condsM;
     vector<colort*> colors;
     colort* crearColor(v);
     v lastPos;

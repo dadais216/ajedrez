@@ -47,6 +47,7 @@ struct normalHolder;
 struct Base;
 struct acct;
 struct condt;
+struct mcondt;
 struct colort;
 
 

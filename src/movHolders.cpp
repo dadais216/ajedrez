@@ -41,15 +41,14 @@ void normalHolder::generar(){
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
     //memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
 
-    for(condt* cn:n->condsN){///sin triggers (por ahora son condt porque son todos posicionales)
-        if(!cn->check(h)){
+    for(mcondt* cm:n->condsM){///triggers de memoria (lecturas)
+        if(!cm->check()){
             allTheWay=continuar=valido=false;
             return;
         }
     }
-    for(condt* cm:n->condsM){///triggers de memoria
-
-        if(!cm->check(h)){
+    for(condt* cnp:n->condsNP){///sin triggers
+        if(!cnp->check(h)){
             allTheWay=continuar=valido=false;
             return;
         }
@@ -57,6 +56,12 @@ void normalHolder::generar(){
     for(condt* cp:n->condsP){///triggers posicionales
         tablptr->tile(cp->pos+offset)->triggers.push_back({h->tile,this,h->tile->step});
         if(!cp->check(h)){
+            allTheWay=continuar=valido=false;
+            return;
+        }
+    }
+    for(mcondt* cnm:n->condsNM){/// (escrituras)
+        if(!cnm->check()){
             allTheWay=continuar=valido=false;
             return;
         }
