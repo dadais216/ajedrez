@@ -435,6 +435,24 @@ Con esto se pueden tener memorias de tamaño variable sin tener que especificar n
 Lo malo es que si se lee antes de escribir se rompe todo pero es esperable, aclarar en el instructivo. No creo que cuelgue el juego 
 Manejarse con un comando aparte hace que no se haga este chequeo en la escritura normal, y en la version compilada permite usar arrays en vez de vectores cuando se vea que no esta
 
+cuando se hace el chequeo de condiciones, dentro de una normal, el orden de procesado de condiciones es lecturas -> condiciones que no usan memorias -> escrituras.
+
+Esto es para manejar eficientemente casos como
+w mcmp 0l 0 mover 
+w vacio mset 0l 1
+
+pero hace cosas como
+madd 1l 1 mcmp 1l 3
+raras porque el mcmp se ejecuta antes del madd.
+
+Podría hacer que todo se ejecute en orden, pero tendria que meter un chequeo por iteracion y agregar otro nivel de polimorfismo. Por ahora lo dejo asi. 
+
+O no. termina siendo muy no intuitivo, y no creo que atrase demasiado. Ir por la otra, que termina comportandose como se comporta la version final. 
+
+
+
+
+
 
 Graficos
 Agregar boton que muestre las memorias. La global se vería todo el tiempo. Si se toca un espacio se dibuja la memoria de tile y la de pieza si hay una pieza en esa pos.
