@@ -127,8 +127,7 @@ void Proper::init(){
         lect.archPiezas.close();
     lect.archPiezas.open("piezas.txt");
 
-    lect.leer(id);
-    lect.mostrar();
+    lect.generarIdsTablero(id);
 
     tablero.armar(v(lect.matriz[0].size(),lect.matriz.size()));
 
@@ -163,7 +162,6 @@ void Proper::init(){
             if(act) act->generar();
         }
     }
-
     cout<<endl;
     for(int i=0; i<tablptr->tam.y; i++){
         for(int j=0; j<tablptr->tam.x; j++){
@@ -171,7 +169,6 @@ void Proper::init(){
         }
         cout<<endl;
     }
-
     drawScreen();
 
 

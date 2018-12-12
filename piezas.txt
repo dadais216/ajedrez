@@ -4,7 +4,8 @@ def move vacio mov pausa
 def passe pass color 235 55 140
 
 :1 1 #ortog
-desliz {w,wa,a,as,s,sd,d,dw} mover c end
+#desliz {w,wa,a,as,s,sd,d,dw} mover c end
+{w,a,s,d} mover
 
 :2 1 #torre
 #desliz {w,a,s,d} mover c end

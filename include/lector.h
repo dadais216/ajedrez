@@ -13,16 +13,15 @@ struct lector
     lector();
     ifstream archPiezas;
     ifstream archTablero;
-    void leer(int);
+    void generarIdsTablero(int);
     vector<vector<int>> matriz;
-    void mostrar();
-    int stringToIntR(string&);
 
     Holder* crearPieza(int,v);
     enum token {def,llaveizq,llaveder,coma,lineJoin,
-                W,A,S,D,N,numSet,numAdd,numSeti,numAddi,
+                W,A,S,D,N,
                 mov,capt,spwn,pausa,pass,
-                vacio,pieza,enemigo,esp,outbounds,numCmp,numDst,numCmpi,numDsti,numLess,numLessi,
+                vacio,pieza,enemigo,esp,outbounds,
+                mcmp,mset,mlocal,mpieza,
                 desliz,exc,isol,desopt,
                 click,
                 color,sprt,numShow,
@@ -31,18 +30,20 @@ struct lector
     bool hayAtras,doEsp;
     int i,j;
     map<int,list<int>> defs;
-    list<int>* lista;
+    list<int>* lista; ///@optim vector?
     map<string,int> tabla;
     int extra;
 
     int piezaSize,movSize;
 
-    bool token(string,char);
-    void token(string);
-    void token(char);
+    void centinela(string,char);
+    void tokenizarPalabra(string);
+    void tokenizarCaracter(char);
     void tokenizarLinea(string);
     void cargarDefs();
+    void procesarTokens(list<int>&);
 };
 
+int stringToInt(string&);
 
 #endif // LECTOR_H

@@ -17,10 +17,7 @@ struct normal:public operador{
     normal(bool);
     void debug();
     vector<acct*> accs;
-    vector<condt*> condsNP;
-    vector<mcondt*> condsNM;
-    vector<condt*> condsP;
-    vector<mcondt*> condsM;
+    vector<condt*> conds;
     vector<colort*> colors;
     colort* crearColor(v);
     v lastPos;
