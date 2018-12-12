@@ -35,37 +35,24 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
 }
 v offset;
 vector<int> memMov;
+Trigger triggerInfo;
+Holder* hAct;
 void normalHolder::generar(){
-    //cout<<"GENERANDO"<<endl;
     const normal* n=static_cast<normal*>(op);
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
     //memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
+    hAct=h;
+    triggerInfo.tile=h->tile;
+    triggerInfo.nh=this;
+    triggerInfo.step=h->tile->step;
 
-    for(mcondt* cm:n->condsM){///triggers de memoria (lecturas)
-        if(!cm->check()){
+    for(condt* c:n->conds)
+        if(!c->check()){
             allTheWay=continuar=valido=false;
             return;
         }
-    }
-    for(condt* cnp:n->condsNP){///sin triggers
-        if(!cnp->check(h)){
-            allTheWay=continuar=valido=false;
-            return;
-        }
-    }
-    for(condt* cp:n->condsP){///triggers posicionales
-        tablptr->tile(cp->pos+offset)->triggers.push_back({h->tile,this,h->tile->step});
-        if(!cp->check(h)){
-            allTheWay=continuar=valido=false;
-            return;
-        }
-    }
-    for(mcondt* cnm:n->condsNM){/// (escrituras)
-        if(!cnm->check()){
-            allTheWay=continuar=valido=false;
-            return;
-        }
-    }
+    ///@optim aca podría haber un switch para tirar los triggers de pos y mem, no sé si es mejor que tenerlos spameados en los cond
+
     //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
     for(int i=0; i<accs.size(); i++)
         accs[i]->pos=n->accs[i]->pos+offset;///podria mandar el tile en vez de la pos, pero como no todas las acciones lo usan mientras menos procesado se haga antes mejor

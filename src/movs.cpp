@@ -3,6 +3,7 @@
 
 ///este archivo se compila a traves de operador.cpp
 
+
 color::color(RectangleShape* rs_,v pos_){
     rs=rs_;
     pos=pos_;
@@ -72,24 +73,6 @@ void numShow::debug(){
     cout<<"numShow "<<index<<" ";
 }
 */
-
-///si tarda mucho en compilar hacerlo por polimorfismo, total esta no va a ser la version definitiva
-///mirar de que deberian heredar las acc m
-template<typename T,typename ma1,typename ma2,T(*chck)(ma1,ma2),string* n> struct mcond:public mcondt{
-    ma1 i1;
-    ma2 i2;
-    mcond(ma1 i1_,ma2 i2_):mcondt(n),i1(i1_),i2(i2_){}
-    virtual bool check(){
-        return chck(i1,i2);
-    }
-};
-template<typename ma1,typename ma2> bool mcmp(ma1 a1,ma2 a2){
-    return *a1.val()==*a2.val();
-}
-template<typename ma1,typename ma2> void mset(ma1 a1,ma2 a2){
-    *a1.val()=*a2.val();
-}
-
 struct locala{
     int ind;
     locala(int ind_):ind(ind_){}
@@ -97,18 +80,25 @@ struct locala{
         return &memMov[ind];
     }
 };
-struct piezaa{
+
+///version condt, la version acct necesita un clone() que le guarde el holder.
+template<void(*t2)(int*)> struct piezaa{
     int ind;
-    Holder* h;
-    piezaa(int ind_,Holder* h_):ind(ind_),h(h_){}
+    piezaa(){
+        ind=tokens.front()-1000;
+        tokens.pop_front();
+    }
     int* val(){
-        //asumo que h es valida
-        return &h->memPieza[ind];
+        t2(&ind);//version con y sin triggers
+        return &hAct->memPieza[ind];
     }
 };
+///reemplazar int* por triggermem*
+inline void dont(int* a){}
+inline void addMemTrigger(int* a){
+    *a+=1;
+}
 
-string mcondstr="mcond";
-typedef mcond<bool,locala,piezaa,mcmp<locala,piezaa>,&mcondstr> mcmplp;
 
 /*
 struct spwn:public acm{
@@ -129,7 +119,7 @@ struct spwn:public acm{
 */
 
 template<void(*funct)(v,Holder*),string* n> struct acc:public acct{
-    acc(v pos_):acct(pos_,n){}
+    acc(v pos_):acct(n,pos_){}
     virtual void func(){
         funct(pos,h);
     }
@@ -165,37 +155,45 @@ fabAcc(capt,
 );
 
 
-template<bool(*chck)(v,Holder*),string* n> struct cond:public condt{
-    cond(v pos_):condt(pos_,n){}
-    virtual bool check(Holder* h){
-        return chck(pos,h);
+template<bool(*chck)(v),string* n> struct cond:public condt{
+    v pos;
+    cond(v pos_):condt(n),pos(pos_){}
+    virtual bool check(){
+        return chck(pos);
     }
 };
 #define fabCond(NAME,FUNC)\
-inline bool NAME##check(v pos,Holder* h){ \
+inline bool NAME##check(v pos){ \
     FUNC \
 }\
 extern string str##NAME=#NAME;\
 typedef cond<NAME##check,&str##NAME> NAME;
 
+inline /* o no? */ void setTrigger(v pos){
+    tablptr->tile(pos+offset)->triggers.push_back(triggerInfo);
+}
+
 fabCond(vacio,
+    setTrigger(pos);
     return tablptr->tile(pos+offset)->holder==nullptr;
 )
 fabCond(pieza,
+    setTrigger(pos);
     return tablptr->tile(pos+offset)->holder;
 )
 fabCond(enemigo,
+    setTrigger(pos);
     if(tablptr->tile(pos+offset)->holder)
-        return tablptr->tile(pos+offset)->holder->bando!=h->bando;
+        return tablptr->tile(pos+offset)->holder->bando!=hAct->bando;
     return false;
 )
 fabCond(esp,
     v posAct=pos+offset;
-    h->outbounds=!(posAct.x>=0&&posAct.x<tablptr->tam.x&&posAct.y>=0&&posAct.y<tablptr->tam.y);
-    return !h->outbounds;
+    hAct->outbounds=!(posAct.x>=0&&posAct.x<tablptr->tam.x&&posAct.y>=0&&posAct.y<tablptr->tam.y);
+    return !hAct->outbounds;
 )
 fabCond(outbounds,
-    return h->outbounds;
+    return hAct->outbounds;
 )
 
 RectangleShape posPieza;
@@ -208,14 +206,17 @@ bool ZPressed=false;
 int mil=25;
 extern string strNil="-";
 struct debugMov:public condt{
+    v pos;
     condt* cond;
-    debugMov(condt* cond_):condt(v(0,0),&strNil){
+    debugMov(condt* cond_):condt(&strNil){
         cond=cond_;
-        pos=cond->pos;
+        pos=static_cast<debugMov*>(cond)->pos;
+        ///sospechoso pero es la unica instancia donde se necesita saber la pos de un cond, no vale la pena agregar
+        ///un nivel mas de herencia por esto nomas. Antes de llegar aca hay que filtrar las no posicionales
     }
-    virtual bool check(Holder* h){
+    virtual bool check(){
         v posAct=pos+offset;
-        bool ret=cond->check(h);
+        bool ret=cond->check();
         textDebug.setString(*cond->nomb);
         if(ret){
             posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
@@ -226,7 +227,7 @@ struct debugMov:public condt{
             tileActDebug=&posActBad;
             textDebug.setColor(sf::Color(240,70,40,240));
         }
-        posPieza.setPosition(h->tile->pos.x*32*escala,h->tile->pos.y*32*escala);
+        posPieza.setPosition(hAct->tile->pos.x*32*escala,hAct->tile->pos.y*32*escala);
         drawDebugTiles=true;
         drawScreen();
         drawDebugTiles=false;
@@ -260,9 +261,11 @@ struct debugMov:public condt{
 
 Text asterisco;
 bool drawAsterisco=false;
-debugInicial::debugInicial():condt(v(0,0),&strNil){}
-bool debugInicial::check(Holder* h){
+debugInicial::debugInicial():condt(&strNil){}
+bool debugInicial::check(){
     drawAsterisco=true;
     return true;
 }
 
+
+#include "memmovs.cpp"

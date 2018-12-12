@@ -105,8 +105,15 @@ extern bool switchToGen;
 extern bool confirm;
 extern v offset;
 extern int isolCount;
-
 extern vector<int> memMov;
+extern Holder* hAct;
+
+struct Trigger{
+    Tile* tile; //pos donde estaria la pieza que puso el trigger
+    normalHolder* nh; //puntero al movimiento a recalcular
+    int step; //valor que se contrasta con el step de la tile. Si son el mismo la pieza que puso el trigger esta en el mismo lugar y no se movio, mh es valido
+};
+extern Trigger triggerInfo;
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 

@@ -24,7 +24,7 @@ Pieza::Pieza(int _id,int _sn,int piezaSize){
         operador* op=tomar();
         if(debugMode){
             normal* n=new normal(false);
-            n->condsNP.push_back(new debugInicial());
+            n->conds.push_back(new debugInicial());
             n->sig=op;
             n->lastPos=v(0,0);
             movs.push_back(n);

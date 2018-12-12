@@ -11,6 +11,8 @@ bool clickExplicit;///cuando se usa click explicitamente no se pone un click imp
 ///al final del movimiento si este termina en una no normal
 ///@detail una condicion mejor sería no poner click implicito si el ultimo operador no normal contiene algun click explicito
 
+string str_cmp="cmp";
+
 normal::normal(bool make){
     tipo=NORMAL;
     hasClick=makeClick=false;
@@ -35,7 +37,7 @@ normal::normal(bool make){
                 pos.x--;
                 break;
                 //cout<<#TOKEN<<endl;
-    #define cond(TOKEN)  case lector::TOKEN: if(debugMode) condsP.push_back(new debugMov(new TOKEN(pos))); else condsP.push_back(new TOKEN(pos));break
+    #define cond(TOKEN)  case lector::TOKEN: if(debugMode) conds.push_back(new debugMov(new TOKEN(pos))); else conds.push_back(new TOKEN(pos));break
     //        cond(posRemember);
     //        cond(numSet);
     //        cond(numAdd);
@@ -51,8 +53,8 @@ normal::normal(bool make){
                 cond(vacio);
                 cond(pieza);
                 cond(enemigo);
-                case lector::esp: condsNP.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
-                case lector::outbounds: condsNP.push_back(new outbounds(pos));break;
+                case lector::esp: conds.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
+                case lector::outbounds: conds.push_back(new outbounds(pos));break;
     #define acc(TOKEN) case lector::TOKEN: accs.push_back(new TOKEN(pos));break
 
                 acc(mov);
@@ -65,6 +67,31 @@ normal::normal(bool make){
                 break;
     //       colorr(sprt);
     //       colorr(numShow);
+            case lector::mcmp:{
+                int a1=tokens.front();
+                tokens.pop_front();
+                switch(a1){
+                case lector::mlocal:
+                    {
+                        int i1=tokens.front();tokens.pop_front();
+                        int a2=tokens.front();tokens.pop_front();
+                        int i2=tokens.front();tokens.pop_front();
+                        switch(a2){
+                        case lector::mlocal:{
+                            conds.push_back(new mcond<locala,locala,mcmp<locala,locala>,&str_cmp>(locala(i1),locala(i2)));
+                        }
+                        case lector::mpieza:
+                            ;
+                        }
+                    }
+                case lector::mpieza:
+                    ;
+                }
+
+
+
+            }
+
 
     #undef acc //(TOKEN)
     #undef cond //(TOKEN)
