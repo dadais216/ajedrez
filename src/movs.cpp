@@ -73,11 +73,25 @@ void numShow::debug(){
     cout<<"numShow "<<index<<" ";
 }
 */
+
+vector<int> memMov;
+int maxMemMovSize=0;
+
 struct locala{
     int ind;
-    locala(int ind_):ind(ind_){}
+    locala(int ind_):ind(ind_){
+        if(ind>=memLocalSize)
+            memLocalSize=ind+1;
+    }
     int* val(){
         return &memMov[ind];
+    }
+};
+struct ctea{
+    int v;
+    ctea(int v_):v(v_){}
+    int* val(){
+        return &v;
     }
 };
 
@@ -98,6 +112,7 @@ inline void dont(int* a){}
 inline void addMemTrigger(int* a){
     *a+=1;
 }
+
 
 
 /*

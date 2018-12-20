@@ -1,11 +1,16 @@
 
 def mover vacio mov pausa color 20 200 115
-def move vacio mov pausa
-def passe pass color 235 55 140
+#def move vacio mov pausa
+#def passe pass color 235 55 140
 
 :1 1 #ortog
 #desliz {w,wa,a,as,s,sd,d,dw} mover c end
-{w,a,s,d} mover
+#s mover mset l0 1 mcmp l0 1 mover
+#desliz s mcmp l0 0 mover mset l0 1 end
+desliz s exc \
+mcmp l0 0 mset l0 1 or \
+mcmp l0 1 mset l0 2 or \
+mcmp l0 2 mset l0 3 end mover c end
 
 :2 1 #torre
 #desliz {w,a,s,d} mover c end

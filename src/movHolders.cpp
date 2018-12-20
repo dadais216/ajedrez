@@ -31,16 +31,15 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
     for(colort* c:org->colors)
         colors.push_back(c->clone());
 
-    //memAct.resize(base.movSize);
+    memAct.resize(base.movSize);
 }
 v offset;
-vector<int> memMov;
 Trigger triggerInfo;
 Holder* hAct;
 void normalHolder::generar(){
     const normal* n=static_cast<normal*>(op);
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
-    //memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
+    memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
     hAct=h;
     triggerInfo.tile=h->tile;
     triggerInfo.nh=this;
@@ -68,7 +67,7 @@ void normalHolder::generar(){
 void normalHolder::reaccionar(normalHolder* nh){
     if(nh==this){
         offset=nh->offsetAct;
-        //memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
+        memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
         switchToGen=true;
         generar();
         ///@optim mecanismo para cortar todo si la validez no vario, un lngjmp

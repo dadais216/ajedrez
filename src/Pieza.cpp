@@ -4,7 +4,8 @@
 #include "../include/Clicker.h"
 
 vector<Pieza*> piezas;
-Pieza::Pieza(int _id,int _sn,int piezaSize){
+int memLocalSize;
+Pieza::Pieza(int _id,int _sn,int memPiezaSize_){
     id=_id;
     sn=_sn;
     spriteb.setTexture(imagen->get("sprites.png"));
@@ -21,18 +22,18 @@ Pieza::Pieza(int _id,int _sn,int piezaSize){
 //        cout<<endl;
 
         clickExplicit=false;
+        memLocalSize=0;
         operador* op=tomar();
         if(debugMode){
             normal* n=new normal(false);
             n->conds.push_back(new debugInicial());
             n->sig=op;
             n->lastPos=v(0,0);
-            movs.push_back(n);
+            movs.push_back(Pieza::base{n,memLocalSize});
         }else
-            movs.push_back(op);
+            movs.push_back(Pieza::base{op,memLocalSize});
     }
-
-    memPiezaSize=piezaSize;
+    memPiezaSize=memPiezaSize_;
 
     function<void(operador*)> showOp=[&showOp](operador* op)->void{
         switch(op->tipo){
@@ -68,8 +69,8 @@ Pieza::Pieza(int _id,int _sn,int piezaSize){
             showOp(op->sig);
     };
     cout<<endl;
-    for(operador* o:movs){
-        showOp(o);
+    for(Pieza::base& b:movs){
+        showOp(b.raiz);
         cout<<endl;
     }
 
@@ -101,14 +102,13 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     pieza=p;
     tile=tablptr->tile(pos_);
     movs.reserve(sizeof(movHolder*)*pieza->movs.size());
-    for(operador* op:pieza->movs){
+    for(Pieza::base& b:pieza->movs){
         Base* base=new Base;
         base->beg=nullptr;
-        base->movSize=0;
-        movs.push_back(crearMovHolder(this,op,base));
+        base->movSize=b.memLocalSize;
+        movs.push_back(crearMovHolder(this,b.raiz,base));
         delete base;
     }
-
     memPieza.resize(p->memPiezaSize);
 }
 void Holder::draw()
@@ -151,8 +151,8 @@ void Holder::makeCli(){
 void Holder::generar(){
     for(movHolder* m:movs){
         offset=tile->pos;
-        ///ver si resulta comodo para el lenguaje hacer que la memoria de movimiento arranque en 0
-        ///memset(memMov.data(),0,m->base.movSize);
+        ///@optim ver si resulta comodo para el lenguaje hacer que la memoria de movimiento arranque en 0
+        memset(memMov.data(),0,m->base.movSize);
         m->generar();
     }
 }

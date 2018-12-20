@@ -12,6 +12,7 @@ bool clickExplicit;///cuando se usa click explicitamente no se pone un click imp
 ///@detail una condicion mejor sería no poner click implicito si el ultimo operador no normal contiene algun click explicito
 
 string str_cmp="cmp";
+string str_set="set";
 
 normal::normal(bool make){
     tipo=NORMAL;
@@ -67,31 +68,36 @@ normal::normal(bool make){
                 break;
     //       colorr(sprt);
     //       colorr(numShow);
-            case lector::mcmp:{
-                int a1=tokens.front();
-                tokens.pop_front();
-                switch(a1){
-                case lector::mlocal:
-                    {
-                        int i1=tokens.front();tokens.pop_front();
-                        int a2=tokens.front();tokens.pop_front();
-                        int i2=tokens.front();tokens.pop_front();
-                        switch(a2){
-                        case lector::mlocal:{
-                            conds.push_back(new mcond<locala,locala,mcmp<locala,locala>,&str_cmp>(locala(i1),locala(i2)));
-                        }
-                        case lector::mpieza:
-                            ;
-                        }
+            case lector::mcmp:
+            case lector::mset:
+                {
+                    int a1=tokens.front();tokens.pop_front();
+                    int i1=tokens.front()-1000;tokens.pop_front();
+                    int a2=tokens.front();tokens.pop_front();
+                    int i2=tokens.front()-1000;tokens.pop_front();
+
+                    ///un poco mas ineficiente que separar por cada uno, pero mas legible
+                    ///@todo agregarle una m al principio a cada accesor para poder meter todo en macros, porque al final \
+                    van a ser como 36 ifs
+                    ///y el debug lo va a duplicar
+                    #define CMP(T,A1,A2) lector::T==tok&&a1==lector::A1&&a2==lector::A2
+                    if(CMP(mcmp,mlocal,mlocal))
+                        conds.push_back(new mcond<locala,locala,mcmp<locala,locala>,&str_cmp>(locala(i1),locala(i2)));
+                    else if(CMP(mcmp,mlocal,mcte))
+                        conds.push_back(new mcond<locala,ctea,mcmp<locala,ctea>,&str_cmp>(locala(i1),ctea(i2)));
+                    else if(CMP(mcmp,mcte,mlocal))
+                        conds.push_back(new mcond<ctea,locala,mcmp<ctea,locala>,&str_cmp>(ctea(i1),locala(i2)));
+                    else if(CMP(mset,mlocal,mlocal))
+                        conds.push_back(new mcond<locala,locala,mset<locala,locala>,&str_set>(locala(i1),locala(i2)));
+                    else if(CMP(mset,mlocal,mcte))
+                        conds.push_back(new mcond<locala,ctea,mset<locala,ctea>,&str_set>(locala(i1),ctea(i2)));
+                    else{
+                        cout<<"operacion de memoria invalida\n";
+                        exit(EXIT_FAILURE);
                     }
-                case lector::mpieza:
-                    ;
+                    #undef CMP
                 }
-
-
-
-            }
-
+                break;
 
     #undef acc //(TOKEN)
     #undef cond //(TOKEN)

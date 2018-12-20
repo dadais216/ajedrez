@@ -5,7 +5,7 @@
 list<int> tokens;
 lector::lector(){
     extra=0;
-#define rel(T) tabla[#T]=T
+    #define rel(T) tabla[#T]=T
     rel(def);
     rel(color);
     rel(sprt);
@@ -25,9 +25,6 @@ lector::lector(){
     rel(pieza);
     rel(outbounds);
 
-    rel(mcmp);
-    rel(mset);
-
     rel(desliz);
     rel(exc);
     rel(isol);
@@ -36,6 +33,11 @@ lector::lector(){
     tabla["c"]=click;
     tabla["or"]=sep;
 
+    #undef rel
+    #define rel(T) tablaMem[#T]=T
+    rel(mcmp);
+    rel(mset);
+    #undef rel
     lista=nullptr;
 }
 
@@ -95,6 +97,7 @@ Holder* lector::crearPieza(int n,v pos){
     archPiezas.seekg(0, ios::beg);
     string linea;///@final mirar los leaks y eso
     int sn;
+    memPiezaSize=0;
     while(getline(archPiezas,linea)){
         if(linea.empty()) continue;
         if(linea[0]==':'){
@@ -116,14 +119,49 @@ enPieza:
         tokenizarLinea(linea);
     }
     procesarTokens(tokens);
-    for(int s:tokens)
-        cout<<"|"<<s<<"|";
+    for(int s:tokens){
+        switch(s){
+            #define CASE(A) case A: cout<<#A" "; break;
+            CASE(W);
+            CASE(A);
+            CASE(S);
+            CASE(D);
+            CASE(N);
+            CASE(mov);
+            CASE(capt);
+            CASE(spwn);
+            CASE(pausa);
+            CASE(pass);
+            CASE(vacio);
+            CASE(pieza);
+            CASE(enemigo);
+            CASE(esp);
+            CASE(outbounds);
+            CASE(mcmp);
+            CASE(mset);
+            CASE(mlocal);
+            CASE(mpieza);
+            CASE(mcte);
+            CASE(desliz);
+            CASE(exc);
+            CASE(isol);
+            CASE(desopt);
+            CASE(click);
+            CASE(color);
+            CASE(sprt);
+            CASE(numShow);
+            case eol: cout<<"eol"<<endl;break;
+            CASE(sep);
+            CASE(end);
+            default:
+                cout<<s-1000<<" ";
+        }
+    }
     cout<<endl;
 
-    ///cada mov tiene que guardar su movSize en su base
-    ///el lector es el encargado de agrandar el memMov al max de todos los movs
+    memMov.resize(maxMemMovSize);
 
-    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn,piezaSize),pos);
+    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn,memPiezaSize),pos);
     tokens.clear();
     return h;
 }
@@ -242,6 +280,7 @@ void lector::centinela(string linea,char c){
 }
 void lector::tokenizarPalabra(string linea){
     string palabra=linea.substr(i,j-i);
+    cout<<">>>"<<palabra<<"<<<"<<linea[i]<<"\n";
     i=j;
     bool esMov=true;
     for(char c:palabra)
@@ -255,40 +294,62 @@ void lector::tokenizarPalabra(string linea){
         doEsp=true;
         return;
     }
-    bool esNum=true;
-    bool esMNum=palabra[0]=='l'||palabra[0]=='p';
-    for(int i=esMNum?1:0;i<palabra.length();i++)
-        if(palabra[i]<'0'||palabra[i]>'9'){
+    bool esNum=true;///@optim manejar color como mems, es mas eficiente
+    for(char c:palabra)
+        if(c<'0'||c>'9'){
             esNum=false;
         }
-    esMNum=esMNum&&esNum;
-
-    if(esMNum){
-        switch(palabra[0]){
-        case 'l': lista->push_back(mlocal);break;
-        case 'p': lista->push_back(mpieza);break;
-        }
-        string num=palabra.substr(1,palabra.length());
-        lista->push_back(stringToInt(num)+1000);
-        return;
-    }
     if(esNum){
         lista->push_back(stringToInt(palabra)+1000);
         return;
     }
 
-    for(auto i:tabla)
-        if(palabra==i.first){
-            lista->push_back(i.second);
+    for(auto t:tabla)
+        if(palabra==t.first){
+            lista->push_back(t.second);
+            return;
+        }
+    for(auto t:tablaMem)
+        if(palabra==t.first){
+            lista->push_back(t.second);
+            for(int k=0;k<2;k++){
+                do{j++;}while(linea[j]==' ');
+                char c=linea[j];
+                if(c<'0'||c>'9')
+                    j++;
+                i=j;
+                while(linea[j]>='0'&&linea[j]<='9')
+                    j++;
+                string numstr=linea.substr(i,j-i);
+                int num=stringToInt(numstr);
+
+                if(c=='l'){
+                    lista->push_back(mlocal);
+                    if(num>=maxMemMovSize)
+                        maxMemMovSize=num+1;
+                }else if(c=='p'){
+                    lista->push_back(mpieza);
+                    if(num>=memPiezaSize)
+                        memPiezaSize=num+1;
+                }else{
+                    lista->push_back(mcte);
+                }
+                lista->push_back(num+1000);
+            }
+            do{
+                    cout<<"-"<<linea[j]<<"+"<<linea[j+1]<<endl;
+                    j++;
+            }while(linea[j]==' ');
+            i=--j;
             return;
         }
     if(lista!=&tokens){ //se esta llamando desde cargarDefs
-        cout<<"palabra nueva: "<<palabra<<endl;
+        cout<<"palabra nueva:"<<palabra<<endl;
         tabla[palabra]=last+extra;
         lista->push_back(last+extra);
         extra++;
     }else{
-        cout<<"palabra no reconocida: "<<palabra;
+        cout<<"palabra no reconocida:"<<palabra;
         exit(EXIT_FAILURE);
     }
 }
