@@ -73,10 +73,13 @@ template<typename ma1,typename ma2,bool(*chck)(ma1,ma2),string* n> struct macc:p
     }
 };
 template<typename ma1,typename ma2> bool mcmp(ma1 a1,ma2 a2){
+    cout<<*a1.val()<<" == "<<*a2.val()<<endl;
     return *a1.val()==*a2.val();
 }
-template<typename ma1,typename ma2> void mset(ma1 a1,ma2 a2){
+template<typename ma1,typename ma2> bool mset(ma1 a1,ma2 a2){
+    cout<<*a1.val()<<" <- "<<*a2.val()<<endl;
     *a1.val()=*a2.val();
+    return true;
 }
 struct locala;
 

@@ -113,6 +113,8 @@ extern bool confirm;
 extern v offset;
 extern int isolCount;
 extern vector<int> memMov;
+extern int maxMemMovSize;
+extern int memLocalSize;
 extern Holder* hAct;
 
 struct Trigger{

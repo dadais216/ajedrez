@@ -21,7 +21,7 @@ struct lector
                 W,A,S,D,N,
                 mov,capt,spwn,pausa,pass,
                 vacio,pieza,enemigo,esp,outbounds,
-                mcmp,mset,mlocal,mpieza,
+                mcmp,mset,mlocal,mpieza,mcte,
                 desliz,exc,isol,desopt,
                 click,
                 color,sprt,numShow,
@@ -32,9 +32,10 @@ struct lector
     map<int,list<int>> defs;
     list<int>* lista; ///@optim vector?
     map<string,int> tabla;
+    map<string,int> tablaMem;
     int extra;
 
-    int piezaSize,movSize;
+    int memPiezaSize;
 
     void centinela(string,char);
     void tokenizarPalabra(string);

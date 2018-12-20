@@ -13,9 +13,14 @@ struct Pieza{
     int id; //para hacer copias
     int sn;
 
-    vector<operador*> movs;
+    struct base{
+        operador* raiz;
+        int memLocalSize;
+    };
+    vector<base> movs;
 
     int memPiezaSize;
+
 
     Pieza(int,int,int);
 };
