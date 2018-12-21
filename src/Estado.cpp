@@ -116,12 +116,23 @@ Proper::Proper(int id_,int sel1,int sel2)
     asterisco.setPosition(515,450);
     asterisco.setColor(Color::Black);
     asterisco.setString("*");
-    init();
 
+    backGroundMemLocal.setFillColor(sf::Color(240,235,200));
+    backGroundMemLocal.setOutlineColor(sf::Color(195,195,175));
+    backGroundMemLocal.setOutlineThickness(4);
+    backGroundMemLocal.setPosition(521,411);
+    backGroundMemLocal.setSize(Vector2f(20,40));
+    textValMemLocal.setColor(Color::Black);
+    textValMemLocal.setFont(j->font);
+
+
+    init();
 }
 
 void Proper::init(){
     clickers.clear();
+    memMov.resize(0);
+    maxMemMovSize=0;
 
     if(lect.archPiezas.is_open())
         lect.archPiezas.close();
@@ -133,11 +144,12 @@ void Proper::init(){
 
     lect.cargarDefs();
 
-    ///tiles de debug
+    //esto esta aca porque escala se setea en armar
     posPieza.setSize(Vector2f(32*escala,32*escala));
     posActGood.setSize(Vector2f(32*escala,32*escala));
     posActBad.setSize(Vector2f(32*escala,32*escala));
-    textDebug.setScale(escala/2.5,escala/2.5);
+
+
 
     piezas.clear();
     cout<<"-----"<<endl;
@@ -185,13 +197,29 @@ void Proper::draw(){
         window->draw(turnoBlanco);
     else
         window->draw(turnoNegro);
-    if(drawDebugTiles){
+    if(drawDebugTiles){ ///@optim funcion aparte
         window->draw(posPieza);
         window->draw(*tileActDebug);
         window->draw(textDebug);
-        if(drawAsterisco)
+        if(drawAsterisco){
             window->draw(asterisco);
             drawAsterisco=false;
+        }
+        if(memMov.size()){
+            ///@estetica provisorio, supongo que algo mas lindo seria hacer un wrapper como para los posicionales
+            ///lo complicado sería marcar el cambio, se puede hacer no creo que valga la pena
+            ///ver cuando haga el editor y esas cosas
+            for(int i=0;i<memMov.size();i++){
+                backGroundMemLocal.setPosition(Vector2f(530+25*i,405));
+                window->draw(backGroundMemLocal);
+            }
+            for(int i=0;i<memMov.size();i++){
+                textValMemLocal.setPosition(530+25*i,410);
+                textValMemLocal.setString(string(1,memMov[i]+48));
+                window->draw(textValMemLocal);
+            }
+        }
+
     }
 }
 

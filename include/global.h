@@ -91,6 +91,8 @@ extern RectangleShape* tileActDebug;
 extern RectangleShape posPieza;
 extern RectangleShape posActGood;
 extern RectangleShape posActBad;
+extern RectangleShape backGroundMemLocal;
+extern Text textValMemLocal;
 
 extern unordered_set<Base*> basesAActualizar;
 extern bool memcambios;

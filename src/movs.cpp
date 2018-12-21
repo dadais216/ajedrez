@@ -211,6 +211,9 @@ fabCond(outbounds,
     return hAct->outbounds;
 )
 
+RectangleShape backGroundMemLocal;
+Text textValMemLocal;
+
 RectangleShape posPieza;
 RectangleShape posActGood;
 RectangleShape posActBad;
@@ -247,7 +250,7 @@ struct debugMov:public condt{
         drawScreen();
         drawDebugTiles=false;
 
-        //como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
+        ///@cleanup como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
         while(true){
             sleep(milliseconds(mil));
             if(!window->hasFocus()) continue;
