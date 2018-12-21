@@ -13,6 +13,8 @@ bool clickExplicit;///cuando se usa click explicitamente no se pone un click imp
 
 string str_cmp="cmp";
 string str_set="set";
+string str_add="add";
+string str_less="less";
 
 normal::normal(bool make){
     tipo=NORMAL;
@@ -70,6 +72,8 @@ normal::normal(bool make){
     //       colorr(numShow);
             case lector::mcmp:
             case lector::mset:
+            case lector::madd:
+            case lector::mless:
                 {
                     int a1=tokens.front();tokens.pop_front();
                     int i1=tokens.front()-1000;tokens.pop_front();
@@ -91,6 +95,14 @@ normal::normal(bool make){
                         conds.push_back(new mcond<locala,locala,mset<locala,locala>,&str_set>(locala(i1),locala(i2)));
                     else if(CMP(mset,mlocal,mcte))
                         conds.push_back(new mcond<locala,ctea,mset<locala,ctea>,&str_set>(locala(i1),ctea(i2)));
+                    else if(CMP(madd,mlocal,mlocal))
+                        conds.push_back(new mcond<locala,locala,madd<locala,locala>,&str_add>(locala(i1),locala(i2)));
+                    else if(CMP(madd,mlocal,mcte))
+                        conds.push_back(new mcond<locala,ctea,madd<locala,ctea>,&str_add>(locala(i1),ctea(i2)));
+                    else if(CMP(mless,mlocal,mlocal))
+                        conds.push_back(new mcond<locala,locala,mless<locala,locala>,&str_less>(locala(i1),locala(i2)));
+                    else if(CMP(mless,mlocal,mcte))
+                        conds.push_back(new mcond<locala,ctea,mless<locala,ctea>,&str_less>(locala(i1),ctea(i2)));
                     else{
                         cout<<"operacion de memoria invalida\n";
                         exit(EXIT_FAILURE);

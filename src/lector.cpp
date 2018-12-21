@@ -37,6 +37,8 @@ lector::lector(){
     #define rel(T) tablaMem[#T]=T
     rel(mcmp);
     rel(mset);
+    rel(madd);
+    rel(mless);
     #undef rel
     lista=nullptr;
 }
@@ -139,6 +141,8 @@ enPieza:
             CASE(outbounds);
             CASE(mcmp);
             CASE(mset);
+            CASE(madd);
+            CASE(mless);
             CASE(mlocal);
             CASE(mpieza);
             CASE(mcte);
@@ -336,11 +340,7 @@ void lector::tokenizarPalabra(string linea){
                 }
                 lista->push_back(num+1000);
             }
-            do{
-                    cout<<"-"<<linea[j]<<"+"<<linea[j+1]<<endl;
-                    j++;
-            }while(linea[j]==' ');
-            i=--j;
+            i=j;
             return;
         }
     if(lista!=&tokens){ //se esta llamando desde cargarDefs

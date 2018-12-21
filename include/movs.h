@@ -81,6 +81,17 @@ template<typename ma1,typename ma2> bool mset(ma1 a1,ma2 a2){
     *a1.val()=*a2.val();
     return true;
 }
+template<typename ma1,typename ma2> bool madd(ma1 a1,ma2 a2){
+    cout<<*a1.val()<<" += "<<*a2.val()<<endl;
+    *a1.val()+=*a2.val();
+    return true;
+}
+template<typename ma1,typename ma2> bool mless(ma1 a1,ma2 a2){
+    cout<<*a1.val()<<" < "<<*a2.val()<<endl;
+    return *a1.val()<*a2.val();
+}
+
+
 struct locala;
 
 #endif // MOVS_H

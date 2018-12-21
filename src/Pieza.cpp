@@ -155,7 +155,7 @@ void Holder::generar(){
     for(movHolder* m:movs){
         offset=tile->pos;
         ///@optim ver si resulta comodo para el lenguaje hacer que la memoria de movimiento arranque en 0
-        memset(memMov.data(),0,m->base.movSize);
+        memset(memMov.data(),0,m->base.movSize*sizeof(int));
         m->generar();
     }
 }
