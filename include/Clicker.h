@@ -18,7 +18,6 @@ struct Clicker{
     //void activacion(int);
     //int val,mod;
     void accionar();
-    void debug();
     Holder* h;
 };
 
