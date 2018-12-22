@@ -135,6 +135,7 @@ normal::normal(bool make){
             default:
                 tokens.push_front(tok);
                 sig=tomar();
+                hasClick=sig->hasClick;
                 goto then;
             }
         }

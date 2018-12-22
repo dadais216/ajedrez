@@ -12,14 +12,13 @@ movHolder::movHolder(Holder* h_,operador* org,Base* base_){
     hasClick=op->hasClick;
 }
 void movHolder::generarSig(){
+    //se llama cuando valor == true
     if(sig){
         sig->generar();
-        continuar=hasClick||sig->continuar;
-        allTheWay=sig->continuar&&sig->allTheWay;
-    }else{
-        continuar=true;
-        allTheWay=true;
-    }
+        valorCadena=hasClick||sig->valorCadena;
+        valorFinal=sig->valorFinal;//sig->valorCadena&&
+    }else
+        valorFinal=valorCadena=true;
 }
 normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
 :movHolder(h_,org,base_){
@@ -47,7 +46,7 @@ void normalHolder::generar(){
 
     for(condt* c:n->conds)
         if(!c->check()){
-            allTheWay=continuar=valido=false;
+            valorFinal=valorCadena=valor=false;
             return;
         }
     ///@optim aca podría haber un switch para tirar los triggers de pos y mem, no sé si es mejor que tenerlos spameados en los cond
@@ -61,7 +60,7 @@ void normalHolder::generar(){
 
     offset=n->lastPos+offset;
 
-    valido=true;
+    valor=true;
     generarSig();
 }
 void normalHolder::reaccionar(normalHolder* nh){
@@ -75,12 +74,8 @@ void normalHolder::reaccionar(normalHolder* nh){
         ///una pieza va y vuelve, y por ahi eso se puede manejar haciendo que active el trigger dos veces o alguna otra cosa.
         ///en estos casos sería mas ineficiente porque se hace el recorrido dos veces, pero son casos muy raros. El general seria
         ///mas eficiente porque se salta un recalculo de una normal entera
-    }else if(valido&&sig){
-        sig->reaccionar(nh);
-        if(switchToGen){
-            continuar=hasClick||sig->continuar;
-            allTheWay=sig->continuar&&sig->allTheWay;
-        }
+    }else if(valor){
+        reaccionarSig(nh);
     }
 }
 void normalHolder::reaccionar(vector<normalHolder*> nhs){
@@ -94,12 +89,8 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
             return;
         }
     }
-    if(valido&&sig){
-        sig->reaccionar(nhs);
-        if(switchToGen){
-            continuar=hasClick||sig->continuar;
-            allTheWay=sig->continuar&&sig->allTheWay;
-        }
+    if(valor){
+        reaccionarSig(nhs);
     }
 }
 
@@ -108,7 +99,7 @@ void normalHolder::accionar(){
         ac->func();
 }
 void normalHolder::cargar(vector<normalHolder*>* norms){
-    if(!continuar) return;
+    if(!valorCadena) return;///@optim poner if antes de llamada
     norms->push_back(this);
     //cout<<"#"<<makeClick<<"  ";
     if(makeClick)
@@ -120,42 +111,27 @@ void normalHolder::draw(){
     for(colort* c:colors)
         c->draw();
 }
-void normalHolder::debug(){
-}
 deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_)
 :movHolder(h_,org,base_){
     movs.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
     movs.push_back(crearMovHolder(h,org->inside,&base));
-    valido=true;///desliz es siempre valido
-    hasClick=org->inside->hasClick;
-}
-void deslizHolder::generarSig(){
-    if(sig){
-        sig->generar();
-        continuar=hasClick||sig->continuar;
-        allTheWay=sig->continuar&&sig->allTheWay;
-    }else{
-        continuar=lastNotFalse||f!=0;
-        allTheWay=continuar; //salva algunos casos de bucles infinitos como desopt desliz A end or B end
-    }
 }
 void deslizHolder::generar(){
     lastNotFalse=false;
-    for(int i=0;;){
-        movHolder* act=movs[i];
+    movHolder* act;
+    int i=0;
+    for(;;){
+        act=movs[i];
         act->generar();
-        if(!act->continuar){
-            f=i;
+        if(!act->valorFinal)
             break;
-        }else if(!act->allTheWay){
-            lastNotFalse=true;
-            f=i;
-            break;
-        }
         i++;
         if(movs.size()==i)
             movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
     }
+    if(act->valorCadena)
+        lastNotFalse=true;
+    f=i;
     generarSig();
 }
 int x=0;
@@ -166,36 +142,21 @@ void deslizReaccionar(auto nh,deslizHolder* $){
         act->reaccionar(nh);
         if(switchToGen){
             $->lastNotFalse=false;
-            if(act->allTheWay){
+            for(;act->valorFinal;){
                 i++;
                 if($->movs.size()==i)
                     $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
-                for(;;){
-                    act=$->movs[i];
-                    act->generar();
-                    if(!act->continuar){
-                        $->f=i;
-                        break;
-                    }else if(!act->allTheWay){
-                        $->lastNotFalse=true;
-                        $->f=i;
-                        break;
-                    }
-                    i++;
-                    if($->movs.size()==i)
-                        $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
-                }
-            }else if(act->continuar){
+                act=$->movs[i];
+                act->generar();
+            }
+            if(act->valorCadena)
                 $->lastNotFalse=true;
-                $->f=i;
-            }else
-                $->f=i;
+            $->f=i;
             $->generarSig();
             return;
         }
     }
-    if($->sig)
-        $->sig->reaccionar(nh);
+    $->reaccionarSig(nh);
 }
 void deslizHolder::reaccionar(normalHolder* nh){
     deslizReaccionar(nh,this);
@@ -204,9 +165,8 @@ void deslizHolder::reaccionar(vector<normalHolder*> nhs){
     deslizReaccionar(nhs,this);
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
-    if(!continuar) return;
-    int limit=lastNotFalse?f+1:f;
-    for(int i=0;i<limit;i++){
+    if(!valorCadena) return;
+    for(int i=0;i<(lastNotFalse?f+1:f);i++){
         movs[i]->cargar(norms);
     }
     if(makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
@@ -214,15 +174,9 @@ void deslizHolder::cargar(vector<normalHolder*>* norms){
     if(sig)
         sig->cargar(norms);
 }
-void deslizHolder::debug(){
-    for(movHolder* m:movs)
-        if(m->valido)
-            m->debug();
-}
 excHolder::excHolder(Holder* h_,exc* org,Base* base_)
 :movHolder(h_,org,base_){
     ops.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
-
     for(operador* opos:org->ops)
         ops.push_back(crearMovHolder(h,opos,&base));
 }
@@ -231,14 +185,14 @@ void excHolder::generar(){
     for(i=0;i<ops.size();i++){
         movHolder* branch=ops[i];
         branch->generar();
-        if(branch->continuar){
-            valido=true;
-            actualBranch=i; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que continuar==true
+        if(branch->valorCadena){
+            valor=true;
+            actualBranch=i; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que valorCadena==true
             generarSig();
             return;
         }
     }
-    continuar=valido=false;
+    valorFinal=valorCadena=valor=false;
     actualBranch=i-1;
 }
 void excReaccionar(auto nh,excHolder* $){
@@ -246,33 +200,33 @@ void excReaccionar(auto nh,excHolder* $){
         movHolder* branch=$->ops[i];
         branch->reaccionar(nh);
         if(switchToGen){
-            if(!branch->continuar){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
+            if(!branch->valorCadena){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
                 int j;
                 for(j=0;j<$->ops.size();j++){
                     if(i!=j){
                         movHolder* brancj=$->ops[j];
                         brancj->generar();
-                        if(brancj->continuar){
-                            $->valido=true;
+                        if(brancj->valorCadena){
+                            $->valor=true;
                             $->actualBranch=j;
                             $->generarSig();
                             return;
                         }
                     }
                 }
-                $->continuar=$->valido=false;
+                $->valorCadena=$->valor=false;
                 $->actualBranch=j-1;
                 return;
             }else{ ///se valido una rama que era invalida
                 $->actualBranch=i;
-                $->valido=true;
+                $->valor=true;
                 $->generarSig();
                 return;
             }
         }
     }
-    if($->valido&&$->sig)
-        $->sig->reaccionar(nh);
+    if($->valor)
+        $->reaccionarSig(nh);
 }
 void excHolder::reaccionar(normalHolder* nh){
     excReaccionar(nh,this);
@@ -281,19 +235,18 @@ void excHolder::reaccionar(vector<normalHolder*> nhs){
     excReaccionar(nhs,this);
 }
 void excHolder::cargar(vector<normalHolder*>* norms){
-    if(!continuar) return;
+    if(!valorCadena) return;
     ops[actualBranch]->cargar(norms);
     if(makeClick)
         clickers.push_back(new Clicker(norms,h));
     if(sig)
         sig->cargar(norms);
 }
-void excHolder::debug(){}
 isolHolder::isolHolder(Holder* h_,isol* org,Base* base_)
 :movHolder(h_,org,base_){
     inside=crearMovHolder(h_,org->inside,base_);
     selfCount=0;
-    allTheWay=continuar=valido=true;
+    valorFinal=valorCadena=true;
 }
 void isolHolder::generar(){
     tempPos=offset;
@@ -301,7 +254,7 @@ void isolHolder::generar(){
     offset=tempPos;
     if(sig){
         sig->generar();
-        allTheWay=sig->allTheWay;
+        valorFinal=sig->valorFinal;
     }
 }
 void isolReaccionar(auto nh,isolHolder* $){
@@ -325,7 +278,6 @@ void isolHolder::reaccionar(vector<normalHolder*> nhs){
 void isolHolder::cargar(vector<normalHolder*>* norms){
     if(selfCount<isolCount){
         selfCount=isolCount;
-
         vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
         inside->cargar(&normExt);
         if(makeClick)
@@ -334,7 +286,6 @@ void isolHolder::cargar(vector<normalHolder*>* norms){
     if(sig)
         sig->cargar(norms);
 }
-void isolHolder::debug(){}
 
 node::node(movHolder* m):mh(m){}
 desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
@@ -342,7 +293,6 @@ desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
     nodes.reserve(org->ops.size()*sizeof(node));///@todo @optim temporal, eventualmente voy a usar buckets
     for(operador* opos:org->ops)
         nodes.emplace_back(crearMovHolder(h,opos,&base));
-    valido=true;
     memAct.resize(base.movSize);
 }
 struct dataPass{
@@ -358,7 +308,7 @@ void generarNodos(vector<node*>& nodes,dataPass& dp){
     v offsetAct=offset;
     for(node* n:nodes){
         n->mh->generar();
-        if(n->mh->allTheWay)
+        if(n->mh->valorFinal)
             generarNodos(n->nodes,dp);
         offset=offsetAct;
     }
@@ -370,7 +320,7 @@ void desoptHolder::generar(){
     memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
     for(node& n:nodes){
         n.mh->generar();
-        if(n.mh->allTheWay)
+        if(n.mh->valorFinal)
             generarNodos(n.nodes,dp);
         offset=offsetAct;
         memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
@@ -381,7 +331,7 @@ void reaccionarNodos(auto nh,vector<node*>& nodes,dataPass& dp){
     for(node* n:nodes){
         n->mh->reaccionar(nh);
         if(switchToGen){
-            if(n->mh->allTheWay)
+            if(n->mh->valorFinal)
                 generarNodos(n->nodes,dp);
             switchToGen=false;
             continue;
@@ -394,7 +344,7 @@ void desoptReaccionar(auto nh,desoptHolder* $){
     for(node n:$->nodes){
         n.mh->reaccionar(nh);
         if(switchToGen){
-            if(n.mh->allTheWay)
+            if(n.mh->valorFinal)
                 generarNodos(n.nodes,dp);
             switchToGen=false;
             continue;
@@ -412,7 +362,7 @@ void cargarNodos(vector<node*>& nodes,vector<normalHolder*>* norms){
     int res=norms->size();
     for(node* n:nodes){
         n->mh->cargar(norms);
-        if(n->mh->allTheWay)
+        if(n->mh->valorFinal)
             cargarNodos(n->nodes,norms);
         norms->resize(res);
     }
@@ -422,14 +372,13 @@ void desoptHolder::cargar(vector<normalHolder*>* norms){
     norms->reserve(100);///@todo buckets
     for(node& n:nodes){
         n.mh->cargar(norms);
-        if(n.mh->allTheWay)
+        if(n.mh->valorFinal)
             cargarNodos(n.nodes,norms);
         norms->resize(res);
     }
     if(sig)
         sig->cargar(norms);
 }
-void desoptHolder::debug(){}
 /*
 desopt actua como un isol respecto a lo que esta antes y despues.
 De no hacerlo todo lo que venga despues tendria que agregarse al final de cada rama, lo que no
@@ -441,6 +390,5 @@ A desopt BD c A , CD c A end
 Esto refleja lo que se hace y no oscurece la cantidad de calculos distintos que se hacen
 (de la otra forma se podría pensar que D y A se calculan una vez en lugar de por cada rama)
 @testarVelocidad con A a la izquierda, sin partir con c
-
 
 */

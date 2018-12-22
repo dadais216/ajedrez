@@ -144,7 +144,7 @@ int isolCount=0;
 void Holder::makeCli(){
     isolCount++;
     for(movHolder* b:movs){
-        if(!b->continuar) continue;
+        if(!b->valorCadena) continue;
         vector<normalHolder*>* normales=new vector<normalHolder*>;
         b->cargar(normales);
     }

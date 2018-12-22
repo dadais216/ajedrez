@@ -15,16 +15,24 @@ struct movHolder{
     virtual void reaccionar(normalHolder*)=0;
     virtual void reaccionar(vector<normalHolder*>)=0;
     virtual void cargar(vector<normalHolder*>*)=0;
-    virtual void debug()=0;
     void generarSig();
+    template<typename T> void reaccionarSig(T nhs){
+        if(sig){
+            sig->reaccionar(nhs);
+            if(switchToGen){
+                valorCadena=hasClick||sig->valorCadena;
+                valorFinal=sig->valorFinal;
+            }
+        }
+    }
     Holder* h;
     movHolder* sig;
     Base base;
-    bool valido;
-    bool continuar;
-    bool allTheWay;///@optim meter estos bools en una variable?
+    bool valorCadena; //la cadena de movholders es valida. Una cadena va desde la base hasta un clicker o el final
+    bool valorFinal;  //se llegó al final. Esto sirve para saber si seguir iterando en un desliz
     bool makeClick;
     bool hasClick;
+    ///@optim meter estos bools en una variable
 };
 struct normalHolder:public movHolder{
     normalHolder(Holder*,normal*,Base*);//supongo que ni bien se crea el op le copias las accs
@@ -34,9 +42,9 @@ struct normalHolder:public movHolder{
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
-    virtual void debug();
     void draw();
     void accionar();///desencadena los acct
+    bool valor;       //las condiciones del movholder son verdaderas, las acciones guardadas validas
     v offsetAct;
     vector<int> memAct;
     //no separo entre piezas con y sin memoria porque duplicaria mucho codigo.
@@ -44,12 +52,10 @@ struct normalHolder:public movHolder{
 };
 struct deslizHolder:public movHolder{
     deslizHolder(Holder*,desliz*,Base*);
-    void generarSig();
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
-    virtual void debug();
     vector<movHolder*> movs;
     int f;
     bool lastNotFalse;
@@ -60,9 +66,9 @@ struct excHolder:public movHolder{
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
-    virtual void debug();
     vector<movHolder*> ops;
     int actualBranch;
+    bool valor;
 };
 struct isolHolder:public movHolder{
     isolHolder(Holder*,isol*,Base*);
@@ -70,7 +76,6 @@ struct isolHolder:public movHolder{
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
-    virtual void debug();
     movHolder* inside;
     int selfCount;
     v tempPos;
@@ -86,7 +91,6 @@ struct desoptHolder:public movHolder{
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
-    virtual void debug();
     vector<node> nodes;
     vector<int> memAct;
 };

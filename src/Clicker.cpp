@@ -128,8 +128,4 @@ void Clicker::activacion(int clickI)
 }
 
 */
-void Clicker::debug(){
-    for(normalHolder* n:normales)
-        n->debug();
-}
 
