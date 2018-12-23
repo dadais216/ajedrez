@@ -371,6 +371,7 @@ void lector::tokenizarCaracter(char c){
         }
         break;
     case '\0':
+    case '#':
         if(doEsp)
         {
             lista->push_back(esp);

@@ -135,7 +135,7 @@ normal::normal(bool make){
             default:
                 tokens.push_front(tok);
                 sig=tomar();
-                hasClick=sig->hasClick;
+                //hasClick=sig->hasClick;
                 goto then;
             }
         }
@@ -153,7 +153,15 @@ desliz::desliz(){
     makeClick=false;
     inside=tomar();
     sig=keepOn(&makeClick);
-    hasClick=makeClick||inside->hasClick;
+
+    if(makeClick)
+        hasClick=true;
+    else
+        for(operador* op=inside;op!=nullptr;op=op->sig)
+            if(op->hasClick){
+                hasClick=true;
+                break;
+            }
 }
 exc::exc(){
     tipo=EXC;
@@ -165,7 +173,7 @@ exc::exc(){
     makeClick=false;
     sig=keepOn(&makeClick);
     if(makeClick)
-        hasClick=makeClick;
+        hasClick=true;
     else{
         hasClick=false;
         for(operador* op:ops)
@@ -180,7 +188,11 @@ isol::isol(){
     tipo=ISOL;
     hasClick=true;
     makeClick=false;
+    bool clickExplicitBack=clickExplicit;
     inside=tomar();
+    if(!clickExplicit)
+        makeClick=true;
+    clickExplicit=clickExplicitBack;
     sig=keepOn(&makeClick);
 }
 desopt::desopt(){

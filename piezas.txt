@@ -59,11 +59,11 @@ end
 
 :9 1 #cuadrados bien
 desliz ssaan madd l1 4 \
-mset l0 0 desliz mless l0 l1 madd l0 1 wn isol esp mover c end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 dn isol esp mover c end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 sn isol esp mover c end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 an isol esp mover c end end \
-mless l1 28 end
+mset l0 0 desliz mless l0 l1 madd l0 1 wn isol esp mover end end \
+mset l0 0 desliz mless l0 l1 madd l0 1 dn isol esp mover end end \
+mset l0 0 desliz mless l0 l1 madd l0 1 sn isol esp mover end end \ #blablabla
+mset l0 0 desliz mless l0 l1 madd l0 1 an isol esp mover end end \
+mless l1 12 end
 
 :10 1 #espiral
 desliz \
