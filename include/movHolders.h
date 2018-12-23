@@ -16,7 +16,7 @@ struct movHolder{
     virtual void reaccionar(vector<normalHolder*>)=0;
     virtual void cargar(vector<normalHolder*>*)=0;
     void generarSig();
-    template<typename T> void reaccionarSig(T nhs){
+    void reaccionarSig(auto nhs){
         if(sig){
             sig->reaccionar(nhs);
             if(switchToGen){
