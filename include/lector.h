@@ -21,8 +21,8 @@ struct lector
                 W,A,S,D,N,
                 mov,capt,spwn,pausa,pass,
                 vacio,pieza,enemigo,esp,outbounds,
-                mcmp,mset,madd,mless,
-                mlocal,mpieza,mcte,
+                mcmp,mset,madd,mless,msize,
+                mlocal,mpieza,
                 desliz,exc,isol,desopt,
                 click,
                 color,sprt,numShow,
@@ -42,6 +42,7 @@ struct lector
     void tokenizarPalabra(string);
     void tokenizarCaracter(char);
     void tokenizarLinea(string);
+    int getNum(string&);
     void cargarDefs();
     void procesarTokens(list<int>&);
 };

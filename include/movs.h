@@ -55,40 +55,48 @@ struct debugInicial:public condt{
     debugInicial();
     virtual bool check();
 };
-///si tarda mucho en compilar hacerlo por polimorfismo, total esta no va a ser la version definitiva
-template<typename ma1,typename ma2,bool(*chck)(ma1,ma2),string* n> struct mcond:public condt{
-    ma1 i1;
-    ma2 i2;
-    mcond(ma1 i1_,ma2 i2_):condt(n),i1(i1_),i2(i2_){}
+struct getter{
+    getter(){}
+    virtual int* val()=0;
+};
+//antes habia una version por combinacion de getters para ahorrarme hacer los getters polimorficos, pero era mucho bloat
+//total no es la version final, no creo que la velocidad lo valga
+//mas que nada lo malo de los templates es que en el constructor de normal habia que discernir cada combinacion posible
+template<bool(*chck)(getter*,getter*),string* n> struct mcond:public condt{
+    getter* i1;
+    getter* i2;
+    mcond(getter* i1_,getter* i2_):condt(n),i1(i1_),i2(i2_){}
     virtual bool check(){
         return chck(i1,i2);
     }
 };
-template<typename ma1,typename ma2,bool(*chck)(ma1,ma2),string* n> struct macc:public macct{
-    ma1 i1;
-    ma2 i2;
-    macc(ma1 i1_,ma2 i2_):macct(n),i1(i1_),i2(i2_){}
+/*
+template<bool(*chck)(ma1,ma2),string* n> struct macc:public macct{
+    getter* i1;
+    getter* i2;
+    macc(getter* i1_,getter* i2_):macct(n),i1(i1_),i2(i2_){}
     virtual bool check(){
         return chck(i1,i2);
     }
 };
-template<typename ma1,typename ma2> bool mcmp(ma1 a1,ma2 a2){
-    cout<<*a1.val()<<" == "<<*a2.val()<<endl;
-    return *a1.val()==*a2.val();
+*/
+inline bool mcmp(getter* a1,getter* a2){
+    cout<<*a1->val()<<" == "<<*a2->val()<<endl;
+    return *a1->val()==*a2->val();
 }
-template<typename ma1,typename ma2> bool mset(ma1 a1,ma2 a2){
-    cout<<*a1.val()<<" <- "<<*a2.val()<<endl;
-    *a1.val()=*a2.val();
+inline bool mset(getter* a1,getter* a2){
+    cout<<*a1->val()<<" <- "<<*a2->val()<<endl;
+    *a1->val()=*a2->val();
     return true;
 }
-template<typename ma1,typename ma2> bool madd(ma1 a1,ma2 a2){
-    cout<<*a1.val()<<" += "<<*a2.val()<<endl;
-    *a1.val()+=*a2.val();
+inline bool madd(getter* a1,getter* a2){
+    cout<<*a1->val()<<" += "<<*a2->val()<<endl;
+    *a1->val()+=*a2->val();
     return true;
 }
-template<typename ma1,typename ma2> bool mless(ma1 a1,ma2 a2){
-    cout<<*a1.val()<<" < "<<*a2.val()<<endl;
-    return *a1.val()<*a2.val();
+inline bool mless(getter* a1,getter* a2){
+    cout<<*a1->val()<<" < "<<*a2->val()<<endl;
+    return *a1->val()<*a2->val();
 }
 
 

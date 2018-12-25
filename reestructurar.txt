@@ -450,6 +450,49 @@ Podría hacer que todo se ejecute en orden, pero tendria que meter un chequeo por
 O no. termina siendo muy no intuitivo, y no creo que atrase demasiado. Ir por la otra, que termina comportandose como se comporta la version final. 
 
 
+--
+
+Algo ahora imposible en el lenguaje es poder armar una lista de tamaño indefinido, y poder recorrerla. Esto es util en bastantes piezas y es algo que debería estar.
+Lo que se necesita especificamente es que un valor indique en que posicion de memoria ejectar un comando (hasta ahora los comandos toman una posicion constante, como l0, y no se puede pasar algo variable como lX)
+
+Una forma de hacerlo es harcodeando algunos operadores, pero haria el lenguaje feo y no se podría acceder a los operadores comunes, a menos que se haga una version especial de cada uno de estos y haya un sistema que los relacione y que se yo. No
+
+Una opcion es algo como
+mdir d0 l0 desliz mshift d0 1 mdist d0 l8 mset d0 0 end #limpiar una lista de 8
+
+habria que agregar 3 operadores y un tipo de memoria (global), d, que sería como un puntero. Este puntero puede apuntar a cualquier tipo de memoria, y se determina a que apunta como mdir. mshift la desplaza, y mdist retorna true si donde apunta es distinto a su segundo parametro. 
+mdir va a tener que usar polimorfismo para saber como desplazarse. (o al menos va a tener 2 versiones, una global y una local, por la forma en que esta armada la memoria).
+Puede que tenga otros problemas con los tipos y demas que no estoy pensando ahora. 
+Puede que sea un poco confuso porque mete la idea de punteros, pero bueno. No es una mala opcion.
+
+Otra opcion es algo como
+desliz mset ll0 0 madd l0 1 mless l0 9 end mset l0 0 #limpiar lista de 8
+
+Este me gusta mas porque es mas intuitivo y no agrega comandos nuevos. Es mas explicito tambien, se lee mejor. 
+Para implementarlo habria que dar la posibilidad de que los accesores puedan tomar accesores en vez de constantes, lo que probablemente se implemente dandoles una nueva version.
+--
+Esto se podría hacer con templates, pero ya es un quilombo y da pie a cambiar todo por polimorfismo. Total esta no es la version final y la diferencia de velocidad no va a ser muy notable. Y puede que el tiempo de compilacion se haga muy largo con templates, a demas de que va a ser un asco escribir eso
+--
+
+Un criterio importante para definir cual usar va a ser cual es mas rapido en la version final, compilada.
+El primero tomaría un puntero a un lugar y lo desplazaria. 
+El segundo accede pasando una variable a un array. 
+Si es un acceso solo son iguales, y creo que despues tambien. Los dos hacen una suma y un acceso, el primero incrementando el puntero y accediendo, el segundo incrementando la base del array por la variable y accediendo. Puede que el primero sea marginalmente mas rapido porque toma una constante en lugar de una variable, pero son practicamente lo mismo.
+
+Me parece que voy a ir por el segundo porque es mas facil de escribir. En el producto final van a ser casi igual de rapidos, asi que no estoy perdiendo nada
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

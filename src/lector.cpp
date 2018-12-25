@@ -7,7 +7,6 @@ lector::lector(){
     extra=0;
     #define rel(T) tabla[#T]=T
     rel(def);
-    rel(color);
     rel(sprt);
     rel(numShow);
     rel(end);
@@ -40,6 +39,11 @@ lector::lector(){
     rel(madd);
     rel(mless);
     #undef rel
+    tablaMem["=="]=mcmp;
+    tablaMem["="]=mset;
+    tablaMem["+="]=madd;
+    tablaMem["<"]=mless;
+
     lista=nullptr;
 }
 
@@ -139,13 +143,13 @@ enPieza:
             CASE(enemigo);
             CASE(esp);
             CASE(outbounds);
+            CASE(msize);
             CASE(mcmp);
             CASE(mset);
             CASE(madd);
             CASE(mless);
             CASE(mlocal);
             CASE(mpieza);
-            CASE(mcte);
             CASE(desliz);
             CASE(exc);
             CASE(isol);
@@ -268,7 +272,7 @@ void lector::tokenizarLinea(string linea){
         case '{': centinela(linea,'{'); break;
         case ',': centinela(linea,','); break;
         case '}': centinela(linea,'}'); break;
-        case '\0': centinela(linea,'\0'); break;///@necesario?
+        case '\0': centinela(linea,'\0'); break;
         case '\\': centinela(linea,'\\'); break;
         default: hayAtras=true;
         }
@@ -281,6 +285,12 @@ void lector::centinela(string linea,char c){
     }
     i++;
     tokenizarCaracter(c);
+}
+int lector::getNum(string& linea){//arranca con j en el primer numero
+    i=j;
+    do{j++;}while(linea[j]>='0'&&linea[j]<='9');
+    string numstr=linea.substr(i,j-1);
+    return stringToInt(numstr);
 }
 void lector::tokenizarPalabra(string linea){
     string palabra=linea.substr(i,j-i);
@@ -298,16 +308,38 @@ void lector::tokenizarPalabra(string linea){
         doEsp=true;
         return;
     }
-    bool esNum=true;///@optim manejar color como mems, es mas eficiente
-    for(char c:palabra)
-        if(c<'0'||c>'9'){
-            esNum=false;
+    if(palabra=="color"){
+        lista->push_back(color);
+        for(int k=0;k<3;k++){
+            do{j++;}while(linea[j]==' ');
+            int num=getNum(linea);
+            lista->push_back(num+1000);
+            }
+        ///@maybe 4 numero opcional para transparencia
+        i=j;
+        return;
+    }else if(palabra=="msize"){
+        do{j++;}while(linea[j]==' ');
+        int num;
+        switch(linea[j]){
+        case 'l': //cargar msize y el valor para determinar memLocalSize en operador
+            lista->push_back(msize);
+            do{j++;}while(linea[j]==' ');
+            num=getNum(linea);
+            if(num>=maxMemMovSize)
+                maxMemMovSize=num;
+            lista->push_back(num+1000);
+            break;
+        case 'p'://determinar memPiezaSize aca, no cargar nada. Lo mismo para las otras memorias
+            do{j++;}while(linea[j]==' ');
+            num=getNum(linea);
+            if(num>=memPiezaSize)
+                memPiezaSize=num;
+            break;
         }
-    if(esNum){
-        lista->push_back(stringToInt(palabra)+1000);
+        i=j;
         return;
     }
-
     for(auto t:tabla)
         if(palabra==t.first){
             lista->push_back(t.second);
@@ -317,26 +349,31 @@ void lector::tokenizarPalabra(string linea){
         if(palabra==t.first){
             lista->push_back(t.second);
             for(int k=0;k<2;k++){
-                do{j++;}while(linea[j]==' ');
-                char c=linea[j];
-                if(c<'0'||c>'9')
+                int directGetter=0;
+                while(true){
                     j++;
-                i=j;
-                while(linea[j]>='0'&&linea[j]<='9')
-                    j++;
-                string numstr=linea.substr(i,j-i);
-                int num=stringToInt(numstr);
-
-                if(c=='l'){
-                    lista->push_back(mlocal);
+                    switch(linea[j]){
+                    case ' ':
+                        continue;
+                    case 'l':
+                        lista->push_back(directGetter=mlocal);break;
+                    case 'p':
+                        lista->push_back(directGetter=mpieza);break;
+                    default:
+                        goto gnum;
+                    }
+                }
+                gnum:
+                int num=getNum(linea);
+                switch(directGetter){
+                case mlocal:
                     if(num>=maxMemMovSize)
                         maxMemMovSize=num+1;
-                }else if(c=='p'){
-                    lista->push_back(mpieza);
+                    break;
+                case mpieza:
                     if(num>=memPiezaSize)
                         memPiezaSize=num+1;
-                }else{
-                    lista->push_back(mcte);
+                    break;
                 }
                 lista->push_back(num+1000);
             }
@@ -372,12 +409,15 @@ void lector::tokenizarCaracter(char c){
         break;
     case '\0':
     case '#':
-        if(doEsp)
-        {
+        if(doEsp){
             lista->push_back(esp);
             doEsp=false;
+            lista->push_back(eol);
+        }else{
+            if(lista->back()!=eol){//no es una linea vacia
+                lista->push_back(eol);
+            }
         }
-        lista->push_back(eol);
         break;
     }
 }
