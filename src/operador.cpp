@@ -70,44 +70,52 @@ normal::normal(bool make){
                 break;
     //       colorr(sprt);
     //       colorr(numShow);
+            case lector::msize:
+                {
+                    int size=tokens.front()-1000;tokens.pop_front();
+                    if(size>memLocalSize)
+                        memLocalSize=size;
+                }
+                break;
             case lector::mcmp:
             case lector::mset:
             case lector::madd:
             case lector::mless:
                 {
-                    int a1=tokens.front();tokens.pop_front();
-                    int i1=tokens.front()-1000;tokens.pop_front();
-                    int a2=tokens.front();tokens.pop_front();
-                    int i2=tokens.front()-1000;tokens.pop_front();
-
-                    ///un poco mas ineficiente que separar por cada uno, pero mas legible
-                    ///@todo agregarle una m al principio a cada accesor para poder meter todo en macros, porque al final \
-                    van a ser como 36 ifs
-                    ///y el debug lo va a duplicar
-                    #define CMP(T,A1,A2) lector::T==tok&&a1==lector::A1&&a2==lector::A2
-                    if(CMP(mcmp,mlocal,mlocal))
-                        conds.push_back(new mcond<locala,locala,mcmp<locala,locala>,&str_cmp>(locala(i1),locala(i2)));
-                    else if(CMP(mcmp,mlocal,mcte))
-                        conds.push_back(new mcond<locala,ctea,mcmp<locala,ctea>,&str_cmp>(locala(i1),ctea(i2)));
-                    else if(CMP(mcmp,mcte,mlocal))
-                        conds.push_back(new mcond<ctea,locala,mcmp<ctea,locala>,&str_cmp>(ctea(i1),locala(i2)));
-                    else if(CMP(mset,mlocal,mlocal))
-                        conds.push_back(new mcond<locala,locala,mset<locala,locala>,&str_set>(locala(i1),locala(i2)));
-                    else if(CMP(mset,mlocal,mcte))
-                        conds.push_back(new mcond<locala,ctea,mset<locala,ctea>,&str_set>(locala(i1),ctea(i2)));
-                    else if(CMP(madd,mlocal,mlocal))
-                        conds.push_back(new mcond<locala,locala,madd<locala,locala>,&str_add>(locala(i1),locala(i2)));
-                    else if(CMP(madd,mlocal,mcte))
-                        conds.push_back(new mcond<locala,ctea,madd<locala,ctea>,&str_add>(locala(i1),ctea(i2)));
-                    else if(CMP(mless,mlocal,mlocal))
-                        conds.push_back(new mcond<locala,locala,mless<locala,locala>,&str_less>(locala(i1),locala(i2)));
-                    else if(CMP(mless,mlocal,mcte))
-                        conds.push_back(new mcond<locala,ctea,mless<locala,ctea>,&str_less>(locala(i1),ctea(i2)));
-                    else{
-                        cout<<"operacion de memoria invalida\n";
-                        exit(EXIT_FAILURE);
+                    getter* g[2];
+                    for(int i=0;i<2;i++){
+                        int tg[5],j;
+                        for(j=0;;j++){
+                            assert(j<5);
+                            tg[j]=tokens.front();tokens.pop_front();
+                            if(tg[j]>=1000)
+                                break;
+                        }
+                        tg[j]-=1000;
+                        if(j==0)
+                            g[i]=new ctea(tg[0]);
+                        else{
+                            switch(tg[j-1]){
+                            case lector::mlocal:
+                                g[i]=new locala(tg[j]);
+                            }
+                            for(int k=j-2;k>=0;k--)//getters indirectos
+                                switch(tg[k]){
+                                case lector::mlocal:
+                                    g[i]=new localai(g[i]);continue;
+                                }
+                        }
                     }
-                    #undef CMP
+                    switch(tok){
+                    case lector::mcmp:
+                        conds.push_back(new mcond<mcmp,&str_cmp>(g[0],g[1]));break;
+                    case lector::mset:
+                        conds.push_back(new mcond<mset,&str_set>(g[0],g[1]));break;
+                    case lector::madd:
+                        conds.push_back(new mcond<madd,&str_add>(g[0],g[1]));break;
+                    case lector::mless:
+                        conds.push_back(new mcond<mless,&str_less>(g[0],g[1]));break;
+                    }
                 }
                 break;
 

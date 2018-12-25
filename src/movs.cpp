@@ -77,31 +77,35 @@ void numShow::debug(){
 vector<int> memMov;
 int maxMemMovSize=0;
 
-struct locala{
+struct locala:public getter{
     int ind;
     locala(int ind_):ind(ind_){
         if(ind>=memLocalSize)
             memLocalSize=ind+1;
     }
-    int* val(){
+    virtual int* val(){
         return &memMov[ind];
     }
 };
-struct ctea{
+struct localai:public getter{
+    getter* g;
+    localai(getter* g_):g(g_){}
+    virtual int* val(){
+        return &memMov[*g->val()];
+    }
+};
+struct ctea:public getter{
     int v;
     ctea(int v_):v(v_){}
-    int* val(){
+    virtual int* val(){
         return &v;
     }
 };
-
+/*
 ///version condt, la version acct necesita un clone() que le guarde el holder.
-template<void(*t2)(int*)> struct piezaa{
+template<void(*t2)(int*)> struct piezaac{
     int ind;
-    piezaa(){
-        ind=tokens.front()-1000;
-        tokens.pop_front();
-    }
+    piezaa(int ind_):ind(ind_){}
     int* val(){
         t2(&ind);//version con y sin triggers
         return &hAct->memPieza[ind];
@@ -112,7 +116,8 @@ inline void dont(int* a){}
 inline void addMemTrigger(int* a){
     *a+=1;
 }
-
+///puede que pisarTrigger sea una funcion aca
+*/
 
 
 /*

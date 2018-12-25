@@ -4,86 +4,23 @@ def mover vacio mov pausa color 20 200 115
 #def passe pass color 235 55 140
 
 :1 1 #ortog
-#desliz {w,wa,a,as,s,sd,d,dw} mover c end
-mset l1 4 desliz ssaan exc esp or mset l2 1 end \
-mset l0 0 desliz mless l0 l1 madd l0 1 wn isol esp mover c end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 dn isol esp mover c end end \
-exc mcmp l2 0 or esp mset l2 0 end \
-mset l0 0 desliz mless l0 l1 madd l0 1 sn isol esp mover c end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 an isol esp mover c end end \
-madd l1 4 end
+{w,a,s,d} mover
 
 :2 1 #torre
-#desliz {w,a,s,d} mover c end
-#desliz w mover c aa mover c end
-desliz w mover c isol desliz a mover c end end end
-desliz w mover c isol desliz d mover c end end end
-desliz a mover c isol desliz s mover c end end end
-desliz a mover c isol desliz w mover c end end end
-desliz s mover c isol desliz a mover c end end end
-desliz s mover c isol desliz d mover c end end end
-desliz d mover c isol desliz s mover c end end end
-desliz d mover c isol desliz w mover c end end end
+#msize l 4 desliz += l0 1 < l0 4 s mover c end
+msize l 4 mset l0 1 desliz mset ll0 8 madd l0 1 mless l0 4 s vacio end mset l0 8 s vacio
 
 :3 3 #alfil
-#desliz {aw,wd,sa,sd} mover c end
-desliz wa mover c end desliz as mover c end
-desliz sa mover c end desliz sd mover c end
-desliz sd mover c end desliz dw mover c end
-desliz dw mover c end desliz wa mover c end
+desliz {aw,wd,sa,sd} mover c end
 
 :4 2 #excguy
-#desopt desliz w mover c end or a mover end
-#desopt exc wa mover or wd mover end c or a mover end
-#desliz d mover c end desopt w mover c or a mover c end
-#desopt w mover c or a mover c end desliz d mover c end 
 desopt aaw mover c or wwa mover c or wwd mover c or ddw mover c end
 desopt aas mover c or ssa mover c or ssd mover c or dds mover c end
 desopt wwa mover c or aaw mover c or aas mover c or ssa mover c end
 desopt wwd mover c or ddw mover c or dds mover c or ssd mover c end
 
-
 :5 5 #emperador
 desliz w end desliz a end \
 desliz isol desliz isol da mover c end d end end s end
-#desliz a mover isol desliz w mover c end end end
-#desliz isol desliz w mover c end end a mover end
-
-:8 1 #cuadrados
-mset l1 5 desliz aaww \
-mset l0 0 desliz mless l0 l1 madd l0 1 dn isol esp mover c end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 sn isol esp mover c end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 an isol esp mover c end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 wn isol esp mover c end end \
-end
-
-:9 1 #cuadrados bien
-desliz ssaan madd l1 4 \
-mset l0 0 desliz mless l0 l1 madd l0 1 wn isol esp mover end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 dn isol esp mover end end \
-mset l0 0 desliz mless l0 l1 madd l0 1 sn isol esp mover end end \ #blablabla
-mset l0 0 desliz mless l0 l1 madd l0 1 an isol esp mover end end \
-mless l1 12 end
-
-:10 1 #espiral
-desliz \
-madd l1 1 mset l0 0 desliz mless l0 l1 dn isol esp mover c end madd l0 1 end mcmp l0 l1 \
-madd l1 1 mset l0 0 desliz mless l0 l1 sn isol esp mover c end madd l0 1 end mcmp l0 l1 \
-madd l1 1 mset l0 0 desliz mless l0 l1 an isol esp mover c end madd l0 1 end mcmp l0 l1 \
-madd l1 1 mset l0 0 desliz mless l0 l1 wn isol esp mover c end madd l0 1 end mcmp l0 l1 \
-mless l1 29 end
-
-:11 1 #alfil rebota
-desliz exc mcmp l0 0 wan or mcmp l0 1 wdn or mcmp l0 2 sdn or mcmp l0 3 san end \
- exc esp mover c or \
-  esp mset l1 1 or \
-  exc mcmp l0 0 sdn exc w sn mset l0 1 or a dn mset l0 3 end or \
-      mcmp l0 1 san exc d an mset l0 2 or s wn mset l0 0 end or \
-      mcmp l0 2 wan exc s wn mset l0 3 or d an mset l0 1 end or \
-      mcmp l0 3 wdn exc a dn mset l0 0 or w sn mset l0 2 end end end mcmp l1 0 end
-
-:7 0 #ortog
-{w,a,s,d} mover
-
 
 

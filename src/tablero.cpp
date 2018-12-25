@@ -74,14 +74,6 @@ void Tile::chargeTriggers(){
     triggers.clear();
 }
 void activateTriggers(){
-    /*
-    for(int i=trigsC.size()-1;i>=0;i--){
-        cout<<"TRIGGERED"<<endl;
-        switchToGen=false;
-        trigsC[i]->base.beg->reaccionar(trigsC[i]);
-    }
-    */
-
     if(trigsC.size()==0) return;
     if(trigsC.size()==1){
         switchToGen=false;
