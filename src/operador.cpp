@@ -106,16 +106,16 @@ normal::normal(bool make){
                                 }
                         }
                     }
+                    #define memCase(F) case lector::m##F: if(debugMode) \
+                        conds.push_back(new debugMem(new mcond<m##F,&str_##F>(g[0],g[1]))); \
+                        else conds.push_back(new mcond<m##F,&str_##F>(g[0],g[1])); break;
                     switch(tok){
-                    case lector::mcmp:
-                        conds.push_back(new mcond<mcmp,&str_cmp>(g[0],g[1]));break;
-                    case lector::mset:
-                        conds.push_back(new mcond<mset,&str_set>(g[0],g[1]));break;
-                    case lector::madd:
-                        conds.push_back(new mcond<madd,&str_add>(g[0],g[1]));break;
-                    case lector::mless:
-                        conds.push_back(new mcond<mless,&str_less>(g[0],g[1]));break;
+                        memCase(cmp);
+                        memCase(set);
+                        memCase(add);
+                        memCase(less);
                     }
+                    #undef memCase
                 }
                 break;
 

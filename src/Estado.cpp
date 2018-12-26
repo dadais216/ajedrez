@@ -120,11 +120,13 @@ Proper::Proper(int id_,int sel1,int sel2)
     backGroundMemLocal.setFillColor(sf::Color(240,235,200));
     backGroundMemLocal.setOutlineColor(sf::Color(195,195,175));
     backGroundMemLocal.setOutlineThickness(4);
-    backGroundMemLocal.setPosition(521,411);
     backGroundMemLocal.setSize(Vector2f(20,40));
+    backGroundMemLocalDebug.setFillColor(sf::Color(163,230,128,150));
+    backGroundMemLocalDebug.setOutlineColor(sf::Color(195,195,175));
+    backGroundMemLocalDebug.setOutlineThickness(4);
+    backGroundMemLocalDebug.setSize(Vector2f(20,40));
     textValMemLocal.setColor(Color::Black);
     textValMemLocal.setFont(j->font);
-
 
     init();
 }
@@ -200,26 +202,27 @@ void Proper::draw(){
     if(drawDebugTiles){ ///@optim funcion aparte
         window->draw(posPieza);
         window->draw(*tileActDebug);
-        window->draw(textDebug);
         if(drawAsterisco){
             window->draw(asterisco);
             drawAsterisco=false;
         }
-        if(memMov.size()){
-            ///@estetica provisorio, supongo que algo mas lindo seria hacer un wrapper como para los posicionales
-            ///lo complicado sería marcar el cambio, se puede hacer no creo que valga la pena
-            ///ver cuando haga el editor y esas cosas
-            for(int i=0;i<memMov.size();i++){
-                backGroundMemLocal.setPosition(Vector2f(530+25*i,405));
-                window->draw(backGroundMemLocal);
-            }
-            for(int i=0;i<memMov.size();i++){
-                textValMemLocal.setPosition(530+25*i,410);
-                textValMemLocal.setString(string(1,memMov[i]+48));
-                window->draw(textValMemLocal);
-            }
+    }
+    if(drawDebugTiles||drawMemDebug){
+        window->draw(textDebug);
+        int memSize=triggerInfo.nh->base.movSize;
+        for(int i=0;i<memSize;i++){
+            backGroundMemLocal.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
+            window->draw(backGroundMemLocal);
         }
-
+        if(getterMemLocalDebug1){
+            getterMemLocalDebug1->drawDebugMem();
+            getterMemLocalDebug2->drawDebugMem();
+        }
+        for(int i=0;i<memSize;i++){
+            textValMemLocal.setPosition(530+25*(i%4),410+45*(i/4-memSize/4));
+            textValMemLocal.setString(to_string(memMov[i]));
+            window->draw(textValMemLocal);
+        }
     }
 }
 

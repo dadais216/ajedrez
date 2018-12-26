@@ -29,7 +29,6 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
     colors.reserve(org->colors.size()*sizeof(colort*));
     for(colort* c:org->colors)
         colors.push_back(c->clone());
-
     memAct.resize(base.movSize);
 }
 v offset;
