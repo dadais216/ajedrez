@@ -49,6 +49,7 @@ struct acct;
 struct condt;
 struct mcondt;
 struct colort;
+struct getter;
 
 
 extern Juego* j;
@@ -91,6 +92,7 @@ extern bool addTrigger;
 
 extern bool debugMode;
 extern bool drawDebugTiles;
+extern bool drawMemDebug;
 extern Text textDebug;
 extern Text asterisco;
 extern bool drawAsterisco;
@@ -99,7 +101,10 @@ extern RectangleShape posPieza;
 extern RectangleShape posActGood;
 extern RectangleShape posActBad;
 extern RectangleShape backGroundMemLocal;
+extern RectangleShape backGroundMemLocalDebug;
 extern Text textValMemLocal;
+extern getter* getterMemLocalDebug1;
+extern getter* getterMemLocalDebug2;
 
 extern unordered_set<Base*> basesAActualizar;
 extern bool memcambios;

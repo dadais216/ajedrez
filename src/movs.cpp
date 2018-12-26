@@ -76,6 +76,7 @@ void numShow::debug(){
 
 vector<int> memMov;
 int maxMemMovSize=0;
+RectangleShape backGroundMemLocalDebug;
 
 struct locala:public getter{
     int ind;
@@ -86,6 +87,11 @@ struct locala:public getter{
     virtual int* val(){
         return &memMov[ind];
     }
+    virtual void drawDebugMem(){
+        int memSize=triggerInfo.nh->base.movSize;
+        backGroundMemLocalDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
+        window->draw(backGroundMemLocalDebug);
+    }
 };
 struct localai:public getter{
     getter* g;
@@ -93,12 +99,26 @@ struct localai:public getter{
     virtual int* val(){
         return &memMov[*g->val()];
     }
+    virtual void drawDebugMem(){
+        int memSize=triggerInfo.nh->base.movSize;
+        int ind=*g->val();
+        backGroundMemLocalDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
+        window->draw(backGroundMemLocalDebug);
+        backGroundMemLocalDebug.setFillColor(sf::Color(178,235,221,150));
+        g->drawDebugMem();
+        backGroundMemLocalDebug.setFillColor(sf::Color(163,230,128,150));
+    }
 };
 struct ctea:public getter{
     int v;
     ctea(int v_):v(v_){}
     virtual int* val(){
         return &v;
+    }
+    virtual void drawDebugMem(){
+            textValMemLocal.setPosition(610,470);
+            textValMemLocal.setString(to_string(v));
+            window->draw(textValMemLocal);
     }
 };
 /*
@@ -228,33 +248,13 @@ bool drawDebugTiles;
 bool ZPressed=false;
 int mil=25;
 extern string strNil="-";
-struct debugMov:public condt{
-    v pos;
+template<bool(*drawBlocks)(condt*,bool)> struct debugWrapper:public condt{
     condt* cond;
-    debugMov(condt* cond_):condt(&strNil){
-        cond=cond_;
-        pos=static_cast<debugMov*>(cond)->pos;
-        ///sospechoso pero es la unica instancia donde se necesita saber la pos de un cond, no vale la pena agregar
-        ///un nivel mas de herencia por esto nomas. Antes de llegar aca hay que filtrar las no posicionales
-    }
+    debugWrapper(condt* cond_):condt(&strNil),cond(cond_){}
     virtual bool check(){
-        v posAct=pos+offset;
         bool ret=cond->check();
         textDebug.setString(*cond->nomb);
-        if(ret){
-            posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
-            tileActDebug=&posActGood;
-            textDebug.setColor(sf::Color(78,84,68,100));
-        }else{
-            posActBad.setPosition(posAct.x*32*escala,posAct.y*32*escala);
-            tileActDebug=&posActBad;
-            textDebug.setColor(sf::Color(240,70,40,240));
-        }
-        posPieza.setPosition(hAct->tile->pos.x*32*escala,hAct->tile->pos.y*32*escala);
-        drawDebugTiles=true;
-        drawScreen();
-        drawDebugTiles=false;
-
+        drawBlocks(cond,ret);
         ///@cleanup como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
         while(true){
             sleep(milliseconds(mil));
@@ -278,9 +278,48 @@ struct debugMov:public condt{
         }
         return ret;
     }
-    virtual void debug(){
-    }
+    virtual void debug(){}
 };
+
+inline bool drawDebugPos(condt* cond,bool ret){
+    v posAct=static_cast<vacio*>(cond)->pos+offset;
+    if(ret){
+        posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
+        tileActDebug=&posActGood;
+        textDebug.setColor(sf::Color(78,84,68,100));
+    }else{
+        posActBad.setPosition(posAct.x*32*escala,posAct.y*32*escala);
+        tileActDebug=&posActBad;
+        textDebug.setColor(sf::Color(240,70,40,240));
+    }
+    posPieza.setPosition(hAct->tile->pos.x*32*escala,hAct->tile->pos.y*32*escala);
+    drawDebugTiles=true;
+    drawScreen();
+    drawDebugTiles=false;
+}
+typedef debugWrapper<drawDebugPos> debugMov;
+bool drawMemDebug;
+getter* getterMemLocalDebug1;
+getter* getterMemLocalDebug2;
+inline bool drawDebugMem(condt* cond,bool ret){
+    struct mock:public condt{
+        getter* i1;
+        getter* i2;
+    };
+    if(ret)
+        textDebug.setColor(sf::Color(78,84,68,100));
+    else
+        textDebug.setColor(sf::Color(240,70,40,240));
+
+    getterMemLocalDebug1=static_cast<mock*>(cond)->i1;
+    getterMemLocalDebug2=static_cast<mock*>(cond)->i2;
+    drawMemDebug=true;
+    drawScreen();
+    drawMemDebug=false;
+    getterMemLocalDebug1=nullptr;
+}
+typedef debugWrapper<drawDebugMem> debugMem;
+
 
 Text asterisco;
 bool drawAsterisco=false;

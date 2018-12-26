@@ -58,6 +58,7 @@ struct debugInicial:public condt{
 struct getter{
     getter(){}
     virtual int* val()=0;
+    virtual void drawDebugMem()=0;
 };
 //antes habia una version por combinacion de getters para ahorrarme hacer los getters polimorficos, pero era mucho bloat
 //total no es la version final, no creo que la velocidad lo valga

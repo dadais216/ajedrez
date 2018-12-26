@@ -317,6 +317,8 @@ void lector::tokenizarPalabra(string linea){
             }
         ///@maybe 4 numero opcional para transparencia
         i=j;
+        if(linea[j]=='\0')
+            lista->push_back(eol);
         return;
     }else if(palabra=="msize"){
         do{j++;}while(linea[j]==' ');
@@ -338,6 +340,8 @@ void lector::tokenizarPalabra(string linea){
             break;
         }
         i=j;
+        if(linea[j]=='\0')
+            lista->push_back(eol);
         return;
     }
     for(auto t:tabla)
@@ -378,6 +382,8 @@ void lector::tokenizarPalabra(string linea){
                 lista->push_back(num+1000);
             }
             i=j;
+            if(linea[j]=='\0')
+                lista->push_back(eol);
             return;
         }
     if(lista!=&tokens){ //se esta llamando desde cargarDefs
@@ -414,7 +420,7 @@ void lector::tokenizarCaracter(char c){
             doEsp=false;
             lista->push_back(eol);
         }else{
-            if(lista->back()!=eol){//no es una linea vacia
+            if(!lista->empty()&&lista->back()!=eol){//no es una linea vacia
                 lista->push_back(eol);
             }
         }

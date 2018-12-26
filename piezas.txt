@@ -8,7 +8,8 @@ def mover vacio mov pausa color 20 200 115
 
 :2 1 #torre
 #msize l 4 desliz += l0 1 < l0 4 s mover c end
-msize l 4 mset l0 1 desliz mset ll0 8 madd l0 1 mless l0 4 s vacio end mset l0 8 s vacio
+#msize l 11 mset l0 1 desliz mset ll0 8 madd l0 1 mless l0 11 end mset l0 8
+msize l 20 mset l0 1 desliz mset ll0 l0 madd l0 1 mless l0 20 end mset l0 0
 
 :3 3 #alfil
 desliz {aw,wd,sa,sd} mover c end
