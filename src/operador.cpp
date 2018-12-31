@@ -115,7 +115,7 @@ normal::normal(bool make){
                                         g[i]=new globalaWrite(tg[j]);
                                     else{
                                         g[i]=new globalaRead(tg[j]);
-                                        setUpPermaMemTriggersPerNormalHolder.push_back(i);
+                                        setUpPermaMemTriggersPerNormalHolder.push_back(make_pair(i,(globalaRead*)g[i]));
                                     }
                                     break;
                                 }
