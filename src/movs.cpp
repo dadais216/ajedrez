@@ -9,16 +9,8 @@ color::color(RectangleShape* rs_,v pos_){
     pos=pos_;
 }
 void color::draw(){
-    rs->setPosition(pos.x*32*escala,pos.y*32*escala);
+    rs->setPosition((pos.x+actualHolder.offset.x)*32*escala,(pos.y+actualHolder.offset.y)*32*escala);
     window->draw(*rs);
-}
-/*
-void color::debug(){
-    cout<<"color "<<(int)rs->getFillColor().r<<" "<<(int)rs->getFillColor().g<<" "<<(int)rs->getFillColor().b<<" "<<pos<<endl;
-}
-*/
-color* color::clone(){
-    return new color(rs,pos);
 }
 list<RectangleShape*> colores;
 colort* normal::crearColor(v pos){
@@ -74,9 +66,20 @@ void numShow::debug(){
 }
 */
 
+
 vector<int> memMov;
+vector<vector<normalHolder*>> memGlobalPermaTriggers;
+vector<int> memGlobal;
 int maxMemMovSize=0;
-RectangleShape backGroundMemLocalDebug;
+RectangleShape backGroundMemDebug;
+
+void doNothing(){}
+void stepMem(){
+    ///pisar trigger
+}
+void triggerMem(){
+    ///poner trigger (solo indirectos)
+}
 
 struct locala:public getter{
     int ind;
@@ -88,9 +91,9 @@ struct locala:public getter{
         return &memMov[ind];
     }
     virtual void drawDebugMem(){
-        int memSize=triggerInfo.nh->base.movSize;
-        backGroundMemLocalDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
-        window->draw(backGroundMemLocalDebug);
+        int memSize=actualHolder.nh->base.movSize;
+        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
+        window->draw(backGroundMemDebug);
     }
 };
 struct localai:public getter{
@@ -100,13 +103,53 @@ struct localai:public getter{
         return &memMov[*g->val()];
     }
     virtual void drawDebugMem(){
-        int memSize=triggerInfo.nh->base.movSize;
+        int memSize=actualHolder.nh->base.movSize;
         int ind=*g->val();
-        backGroundMemLocalDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
-        window->draw(backGroundMemLocalDebug);
-        backGroundMemLocalDebug.setFillColor(sf::Color(178,235,221,150));
+        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
+        window->draw(backGroundMemDebug);
+        backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
-        backGroundMemLocalDebug.setFillColor(sf::Color(163,230,128,150));
+        backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+    }
+};
+struct globala:public getter{
+    int ind;
+    globala(int ind_):ind(ind_){}
+    virtual int* val()=0;
+    virtual void drawDebugMem(){
+        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-memGlobalSize/4)));
+        window->draw(backGroundMemDebug);
+    }
+};
+struct globalaWrite:public globala{
+    globalaWrite(int ind_):globala(ind_){}
+    virtual int* val(){
+        for(normalHolder* nh:memGlobalPermaTriggers[ind])
+            if(nh->h!=actualHolder.h)
+                trigsActivados.push_back(nh);
+        return &memGlobal[ind];
+    }
+};
+struct globalaRead:public globala{
+    globalaRead(int ind_):globala(ind_){}
+    virtual int* val(){
+        return &memGlobal[ind];
+    }
+};
+struct globalai:public getter{
+    getter* g;
+    globalai(getter* g_):g(g_){}
+    virtual int* val(){
+        return &memGlobal[*g->val()];
+    }
+    virtual void drawDebugMem(){
+        //int memSize=triggerInfo.nh->base.movSize;
+        //int ind=*g->val();
+        //backGroundMemLocalDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
+//        window->draw(backGroundMemLocalDebug);
+//        backGroundMemLocalDebug.setFillColor(sf::Color(178,235,221));
+//        g->drawDebugMem();
+//        backGroundMemLocalDebug.setFillColor(sf::Color(163,230,128,150));
     }
 };
 struct ctea:public getter{
@@ -116,11 +159,15 @@ struct ctea:public getter{
         return &v;
     }
     virtual void drawDebugMem(){
-            textValMemLocal.setPosition(610,470);
-            textValMemLocal.setString(to_string(v));
-            window->draw(textValMemLocal);
+            textValMem.setPosition(610,470);
+            textValMem.setString(to_string(v));
+            window->draw(textValMem);
     }
 };
+
+
+
+
 /*
 ///version condt, la version acct necesita un clone() que le guarde el holder.
 template<void(*t2)(int*)> struct piezaac{
@@ -131,14 +178,7 @@ template<void(*t2)(int*)> struct piezaac{
         return &hAct->memPieza[ind];
     }
 };
-///reemplazar int* por triggermem*
-inline void dont(int* a){}
-inline void addMemTrigger(int* a){
-    *a+=1;
-}
-///puede que pisarTrigger sea una funcion aca
 */
-
 
 /*
 struct spwn:public acm{
@@ -158,40 +198,41 @@ struct spwn:public acm{
 };
 */
 
-template<void(*funct)(v,Holder*),string* n> struct acc:public acct{
-    acc(v pos_):acct(n,pos_){}
+template<void(*funct)(v),string* n> struct acc:public acct{
+    v relPos;
+    acc(v pos_):acct(n),relPos(pos_){}
     virtual void func(){
-        funct(pos,h);
-    }
-    virtual acct* clone(Holder* h_){
-        acct* a=new acc(pos);
-        a->h=h_;
-        return a;
+        funct(relPos);
     }
 };
+
 #define fabAcc(NAME,FUNC) \
-inline void NAME##func(v pos,Holder* h){ \
+inline void NAME##func(v relPos){ \
     FUNC \
 }\
 extern string str##NAME=#NAME;\
 typedef acc<NAME##func,&str##NAME> NAME;
 
 fabAcc(mov,
-    h->tile->step++;
-    h->tile->holder=nullptr;
-    h->tile=tablptr->tile(pos);
-    h->tile->holder=h;
+    actualHolder.tile->step++;
+    actualHolder.tile->holder=nullptr;
+    actualHolder.h->tile=tablptr->tile(relPos+actualHolder.offset);
+    actualHolder.h->tile->holder=actualHolder.h;
 )
+
 fabAcc(pausa,
+    ///@optim sacar nh
     drawScreen();
     sleep(milliseconds(40));
 )
 fabAcc(capt,
+    /*
     Tile* captT=tablptr->tile(pos);
     delete captT->holder;
     captT->holder=nullptr;
     captT->step++;
     pisados.push_back(captT);
+    */
 );
 
 
@@ -210,7 +251,7 @@ extern string str##NAME=#NAME;\
 typedef cond<NAME##check,&str##NAME> NAME;
 
 inline /* o no? */ void setTrigger(v pos){
-    tablptr->tile(pos+offset)->triggers.push_back(triggerInfo);
+    tablptr->tile(pos+offset)->triggers.push_back(Trigger{actualHolder.tile,actualHolder.nh,actualHolder.tile->step});
 }
 
 fabCond(vacio,
@@ -224,20 +265,16 @@ fabCond(pieza,
 fabCond(enemigo,
     setTrigger(pos);
     if(tablptr->tile(pos+offset)->holder)
-        return tablptr->tile(pos+offset)->holder->bando!=hAct->bando;
+        return tablptr->tile(pos+offset)->holder->bando!=actualHolder.h->bando;
     return false;
 )
 fabCond(esp,
     v posAct=pos+offset;
-    hAct->outbounds=!(posAct.x>=0&&posAct.x<tablptr->tam.x&&posAct.y>=0&&posAct.y<tablptr->tam.y);
-    return !hAct->outbounds;
-)
-fabCond(outbounds,
-    return hAct->outbounds;
+    return posAct.x>=0&&posAct.x<tablptr->tam.x&&posAct.y>=0&&posAct.y<tablptr->tam.y;
 )
 
-RectangleShape backGroundMemLocal;
-Text textValMemLocal;
+RectangleShape backGroundMem;
+Text textValMem;
 
 RectangleShape posPieza;
 RectangleShape posActGood;
@@ -248,7 +285,7 @@ bool drawDebugTiles;
 bool ZPressed=false;
 int mil=25;
 extern string strNil="-";
-template<bool(*drawBlocks)(condt*,bool)> struct debugWrapper:public condt{
+template<void(*drawBlocks)(condt*,bool)> struct debugWrapper:public condt{
     condt* cond;
     debugWrapper(condt* cond_):condt(&strNil),cond(cond_){}
     virtual bool check(){
@@ -281,7 +318,7 @@ template<bool(*drawBlocks)(condt*,bool)> struct debugWrapper:public condt{
     virtual void debug(){}
 };
 
-inline bool drawDebugPos(condt* cond,bool ret){
+inline void drawDebugPos(condt* cond,bool ret){
     v posAct=static_cast<vacio*>(cond)->pos+offset;
     if(ret){
         posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
@@ -292,16 +329,16 @@ inline bool drawDebugPos(condt* cond,bool ret){
         tileActDebug=&posActBad;
         textDebug.setColor(sf::Color(240,70,40,240));
     }
-    posPieza.setPosition(hAct->tile->pos.x*32*escala,hAct->tile->pos.y*32*escala);
+    posPieza.setPosition(actualHolder.tile->pos.x*32*escala,actualHolder.tile->pos.y*32*escala);
     drawDebugTiles=true;
     drawScreen();
     drawDebugTiles=false;
 }
 typedef debugWrapper<drawDebugPos> debugMov;
 bool drawMemDebug;
-getter* getterMemLocalDebug1;
-getter* getterMemLocalDebug2;
-inline bool drawDebugMem(condt* cond,bool ret){
+getter* getterMemDebug1;
+getter* getterMemDebug2;
+inline void drawDebugMem(condt* cond,bool ret){
     struct mock:public condt{
         getter* i1;
         getter* i2;
@@ -311,12 +348,12 @@ inline bool drawDebugMem(condt* cond,bool ret){
     else
         textDebug.setColor(sf::Color(240,70,40,240));
 
-    getterMemLocalDebug1=static_cast<mock*>(cond)->i1;
-    getterMemLocalDebug2=static_cast<mock*>(cond)->i2;
+    getterMemDebug1=static_cast<mock*>(cond)->i1;
+    getterMemDebug2=static_cast<mock*>(cond)->i2;
     drawMemDebug=true;
     drawScreen();
     drawMemDebug=false;
-    getterMemLocalDebug1=nullptr;
+    getterMemDebug1=nullptr;
 }
 typedef debugWrapper<drawDebugMem> debugMem;
 

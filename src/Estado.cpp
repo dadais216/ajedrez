@@ -75,7 +75,7 @@ Proper::Proper(int id_,int sel1,int sel2)
     :tablero(){
     id=id_;
     j->change(this);
-    debugMode=true;
+    debugMode=false;
 
 
     auto selec=[&](int sel,int bando)->Jugador*
@@ -117,16 +117,16 @@ Proper::Proper(int id_,int sel1,int sel2)
     asterisco.setColor(Color::Black);
     asterisco.setString("*");
 
-    backGroundMemLocal.setFillColor(sf::Color(240,235,200));
-    backGroundMemLocal.setOutlineColor(sf::Color(195,195,175));
-    backGroundMemLocal.setOutlineThickness(4);
-    backGroundMemLocal.setSize(Vector2f(20,40));
-    backGroundMemLocalDebug.setFillColor(sf::Color(163,230,128,150));
-    backGroundMemLocalDebug.setOutlineColor(sf::Color(195,195,175));
-    backGroundMemLocalDebug.setOutlineThickness(4);
-    backGroundMemLocalDebug.setSize(Vector2f(20,40));
-    textValMemLocal.setColor(Color::Black);
-    textValMemLocal.setFont(j->font);
+    backGroundMem.setFillColor(sf::Color(240,235,200));
+    backGroundMem.setOutlineColor(sf::Color(195,195,175));
+    backGroundMem.setOutlineThickness(4);
+    backGroundMem.setSize(Vector2f(20,40));
+    backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+    backGroundMemDebug.setOutlineColor(sf::Color(195,195,175));
+    backGroundMemDebug.setOutlineThickness(4);
+    backGroundMemDebug.setSize(Vector2f(20,40));
+    textValMem.setColor(Color::Black);
+    textValMem.setFont(j->font);
 
     init();
 }
@@ -135,6 +135,9 @@ void Proper::init(){
     clickers.clear();
     memMov.resize(0);
     maxMemMovSize=0;
+    memGlobal.resize(0);
+    memGlobalPermaTriggers.resize(0);
+    memGlobalSize=0;
 
     if(lect.archPiezas.is_open())
         lect.archPiezas.close();
@@ -172,8 +175,8 @@ void Proper::init(){
 
     for(uint i=0; i<lect.matriz.size(); i++){
         for(uint j=0; j<lect.matriz[0].size(); j++){
-            Holder* act=tablero.tile(v(j,i))->holder;
-            if(act) act->generar();
+            Holder* hAct=tablero.tile(v(j,i))->holder;
+            if(hAct) hAct->generar();
         }
     }
     cout<<endl;
@@ -185,7 +188,7 @@ void Proper::init(){
     }
     drawScreen();
 
-
+    //memset(memGlobal.data(),0,memGlobalSize*sizeof(int));
 }
 
 
@@ -209,19 +212,28 @@ void Proper::draw(){
     }
     if(drawDebugTiles||drawMemDebug){
         window->draw(textDebug);
-        int memSize=triggerInfo.nh->base.movSize;
+        int memSize=actualHolder.nh->base.movSize;
         for(int i=0;i<memSize;i++){
-            backGroundMemLocal.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
-            window->draw(backGroundMemLocal);
+            backGroundMem.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
+            window->draw(backGroundMem);
         }
-        if(getterMemLocalDebug1){
-            getterMemLocalDebug1->drawDebugMem();
-            getterMemLocalDebug2->drawDebugMem();
+        for(int i=0;i<memGlobalSize;i++){
+            backGroundMem.setPosition(Vector2f(530+25*(i%4),205+45*(i/4-memGlobalSize/4)));
+            window->draw(backGroundMem);
+        }
+        if(getterMemDebug1){
+            getterMemDebug1->drawDebugMem();
+            getterMemDebug2->drawDebugMem();
         }
         for(int i=0;i<memSize;i++){
-            textValMemLocal.setPosition(530+25*(i%4),410+45*(i/4-memSize/4));
-            textValMemLocal.setString(to_string(memMov[i]));
-            window->draw(textValMemLocal);
+            textValMem.setPosition(530+25*(i%4),410+45*(i/4-memSize/4));
+            textValMem.setString(to_string(memMov[i]));
+            window->draw(textValMem);
+        }
+        for(int i=0;i<memGlobalSize;i++){
+            textValMem.setPosition(530+25*(i%4),210+45*(i/4-memGlobalSize/4));
+            textValMem.setString(to_string(memGlobal[i]));
+            window->draw(textValMem);
         }
     }
 }

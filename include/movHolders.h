@@ -10,7 +10,6 @@ struct Base{ ///datos compartidos de un movimiento entero
 
 struct movHolder{
     movHolder(Holder*,operador*,Base*);
-    operador* op;
     virtual void generar()=0;
     virtual void reaccionar(normalHolder*)=0;
     virtual void reaccionar(vector<normalHolder*>)=0;
@@ -36,8 +35,7 @@ struct movHolder{
 };
 struct normalHolder:public movHolder{
     normalHolder(Holder*,normal*,Base*);//supongo que ni bien se crea el op le copias las accs
-    vector<acct*> accs;
-    vector<colort*> colors;
+    normal* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
@@ -52,6 +50,7 @@ struct normalHolder:public movHolder{
 };
 struct deslizHolder:public movHolder{
     deslizHolder(Holder*,desliz*,Base*);
+    desliz* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
@@ -87,6 +86,7 @@ struct node{
 };
 struct desoptHolder:public movHolder{
     desoptHolder(Holder*,desopt*,Base*);
+    desopt* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);

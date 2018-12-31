@@ -8,8 +8,7 @@
 using namespace std;
 struct Holder;
 
-struct lector
-{
+struct lector{
     lector();
     ifstream archPiezas;
     ifstream archTablero;
@@ -20,9 +19,9 @@ struct lector
     enum token {def,llaveizq,llaveder,coma,lineJoin,
                 W,A,S,D,N,
                 mov,capt,spwn,pausa,pass,
-                vacio,pieza,enemigo,esp,outbounds,
+                vacio,pieza,enemigo,esp,
                 mcmp,mset,madd,mless,msize,
-                mlocal,mpieza,
+                mlocal,mglobal,mpieza,
                 desliz,exc,isol,desopt,
                 click,
                 color,sprt,numShow,

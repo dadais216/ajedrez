@@ -45,7 +45,6 @@ struct Holder{
     vector<movHolder*> movs;
     int id;
     int bando;
-    bool outbounds;
 };
 struct Base;
 movHolder* crearMovHolder(Holder*,operador*,Base*);

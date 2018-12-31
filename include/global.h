@@ -33,6 +33,7 @@ struct Boton;
 struct tablero;
 struct tabl; ///?
 struct Clicker;
+struct Trigger;
 struct operador;
 struct Pieza;
 struct normal;
@@ -48,6 +49,7 @@ struct Base;
 struct acct;
 struct condt;
 struct mcondt;
+struct macct;
 struct colort;
 struct getter;
 
@@ -93,18 +95,14 @@ extern RectangleShape* tileActDebug;
 extern RectangleShape posPieza;
 extern RectangleShape posActGood;
 extern RectangleShape posActBad;
-extern RectangleShape backGroundMemLocal;
-extern RectangleShape backGroundMemLocalDebug;
-extern Text textValMemLocal;
-extern getter* getterMemLocalDebug1;
-extern getter* getterMemLocalDebug2;
+extern RectangleShape backGroundMem;
+extern RectangleShape backGroundMemDebug;
+extern Text textValMem;
+extern getter* getterMemDebug1;
+extern getter* getterMemDebug2;
 
-extern unordered_set<Base*> basesAActualizar;
-extern bool memcambios;
-extern array<int,20> numeros;
-extern vector<Holder*> capturados;
+extern int memGlobalSize;
 
-void resetearValores();
 void drawScreen();
 
 extern bool clickExplicit;
@@ -112,17 +110,22 @@ extern bool switchToGen;
 extern bool confirm;
 extern v offset;
 extern int isolCount;
+extern vector<int> memGlobal;
 extern vector<int> memMov;
 extern int maxMemMovSize;
 extern int memLocalSize;
-extern Holder* hAct;
 
-struct Trigger{
-    Tile* tile; //pos donde estaria la pieza que puso el trigger
-    normalHolder* nh; //puntero al movimiento a recalcular
-    int step; //valor que se contrasta con el step de la tile. Si son el mismo la pieza que puso el trigger esta en el mismo lugar y no se movio, mh es valido
+struct AH{
+    Holder* h;
+    normalHolder* nh;
+    Tile* tile;
+    v offset;
 };
+extern AH actualHolder;
+
+extern vector<normalHolder*> trigsActivados;
 extern Trigger triggerInfo;
+extern vector<vector<normalHolder*>> memGlobalPermaTriggers;
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 

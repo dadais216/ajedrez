@@ -3,6 +3,11 @@
 
 #include "global.h"
 
+struct Trigger{
+    Tile* tile; //pos donde estaria la pieza que puso el trigger
+    normalHolder* nh; //puntero al movimiento a recalcular
+    int step; //valor que se contrasta con el step de la tile. Si son el mismo la pieza que puso el trigger esta en el mismo lugar y no se movio, mh es valido
+};
 
 struct Tile{ //sería mejor usar vectores amigos supongo
     Holder* holder;

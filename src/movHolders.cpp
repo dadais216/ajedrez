@@ -2,12 +2,11 @@
 #include "Clicker.h"
 #include "Pieza.h"
 
-movHolder::movHolder(Holder* h_,operador* org,Base* base_){
+movHolder::movHolder(Holder* h_,operador* op,Base* base_){
     if(!base_->beg)
         base_->beg=this;
     base=*base_;
     h=h_;
-    op=org;
     makeClick=op->makeClick;
     hasClick=op->hasClick;
 }
@@ -22,42 +21,30 @@ void movHolder::generarSig(){
 }
 normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
 :movHolder(h_,org,base_){
-    accs.reserve(org->accs.size()*sizeof(acct*));
-    ///no es la mejor forma pero bueno
-    for(acct* a:org->accs)
-        accs.push_back(a->clone(h));
-    colors.reserve(org->colors.size()*sizeof(colort*));
-    for(colort* c:org->colors)
-        colors.push_back(c->clone());
+    op=org;
+    for(int ind:op->setUpPermaMemTriggersPerNormalHolder)
+        memGlobalPermaTriggers[ind].push_back(this);
     memAct.resize(base.movSize);
 }
 v offset;
-Trigger triggerInfo;
-Holder* hAct;
+AH actualHolder;
 void normalHolder::generar(){
-    const normal* n=static_cast<normal*>(op);
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
     memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
-    hAct=h;
-    triggerInfo.tile=h->tile;
-    triggerInfo.nh=this;
-    triggerInfo.step=h->tile->step;
 
-    for(condt* c:n->conds)
+    actualHolder.h=h;
+    actualHolder.nh=this;
+    actualHolder.tile=h->tile;
+    actualHolder.offset=offset;
+
+    for(condt* c:op->conds)
         if(!c->check()){
             valorFinal=valorCadena=valor=false;
             return;
         }
     ///@optim aca podría haber un switch para tirar los triggers de pos y mem, no sé si es mejor que tenerlos spameados en los cond
 
-    //solo se actualiza la pos porque la accion (y sus parametros si tiene) no varian
-    for(int i=0; i<accs.size(); i++)
-        accs[i]->pos=n->accs[i]->pos+offset;///podria mandar el tile en vez de la pos, pero como no todas las acciones lo usan mientras menos procesado se haga antes mejor
-    ///@optim ver si vale la pena separar accs no pos
-    for(int i=0; i<colors.size(); i++)
-        colors[i]->pos=n->colors[i]->pos+offset;
-
-    offset=n->lastPos+offset;
+    offset=op->lastPos+offset;
 
     valor=true;
     generarSig();
@@ -94,7 +81,11 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
 }
 
 void normalHolder::accionar(){
-    for(acct* ac:accs)
+    actualHolder.h=h;
+    actualHolder.nh=this;
+    actualHolder.offset=offsetAct;
+    actualHolder.tile=h->tile;
+    for(acct* ac:op->accs)
         ac->func();
 }
 void normalHolder::cargar(vector<normalHolder*>* norms){
@@ -107,11 +98,13 @@ void normalHolder::cargar(vector<normalHolder*>* norms){
         sig->cargar(norms);
 }
 void normalHolder::draw(){
-    for(colort* c:colors)
+    actualHolder.offset=offsetAct;
+    for(colort* c:op->colors)
         c->draw();
 }
 deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_)
 :movHolder(h_,org,base_){
+    op=org;
     movs.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
     movs.push_back(crearMovHolder(h,org->inside,&base));
 }
@@ -126,7 +119,7 @@ void deslizHolder::generar(){
             break;
         i++;
         if(movs.size()==i)
-            movs.push_back(crearMovHolder(h,static_cast<desliz*>(op)->inside,&base));
+            movs.push_back(crearMovHolder(h,op->inside,&base));
     }
     if(act->valorCadena)
         lastNotFalse=true;
@@ -144,7 +137,7 @@ void deslizReaccionar(auto nh,deslizHolder* $){
             for(;act->valorFinal;){
                 i++;
                 if($->movs.size()==i)
-                    $->movs.push_back(crearMovHolder($->h,static_cast<desliz*>($->op)->inside,&$->base));
+                    $->movs.push_back(crearMovHolder($->h,$->op->inside,&$->base));
                 act=$->movs[i];
                 act->generar();
             }
@@ -289,6 +282,7 @@ void isolHolder::cargar(vector<normalHolder*>* norms){
 node::node(movHolder* m):mh(m){}
 desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
 :movHolder(h_,org,base_){
+    op=org;
     nodes.reserve(org->ops.size()*sizeof(node));///@todo @optim temporal, eventualmente voy a usar buckets
     for(operador* opos:org->ops)
         nodes.emplace_back(crearMovHolder(h,opos,&base));
