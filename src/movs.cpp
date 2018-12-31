@@ -68,7 +68,7 @@ void numShow::debug(){
 
 
 vector<int> memMov;
-vector<vector<normalHolder*>> memGlobalPermaTriggers;
+vector<vector<pair<normalHolder*,globalaRead*>>> memGlobalPermaTriggers;
 vector<int> memGlobal;
 int maxMemMovSize=0;
 RectangleShape backGroundMemDebug;
@@ -112,30 +112,23 @@ struct localai:public getter{
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
     }
 };
-struct globala:public getter{
-    int ind;
-    globala(int ind_):ind(ind_){}
-    virtual int* val()=0;
-    virtual void drawDebugMem(){
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-memGlobalSize/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct globalaWrite:public globala{
-    globalaWrite(int ind_):globala(ind_){}
-    virtual int* val(){
-        for(normalHolder* nh:memGlobalPermaTriggers[ind])
-            if(nh->h!=actualHolder.h)
-                trigsActivados.push_back(nh);
-        return &memGlobal[ind];
-    }
-};
-struct globalaRead:public globala{
-    globalaRead(int ind_):globala(ind_){}
-    virtual int* val(){
-        return &memGlobal[ind];
-    }
-};
+void globala::drawDebugMem(){
+    backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-memGlobalSize/4)));
+    window->draw(backGroundMemDebug);
+}
+int* globalaWrite::val(){
+    for(pair<normalHolder*,globalaRead*> p:memGlobalPermaTriggers[ind])
+        if(p.first->h!=actualHolder.h)
+            trigsMemToCheck.push_back(p);
+    return &memGlobal[ind];
+}
+int* globalaRead::val(){
+    before=memGlobal[ind];
+    return &memGlobal[ind];
+}
+bool globalaRead::change(){
+    return before!=memGlobal[ind];
+}
 struct globalai:public getter{
     getter* g;
     globalai(getter* g_):g(g_){}

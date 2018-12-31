@@ -52,6 +52,8 @@ struct mcondt;
 struct macct;
 struct colort;
 struct getter;
+struct globalaRead;
+
 
 
 extern Juego* j;
@@ -132,7 +134,8 @@ extern AH actualHolder;
 
 extern vector<normalHolder*> trigsActivados;
 extern Trigger triggerInfo;
-extern vector<vector<normalHolder*>> memGlobalPermaTriggers;
+extern vector<vector<pair<normalHolder*,globalaRead*>>> memGlobalPermaTriggers;
+extern vector<pair<normalHolder*,globalaRead*>> trigsMemToCheck;
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 

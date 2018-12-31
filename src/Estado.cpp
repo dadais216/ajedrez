@@ -75,7 +75,7 @@ Proper::Proper(int id_,int sel1,int sel2)
     :tablero(){
     id=id_;
     j->change(this);
-    debugMode=false;
+    debugMode=true;
 
 
     auto selec=[&](int sel,int bando)->Jugador*

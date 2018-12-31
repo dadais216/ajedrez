@@ -9,14 +9,14 @@ def mover vacio mov pausa color 20 200 115
 :2 1 #torre
 #msize l 4 desliz += l0 1 < l0 4 s mover c end
 #msize l 11 desliz mset ll0 l0 madd l0 1 mless l0 11 end
-mcmp g0 0 desliz {w,a,s,d} mover isol mset g0 1 end end
-mcmp g0 1 desliz {wa,as,sd,dw} mover isol mset g0 0 end end
-
-
+#mcmp g0 0 desliz {w,a,s,d} mover isol mset g0 1 end end
+#mcmp g0 1 desliz {wa,as,sd,dw} mover isol mset g0 0 end end
+w mover mset g0 1
 
 :3 3 #alfil
 #desliz {aw,wd,sa,sd} mover c end
-#exc mcmp g0 1 desliz a mover c end or mcmp g0 2 desliz d mover c end end
+exc mcmp g0 0 desliz a mover c end or mcmp g0 1 desliz d mover c end end
+
 
 :4 2 #excguy
 desopt aaw mover c or wwa mover c or wwd mover c or ddw mover c end

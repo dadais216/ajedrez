@@ -52,6 +52,23 @@ struct getter{
     virtual int* val()=0;
     virtual void drawDebugMem()=0;
 };
+struct globala:public getter{
+    int ind;
+    globala(int ind_):ind(ind_){}
+    virtual int* val()=0;
+    virtual void drawDebugMem();
+};
+struct globalaWrite:public globala{
+    globalaWrite(int ind_):globala(ind_){}
+    virtual int* val();
+};
+struct globalaRead:public globala{//forma que tienen que tener todos los que usen change()
+    globalaRead(int ind_):globala(ind_){}
+    int before;
+    virtual int* val();
+    bool change();
+};
+
 //antes habia una version por combinacion de getters para ahorrarme hacer los getters polimorficos, pero era mucho bloat
 //total no es la version final, no creo que la velocidad lo valga
 //mas que nada lo malo de los templates es que en el constructor de normal habia que discernir cada combinacion posible
