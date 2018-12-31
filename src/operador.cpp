@@ -57,7 +57,6 @@ normal::normal(bool make){
                 cond(pieza);
                 cond(enemigo);
                 case lector::esp: conds.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
-                case lector::outbounds: conds.push_back(new outbounds(pos));break;
     #define acc(TOKEN) case lector::TOKEN: accs.push_back(new TOKEN(pos));break
 
                 acc(mov);
@@ -82,7 +81,13 @@ normal::normal(bool make){
             case lector::madd:
             case lector::mless:
                 {
+                    ///hay 3 tipos de operaciones en memoria no local
+                    ///condiciones que leen
+                    ///acciones que escriben la variable izquierda y leen la derecha
+                    ///@todo condiciones que escriben la variable izquierda y leen la derecha
                     getter* g[2];
+                    bool write=tok==lector::mset||tok==lector::madd;
+                    bool notLocal=write;
                     for(int i=0;i<2;i++){
                         int tg[5],j;
                         for(j=0;;j++){
@@ -92,30 +97,62 @@ normal::normal(bool make){
                                 break;
                         }
                         tg[j]-=1000;
-                        if(j==0)
-                            g[i]=new ctea(tg[0]);
-                        else{
-                            switch(tg[j-1]){
-                            case lector::mlocal:
-                                g[i]=new locala(tg[j]);
-                            }
-                            for(int k=j-2;k>=0;k--)//getters indirectos
-                                switch(tg[k]){
+                        auto asignarGetters=[&](bool write,int i){
+                            if(j==0){
+                                if(!write)
+                                    g[i]=new ctea(tg[0]);
+                                else if(i==0)
+                                    assert(false&&"escritura en constante");
+                            }else{
+                                switch(tg[j-1]){
                                 case lector::mlocal:
-                                    g[i]=new localai(g[i]);continue;
+                                    g[i]=new locala(tg[j]);
+                                    if(i==0)
+                                        notLocal=false;
+                                    break;
+                                case lector::mglobal:
+                                    if(write)
+                                        g[i]=new globalaWrite(tg[j]);
+                                    else{
+                                        g[i]=new globalaRead(tg[j]);
+                                        setUpPermaMemTriggersPerNormalHolder.push_back(i);
+                                    }
+                                    break;
                                 }
-                        }
+                                for(int k=j-2;k>=0;k--)//getters indirectos
+                                    switch(tg[k]){
+                                    case lector::mlocal:
+                                        g[i]=new localai(g[i]);continue;
+                                    case lector::mglobal:
+                                        g[i]=new globalai(g[i]);continue;
+                                    }
+                            }
+                        };
+                        if(i==0)
+                            asignarGetters(write,0);
+                        else
+                            asignarGetters(false,1);
                     }
-                    #define memCase(F) case lector::m##F: if(debugMode) \
+                    if(write&&notLocal){
+                        #define memCase(F) case lector::m##F: accs.push_back(new macc<m##F,&str_##F>(g[0],g[1]));break;
+                        switch(tok){
+                            memCase(set);
+                            memCase(add);
+                        }
+                        #undef memCase
+                    }
+                    else{
+                        #define memCase(F) case lector::m##F: if(debugMode) \
                         conds.push_back(new debugMem(new mcond<m##F,&str_##F>(g[0],g[1]))); \
                         else conds.push_back(new mcond<m##F,&str_##F>(g[0],g[1])); break;
-                    switch(tok){
-                        memCase(cmp);
-                        memCase(set);
-                        memCase(add);
-                        memCase(less);
+                        switch(tok){
+                            memCase(cmp);
+                            memCase(set);
+                            memCase(add);
+                            memCase(less);
+                        }
+                        #undef memCase
                     }
-                    #undef memCase
                 }
                 break;
 

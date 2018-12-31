@@ -47,7 +47,6 @@ struct Holder{
     int id;
     int uniqueId,step;
     int bando;
-    bool outbounds;
 };
 struct Base;
 movHolder* crearMovHolder(Holder*,operador*,Base*);

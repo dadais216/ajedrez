@@ -22,7 +22,6 @@ lector::lector(){
     rel(vacio);
     rel(enemigo);
     rel(pieza);
-    rel(outbounds);
 
     rel(desliz);
     rel(exc);
@@ -142,13 +141,13 @@ enPieza:
             CASE(pieza);
             CASE(enemigo);
             CASE(esp);
-            CASE(outbounds);
             CASE(msize);
             CASE(mcmp);
             CASE(mset);
             CASE(madd);
             CASE(mless);
             CASE(mlocal);
+            CASE(mglobal);
             CASE(mpieza);
             CASE(desliz);
             CASE(exc);
@@ -168,6 +167,8 @@ enPieza:
     cout<<endl;
 
     memMov.resize(maxMemMovSize);
+    memGlobal.resize(memGlobalSize);
+    memGlobalPermaTriggers.resize(memGlobalSize);
 
     Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn,memPiezaSize),pos);
     tokens.clear();
@@ -292,6 +293,7 @@ int lector::getNum(string& linea){//arranca con j en el primer numero
     string numstr=linea.substr(i,j-1);
     return stringToInt(numstr);
 }
+int memGlobalSize;
 void lector::tokenizarPalabra(string linea){
     string palabra=linea.substr(i,j-i);
     cout<<">>>"<<palabra<<"<<<"<<linea[i]<<"\n";
@@ -322,19 +324,21 @@ void lector::tokenizarPalabra(string linea){
         return;
     }else if(palabra=="msize"){
         do{j++;}while(linea[j]==' ');
-        int num;
-        switch(linea[j]){
+        char c=linea[j];
+        do{j++;}while(linea[j]==' ');
+        int num=getNum(linea);
+        switch(c){
         case 'l': //cargar msize y el valor para determinar memLocalSize en operador
             lista->push_back(msize);
-            do{j++;}while(linea[j]==' ');
-            num=getNum(linea);
             if(num>=maxMemMovSize)
                 maxMemMovSize=num;
             lista->push_back(num+1000);
             break;
+        case 'g':
+            if(num>=memGlobalSize)
+                memGlobalSize=num;
+            break;
         case 'p'://determinar memPiezaSize aca, no cargar nada. Lo mismo para las otras memorias
-            do{j++;}while(linea[j]==' ');
-            num=getNum(linea);
             if(num>=memPiezaSize)
                 memPiezaSize=num;
             break;
@@ -361,6 +365,8 @@ void lector::tokenizarPalabra(string linea){
                         continue;
                     case 'l':
                         lista->push_back(directGetter=mlocal);break;
+                    case 'g':
+                        lista->push_back(directGetter=mglobal);break;
                     case 'p':
                         lista->push_back(directGetter=mpieza);break;
                     default:
@@ -373,6 +379,10 @@ void lector::tokenizarPalabra(string linea){
                 case mlocal:
                     if(num>=maxMemMovSize)
                         maxMemMovSize=num+1;
+                    break;
+                case mglobal:
+                    if(num>=memGlobalSize)
+                        memGlobalSize=num+1;
                     break;
                 case mpieza:
                     if(num>=memPiezaSize)

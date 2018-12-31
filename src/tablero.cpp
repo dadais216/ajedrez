@@ -56,45 +56,45 @@ void tabl::drawPieces(){
                 p->draw();
         }
 }
-vector<normalHolder*> trigsC; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
+vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
 void Tile::chargeTriggers(){
     for(Trigger trig:triggers)
         if(trig.step==trig.tile->step){//la pieza que puso el trigger no se movio desde que lo puso
             bool is=false;
-            for(normalHolder* n:trigsC) ///@optim necesario?
+            for(normalHolder* n:trigsActivados) ///@optim necesario?
                 if(n==trig.nh){
                     is=true;
                     break;
                 }
             if(!is)
-                trigsC.push_back(trig.nh);
+                trigsActivados.push_back(trig.nh);
         }
     triggers.clear();
 }
 void activateTriggers(){
-    if(trigsC.size()==0) return;
-    if(trigsC.size()==1){
+    if(trigsActivados.size()==0) return;
+    if(trigsActivados.size()==1){
         switchToGen=false;
-        trigsC[0]->base.beg->reaccionar(trigsC[0]);
+        trigsActivados[0]->base.beg->reaccionar(trigsActivados[0]);
     }
     else{
         ///@optim supongo que volcarlo a una matriz es mas rapido que ordenarlo y trocearlo
-        sort(trigsC.begin(),trigsC.end(),[](normalHolder* a,normalHolder* b)->bool{return a->base.beg<=b->base.beg;});
+        sort(trigsActivados.begin(),trigsActivados.end(),[](normalHolder* a,normalHolder* b)->bool{return a->base.beg<=b->base.beg;});
         int i=0;
-        while(i<trigsC.size()){
+        while(i<trigsActivados.size()){
             switchToGen=false;
-            movHolder* base=trigsC[i]->base.beg;
+            movHolder* base=trigsActivados[i]->base.beg;
             int j=i+1;
-            while(j<trigsC.size()&&trigsC[j]->base.beg==base)
+            while(j<trigsActivados.size()&&trigsActivados[j]->base.beg==base)
                 j++;
             if(j==i+1)
-                base->reaccionar(trigsC[i]);
+                base->reaccionar(trigsActivados[i]);
             else
-                base->reaccionar(vector<normalHolder*>(&trigsC[i],&trigsC[j]));//espero que no haga una copia
+                base->reaccionar(vector<normalHolder*>(&trigsActivados[i],&trigsActivados[j]));//espero que no haga una copia
             i=j;
         }
     }
-    trigsC.clear();
+    trigsActivados.clear();
 }
 
 /*
