@@ -86,15 +86,17 @@ bool Clicker::update(){
             return true;
         }
         */
-        pisados.push_back(h->tile);
+        Tile* tileBef=h->tile;
+        int stepBef=tileBef->step;
         accionar(); //por ahora solo capt agrega a pisados
-        pisados.push_back(h->tile);
 
-
-        for(Tile* tile:pisados){
-            //cout<<"<<<"<<tile->pos<<endl;
-            tile->chargeTriggers();
+        ///@optim esto esta para movimientos que no mueven la pieza, que son una minoria
+        if(tileBef->step!=stepBef){
+            pisados.push_back(tileBef);
+            pisados.push_back(h->tile);
         }
+        for(Tile* tile:pisados)
+            tile->chargeTriggers();
         activateTriggers();
         pisados.clear();
         h->generar();

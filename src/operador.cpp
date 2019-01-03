@@ -22,6 +22,7 @@ normal::normal(bool make){
     sig=nullptr;
     if(make){
         v pos(0,0);
+        bool changeInLocalMem=false,isLocalAcc=false;
         while(true){
             if(tokens.empty()) return;
             int tok=tokens.front();
@@ -86,8 +87,7 @@ normal::normal(bool make){
                     ///acciones que escriben la variable izquierda y leen la derecha
                     ///@todo condiciones que escriben la variable izquierda y leen la derecha
                     getter* g[2];
-                    bool write=tok==lector::mset||tok==lector::madd;
-                    bool notLocal=write;
+                    bool writeNotLocal=tok==lector::mset||tok==lector::madd;
                     for(int i=0;i<2;i++){
                         int tg[5],j;
                         for(j=0;;j++){
@@ -97,49 +97,62 @@ normal::normal(bool make){
                                 break;
                         }
                         tg[j]-=1000;
-                        auto asignarGetters=[&](bool write,int i){
-                            if(j==0){
-                                if(!write)
-                                    g[i]=new ctea(tg[0]);
-                                else if(i==0)
-                                    assert(false&&"escritura en constante");
-                            }else{
-                                switch(tg[j-1]){
-                                case lector::mlocal:
+                        if(j==0){
+                            assert(!(writeNotLocal&&i==0)&&"escritura en constante");
+                            g[i]=new ctea(tg[0]);
+                        }else{
+                            switch(tg[j-1]){
+                            case lector::mlocal:
+                                ///@todo se podría agregar la opcion si no es muy complicado agregar un getter a
+                                ///la copia de memoria del normalholder
+                                if(i==0){
                                     g[i]=new locala(tg[j]);
+                                    if(writeNotLocal)
+                                        changeInLocalMem=true;
+                                    writeNotLocal=false;
+                                }else
+                                    if(writeNotLocal){
+                                        g[i]=new localaAcc(tg[j]);
+                                        isLocalAcc=true;
+                                    }else
+                                        g[i]=new locala(tg[j]);
+                                break;
+                            case lector::mglobal:
+                                if(writeNotLocal)
                                     if(i==0)
-                                        notLocal=false;
-                                    break;
-                                case lector::mglobal:
-                                    if(write)
                                         g[i]=new globalaWrite(tg[j]);
-                                    else{
-                                        g[i]=new globalaRead(tg[j]);
-                                        setUpPermaMemTriggersPerNormalHolder.push_back(make_pair(i,(globalaRead*)g[i]));
-                                    }
-                                    break;
+                                    else
+                                        g[i]=new globalaReadNT(tg[j]);
+                                else{
+                                    g[i]=new globalaRead(tg[j]);
+                                    setUpPermaMemTriggersPerNormalHolder.push_back(make_pair(tg[j],static_cast<getterCondTrig*>(g[i])));
                                 }
-                                for(int k=j-2;k>=0;k--)//getters indirectos
-                                    switch(tg[k]){
-                                    case lector::mlocal:
-                                        g[i]=new localai(g[i]);continue;
-                                    case lector::mglobal:
-                                        g[i]=new globalai(g[i]);continue;
-                                    }
+                                break;
                             }
-                        };
-                        if(i==0)
-                            asignarGetters(write,0);
-                        else
-                            asignarGetters(false,1);
+                            for(int k=j-2;k>=0;k--)//getters indirectos
+                                switch(tg[k]){
+                                case lector::mlocal:
+                                    g[i]=new localai(g[i]);continue;
+                                case lector::mglobal:
+                                    g[i]=new globalai(g[i]);continue;
+                                }
+                        }
                     }
-                    if(write&&notLocal){
+                    if(writeNotLocal){
                         #define memCase(F) case lector::m##F: accs.push_back(new macc<m##F,&str_##F>(g[0],g[1]));break;
-                        switch(tok){
+                            switch(tok){
                             memCase(set);
                             memCase(add);
                         }
                         #undef memCase
+                        ///manejo de locales en acciones que usen memoria local que haya cambiado
+                        if(isLocalAcc&&changeInLocalMem){
+                            sig=new normal(true);
+                            auto& accsSig=static_cast<normal*>(sig)->accs;
+                            accsSig.insert(accsSig.begin(),accs.back());
+                            accs.pop_back();
+                            goto then;
+                        }
                     }
                     else{
                         #define memCase(F) case lector::m##F: if(debugMode) \

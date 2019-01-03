@@ -68,7 +68,7 @@ void numShow::debug(){
 
 
 vector<int> memMov;
-vector<vector<pair<normalHolder*,globalaRead*>>> memGlobalPermaTriggers;
+vector<vector<pair<normalHolder*,getterCondTrig*>>> memGlobalPermaTriggers;
 vector<int> memGlobal;
 int maxMemMovSize=0;
 RectangleShape backGroundMemDebug;
@@ -81,7 +81,7 @@ void triggerMem(){
     ///poner trigger (solo indirectos)
 }
 
-struct locala:public getter{
+struct locala:public getterCond{
     int ind;
     locala(int ind_):ind(ind_){
         if(ind>=memLocalSize)
@@ -96,6 +96,20 @@ struct locala:public getter{
         window->draw(backGroundMemDebug);
     }
 };
+struct localaAcc:public getter{
+    int ind;
+    localaAcc(int ind_):ind(ind_){
+        if(ind>=memLocalSize)
+            memLocalSize=ind+1;///@innecesario?
+    }
+    virtual int* val(){
+        return &actualHolder.nh->memAct[ind];
+        ///@optim creo que es el unico lugar donde se usa actualHolder.nh (en acciones)
+        ///como ahora las acciones no guardan informacion es la unica forma
+        ///Se podria hacer algo con el stack ya que la actualHolder.nh es la normal que llama a esta funcion
+        ///no creo que afecte la version compilada
+    }
+};
 struct localai:public getter{
     getter* g;
     localai(getter* g_):g(g_){}
@@ -103,6 +117,7 @@ struct localai:public getter{
         return &memMov[*g->val()];
     }
     virtual void drawDebugMem(){
+        /*
         int memSize=actualHolder.nh->base.movSize;
         int ind=*g->val();
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
@@ -110,25 +125,49 @@ struct localai:public getter{
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+        */
     }
 };
-void globala::drawDebugMem(){
-    backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-memGlobalSize/4)));
-    window->draw(backGroundMemDebug);
-}
-int* globalaWrite::val(){
-    for(pair<normalHolder*,globalaRead*> p:memGlobalPermaTriggers[ind])
-        if(p.first->h!=actualHolder.h)
-            trigsMemToCheck.push_back(p);
-    return &memGlobal[ind];
-}
-int* globalaRead::val(){
-    before=memGlobal[ind];
-    return &memGlobal[ind];
-}
-bool globalaRead::change(){
-    return before!=memGlobal[ind];
-}
+struct localaAcci:public getter{
+    normalHolder* nh;
+    getter* g;
+    localaAcci(getter* g_):g(g_){}
+    virtual int* val(){
+        return &actualHolder.nh->memAct[*g->val()];
+    }
+};
+struct globalaWrite:public getter{
+    int ind;
+    globalaWrite(int ind_):ind(ind_){}
+    virtual int* val(){
+        for(pair<normalHolder*,getterCondTrig*> p:memGlobalPermaTriggers[ind])
+            if(p.first->h!=actualHolder.h)
+                trigsMemToCheck.push_back(p);
+        return &memGlobal[ind];
+    }
+};
+struct globalaRead:public getterCondTrig{
+    int ind;
+    globalaRead(int ind_):ind(ind_){}
+    virtual int* val(){
+        before=memGlobal[ind];
+        return &memGlobal[ind];
+    }
+    virtual void drawDebugMem(){
+        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-memGlobalSize/4)));
+        window->draw(backGroundMemDebug);
+    }
+    virtual bool change(){
+        return before!=memGlobal[ind];
+    }
+};
+struct globalaReadNT:public getter{
+    int ind;
+    globalaReadNT(int ind_):ind(ind_){}
+    virtual int* val(){
+        return &memGlobal[ind];
+    }
+};
 struct globalai:public getter{
     getter* g;
     globalai(getter* g_):g(g_){}
@@ -145,7 +184,7 @@ struct globalai:public getter{
 //        backGroundMemLocalDebug.setFillColor(sf::Color(163,230,128,150));
     }
 };
-struct ctea:public getter{
+struct ctea:public getterCond{
     int v;
     ctea(int v_):v(v_){}
     virtual int* val(){
@@ -329,17 +368,18 @@ inline void drawDebugPos(condt* cond,bool ret){
 }
 typedef debugWrapper<drawDebugPos> debugMov;
 bool drawMemDebug;
-getter* getterMemDebug1;
-getter* getterMemDebug2;
+getterCond* getterMemDebug1;
+getterCond* getterMemDebug2;
 inline void drawDebugMem(condt* cond,bool ret){
     struct mock:public condt{
-        getter* i1;
-        getter* i2;
+        getterCond* i1;
+        getterCond* i2;
     };
     if(ret)
         textDebug.setColor(sf::Color(78,84,68,100));
     else
         textDebug.setColor(sf::Color(240,70,40,240));
+    posPieza.setPosition(actualHolder.tile->pos.x*32*escala,actualHolder.tile->pos.y*32*escala);
 
     getterMemDebug1=static_cast<mock*>(cond)->i1;
     getterMemDebug2=static_cast<mock*>(cond)->i2;

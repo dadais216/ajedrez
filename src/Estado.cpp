@@ -77,7 +77,6 @@ Proper::Proper(int id_,int sel1,int sel2)
     j->change(this);
     debugMode=true;
 
-
     auto selec=[&](int sel,int bando)->Jugador*
     {
         switch(sel)
@@ -173,6 +172,8 @@ void Proper::init(){
     turno1=true;
     antTurno=false;
 
+    memset(memGlobal.data(),0,memGlobalSize*sizeof(int));
+
     for(uint i=0; i<lect.matriz.size(); i++){
         for(uint j=0; j<lect.matriz[0].size(); j++){
             Holder* hAct=tablero.tile(v(j,i))->holder;
@@ -188,7 +189,6 @@ void Proper::init(){
     }
     drawScreen();
 
-    //memset(memGlobal.data(),0,memGlobalSize*sizeof(int));
 }
 
 
@@ -203,7 +203,6 @@ void Proper::draw(){
     else
         window->draw(turnoNegro);
     if(drawDebugTiles){ ///@optim funcion aparte
-        window->draw(posPieza);
         window->draw(*tileActDebug);
         if(drawAsterisco){
             window->draw(asterisco);
@@ -211,6 +210,7 @@ void Proper::draw(){
         }
     }
     if(drawDebugTiles||drawMemDebug){
+        window->draw(posPieza);
         window->draw(textDebug);
         int memSize=actualHolder.nh->base.movSize;
         for(int i=0;i<memSize;i++){
