@@ -483,6 +483,63 @@ Me parece que voy a ir por el segundo porque es mas facil de escribir. En el pro
 
 
 
+---
+
+mset g0 g1
+g1 no debería poner triggers porque no es una lectura que se haga durante las condiciones, es parte de la accion que va a tomar lo que venga.
+
+mset l0 g1
+en este caso si
+
+mset g0 l1
+esto deberia estar prohibido, no se puede acceder a espacio local durante una accion
+O podria agregarse la funcionalidad si no es muy complicado hacer un getter que acceda a la copia de la memoria en normalholder
+
+
+
+
+mcmp gg2 4
+
+esto debería triggerearse si varia g2 o gg2?
+Si esta bien definido debería ser por los dos
+
+
+mcmp/set ll0 2 -localai locala
+
+mcmp/set lg0 2 -localai globalaRead
+
+mcmp/set gl0 2 -prohibido por ahora
+
+mcmp/set gg0 2 -globalaiRead/Write globalaRead
+
+
+
+
+
+desliz mset gl0 1 madd l0 1 mless l0 5 end
+setear las globales desde 0 hasta 4 en 1, pisando los triggers de cada una
+
+desliz mcmp gl0 1 madd l0 1 mless l0 5 end mcmp l0 5
+verdadero si las globales 0-4 son 1, pone un trigger en cada una
+
+en estos casos los indirectos hacen lo mismo que los directos, nomas que ponen/pisan en la posicion que obtengan del otro
+los triggers indirectos no son como los permanentes, se ponen dinamicamente y se sacan cuando se pisan (o no?). Si ya esta puesto no se vuelve a poner, pero se hace el intento
+
+
+
+
+
+desliz mset gg0 1 madd g0 1 mless g0 5 end
+deberia andar igual que el de local
+
+desliz mcmp gg0 0 madd g0 1 mless g0 5 end mcmp g0 5
+pone 2 triggers permanentes en g0
+dinamicamente pone triggers en g0-4
+el madd no activa triggers por ser de la misma pieza
+como la memoria es global no se guarda el estado de cada iteracion, y el trigger va a dispararse en la primera iteracion del desliz (porque la memoria va a ser igual en cada iteracion), lo que es raro pero esta bien definido. Se tiene que usar memoria local para estas cosas
+
+
+
 
 
 
@@ -564,6 +621,12 @@ falsa. Debería descartarse la falsa y solo tener en cuenta la verdadera, o
 elegir aleatoriamente entre las dos y si cae la falsa no hacer nada?
 Como se puede abstraer para tener los dos casos? Una forma sería con un
 flag y ya esta
+
+
+
+lo mas eficiente para partidas humano vs humano sería calcular el movimiento de la pieza que el jugador toca y listo, en vez de generar todos los movimientos y ir recalculando. Pero hacer esto inhabilita el segundo orden, y las acciones en condiciones. Y a demas va a congelar el juego por un milisegundo cuando se toca la pieza, mientras que el otro sistema calcula antes de que se toque la pieza y el jugador esta pensando.
+Se podría agregar como optimizacion de algunos casos, pero es algo de trabajo y probablemente haga el juego parecer mas lento, asi que no lo vale. Hacer lo mismo para todo es mas simple y limpio.
+
 
 
 

@@ -22,8 +22,9 @@ void movHolder::generarSig(){
 normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
 :movHolder(h_,org,base_){
     op=org;
-    for(pair<int,globalaRead*> indGet:op->setUpPermaMemTriggersPerNormalHolder)
+    for(pair<int,getterCondTrig*> indGet:op->setUpPermaMemTriggersPerNormalHolder){
         memGlobalPermaTriggers[indGet.first].push_back({this,indGet.second});
+    }
     memAct.resize(base.movSize);
 }
 v offset;

@@ -52,7 +52,8 @@ struct mcondt;
 struct macct;
 struct colort;
 struct getter;
-struct globalaRead;
+struct getterCond;
+struct getterCondTrig;
 
 
 
@@ -107,8 +108,8 @@ extern RectangleShape posActBad;
 extern RectangleShape backGroundMem;
 extern RectangleShape backGroundMemDebug;
 extern Text textValMem;
-extern getter* getterMemDebug1;
-extern getter* getterMemDebug2;
+extern getterCond* getterMemDebug1;
+extern getterCond* getterMemDebug2;
 
 extern int memGlobalSize;
 
@@ -134,8 +135,8 @@ extern AH actualHolder;
 
 extern vector<normalHolder*> trigsActivados;
 extern Trigger triggerInfo;
-extern vector<vector<pair<normalHolder*,globalaRead*>>> memGlobalPermaTriggers;
-extern vector<pair<normalHolder*,globalaRead*>> trigsMemToCheck;
+extern vector<vector<pair<normalHolder*,getterCondTrig*>>> memGlobalPermaTriggers;
+extern vector<pair<normalHolder*,getterCondTrig*>> trigsMemToCheck;
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 

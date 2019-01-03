@@ -47,26 +47,21 @@ struct debugInicial:public condt{
     debugInicial();
     virtual bool check();
 };
-struct getter{
+struct getter{ //getters en acciones
     getter(){}
+    virtual int* val()=0;
+};
+struct getterCond:public getter{ //getters locales
+    getterCond(){}
     virtual int* val()=0;
     virtual void drawDebugMem()=0;
 };
-struct globala:public getter{
-    int ind;
-    globala(int ind_):ind(ind_){}
+struct getterCondTrig:public getterCond{ //getters condiciones globales
+    getterCondTrig(){}
     virtual int* val()=0;
-    virtual void drawDebugMem();
-};
-struct globalaWrite:public globala{
-    globalaWrite(int ind_):globala(ind_){}
-    virtual int* val();
-};
-struct globalaRead:public globala{//forma que tienen que tener todos los que usen change()
-    globalaRead(int ind_):globala(ind_){}
+    virtual void drawDebugMem()=0;
     int before;
-    virtual int* val();
-    bool change();
+    virtual bool change()=0;
 };
 
 //antes habia una version por combinacion de getters para ahorrarme hacer los getters polimorficos, pero era mucho bloat

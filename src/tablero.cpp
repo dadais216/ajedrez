@@ -56,7 +56,7 @@ void tabl::drawPieces(){
                 p->draw();
         }
 }
-vector<pair<normalHolder*,globalaRead*>> trigsMemToCheck;
+vector<pair<normalHolder*,getterCondTrig*>> trigsMemToCheck;
 vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
 void Tile::chargeTriggers(){
     for(Trigger trig:triggers)
@@ -74,7 +74,7 @@ void Tile::chargeTriggers(){
 }
 void activateTriggers(){
     //chequeo de triggers de memoria
-    for(pair<normalHolder*,globalaRead*> p:trigsMemToCheck)
+    for(pair<normalHolder*,getterCondTrig*> p:trigsMemToCheck)
         if(p.second->change())
             trigsActivados.push_back(p.first);
     trigsMemToCheck.clear();
