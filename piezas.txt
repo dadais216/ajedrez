@@ -7,20 +7,22 @@ def mover vacio mov pausa color 20 200 115
 {w,a,s,d} mover
 
 :2 1 #torre
-#msize l 4 desliz += l0 1 < l0 4 w mover c end
-#mcmp g0 0 desliz {w,a,s,d} mover isol mset g0 1 end end
-#mcmp g0 1 desliz {wa,as,sd,dw} mover isol mset g0 0 end end
-#msize g 10 w mover madd g0 1 mset gg0 1
-#msize g 11 desliz mset gl0 l0 madd l0 1 mless l0 11 end
-#desliz madd l0 2 madd l1 1 mless l1 g0 end w mover mset g0 l0
-#desliz madd l0 1 mless l0 g0 end madd l0 1 w mover mset g0 l0
-#w mover madd g0 1
-desliz vacio end mset g2 1
+#msize l 5 mset l0 1 desliz mset ll0 6 madd l0 1 mless l0 5 end 
+#mset l0 9 mset g0 l0
+#mset g0 5 mset l0 g0
+#w mover mset g0 8 mset g1 g0
+#msize l 2 msize g 1 mset lg0 4 mcmp l1 4 w mover
+#msize g 1 msize l 1 mcmp gl0 1 w mover
+#msize g 1 msize l 1 mset l1 3 mset gl0 l1 w mover
+#msize g 2 mcmp gg0 5 w mover #rompe por no poner triggers dinamicos
+msize g 2 mset gg0 5 w mover
 
 :3 3 #alfil
 #desliz {aw,wd,sa,sd} mover c end
-exc mcmp g2 1 desliz a mover c end or desliz d mover c end end
-#w mover mset g1 2
+w mover mset g0 0
+s mover mset g0 1
+a mover mset g1 5
+d mover mset g1 0
 
 :4 2 #excguy
 desopt aaw mover c or wwa mover c or wwd mover c or ddw mover c end
