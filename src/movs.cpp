@@ -111,27 +111,26 @@ struct localaAcc:public getter{
     }
 };
 struct localai:public getter{
-    getter* g;
-    localai(getter* g_):g(g_){}
+    getterCond* g;
+    localai(getterCond* g_):g(g_){}
+    int before;
     virtual int* val(){
-        return &memMov[*g->val()];
+        before=*g->val();//para cosas de debug. Es necesario guardar la informacion porque puede variar antes de llamar a drawDebugMem (ej mset ll0 1), de paso ahorra una llamada
+        return &memMov[before];
     }
     virtual void drawDebugMem(){
-        /*
-        int memSize=actualHolder.nh->base.movSize;
-        int ind=*g->val();
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
-        window->draw(backGroundMemDebug);
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        */
+        int memSize=actualHolder.nh->base.movSize;
+        backGroundMemDebug.setPosition(Vector2f(530+25*(before%4),405+45*(before/4-memSize/4)));
+        window->draw(backGroundMemDebug);
     }
 };
-struct localaAcci:public getter{
+struct localaiAcc:public getter{//aparece en cadenas de 3 o mas
     normalHolder* nh;
     getter* g;
-    localaAcci(getter* g_):g(g_){}
+    localaiAcc(getter* g_):g(g_){}
     virtual int* val(){
         return &actualHolder.nh->memAct[*g->val()];
     }
@@ -168,20 +167,43 @@ struct globalaReadNT:public getter{
         return &memGlobal[ind];
     }
 };
-struct globalai:public getter{
+struct globalaiWrite:public getter{
     getter* g;
-    globalai(getter* g_):g(g_){}
+    globalaiWrite(getter* g_):g(g_){}
     virtual int* val(){
-        return &memGlobal[*g->val()];
+        int ind=*g->val();
+        for(pair<normalHolder*,getterCondTrig*> p:memGlobalPermaTriggers[ind])
+            if(p.first->h!=actualHolder.h)
+                trigsMemToCheck.push_back(p);
+        return &memGlobal[ind];
+    }
+};
+struct globalaiRead:public getterCondTrig{
+    getterCond* g;
+    int beforeInd;
+    globalaiRead(getterCond* g_):g(g_){}
+    virtual int* val(){
+        beforeInd=*g->val();//creo que solo para salvar la llamada, podría sacarse si no hay debug
+        before=memGlobal[beforeInd];
+        return &memGlobal[beforeInd];
     }
     virtual void drawDebugMem(){
-        //int memSize=triggerInfo.nh->base.movSize;
-        //int ind=*g->val();
-        //backGroundMemLocalDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
-//        window->draw(backGroundMemLocalDebug);
-//        backGroundMemLocalDebug.setFillColor(sf::Color(178,235,221));
-//        g->drawDebugMem();
-//        backGroundMemLocalDebug.setFillColor(sf::Color(163,230,128,150));
+        backGroundMemDebug.setFillColor(sf::Color(178,235,221));
+        g->drawDebugMem();
+        backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+        backGroundMemDebug.setPosition(Vector2f(530+25*(beforeInd%4),205+45*(beforeInd/4-memGlobalSize/4)));
+        window->draw(backGroundMemDebug);
+    }
+    virtual bool change(){
+        //si hubo un cambio en la cadena que termina devolviendo el mismo valor no pasa nada
+        return before!=memGlobal[*g->val()];
+    }
+};
+struct globalaiReadNT:public getter{
+    getter* g;
+    globalaiReadNT(getter* g_):g(g_){}
+    virtual int* val(){
+        return &memGlobal[*g->val()];
     }
 };
 struct ctea:public getterCond{

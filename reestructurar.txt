@@ -491,9 +491,7 @@ g1 no debería poner triggers porque no es una lectura que se haga durante las co
 mset l0 g1
 en este caso si
 
-mset g0 l1
-esto deberia estar prohibido, no se puede acceder a espacio local durante una accion
-O podria agregarse la funcionalidad si no es muy complicado hacer un getter que acceda a la copia de la memoria en normalholder
+
 
 
 
@@ -508,9 +506,28 @@ mcmp/set ll0 2 -localai locala
 
 mcmp/set lg0 2 -localai globalaRead
 
-mcmp/set gl0 2 -prohibido por ahora
+mcmp/set gl0 2 -globalaiRead/Write locala/localacc
 
-mcmp/set gg0 2 -globalaiRead/Write globalaRead
+mcmp/set gg0 2 -globalaiRead/Write globalaRead/GlobalaReadNT
+
+
+
+
+mcmp gg0 gg3
+mset gg0 gg3
+
+mset g0 ll0
+
+
+-accion/ condicion <- accion si escritura y el mas indirecto global
+
+
+-izquierda/derecha
+-directo/indirecto
+-local/global
+
+
+
 
 
 

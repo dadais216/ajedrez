@@ -87,8 +87,10 @@ normal::normal(bool make){
                     ///acciones que escriben la variable izquierda y leen la derecha
                     ///@todo condiciones que escriben la variable izquierda y leen la derecha
                     getter* g[2];
-                    bool writeNotLocal=tok==lector::mset||tok==lector::madd;
+                    bool write=tok==lector::mset||tok==lector::madd;
+                    bool action;
                     for(int i=0;i<2;i++){
+                        bool left=i==0;
                         int tg[5],j;
                         for(j=0;;j++){
                             assert(j<5);
@@ -96,49 +98,73 @@ normal::normal(bool make){
                             if(tg[j]>=1000)
                                 break;
                         }
+                        if(left)
+                            action=write&&tg[0]!=lector::mlocal;
                         tg[j]-=1000;
                         if(j==0){
-                            assert(!(writeNotLocal&&i==0)&&"escritura en constante");
+                            assert(!(write&&left)&&"escritura en constante");
                             g[i]=new ctea(tg[0]);
                         }else{
+                            bool hasIndirection=j>1;
                             switch(tg[j-1]){
                             case lector::mlocal:
-                                ///@todo se podría agregar la opcion si no es muy complicado agregar un getter a
-                                ///la copia de memoria del normalholder
-                                if(i==0){
+                                if(left){
                                     g[i]=new locala(tg[j]);
-                                    if(writeNotLocal)
-                                        changeInLocalMem=true;
-                                    writeNotLocal=false;
+                                    changeInLocalMem=write;
                                 }else
-                                    if(writeNotLocal){
+                                    if(action){
                                         g[i]=new localaAcc(tg[j]);
                                         isLocalAcc=true;
                                     }else
                                         g[i]=new locala(tg[j]);
                                 break;
                             case lector::mglobal:
-                                if(writeNotLocal)
-                                    if(i==0)
-                                        g[i]=new globalaWrite(tg[j]);
-                                    else
+                                if(action)
+                                    if(hasIndirection)
                                         g[i]=new globalaReadNT(tg[j]);
+                                    else
+                                        if(left)
+                                            g[i]=new globalaWrite(tg[j]);
+                                        else
+                                            g[i]=new globalaReadNT(tg[j]);
                                 else{
                                     g[i]=new globalaRead(tg[j]);
                                     setUpPermaMemTriggersPerNormalHolder.push_back(make_pair(tg[j],static_cast<getterCondTrig*>(g[i])));
                                 }
                                 break;
                             }
-                            for(int k=j-2;k>=0;k--)//getters indirectos
+                            for(int k=j-2;k>=0;k--){//getters indirectos
+                                hasIndirection=k>0;
                                 switch(tg[k]){
                                 case lector::mlocal:
-                                    g[i]=new localai(g[i]);continue;
+                                    if(left){
+                                        g[i]=new localai(static_cast<getterCond*>(g[i]));
+                                        changeInLocalMem=write;
+                                    }else
+                                        if(action){
+                                            g[i]=new localaiAcc(g[i]);
+                                            isLocalAcc=true;
+                                        }else
+                                            g[i]=new localai(static_cast<getterCond*>(g[i]));
+                                    continue;
                                 case lector::mglobal:
-                                    g[i]=new globalai(g[i]);continue;
+                                    if(action)
+                                        if(hasIndirection)
+                                            g[i]=new globalaiReadNT(g[i]);
+                                        else
+                                            if(left)
+                                                g[i]=new globalaiWrite(g[i]);
+                                            else
+                                                g[i]=new globalaiReadNT(g[i]);
+                                    else{
+                                        g[i]=new globalaiRead(static_cast<getterCond*>(g[i]));
+                                        setUpPermaMemTriggersPerNormalHolder.push_back(make_pair(tg[j],static_cast<getterCondTrig*>(g[i])));
+                                    }
                                 }
+                            }
                         }
                     }
-                    if(writeNotLocal){
+                    if(action){
                         #define memCase(F) case lector::m##F: accs.push_back(new macc<m##F,&str_##F>(g[0],g[1]));break;
                             switch(tok){
                             memCase(set);
