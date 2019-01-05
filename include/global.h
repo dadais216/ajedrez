@@ -128,7 +128,7 @@ extern AH actualHolder;
 
 extern vector<normalHolder*> trigsActivados;
 extern Trigger triggerInfo;
-extern vector<vector<pair<normalHolder*,getterCondTrig*>>> memGlobalPermaTriggers;
+extern vector<vector<pair<normalHolder*,getterCondTrig*>>> memGlobalTriggers;
 extern vector<pair<normalHolder*,getterCondTrig*>> trigsMemToCheck;
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};

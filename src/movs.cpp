@@ -68,7 +68,7 @@ void numShow::debug(){
 
 
 vector<int> memMov;
-vector<vector<pair<normalHolder*,getterCondTrig*>>> memGlobalPermaTriggers;
+vector<vector<pair<normalHolder*,getterCondTrig*>>> memGlobalTriggers;
 vector<int> memGlobal;
 int maxMemMovSize=0;
 RectangleShape backGroundMemDebug;
@@ -139,7 +139,7 @@ struct globalaWrite:public getter{
     int ind;
     globalaWrite(int ind_):ind(ind_){}
     virtual int* val(){
-        for(pair<normalHolder*,getterCondTrig*> p:memGlobalPermaTriggers[ind])
+        for(pair<normalHolder*,getterCondTrig*> p:memGlobalTriggers[ind])
             if(p.first->h!=actualHolder.h)
                 trigsMemToCheck.push_back(p);
         return &memGlobal[ind];
@@ -172,7 +172,7 @@ struct globalaiWrite:public getter{
     globalaiWrite(getter* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-        for(pair<normalHolder*,getterCondTrig*> p:memGlobalPermaTriggers[ind])
+        for(pair<normalHolder*,getterCondTrig*> p:memGlobalTriggers[ind])
             if(p.first->h!=actualHolder.h)
                 trigsMemToCheck.push_back(p);
         return &memGlobal[ind];
@@ -183,7 +183,17 @@ struct globalaiRead:public getterCondTrig{
     int beforeInd;
     globalaiRead(getterCond* g_):g(g_){}
     virtual int* val(){
-        beforeInd=*g->val();//creo que solo para salvar la llamada, podría sacarse si no hay debug
+        beforeInd=*g->val();
+
+        bool notSet=true;
+        for(pair<normalHolder*,getterCondTrig*>& p:memGlobalTriggers[beforeInd])
+            if(p.second==this){
+                notSet=false;
+                break;
+            }
+        if(notSet)
+            memGlobalTriggers[beforeInd].push_back(make_pair(actualHolder.nh,this));
+
         before=memGlobal[beforeInd];
         return &memGlobal[beforeInd];
     }
@@ -195,8 +205,7 @@ struct globalaiRead:public getterCondTrig{
         window->draw(backGroundMemDebug);
     }
     virtual bool change(){
-        //si hubo un cambio en la cadena que termina devolviendo el mismo valor no pasa nada
-        return before!=memGlobal[*g->val()];
+        return before!=memGlobal[*g->val()]; //si hubo un cambio en la cadena que termina devolviendo el mismo valor no pasa nada
     }
 };
 struct globalaiReadNT:public getter{

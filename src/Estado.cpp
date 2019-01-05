@@ -135,7 +135,7 @@ void Proper::init(){
     memMov.resize(0);
     maxMemMovSize=0;
     memGlobal.resize(0);
-    memGlobalPermaTriggers.resize(0);
+    memGlobalTriggers.resize(0);
     memGlobalSize=0;
 
     if(lect.archPiezas.is_open())
