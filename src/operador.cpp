@@ -129,7 +129,7 @@ normal::normal(bool make){
                                             g[i]=new globalaReadNT(tg[j]);
                                 else{
                                     g[i]=new globalaRead(tg[j]);
-                                    setUpPermaMemTriggersPerNormalHolder.push_back(make_pair(tg[j],static_cast<getterCondTrig*>(g[i])));
+                                    setUpMemTriggersPerNormalHolder.push_back(make_pair(tg[j],static_cast<getterCondTrig*>(g[i])));
                                 }
                                 break;
                             }
@@ -156,10 +156,8 @@ normal::normal(bool make){
                                                 g[i]=new globalaiWrite(g[i]);
                                             else
                                                 g[i]=new globalaiReadNT(g[i]);
-                                    else{
+                                    else
                                         g[i]=new globalaiRead(static_cast<getterCond*>(g[i]));
-                                        setUpPermaMemTriggersPerNormalHolder.push_back(make_pair(tg[j],static_cast<getterCondTrig*>(g[i])));
-                                    }
                                 }
                             }
                         }

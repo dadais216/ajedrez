@@ -14,8 +14,9 @@ def mover vacio mov pausa color 20 200 115
 #msize l 2 msize g 1 mset lg0 4 mcmp l1 4 w mover
 #msize g 1 msize l 1 mcmp gl0 1 w mover
 #msize g 1 msize l 1 mset l1 3 mset gl0 l1 w mover
-#msize g 2 mcmp gg0 5 w mover #rompe por no poner triggers dinamicos
-msize g 2 mset gg0 5 w mover
+#msize g 2 mset gg0 5 w mover
+msize g 2 mcmp gg0 5 w mover #rompe por no poner triggers dinamicos
+
 
 :3 3 #alfil
 #desliz {aw,wd,sa,sd} mover c end

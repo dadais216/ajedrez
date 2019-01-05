@@ -168,7 +168,7 @@ enPieza:
 
     memMov.resize(maxMemMovSize);
     memGlobal.resize(memGlobalSize);
-    memGlobalPermaTriggers.resize(memGlobalSize);
+    memGlobalTriggers.resize(memGlobalSize);
 
     Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn,memPiezaSize),pos);
     tokens.clear();

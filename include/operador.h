@@ -19,7 +19,7 @@ struct normal:public operador{
     vector<condt*> conds;
     vector<colort*> colors;
     colort* crearColor(v);
-    vector<pair<int,getterCondTrig*>> setUpPermaMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
+    vector<pair<int,getterCondTrig*>> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
     v lastPos;
 };
 struct desliz:public operador{
