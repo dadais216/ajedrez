@@ -137,6 +137,7 @@ void Proper::init(){
     memGlobal.resize(0);
     memGlobalTriggers.resize(0);
     memGlobalSize=0;
+    memTileSize=0;
 
     if(lect.archPiezas.is_open())
         lect.archPiezas.close();
@@ -218,7 +219,16 @@ void Proper::draw(){
             window->draw(backGroundMem);
         }
         for(int i=0;i<memGlobalSize;i++){
-            backGroundMem.setPosition(Vector2f(530+25*(i%4),205+45*(i/4-memGlobalSize/4)));
+            backGroundMem.setPosition(Vector2f(530+25*(i%4),305+45*(i/4-memGlobalSize/4)));
+            window->draw(backGroundMem);
+        }
+        int memPiezaSize=actualHolder.h->memPieza.size();
+        for(int i=0;i<memPiezaSize;i++){
+            backGroundMem.setPosition(Vector2f(530+25*(i%4),205+45*(i/4-memPiezaSize/4)));
+            window->draw(backGroundMem);
+        }
+        for(int i=0;i<memTileSize;i++){
+            backGroundMem.setPosition(Vector2f(530+25*(i%4),105+45*(i/4-memTileSize/4)));
             window->draw(backGroundMem);
         }
         if(getterMemDebug1){
@@ -231,8 +241,18 @@ void Proper::draw(){
             window->draw(textValMem);
         }
         for(int i=0;i<memGlobalSize;i++){
-            textValMem.setPosition(530+25*(i%4),210+45*(i/4-memGlobalSize/4));
+            textValMem.setPosition(530+25*(i%4),310+45*(i/4-memGlobalSize/4));
             textValMem.setString(to_string(memGlobal[i]));
+            window->draw(textValMem);
+        }
+        for(int i=0;i<memPiezaSize;i++){
+            textValMem.setPosition(530+25*(i%4),210+45*(i/4-memPiezaSize/4));
+            textValMem.setString(to_string(actualHolder.h->memPieza[i].actual));
+            window->draw(textValMem);
+        }
+        for(int i=0;i<memTileSize;i++){
+            textValMem.setPosition(530+25*(i%4),110+45*(i/4-memTileSize/4));
+            textValMem.setString(to_string(tablptr->tile(posDebugTile)->memTile[i].actual));
             window->draw(textValMem);
         }
     }

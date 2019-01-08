@@ -2,6 +2,7 @@
 #define MOVS_H
 
 #include "Pieza.h"
+#include "memGetters.h"
 
 //antes separaba acct en posicionales y de memoria, pero como estoy usando polimorfismo para los dos da lo mismo
 //supongo que abstraer las cosas en comun en pos y mem reduce un poco el nivel de instrucciones, pero dentro de todo
@@ -47,22 +48,7 @@ struct debugInicial:public condt{
     debugInicial();
     virtual bool check();
 };
-struct getter{ //getters en acciones
-    getter(){}
-    virtual int* val()=0;
-};
-struct getterCond:public getter{ //getters locales
-    getterCond(){}
-    virtual int* val()=0;
-    virtual void drawDebugMem()=0;
-};
-struct getterCondTrig:public getterCond{ //getters condiciones globales
-    getterCondTrig(){}
-    virtual int* val()=0;
-    virtual void drawDebugMem()=0;
-    int before;
-    virtual bool change()=0;
-};
+
 
 //antes habia una version por combinacion de getters para ahorrarme hacer los getters polimorficos, pero era mucho bloat
 //total no es la version final, no creo que la velocidad lo valga
@@ -96,6 +82,9 @@ inline bool madd(getter* a1,getter* a2){
 }
 inline bool mless(getter* a1,getter* a2){
     return *a1->val()<*a2->val();
+}
+inline bool mmore(getter* a1,getter* a2){
+    return *a1->val()>*a2->val();
 }
 
 

@@ -103,8 +103,8 @@ extern RectangleShape backGroundMemDebug;
 extern Text textValMem;
 extern getterCond* getterMemDebug1;
 extern getterCond* getterMemDebug2;
+extern v posDebugTile;
 
-extern int memGlobalSize;
 
 void drawScreen();
 
@@ -113,10 +113,13 @@ extern bool switchToGen;
 extern bool confirm;
 extern v offset;
 extern int isolCount;
+
+extern int memGlobalSize;
 extern vector<int> memGlobal;
 extern vector<int> memMov;
 extern int maxMemMovSize;
 extern int memLocalSize;
+extern int memTileSize;
 
 struct AH{
     Holder* h;
