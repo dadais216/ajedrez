@@ -485,46 +485,23 @@ Me parece que voy a ir por el segundo porque es mas facil de escribir. En el pro
 
 ---
 
-mset g0 g1
-g1 no debería poner triggers porque no es una lectura que se haga durante las condiciones, es parte de la accion que va a tomar lo que venga.
+mcmp p0 2
+mset p0 2
+mcmp p0 p1
+mset p0 p1
+mset l0 p0
+mset p0 l0
+mcmp p0 g0
+mset p0 g0
+mset g0 p0
 
-mset l0 g1
-en este caso si
+mcmp lp1 lp2
+mset lp1 lp2
+mcmp pl0 pl1
+mset pl0 pl1
+mcmp pp0 pp1
+mset pp0 pp1
 
-
-
-
-
-
-mcmp gg2 4
-
-esto debería triggerearse si varia g2 o gg2?
-Si esta bien definido debería ser por los dos
-
-
-mcmp/set ll0 2 -localai locala
-
-mcmp/set lg0 2 -localai globalaRead
-
-mcmp/set gl0 2 -globalaiRead/Write locala/localacc
-
-mcmp/set gg0 2 -globalaiRead/Write globalaRead/GlobalaReadNT
-
-
-
-
-mcmp gg0 gg3
-mset gg0 gg3
-
-mset g0 ll0
-
-
--accion/ condicion <- accion si escritura y el mas indirecto global
-
-
--izquierda/derecha
--directo/indirecto
--local/global
 
 
 

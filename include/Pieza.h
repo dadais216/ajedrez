@@ -6,6 +6,7 @@
 #include "operador.h"
 #include "movs.h"
 #include "movHolders.h"
+#include "memGetters.h"
 
 
 struct Pieza{
@@ -37,10 +38,15 @@ struct Holder{
     void generar();
     void reaccionar(normalHolder*);
 
-    Pieza* pieza; ///@optim pasar cosas especificas que se usen
+    Pieza* pieza;
     Tile* tile;
 
-    vector<int> memPieza;
+    struct int2{
+        int actual;
+        int before;
+    };
+    vector<int2> memPieza;
+    vector<vector<pair<normalHolder*,getterCondTrig*>>> memPiezaTrigs;
     int movSize;
 
     vector<movHolder*> movs;

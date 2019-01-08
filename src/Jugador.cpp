@@ -66,12 +66,6 @@ bool Humano::turno(){
         act=_tablero.tile(input->get())->holder;
         if(act&&act->bando==bando){
             act->makeCli();
-            /*
-            for(Clicker* cli:clickers){
-                cli->debug();
-                cout<<"---";
-            }
-            */
             drawScreen();
         }
     }

@@ -1,6 +1,6 @@
+#include "../include/global.h"
 #include "../include/lector.h"
 #include "../include/Pieza.h"
-#include "../include/global.h"
 
 list<int> tokens;
 lector::lector(){
@@ -37,11 +37,13 @@ lector::lector(){
     rel(mset);
     rel(madd);
     rel(mless);
+    rel(mmore);
     #undef rel
     tablaMem["=="]=mcmp;
     tablaMem["="]=mset;
     tablaMem["+="]=madd;
     tablaMem["<"]=mless;
+    tablaMem[">"]=mmore;
 
     lista=nullptr;
 }
@@ -92,16 +94,17 @@ void lector::generarIdsTablero(int n){
         }
     }
 }
+bool tileMemGrowth=false;
 Holder* lector::crearPieza(int n,v pos){
     for(Pieza* p:piezas)
         if(p->id==abso(n))
             return new Holder(sgn(n),p,pos);
 
-
     archPiezas.clear();
     archPiezas.seekg(0, ios::beg);
     string linea;///@final mirar los leaks y eso
     int sn;
+    tileMemGrowth=false;
     memPiezaSize=0;
     while(getline(archPiezas,linea)){
         if(linea.empty()) continue;
@@ -146,9 +149,11 @@ enPieza:
             CASE(mset);
             CASE(madd);
             CASE(mless);
+            CASE(mmore);
             CASE(mlocal);
             CASE(mglobal);
             CASE(mpieza);
+            CASE(mtile);
             CASE(desliz);
             CASE(exc);
             CASE(isol);
@@ -169,6 +174,12 @@ enPieza:
     memMov.resize(maxMemMovSize);
     memGlobal.resize(memGlobalSize);
     memGlobalTriggers.resize(memGlobalSize);
+    if(tileMemGrowth)
+        for(auto& vec:tablptr->matriz)
+            for(Tile* t:vec){
+                t->memTile.resize(memTileSize);
+                t->memTileTrigs.resize(memTileSize);
+            }
 
     Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn,memPiezaSize),pos);
     tokens.clear();
@@ -294,6 +305,7 @@ int lector::getNum(string& linea){//arranca con j en el primer numero
     return stringToInt(numstr);
 }
 int memGlobalSize;
+int memTileSize;
 void lector::tokenizarPalabra(string linea){
     string palabra=linea.substr(i,j-i);
     cout<<">>>"<<palabra<<"<<<"<<linea[i]<<"\n";
@@ -334,13 +346,19 @@ void lector::tokenizarPalabra(string linea){
                 maxMemMovSize=num;
             lista->push_back(num+1000);
             break;
-        case 'g':
+        case 'g'://el resto se determina aca directamente
             if(num>=memGlobalSize)
                 memGlobalSize=num;
             break;
-        case 'p'://determinar memPiezaSize aca, no cargar nada. Lo mismo para las otras memorias
+        case 'p':
             if(num>=memPiezaSize)
                 memPiezaSize=num;
+            break;
+        case 't':
+            if(num>=memTileSize){
+                memTileSize=num;
+                tileMemGrowth=true;
+            }
             break;
         }
         i=j;
@@ -361,14 +379,11 @@ void lector::tokenizarPalabra(string linea){
                 while(true){
                     j++;
                     switch(linea[j]){
-                    case ' ':
-                        continue;
-                    case 'l':
-                        lista->push_back(directGetter=mlocal);break;
-                    case 'g':
-                        lista->push_back(directGetter=mglobal);break;
-                    case 'p':
-                        lista->push_back(directGetter=mpieza);break;
+                    case ' ': continue;
+                    case 'l': lista->push_back(directGetter=mlocal);break;
+                    case 'g': lista->push_back(directGetter=mglobal);break;
+                    case 'p': lista->push_back(directGetter=mpieza);break;
+                    case 't': lista->push_back(directGetter=mtile);break;
                     default:
                         goto gnum;
                     }
@@ -388,6 +403,11 @@ void lector::tokenizarPalabra(string linea){
                     if(num>=memPiezaSize)
                         memPiezaSize=num+1;
                     break;
+                case mtile:
+                    if(num>=memTileSize){
+                        memTileSize=num+1;
+                        tileMemGrowth=true;
+                    }
                 }
                 lista->push_back(num+1000);
             }

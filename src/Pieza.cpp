@@ -102,6 +102,8 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     pieza=p;
     tile=tablptr->tile(pos_);
     movs.reserve(sizeof(movHolder*)*pieza->movs.size());
+    memPieza.resize(p->memPiezaSize);
+    memPiezaTrigs.resize(p->memPiezaSize);
     for(Pieza::base& b:pieza->movs){
         Base* base=new Base;
         base->beg=nullptr;
@@ -109,7 +111,6 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
         movs.push_back(crearMovHolder(this,b.raiz,base));
         delete base;
     }
-    memPieza.resize(p->memPiezaSize);
 }
 Holder::~Holder(){
     uniqueIds.erase(find(uniqueIds.begin(),uniqueIds.end(),uniqueId));

@@ -4,7 +4,7 @@
 #include "../include/tablero.h"
 #include "../include/Pieza.h"
 #include "movs.cpp"
-
+#include "memGetters.cpp"
 
 bool separator;
 bool clickExplicit;///cuando se usa click explicitamente no se pone un click implicitamente
@@ -15,6 +15,7 @@ string str_cmp="cmp";
 string str_set="set";
 string str_add="add";
 string str_less="less";
+string str_more="more";
 
 normal::normal(bool make){
     tipo=NORMAL;
@@ -81,6 +82,7 @@ normal::normal(bool make){
             case lector::mset:
             case lector::madd:
             case lector::mless:
+            case lector::mmore:
                 {
                     ///hay 3 tipos de operaciones en memoria no local
                     ///condiciones que leen
@@ -95,7 +97,7 @@ normal::normal(bool make){
                         for(j=0;;j++){
                             assert(j<5);
                             tg[j]=tokens.front();tokens.pop_front();
-                            if(tg[j]>=1000)
+                            if(tg[j]>=900)///@sospechoso no 1000 para tomar algunos numeros negativos
                                 break;
                         }
                         if(left)
@@ -106,8 +108,7 @@ normal::normal(bool make){
                             g[i]=new ctea(tg[0]);
                         }else{
                             bool hasIndirection=j>1;
-                            switch(tg[j-1]){
-                            case lector::mlocal:
+                            if(tg[j-1]==lector::mlocal)
                                 if(left){
                                     g[i]=new locala(tg[j]);
                                     changeInLocalMem=write;
@@ -117,26 +118,42 @@ normal::normal(bool make){
                                         isLocalAcc=true;
                                     }else
                                         g[i]=new locala(tg[j]);
-                                break;
-                            case lector::mglobal:
+                            else
                                 if(action)
                                     if(hasIndirection)
-                                        g[i]=new globalaReadNT(tg[j]);
+                                        switch(tg[j-1]){
+                                        case lector::mglobal: g[i]=new globalaReadNT(tg[j]); break;
+                                        case lector::mpieza: g[i]=new piezaaReadNT(tg[j]);break;
+                                        case lector::mtile: g[i]=new tileaReadNT(tg[j],pos);break;
+                                        }
                                     else
                                         if(left)
-                                            g[i]=new globalaWrite(tg[j]);
+                                            switch(tg[j-1]){
+                                            case lector::mglobal: g[i]=new globalaWrite(tg[j]); break;
+                                            case lector::mpieza: g[i]=new piezaaWrite(tg[j]);break;
+                                            case lector::mtile: g[i]=new tileaWrite(tg[j],pos);break;
+                                            }
                                         else
-                                            g[i]=new globalaReadNT(tg[j]);
-                                else{
-                                    g[i]=new globalaRead(tg[j]);
-                                    setUpMemTriggersPerNormalHolder.push_back(make_pair(tg[j],static_cast<getterCondTrig*>(g[i])));
-                                }
-                                break;
-                            }
+                                            switch(tg[j-1]){
+                                            case lector::mglobal: g[i]=new globalaReadNT(tg[j]); break;
+                                            case lector::mpieza: g[i]=new piezaaReadNT(tg[j]);break;
+                                            case lector::mtile: g[i]=new tileaReadNT(tg[j],pos);break;
+                                            }
+                                else
+                                    switch(tg[j-1]){
+                                    case lector::mglobal:
+                                        g[i]=new globalaRead(tg[j]);
+                                        setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{true,tg[j],static_cast<getterCondTrig*>(g[i])});
+                                    break;case lector::mpieza:
+                                        g[i]=new piezaaRead(tg[j]);
+                                        setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCondTrig*>(g[i])});
+                                    break;
+                                    case lector::mtile: g[i]=new tileaRead(tg[j],pos);break;
+                                    }
+
                             for(int k=j-2;k>=0;k--){//getters indirectos
                                 hasIndirection=k>0;
-                                switch(tg[k]){
-                                case lector::mlocal:
+                                if(tg[k]==lector::mlocal)
                                     if(left){
                                         g[i]=new localai(static_cast<getterCond*>(g[i]));
                                         changeInLocalMem=write;
@@ -146,19 +163,38 @@ normal::normal(bool make){
                                             isLocalAcc=true;
                                         }else
                                             g[i]=new localai(static_cast<getterCond*>(g[i]));
-                                    continue;
-                                case lector::mglobal:
+                                else
                                     if(action)
                                         if(hasIndirection)
-                                            g[i]=new globalaiReadNT(g[i]);
+                                            switch(tg[k]){
+                                            case lector::mglobal: g[i]=new globalaiReadNT(g[i]); break;
+                                            case lector::mpieza: g[i]=new piezaaiReadNT(g[i]);break;
+                                            case lector::mtile: g[i]=new tileaiReadNT(g[i],pos);break;
+                                            }
                                         else
                                             if(left)
-                                                g[i]=new globalaiWrite(g[i]);
+                                                switch(tg[k]){
+                                                case lector::mglobal: g[i]=new globalaiWrite(g[i]); break;
+                                                case lector::mpieza: g[i]=new piezaaiWrite(g[i]);break;
+                                                case lector::mtile: g[i]=new tileaiWrite(g[i],pos);break;
+                                                }
                                             else
-                                                g[i]=new globalaiReadNT(g[i]);
+                                                switch(tg[k]){
+                                                case lector::mglobal: g[i]=new globalaiReadNT(g[i]); break;
+                                                case lector::mpieza: g[i]=new piezaaiReadNT(g[i]);break;
+                                                case lector::mtile: g[i]=new tileaiReadNT(g[i],pos);break;
+                                                }
                                     else
-                                        g[i]=new globalaiRead(static_cast<getterCond*>(g[i]));
-                                }
+                                        switch(tg[k]){
+                                        case lector::mglobal:
+                                            g[i]=new globalaiRead(static_cast<getterCond*>(g[i]));
+                                            setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{true,tg[j],static_cast<getterCondTrig*>(g[i])});
+                                        break;case lector::mpieza:
+                                            g[i]=new piezaaiRead(static_cast<getterCond*>(g[i]));
+                                            setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCondTrig*>(g[i])});
+                                        break;
+                                        case lector::mtile: g[i]=new tileaiRead(static_cast<getterCond*>(g[i]),pos);break;
+                                        }
                             }
                         }
                     }
@@ -187,6 +223,7 @@ normal::normal(bool make){
                             memCase(set);
                             memCase(add);
                             memCase(less);
+                            memCase(more);
                         }
                         #undef memCase
                     }

@@ -74,9 +74,11 @@ void Tile::chargeTriggers(){
 }
 void activateTriggers(){
     //chequeo de triggers de memoria
-    for(pair<normalHolder*,getterCondTrig*> p:trigsMemToCheck)
+    for(pair<normalHolder*,getterCondTrig*> p:trigsMemToCheck){
+        actualHolder.nh=p.first;//para que tiles obtengan el offsetAct
         if(p.second->change())
             trigsActivados.push_back(p.first);
+    }
     trigsMemToCheck.clear();
 
     //activacion de triggers
