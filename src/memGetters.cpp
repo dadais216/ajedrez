@@ -190,8 +190,8 @@ struct piezaaRead:public getterCondTrig{
         window->draw(backGroundMemDebug);
     }
     virtual bool change(){
-        Holder::int2* ret=&actualHolder.h->memPieza[ind];
-        return ret->before==ret->actual;
+        Holder::int2* ret=&actualHolder.nh->h->memPieza[ind];
+        return ret->before!=ret->actual;
     }
 };
 struct piezaaReadNT:public getter{
@@ -242,7 +242,7 @@ struct piezaaiRead:public getterCondTrig{
         window->draw(backGroundMemDebug);
     }
     virtual bool change(){
-        Holder::int2 vals=actualHolder.h->memPieza[*g->valFast()];
+        Holder::int2 vals=actualHolder.nh->h->memPieza[*g->valFast()];
         return vals.actual!=vals.before;
     }
 };
@@ -329,7 +329,7 @@ struct tileaiRead:public getterCondTrig{
                 goto afterSetup;
         t->memTileTrigs[beforeInd].push_back(make_pair(actualHolder.nh,this));
         afterSetup:
-        auto* ret=&tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[beforeInd];
+        auto* ret=&t->memTile[beforeInd];
         ret->before=ret->actual;
         return &ret->actual;
     }
@@ -356,6 +356,118 @@ struct tileaiReadNT:public getter{
         return &tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[*g->val()].actual;
     }
 };
+
+///todos los other asumen que hay una pieza en la posicion actual con una memoria que contenga su indice
+struct otheraWrite:public getter{
+    int ind;
+    v offset;
+    otheraWrite(int ind_,v offset_):ind(ind_),offset(offset_){}
+    virtual int* val(){
+        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
+        for(pair<normalHolder*,getterCondTrig*>& p:h->memPiezaTrigs[ind]){
+            cout<<h->memPieza.size()<<"  "<<p.first->h->memPieza.size()<<"!!\n";
+            if(p.first->h!=actualHolder.h) ///podria asumir que other nunca se usa sobre uno y sacar este if
+                trigsMemToCheck.push_back(p);
+        }
+        return &h->memPieza[ind].actual;
+    }
+};
+int memOtherSize=0;
+struct otheraRead:public getterCondTrig{
+    int ind;
+    v offset;
+    otheraRead(int ind_,v offset_):ind(ind_),offset(offset_){}
+    virtual int* val(){
+        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
+        for(pair<normalHolder*,getterCondTrig*>& p:h->memPiezaTrigs[ind])
+            if(p.second==this)
+                goto afterSetup;
+        h->memPiezaTrigs[ind].push_back(make_pair(actualHolder.nh,this));
+        afterSetup:
+        auto* ret=&h->memPieza[ind];
+        ret->before=ret->actual;
+        return &ret->actual;
+    }
+    virtual int* valFast(){
+        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[ind].actual;
+    }
+    virtual void drawDebugMem(){
+        posDebugTile=offset+actualHolder.nh->offsetAct;
+        memOtherSize=actualHolder.nh->h->memPieza.size();
+        backGroundMemDebug.setPosition(Vector2f(630+25*(ind%4),105+45*(ind/4-memOtherSize/4)));
+        window->draw(backGroundMemDebug);
+    }
+    virtual bool change(){
+        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
+        if(h){
+            auto vals=h->memPieza[ind];
+            return vals.actual!=vals.before;
+        }
+        return true;///@sospechoso
+    }
+};
+struct otheraReadNT:public getter{
+    int ind;
+    v offset;
+    otheraReadNT(int ind_,v offset_):ind(ind_),offset(offset_){}
+    virtual int* val(){
+        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[ind].actual;
+    }
+};
+struct otheraiWrite:public getter{
+    getter* g;
+    v offset;
+    otheraiWrite(getter* g_,v offset_):g(g_),offset(offset_){}
+    virtual int* val(){
+        int ind=*g->val();
+        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
+        for(pair<normalHolder*,getterCondTrig*> p:h->memPiezaTrigs[ind])
+            if(p.first->h!=actualHolder.h)
+                trigsMemToCheck.push_back(p);
+        return &h->memPieza[ind].actual;
+    }
+};
+struct otheraiRead:public getterCondTrig{
+    getterCond* g;
+    v offset;
+    int beforeInd;
+    otheraiRead(getterCond* g_,v offset_):g(g_),offset(offset_){}
+    virtual int* val(){
+        beforeInd=*g->val();
+        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
+        for(pair<normalHolder*,getterCondTrig*>& p:h->memPiezaTrigs[beforeInd])
+            if(p.second==this)
+                goto afterSetup;
+        h->memPiezaTrigs[beforeInd].push_back(make_pair(actualHolder.nh,this));
+        afterSetup:
+        auto* ret=&h->memPieza[beforeInd];
+        ret->before=ret->actual;
+        return &ret->actual;
+    }
+    virtual int* valFast(){
+        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[*g->val()].actual;
+    }
+    virtual void drawDebugMem(){
+        backGroundMemDebug.setFillColor(sf::Color(178,235,221));
+        g->drawDebugMem();
+        backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+        backGroundMemDebug.setPosition(Vector2f(530+25*(beforeInd%4),105+45*(beforeInd/4-memTileSize/4)));
+        window->draw(backGroundMemDebug);
+    }
+    virtual bool change(){
+        auto vals=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[*g->valFast()];
+        return vals.actual!=vals.before;
+    }
+};
+struct otheraiReadNT:public getter{
+    getter* g;
+    v offset;
+    otheraiReadNT(getter* g_,v offset_):g(g_),offset(offset_){}
+    virtual int* val(){
+        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[*g->val()].actual;
+    }
+};
+
 struct ctea:public getterCond{
     int v;
     ctea(int v_):v(v_){}

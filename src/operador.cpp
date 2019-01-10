@@ -43,28 +43,17 @@ normal::normal(bool make){
                 break;
                 //cout<<#TOKEN<<endl;
     #define cond(TOKEN)  case lector::TOKEN: if(debugMode) conds.push_back(new debugMov(new TOKEN(pos))); else conds.push_back(new TOKEN(pos));break
-    //        cond(posRemember);
-    //        cond(numSet);
-    //        cond(numAdd);
-    //        cond(numSeti);
-    //        cond(numAddi);
-    //        cond(numCmp);
-    //        cond(numDst);
-    //        cond(numCmpi);
-    //        cond(numDsti);
-    //        cond(numLess);
-    //        cond(numLessi);
-
                 cond(vacio);
                 cond(pieza);
                 cond(enemigo);
-                case lector::esp: conds.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
+            case lector::esp: conds.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
     #define acc(TOKEN) case lector::TOKEN: accs.push_back(new TOKEN(pos));break
 
                 acc(mov);
                 acc(capt);
                 acc(pausa);
-    //        acc(spwn);
+            case lector::spwn:
+                accs.push_back(new spwn(pos,tokens.front()-1000));tokens.pop_front();break;
 
             case lector::color:
                 colors.push_back(crearColor(pos));
@@ -125,6 +114,7 @@ normal::normal(bool make){
                                         case lector::mglobal: g[i]=new globalaReadNT(tg[j]); break;
                                         case lector::mpieza: g[i]=new piezaaReadNT(tg[j]);break;
                                         case lector::mtile: g[i]=new tileaReadNT(tg[j],pos);break;
+                                        case lector::mother: g[i]=new otheraReadNT(tg[j],pos);break;
                                         }
                                     else
                                         if(left)
@@ -132,12 +122,14 @@ normal::normal(bool make){
                                             case lector::mglobal: g[i]=new globalaWrite(tg[j]); break;
                                             case lector::mpieza: g[i]=new piezaaWrite(tg[j]);break;
                                             case lector::mtile: g[i]=new tileaWrite(tg[j],pos);break;
+                                            case lector::mother: g[i]=new otheraWrite(tg[j],pos);break;
                                             }
                                         else
                                             switch(tg[j-1]){
                                             case lector::mglobal: g[i]=new globalaReadNT(tg[j]); break;
                                             case lector::mpieza: g[i]=new piezaaReadNT(tg[j]);break;
                                             case lector::mtile: g[i]=new tileaReadNT(tg[j],pos);break;
+                                            case lector::mother: g[i]=new otheraReadNT(tg[j],pos);break;
                                             }
                                 else
                                     switch(tg[j-1]){
@@ -149,6 +141,7 @@ normal::normal(bool make){
                                         setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCondTrig*>(g[i])});
                                     break;
                                     case lector::mtile: g[i]=new tileaRead(tg[j],pos);break;
+                                    case lector::mother: g[i]=new otheraRead(tg[j],pos);break;
                                     }
 
                             for(int k=j-2;k>=0;k--){//getters indirectos
@@ -170,6 +163,7 @@ normal::normal(bool make){
                                             case lector::mglobal: g[i]=new globalaiReadNT(g[i]); break;
                                             case lector::mpieza: g[i]=new piezaaiReadNT(g[i]);break;
                                             case lector::mtile: g[i]=new tileaiReadNT(g[i],pos);break;
+                                            case lector::mother: g[i]=new otheraiReadNT(g[i],pos);break;
                                             }
                                         else
                                             if(left)
@@ -177,12 +171,14 @@ normal::normal(bool make){
                                                 case lector::mglobal: g[i]=new globalaiWrite(g[i]); break;
                                                 case lector::mpieza: g[i]=new piezaaiWrite(g[i]);break;
                                                 case lector::mtile: g[i]=new tileaiWrite(g[i],pos);break;
+                                                case lector::mother: g[i]=new otheraiWrite(g[i],pos);break;
                                                 }
                                             else
                                                 switch(tg[k]){
                                                 case lector::mglobal: g[i]=new globalaiReadNT(g[i]); break;
                                                 case lector::mpieza: g[i]=new piezaaiReadNT(g[i]);break;
                                                 case lector::mtile: g[i]=new tileaiReadNT(g[i],pos);break;
+                                                case lector::mother: g[i]=new otheraiReadNT(g[i],pos);break;
                                                 }
                                     else
                                         switch(tg[k]){
@@ -194,6 +190,7 @@ normal::normal(bool make){
                                             setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCondTrig*>(g[i])});
                                         break;
                                         case lector::mtile: g[i]=new tileaiRead(static_cast<getterCond*>(g[i]),pos);break;
+                                        case lector::mother: g[i]=new otheraiRead(static_cast<getterCond*>(g[i]),pos);break;
                                         }
                             }
                         }

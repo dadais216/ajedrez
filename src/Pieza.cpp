@@ -99,6 +99,7 @@ movHolder* crearMovHolder(Holder* h,operador* op,Base* base){
 }
 Holder::Holder(int _bando,Pieza* p,v pos_){
     bando=_bando;
+    id=p->id;
     pieza=p;
     tile=tablptr->tile(pos_);
     movs.reserve(sizeof(movHolder*)*pieza->movs.size());

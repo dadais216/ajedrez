@@ -255,6 +255,14 @@ void Proper::draw(){
             textValMem.setString(to_string(tablptr->tile(posDebugTile)->memTile[i].actual));
             window->draw(textValMem);
         }
+        if(memOtherSize){
+            for(int i=0;i<memOtherSize;i++){
+                textValMem.setPosition(530+25*(i%4),160+45*(i/4-memOtherSize/4));
+                textValMem.setString(to_string(tablptr->tile(posDebugTile)->holder->memPieza[i].actual));
+                window->draw(textValMem);
+            }
+            memOtherSize=0;
+        }
     }
 }
 

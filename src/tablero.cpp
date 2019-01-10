@@ -76,8 +76,11 @@ void Tile::chargeTriggers(){
 }
 void activateTriggers(){
     //chequeo de triggers de memoria
+    cout<<"!!!!!"<<trigsMemToCheck.size()<<"¡¡¡¡¡¡¡¡¡¡¡¡\n";
+
     for(pair<normalHolder*,getterCondTrig*> p:trigsMemToCheck){
         actualHolder.nh=p.first;//para que tiles obtengan el offsetAct
+        cout<<p.first->h->memPieza.size()<<"??\n";
         if(p.second->change())
             trigsActivados.push_back(p.first);
     }
