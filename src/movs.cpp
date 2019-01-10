@@ -112,7 +112,7 @@ template<void(*funct)(v),string* n> struct acc:public acct{
 inline void NAME##func(v relPos){ \
     FUNC \
 }\
-extern string str##NAME=#NAME;\
+string str##NAME=#NAME;\
 typedef acc<NAME##func,&str##NAME> NAME;
 
 fabAcc(mov,
@@ -127,15 +127,40 @@ fabAcc(pausa,
     drawScreen();
     sleep(milliseconds(40));
 )
+vector<Holder*> reciclaje;
 fabAcc(capt,
-    /*
-    Tile* captT=tablptr->tile(pos);
-    delete captT->holder;
+    Tile* captT=tablptr->tile(relPos+actualHolder.offset);
+    reciclaje.push_back(captT->holder);
     captT->holder=nullptr;
     captT->step++;
     pisados.push_back(captT);
-    */
 );
+string spwn_str="spwn";
+struct spwn:public acct{
+    v relPos;
+    int id;
+    spwn(v pos_,int id_):acct(&spwn_str),relPos(pos_),id(id_){}
+    virtual void func(){
+        v pos=relPos+actualHolder.offset;
+        Tile* spwnT=tablptr->tile(pos);
+        for(int i=0;i<reciclaje.size();i++){
+            Holder* h=reciclaje[i];
+            if(h->id==id){//no tomo bandos distintos porque los movimientos estan espejados
+                spwnT->holder=h;
+                h->tile=spwnT;
+                reciclaje.erase(reciclaje.begin()+i);
+                goto gen;
+            }
+        }
+        spwnT->holder=lect.crearPieza(id*actualHolder.h->bando,pos);
+        gen:
+        spwnT->holder->generar();
+        ///@optim se podria generar despues agregando un if al curso principal. Pense meterlo como un trigger
+        ///pero eso llama a recalcular pasandole el primer normalHolder como el que tira el error. Pero encontrar
+        ///ese normalHolder es un problema y los otros holders no terminan de generar sus cosas hasta la primera generacion
+        pisados.push_back(spwnT);
+    }
+};
 
 
 template<bool(*chck)(v),string* n> struct cond:public condt{

@@ -17,15 +17,32 @@ def move vacio mov pausa color 115 20 200
 #msize g 2 mset gg0 5 w mover
 #msize g 2 mcmp gg0 5 w mover #rompe por no poner triggers dinamicos
 #mset t0 1 desliz {w,a,s,d} mover mset t0 1 c end
-madd p0 1 mset t0 p0 {w,a,s,d} mover
-mset l0 p0 desliz mmore l0 0 exc \
-    {w,a,s,d} mcmp l0 t0 move madd l0 -1 or \
-end mset p0 l0 c end
+#madd p0 1 mset t0 p0 {w,a,s,d} mover
+#mset l0 p0 desliz mmore l0 0 exc \
+#    {w,a,s,d} mcmp l0 t0 move madd l0 -1 or \
+#end mset p0 l0 c end
+#desliz w mover sn spwn 2 wn c end
+#desliz a mover dn spwn 2 an c end
+#desliz s mover wn spwn 2 sn c end
+#desliz d mover an spwn 2 dn c end
+#desliz d w pieza mcmp o0 0 sn mover c end
+#mcmp p0 0 desliz {w,a,s,d} mover c end
+mcmp p0 0 d mover
 
 :3 3 #alfil
 #desliz {w,a,s,d} isol mcmp t0 1 mover end end
 #desliz w isol mcmp t0 1 mover end end
 #{w,wa,a,as,s,sd,d,dw} mcmp t0 1 mover mset t0 0
+#{w,a,s,d} exc vacio mover or capt mov color 10 20 30 end
+#mcmp p0 0 mset p0 1 color 0 0 255
+#mcmp p0 1 mset p0 0 color 255 0 0
+mcmp p0 0 ww pieza mset p0 1 mset o0 1 color 0 0 255
+mcmp p0 1 ww pieza mcmp o0 1 mset o0 0 mset p0 0 color 255 0 0
+
+#mcmp p0 0 {w,a,s,d} mover
+#ww pieza mset o0 1 mset p0 1 color 0 0 255
+#mcmp p0 1 ww pieza mcmp o0 1 mset o0 0 mset p0 0 color 255 0 0
+
 
 :4 2 #excguy
 desopt aaw mover c or wwa mover c or wwd mover c or ddw mover c end

@@ -154,6 +154,7 @@ enPieza:
             CASE(mglobal);
             CASE(mpieza);
             CASE(mtile);
+            CASE(mother);
             CASE(desliz);
             CASE(exc);
             CASE(isol);
@@ -334,7 +335,8 @@ void lector::tokenizarPalabra(string linea){
         if(linea[j]=='\0')
             lista->push_back(eol);
         return;
-    }else if(palabra=="msize"){
+    }
+    if(palabra=="msize"){
         do{j++;}while(linea[j]==' ');
         char c=linea[j];
         do{j++;}while(linea[j]==' ');
@@ -360,7 +362,19 @@ void lector::tokenizarPalabra(string linea){
                 tileMemGrowth=true;
             }
             break;
+        default:
+            assert(false&&"msize invalido");
         }
+        i=j;
+        if(linea[j]=='\0')
+            lista->push_back(eol);
+        return;
+    }
+    if(palabra=="spwn"){
+        lista->push_back(spwn);
+        do{j++;}while(linea[j]==' ');
+        int num=getNum(linea);
+        lista->push_back(num+1000);
         i=j;
         if(linea[j]=='\0')
             lista->push_back(eol);
@@ -384,6 +398,7 @@ void lector::tokenizarPalabra(string linea){
                     case 'g': lista->push_back(directGetter=mglobal);break;
                     case 'p': lista->push_back(directGetter=mpieza);break;
                     case 't': lista->push_back(directGetter=mtile);break;
+                    case 'o': lista->push_back(directGetter=mother);break;
                     default:
                         goto gnum;
                     }

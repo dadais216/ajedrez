@@ -127,6 +127,7 @@ extern vector<int> memMov;
 extern int maxMemMovSize;
 extern int memLocalSize;
 extern int memTileSize;
+extern int memOtherSize;
 
 struct AH{
     Holder* h;
