@@ -247,18 +247,18 @@ void Proper::draw(){
         }
         for(int i=0;i<memPiezaSize;i++){
             textValMem.setPosition(530+25*(i%4),210+45*(i/4-memPiezaSize/4));
-            textValMem.setString(to_string(actualHolder.h->memPieza[i].actual));
+            textValMem.setString(to_string(actualHolder.h->memPieza[i]));
             window->draw(textValMem);
         }
         for(int i=0;i<memTileSize;i++){
             textValMem.setPosition(530+25*(i%4),110+45*(i/4-memTileSize/4));
-            textValMem.setString(to_string(tablptr->tile(posDebugTile)->memTile[i].actual));
+            textValMem.setString(to_string(tablptr->tile(posDebugTile)->memTile[i]));
             window->draw(textValMem);
         }
         if(memOtherSize){
             for(int i=0;i<memOtherSize;i++){
                 textValMem.setPosition(530+25*(i%4),160+45*(i/4-memOtherSize/4));
-                textValMem.setString(to_string(tablptr->tile(posDebugTile)->holder->memPieza[i].actual));
+                textValMem.setString(to_string(tablptr->tile(posDebugTile)->holder->memPieza[i]));
                 window->draw(textValMem);
             }
             memOtherSize=0;

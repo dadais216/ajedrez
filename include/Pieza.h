@@ -28,6 +28,7 @@ struct Pieza{
 
 extern vector<Tile*> pisados;
 
+
 struct Holder{
     Holder(int,Pieza*,v);
     void draw();///dibuja la pieza
@@ -40,12 +41,8 @@ struct Holder{
     Pieza* pieza;
     Tile* tile;
 
-    struct int2{
-        int actual;
-        int before;
-    };
-    vector<int2> memPieza;
-    vector<vector<pair<normalHolder*,getterCondTrig*>>> memPiezaTrigs;
+    vector<int> memPieza;
+    vector<vector<trigMemGlobal>> memPiezaTrigs;
     int movSize;
 
     vector<movHolder*> movs;

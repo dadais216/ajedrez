@@ -53,7 +53,6 @@ struct macct;
 struct colort;
 struct getter;
 struct getterCond;
-struct getterCondTrig;
 
 
 
@@ -130,10 +129,14 @@ struct AH{
 };
 extern AH actualHolder;
 
+struct trigMemGlobal{
+    normalHolder* nh;//para reaccionar
+    getterCond* gc;//identificador para indirectos
+};
+extern vector<trigMemGlobal>* trigsMaybeActivate;
 extern vector<normalHolder*> trigsActivados;
 extern Trigger triggerInfo;
-extern vector<vector<pair<normalHolder*,getterCondTrig*>>> memGlobalTriggers;
-extern vector<pair<normalHolder*,getterCondTrig*>> trigsMemToCheck;
+extern vector<vector<trigMemGlobal>> memGlobalTriggers;
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 

@@ -3,6 +3,7 @@
 
 #include "Pieza.h"
 #include "memGetters.h"
+#include "movHolders.h"
 
 //antes separaba acct en posicionales y de memoria, pero como estoy usando polimorfismo para los dos da lo mismo
 //supongo que abstraer las cosas en comun en pos y mem reduce un poco el nivel de instrucciones, pero dentro de todo
@@ -69,21 +70,51 @@ template<bool(*chck)(getter*,getter*),string* n> struct macc:public acct{
         chck(i1,i2);
     }
 };
-inline bool mcmp(getter* a1,getter* a2){
+inline bool mcmpCond(getter* a1,getter* a2){
     return *a1->val()==*a2->val();
 }
-inline bool mset(getter* a1,getter* a2){
+inline bool msetCond(getter* a1,getter* a2){
     *a1->val()=*a2->val();
     return true;
 }
-inline bool madd(getter* a1,getter* a2){
+inline bool msetAcc(getter* a1,getter* a2){///version para memorias globales, para activar triggers
+    int* val=a1->val();
+    int before=*val;
+    *val=*a2->val();
+    if(before!=*val)
+        for(trigMemGlobal& tmg:*trigsMaybeActivate)
+            if(tmg.nh->h!=actualHolder.h)
+                trigsActivados.push_back(tmg.nh);
+    return true;
+}
+inline bool msetAccTile(getter* a1,getter* a2){///version para tiles que necesitan que la pieza que puso el trigger no se haya movido a demas de que la memoria varie
+    int* val=a1->val();
+    int before=*val;
+    *val=*a2->val();
+    if(before!=*val)
+        for(Tile::tileTrigInfo& tti:*reinterpret_cast<vector<Tile::tileTrigInfo>*>(trigsMaybeActivate))
+            if(tti.nh->h!=actualHolder.h&&tti.step==*tti.stepCheck)
+                trigsActivados.push_back(tti.nh);
+    ///@optim? aca podrían removerse los invalidos. No se si vale la pena
+}
+inline bool maddCond(getter* a1,getter* a2){
     *a1->val()+=*a2->val();
     return true;
 }
-inline bool mless(getter* a1,getter* a2){
+inline bool maddAcc(getter* a1,getter* a2){
+    *a1->val()+=*a2->val();
+    ///cargar triggers
+    return true;
+}
+inline bool maddAccTile(getter* a1,getter* a2){
+    *a1->val()+=*a2->val();
+    ///cargar triggers
+    return true;
+}
+inline bool mlessCond(getter* a1,getter* a2){
     return *a1->val()<*a2->val();
 }
-inline bool mmore(getter* a1,getter* a2){
+inline bool mmoreCond(getter* a1,getter* a2){
     return *a1->val()>*a2->val();
 }
 

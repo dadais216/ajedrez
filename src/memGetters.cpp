@@ -4,7 +4,7 @@
 
 
 vector<int> memMov;
-vector<vector<pair<normalHolder*,getterCondTrig*>>> memGlobalTriggers;
+vector<vector<trigMemGlobal>> memGlobalTriggers;
 vector<int> memGlobal;
 int maxMemMovSize=0;
 RectangleShape backGroundMemDebug;
@@ -49,9 +49,6 @@ struct localai:public getterCond{
         before=*g->val();//para cosas de debug. Es necesario guardar la informacion porque puede variar antes de llamar a drawDebugMem (ej mset ll0 1), de paso ahorra una llamada
         return &memMov[before];
     }
-    virtual int* valFast(){
-        return &memMov[*g->valFast()];
-    }
     virtual void drawDebugMem(){
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
@@ -69,35 +66,28 @@ struct localaiAcc:public getter{//aparece en cadenas de 3 o mas
         return &actualHolder.nh->memAct[*g->val()];
     }
 };
+
+vector<trigMemGlobal>* trigsMaybeActivate;
+
 //se podrían meter templates para evitar copiar y pegar, pero no vale la pena
 struct globalaWrite:public getter{
     int ind;
     globalaWrite(int ind_):ind(ind_){}
     virtual int* val(){
-        for(pair<normalHolder*,getterCondTrig*> p:memGlobalTriggers[ind])
-            if(p.first->h!=actualHolder.h)
-                trigsMemToCheck.push_back(p);
+        trigsMaybeActivate=&memGlobalTriggers[ind];
         return &memGlobal[ind];
     }
 };
-struct globalaRead:public getterCondTrig{
+struct globalaRead:public getterCond{
     int ind;
     int* val_;
-    int before;
     globalaRead(int ind_):ind(ind_),val_(&memGlobal[ind_]){}
     virtual int* val(){
-        before=*val_;
-        return val_;
-    }
-    virtual int* valFast(){
         return val_;
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),305+45*(ind/4-memGlobalSize/4)));
         window->draw(backGroundMemDebug);
-    }
-    virtual bool change(){
-        return before!=*val_;
     }
 };
 struct globalaReadNT:public getter{
@@ -112,48 +102,38 @@ struct globalaiWrite:public getter{
     globalaiWrite(getter* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-        for(pair<normalHolder*,getterCondTrig*> p:memGlobalTriggers[ind])
-            if(p.first->h!=actualHolder.h)
-                trigsMemToCheck.push_back(p);
+        trigsMaybeActivate=&memGlobalTriggers[ind];
         return &memGlobal[ind];
     }
 };
-struct globalaiRead:public getterCondTrig{
+struct globalaiRead:public getterCond{
     getterCond* g;
-    int before;
-    int* beforeInd;
+    int indDebug;
     globalaiRead(getterCond* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
 
         bool notSet=true;
-        for(pair<normalHolder*,getterCondTrig*>& p:memGlobalTriggers[ind])
-            if(p.second==this){
-                notSet=false;
-                break;
+        for(trigMemGlobal& tmg:memGlobalTriggers[ind])
+            if(tmg.gc==this){
+                goto afterSetup;
             }
-        if(notSet)
-            memGlobalTriggers[ind].push_back(make_pair(actualHolder.nh,this));
+        memGlobalTriggers[ind].push_back({actualHolder.nh,this});
+        afterSetup:
         ///@optim lo malo de este sistema es que pone triggers dinamicos que nunca se van, y pueden estar
         //soltando triggers falso positivo a cada rato si se lee una memoria en alguna rama que no se ejecuta seguido.
         //Podría manejarse con un mecanismo de aging, pero como es algo raro en una mecanica que ya es rara, puede
         //que lo mas eficiente sea no hacer nada
-        beforeInd=&memGlobal[ind];
-        before=*beforeInd;
-        return beforeInd;
-    }
-    virtual int* valFast(){
-        return &memGlobal[*g->val()];
+        int* ret=&memGlobal[ind];
+        indDebug=*ret;
+        return ret;
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        backGroundMemDebug.setPosition(Vector2f(530+25*(before%4),305+45*(before/4-memGlobalSize/4)));
+        backGroundMemDebug.setPosition(Vector2f(530+25*(indDebug%4),305+45*(indDebug/4-memGlobalSize/4)));
         window->draw(backGroundMemDebug);
-    }
-    virtual bool change(){
-        return before!=*beforeInd; //un cambio en g se maneja desde su trigger
     }
 };
 struct globalaiReadNT:public getter{
@@ -168,37 +148,26 @@ struct piezaaWrite:public getter{
     int ind;
     piezaaWrite(int ind_):ind(ind_){}
     virtual int* val(){
-        for(pair<normalHolder*,getterCondTrig*> p:actualHolder.h->memPiezaTrigs[ind])
-            if(p.first->h!=actualHolder.h)
-                trigsMemToCheck.push_back(p);
-        return &actualHolder.h->memPieza[ind].actual;
+        trigsMaybeActivate=&actualHolder.h->memPiezaTrigs[ind];
+        return &actualHolder.h->memPieza[ind];
     }
 };
-struct piezaaRead:public getterCondTrig{
+struct piezaaRead:public getterCond{
     int ind;
     piezaaRead(int ind_):ind(ind_){}
     virtual int* val(){
-        Holder::int2* ret=&actualHolder.h->memPieza[ind];
-        ret->before=ret->actual;
-        return &ret->actual;
-    }
-    virtual int* valFast(){
-        return &actualHolder.h->memPieza[ind].actual;
+        return &actualHolder.h->memPieza[ind];
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-actualHolder.h->memPieza.size()/4)));
         window->draw(backGroundMemDebug);
-    }
-    virtual bool change(){
-        Holder::int2* ret=&actualHolder.nh->h->memPieza[ind];
-        return ret->before!=ret->actual;
     }
 };
 struct piezaaReadNT:public getter{
     int ind;
     piezaaReadNT(int ind_):ind(ind_){}
     virtual int* val(){
-        return &actualHolder.h->memPieza[ind].actual;
+        return &actualHolder.h->memPieza[ind];
     }
 };
 struct piezaaiWrite:public getter{
@@ -206,51 +175,36 @@ struct piezaaiWrite:public getter{
     piezaaiWrite(getter* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-        for(pair<normalHolder*,getterCondTrig*> p:actualHolder.h->memPiezaTrigs[ind])
-            if(p.first->h!=actualHolder.h)
-                trigsMemToCheck.push_back(p);
-        return &actualHolder.h->memPieza[ind].actual;
+        trigsMaybeActivate=&actualHolder.h->memPiezaTrigs[ind];
+        return &actualHolder.h->memPieza[ind];
     }
 };
-struct piezaaiRead:public getterCondTrig{
+struct piezaaiRead:public getterCond{
     getterCond* g;
     piezaaiRead(getterCond* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-
-        bool notSet=true;
-        for(pair<normalHolder*,getterCondTrig*>& p:actualHolder.h->memPiezaTrigs[ind])
-            if(p.second==this){
-                notSet=false;
-                break;
-            }
-        if(notSet)
-            actualHolder.h->memPiezaTrigs[ind].push_back(make_pair(actualHolder.nh,this));
-        Holder::int2* ret=&actualHolder.h->memPieza[ind];
-        ret->before=ret->actual;
-        return &ret->actual;
-    }
-    virtual int* valFast(){
-        return &actualHolder.h->memPieza[*g->val()].actual;
+        for(trigMemGlobal& tmg:actualHolder.h->memPiezaTrigs[ind])
+            if(tmg.gc==this)
+                goto afterSetup;
+        actualHolder.h->memPiezaTrigs[ind].push_back({actualHolder.nh,this});
+        afterSetup:
+        return &actualHolder.h->memPieza[ind];
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        int ind=*g->valFast();
+        int ind=*g->val();
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-actualHolder.h->memPieza.size()/4)));
         window->draw(backGroundMemDebug);
-    }
-    virtual bool change(){
-        Holder::int2 vals=actualHolder.nh->h->memPieza[*g->valFast()];
-        return vals.actual!=vals.before;
     }
 };
 struct piezaaiReadNT:public getter{
     getter* g;
     piezaaiReadNT(getter* g_):g(g_){}
     virtual int* val(){
-        return &actualHolder.h->memPieza[*g->val()].actual;
+        return &actualHolder.h->memPieza[*g->val()];
     }
 };
 
@@ -260,39 +214,33 @@ struct tileaWrite:public getter{
     tileaWrite(int ind_,v offset_):ind(ind_),offset(offset_){}
     virtual int* val(){
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        for(pair<normalHolder*,getterCondTrig*>& p:t->memTileTrigs[ind])
-            if(p.first->h!=actualHolder.h)
-                trigsMemToCheck.push_back(p);
-        return &t->memTile[ind].actual;
+        trigsMaybeActivate=reinterpret_cast<vector<trigMemGlobal>*>(&t->memTileTrigs[ind]);
+        return &t->memTile[ind];
     }
 };
 v posDebugTile(0,0);
-struct tileaRead:public getterCondTrig{
+struct tileaRead:public getterCond{
     int ind;
     v offset;
     tileaRead(int ind_,v offset_):ind(ind_),offset(offset_){}
     virtual int* val(){
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        for(pair<normalHolder*,getterCondTrig*>& p:t->memTileTrigs[ind])
-            if(p.second==this)
+        int* stepCheck=&actualHolder.tile->step;
+        int step=*stepCheck;
+        for(Tile::tileTrigInfo& tti:t->memTileTrigs[ind])
+            if(tti.gc==this){
+                tti.step=step;
+                tti.stepCheck=stepCheck;//creo que no es necesario actualizar este
                 goto afterSetup;
-        t->memTileTrigs[ind].push_back(make_pair(actualHolder.nh,this));
+            }
+        t->memTileTrigs[ind].push_back({actualHolder.nh,this,step,stepCheck});
         afterSetup:
-        auto* ret=&t->memTile[ind];
-        ret->before=ret->actual;
-        return &ret->actual;
-    }
-    virtual int* valFast(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[ind].actual;
+        return &t->memTile[ind];
     }
     virtual void drawDebugMem(){
         posDebugTile=offset+actualHolder.nh->offsetAct;
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),105+45*(ind/4-memTileSize/4)));
         window->draw(backGroundMemDebug);
-    }
-    virtual bool change(){
-        auto vals=tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[ind];
-        return vals.actual!=vals.before;
     }
 };
 struct tileaReadNT:public getter{
@@ -300,7 +248,7 @@ struct tileaReadNT:public getter{
     v offset;
     tileaReadNT(int ind_,v offset_):ind(ind_),offset(offset_){}
     virtual int* val(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[ind].actual;
+        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[ind];
     }
 };
 struct tileaiWrite:public getter{
@@ -310,42 +258,36 @@ struct tileaiWrite:public getter{
     virtual int* val(){
         int ind=*g->val();
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        for(pair<normalHolder*,getterCondTrig*> p:t->memTileTrigs[ind])
-            if(p.first->h!=actualHolder.h)
-                trigsMemToCheck.push_back(p);
-        return &t->memTile[ind].actual;
+        trigsMaybeActivate=reinterpret_cast<vector<trigMemGlobal>*>(&t->memTileTrigs[ind]);
+        return &t->memTile[ind];
     }
 };
-struct tileaiRead:public getterCondTrig{
+struct tileaiRead:public getterCond{
     getterCond* g;
     v offset;
-    int beforeInd;
+    int ind;
     tileaiRead(getterCond* g_,v offset_):g(g_),offset(offset_){}
     virtual int* val(){
-        beforeInd=*g->val();
+        ind=*g->val();
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        for(pair<normalHolder*,getterCondTrig*>& p:t->memTileTrigs[beforeInd])
-            if(p.second==this)
+        int* stepCheck=&actualHolder.tile->step;
+        int step=*stepCheck;
+        for(Tile::tileTrigInfo& tti:t->memTileTrigs[ind])
+            if(tti.gc==this){
+                tti.step=step;
+                tti.stepCheck=stepCheck;//creo que no es necesario actualizar este
                 goto afterSetup;
-        t->memTileTrigs[beforeInd].push_back(make_pair(actualHolder.nh,this));
+            }
+        t->memTileTrigs[ind].push_back({actualHolder.nh,this,step,stepCheck});
         afterSetup:
-        auto* ret=&t->memTile[beforeInd];
-        ret->before=ret->actual;
-        return &ret->actual;
-    }
-    virtual int* valFast(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[*g->val()].actual;
+        return &t->memTile[ind];
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        backGroundMemDebug.setPosition(Vector2f(530+25*(beforeInd%4),105+45*(beforeInd/4-memTileSize/4)));
+        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),105+45*(ind/4-memTileSize/4)));
         window->draw(backGroundMemDebug);
-    }
-    virtual bool change(){
-        auto vals=tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[*g->valFast()];
-        return vals.actual!=vals.before;
     }
 };
 struct tileaiReadNT:public getter{
@@ -353,43 +295,39 @@ struct tileaiReadNT:public getter{
     v offset;
     tileaiReadNT(getter* g_,v offset_):g(g_),offset(offset_){}
     virtual int* val(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[*g->val()].actual;
+        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[*g->val()];
     }
 };
 
 ///todos los other asumen que hay una pieza en la posicion actual con una memoria que contenga su indice
+///@optim other deja triggers colgados en las otras piezas, que lo van a activar cada vez que cambien esa memoria
+///lo que no es grave porque siempre se van a ignorar por estar en ramas falsas (cond pieza antes de mother), aun asi
+///es lento. Se podría guardar mas informacion como en tile, solo para tener una condicion con la que eliminar triggers
+///la condicion es que el step de la pieza propia y la que lee no varie. Se puede guardar la suma en vez de cada numero
+///para ahorrar espacio. Haría necesario una version mas de cada accion que escribe
 struct otheraWrite:public getter{
     int ind;
     v offset;
     otheraWrite(int ind_,v offset_):ind(ind_),offset(offset_){}
     virtual int* val(){
         Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
-        for(pair<normalHolder*,getterCondTrig*>& p:h->memPiezaTrigs[ind]){
-            cout<<h->memPieza.size()<<"  "<<p.first->h->memPieza.size()<<"!!\n";
-            if(p.first->h!=actualHolder.h) ///podria asumir que other nunca se usa sobre uno y sacar este if
-                trigsMemToCheck.push_back(p);
-        }
-        return &h->memPieza[ind].actual;
+        trigsMaybeActivate=&h->memPiezaTrigs[ind];//podria asumir que other nunca se usa sobre uno y sacar el if holder==
+        return &h->memPieza[ind];
     }
 };
 int memOtherSize=0;
-struct otheraRead:public getterCondTrig{
+struct otheraRead:public getterCond{
     int ind;
     v offset;
     otheraRead(int ind_,v offset_):ind(ind_),offset(offset_){}
     virtual int* val(){
         Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
-        for(pair<normalHolder*,getterCondTrig*>& p:h->memPiezaTrigs[ind])
-            if(p.second==this)
+        for(trigMemGlobal& tmg:h->memPiezaTrigs[ind])
+            if(tmg.gc==this)
                 goto afterSetup;
-        h->memPiezaTrigs[ind].push_back(make_pair(actualHolder.nh,this));
+        h->memPiezaTrigs[ind].push_back({actualHolder.nh,this});
         afterSetup:
-        auto* ret=&h->memPieza[ind];
-        ret->before=ret->actual;
-        return &ret->actual;
-    }
-    virtual int* valFast(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[ind].actual;
+        return &h->memPieza[ind];
     }
     virtual void drawDebugMem(){
         posDebugTile=offset+actualHolder.nh->offsetAct;
@@ -397,21 +335,13 @@ struct otheraRead:public getterCondTrig{
         backGroundMemDebug.setPosition(Vector2f(630+25*(ind%4),105+45*(ind/4-memOtherSize/4)));
         window->draw(backGroundMemDebug);
     }
-    virtual bool change(){
-        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
-        if(h){
-            auto vals=h->memPieza[ind];
-            return vals.actual!=vals.before;
-        }
-        return true;///@sospechoso
-    }
 };
 struct otheraReadNT:public getter{
     int ind;
     v offset;
     otheraReadNT(int ind_,v offset_):ind(ind_),offset(offset_){}
     virtual int* val(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[ind].actual;
+        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[ind];
     }
 };
 struct otheraiWrite:public getter{
@@ -421,42 +351,31 @@ struct otheraiWrite:public getter{
     virtual int* val(){
         int ind=*g->val();
         Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
-        for(pair<normalHolder*,getterCondTrig*> p:h->memPiezaTrigs[ind])
-            if(p.first->h!=actualHolder.h)
-                trigsMemToCheck.push_back(p);
-        return &h->memPieza[ind].actual;
+        trigsMaybeActivate=&h->memPiezaTrigs[ind];
+        return &h->memPieza[ind];
     }
 };
-struct otheraiRead:public getterCondTrig{
+struct otheraiRead:public getterCond{
     getterCond* g;
     v offset;
-    int beforeInd;
+    int ind;
     otheraiRead(getterCond* g_,v offset_):g(g_),offset(offset_){}
     virtual int* val(){
-        beforeInd=*g->val();
+        ind=*g->val();
         Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
-        for(pair<normalHolder*,getterCondTrig*>& p:h->memPiezaTrigs[beforeInd])
-            if(p.second==this)
+        for(trigMemGlobal& tmg:h->memPiezaTrigs[ind])
+            if(tmg.gc==this)
                 goto afterSetup;
-        h->memPiezaTrigs[beforeInd].push_back(make_pair(actualHolder.nh,this));
+        h->memPiezaTrigs[ind].push_back({actualHolder.nh,this});
         afterSetup:
-        auto* ret=&h->memPieza[beforeInd];
-        ret->before=ret->actual;
-        return &ret->actual;
-    }
-    virtual int* valFast(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[*g->val()].actual;
+        return &h->memPieza[ind];
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        backGroundMemDebug.setPosition(Vector2f(530+25*(beforeInd%4),105+45*(beforeInd/4-memTileSize/4)));
+        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),105+45*(ind/4-memTileSize/4)));
         window->draw(backGroundMemDebug);
-    }
-    virtual bool change(){
-        auto vals=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[*g->valFast()];
-        return vals.actual!=vals.before;
     }
 };
 struct otheraiReadNT:public getter{
@@ -464,7 +383,7 @@ struct otheraiReadNT:public getter{
     v offset;
     otheraiReadNT(getter* g_,v offset_):g(g_),offset(offset_){}
     virtual int* val(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[*g->val()].actual;
+        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[*g->val()];
     }
 };
 
