@@ -56,7 +56,7 @@ void tabl::drawPieces(){
                 p->draw();
         }
 }
-vector<pair<normalHolder*,getterCondTrig*>> trigsMemToCheck;
+
 vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
 void Tile::chargeTriggers(){
     for(Trigger trig:triggers)
@@ -73,18 +73,9 @@ void Tile::chargeTriggers(){
     triggers.clear();
 }
 void activateTriggers(){
-    //chequeo de triggers de memoria
-    cout<<"!!!!!"<<trigsMemToCheck.size()<<"¡¡¡¡¡¡¡¡¡¡¡¡\n";
 
-    for(pair<normalHolder*,getterCondTrig*> p:trigsMemToCheck){
-        actualHolder.nh=p.first;//para que tiles obtengan el offsetAct
-        cout<<p.first->h->memPieza.size()<<"??\n";
-        if(p.second->change())
-            trigsActivados.push_back(p.first);
-    }
-    trigsMemToCheck.clear();
+    ///@todo remover duplicados
 
-    //activacion de triggers
     if(trigsActivados.size()==0) return;
     if(trigsActivados.size()==1){
         switchToGen=false;

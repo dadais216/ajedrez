@@ -27,7 +27,9 @@ def move vacio mov pausa color 115 20 200
 #desliz d mover an spwn 2 dn c end
 #desliz d w pieza mcmp o0 0 sn mover c end
 #mcmp p0 0 desliz {w,a,s,d} mover c end
-mcmp p0 0 d mover
+#mcmp p0 0 d mover
+mcmp t0 0 w mover
+mcmp t0 1 a mover
 
 :3 3 #alfil
 #desliz {w,a,s,d} isol mcmp t0 1 mover end end
@@ -36,12 +38,10 @@ mcmp p0 0 d mover
 #{w,a,s,d} exc vacio mover or capt mov color 10 20 30 end
 #mcmp p0 0 mset p0 1 color 0 0 255
 #mcmp p0 1 mset p0 0 color 255 0 0
-mcmp p0 0 ww pieza mset p0 1 mset o0 1 color 0 0 255
-mcmp p0 1 ww pieza mcmp o0 1 mset o0 0 mset p0 0 color 255 0 0
-
-#mcmp p0 0 {w,a,s,d} mover
-#ww pieza mset o0 1 mset p0 1 color 0 0 255
+#mcmp p0 0 ww pieza mset p0 1 mset o0 1 color 0 0 255
 #mcmp p0 1 ww pieza mcmp o0 1 mset o0 0 mset p0 0 color 255 0 0
+a mset t0 1 color 0 0 255
+
 
 
 :4 2 #excguy

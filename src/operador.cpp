@@ -73,13 +73,13 @@ normal::normal(bool make){
             case lector::mless:
             case lector::mmore:
                 {
-                    ///hay 3 tipos de operaciones en memoria no local
+                    ///hay 2 tipos de operaciones en memoria no local
                     ///condiciones que leen
                     ///acciones que escriben la variable izquierda y leen la derecha
-                    ///@todo condiciones que escriben la variable izquierda y leen la derecha
                     getter* g[2];
                     bool write=tok==lector::mset||tok==lector::madd;
                     bool action;
+                    bool writeOnTile;
                     for(int i=0;i<2;i++){
                         bool left=i==0;
                         int tg[5],j;
@@ -121,7 +121,7 @@ normal::normal(bool make){
                                             switch(tg[j-1]){
                                             case lector::mglobal: g[i]=new globalaWrite(tg[j]); break;
                                             case lector::mpieza: g[i]=new piezaaWrite(tg[j]);break;
-                                            case lector::mtile: g[i]=new tileaWrite(tg[j],pos);break;
+                                            case lector::mtile: g[i]=new tileaWrite(tg[j],pos);writeOnTile=true;break;
                                             case lector::mother: g[i]=new otheraWrite(tg[j],pos);break;
                                             }
                                         else
@@ -135,10 +135,10 @@ normal::normal(bool make){
                                     switch(tg[j-1]){
                                     case lector::mglobal:
                                         g[i]=new globalaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{true,tg[j],static_cast<getterCondTrig*>(g[i])});
+                                        setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{true,tg[j],static_cast<getterCond*>(g[i])});
                                     break;case lector::mpieza:
                                         g[i]=new piezaaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCondTrig*>(g[i])});
+                                        setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCond*>(g[i])});
                                     break;
                                     case lector::mtile: g[i]=new tileaRead(tg[j],pos);break;
                                     case lector::mother: g[i]=new otheraRead(tg[j],pos);break;
@@ -184,10 +184,10 @@ normal::normal(bool make){
                                         switch(tg[k]){
                                         case lector::mglobal:
                                             g[i]=new globalaiRead(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{true,tg[j],static_cast<getterCondTrig*>(g[i])});
+                                            setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{true,tg[j],static_cast<getterCond*>(g[i])});
                                         break;case lector::mpieza:
                                             g[i]=new piezaaiRead(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCondTrig*>(g[i])});
+                                            setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCond*>(g[i])});
                                         break;
                                         case lector::mtile: g[i]=new tileaiRead(static_cast<getterCond*>(g[i]),pos);break;
                                         case lector::mother: g[i]=new otheraiRead(static_cast<getterCond*>(g[i]),pos);break;
@@ -196,7 +196,10 @@ normal::normal(bool make){
                         }
                     }
                     if(action){
-                        #define memCase(F) case lector::m##F: accs.push_back(new macc<m##F,&str_##F>(g[0],g[1]));break;
+                        #define memCase(F) case lector::m##F: if(writeOnTile) \
+                                                                    accs.push_back(new macc<m##F##AccTile,&str_##F>(g[0],g[1]));\
+                                                                else \
+                                                                    accs.push_back(new macc<m##F##Acc,&str_##F>(g[0],g[1]));break;
                             switch(tok){
                             memCase(set);
                             memCase(add);
@@ -213,8 +216,8 @@ normal::normal(bool make){
                     }
                     else{
                         #define memCase(F) case lector::m##F: if(debugMode) \
-                        conds.push_back(new debugMem(new mcond<m##F,&str_##F>(g[0],g[1]))); \
-                        else conds.push_back(new mcond<m##F,&str_##F>(g[0],g[1])); break;
+                        conds.push_back(new debugMem(new mcond<m##F##Cond,&str_##F>(g[0],g[1]))); \
+                        else conds.push_back(new mcond<m##F##Cond,&str_##F>(g[0],g[1])); break;
                         switch(tok){
                             memCase(cmp);
                             memCase(set);

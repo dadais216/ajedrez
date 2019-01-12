@@ -16,12 +16,14 @@ struct Tile{
     v pos;
     int step; //se actualiza por mov, capt y spawn
     void chargeTriggers();
-    struct int2{
-        int actual;
-        int before;
+    vector<int> memTile;
+    struct tileTrigInfo{
+        normalHolder* nh;//para reaccionar
+        getterCond* gc;//para identificar triggers y no poner de mas
+        int step;//step de la tile de la pieza que puso el trigger
+        int* stepCheck;//puntero al step de la tile de la pieza que puso el trigger
     };
-    vector<int2> memTile;
-    vector<vector<pair<normalHolder*,getterCondTrig*>>> memTileTrigs;
+    vector<vector<tileTrigInfo>> memTileTrigs;
 };
 void activateTriggers();
 

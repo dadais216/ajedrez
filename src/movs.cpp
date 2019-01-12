@@ -174,7 +174,7 @@ template<bool(*chck)(v),string* n> struct cond:public condt{
 inline bool NAME##check(v pos){ \
     FUNC \
 }\
-extern string str##NAME=#NAME;\
+string str##NAME=#NAME;\
 typedef cond<NAME##check,&str##NAME> NAME;
 
 inline /* o no? */ void setTrigger(v pos){
