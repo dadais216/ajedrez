@@ -24,9 +24,9 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
     op=org;
     for(auto trigInfo:op->setUpMemTriggersPerNormalHolder)
         if(trigInfo.memGlobal)
-            memGlobalTriggers[trigInfo.ind].push_back({this,trigInfo.getter});
+            memGlobalTriggers[trigInfo.ind].perma.push_back(this);
         else
-            h->memPiezaTrigs[trigInfo.ind].push_back({this,trigInfo.getter});
+            h->memPiezaTrigs[trigInfo.ind].perma.push_back(this);
     memAct.resize(base.movSize);
 }
 v offset;

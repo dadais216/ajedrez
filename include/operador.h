@@ -22,7 +22,6 @@ struct normal:public operador{
     struct setupTrigInfo{
         bool memGlobal; //global o pieza
         int ind;
-        getterCond* getter;
     };
     vector<setupTrigInfo> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
     v lastPos;

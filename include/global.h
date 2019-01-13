@@ -136,14 +136,14 @@ struct AH{
 };
 extern AH actualHolder;
 
-struct trigMemGlobal{
-    normalHolder* nh;//para reaccionar
-    getterCond* gc;//identificador para indirectos
+struct memTriggers{
+    vector<normalHolder*> perma,dinam;
 };
-extern vector<trigMemGlobal>* trigsMaybeActivate;
+
+extern memTriggers* trigsMaybeActivate;
 extern vector<normalHolder*> trigsActivados;
 extern Trigger triggerInfo;
-extern vector<vector<trigMemGlobal>> memGlobalTriggers;
+extern vector<memTriggers> memGlobalTriggers;
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 

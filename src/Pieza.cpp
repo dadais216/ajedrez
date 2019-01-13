@@ -1,7 +1,7 @@
-#include "../include/Pieza.h"
 #include "../include/global.h"
-#include "../include/operador.h"
+#include "../include/Pieza.h"
 #include "../include/Clicker.h"
+#include "../include/operador.h"
 
 vector<Pieza*> piezas;
 int memLocalSize;
@@ -112,6 +112,7 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
         movs.push_back(crearMovHolder(this,b.raiz,base));
         delete base;
     }
+    inPlay=true;
 }
 Holder::~Holder(){
     uniqueIds.erase(find(uniqueIds.begin(),uniqueIds.end(),uniqueId));

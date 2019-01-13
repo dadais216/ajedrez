@@ -4,7 +4,7 @@
 
 
 vector<int> memMov;
-vector<vector<trigMemGlobal>> memGlobalTriggers;
+vector<memTriggers> memGlobalTriggers;
 vector<int> memGlobal;
 int maxMemMovSize=0;
 RectangleShape backGroundMemDebug;
@@ -35,10 +35,6 @@ struct localaAcc:public getter{
     }
     virtual int* val(){
         return &actualHolder.nh->memAct[ind];
-        ///@optim creo que es el unico lugar donde se usa actualHolder.nh (en acciones)
-        ///como ahora las acciones no guardan informacion es la unica forma
-        ///Se podria hacer algo con el stack ya que la actualHolder.nh es la normal que llama a esta funcion
-        ///no creo que afecte la version compilada
     }
 };
 struct localai:public getterCond{
@@ -67,7 +63,11 @@ struct localaiAcc:public getter{//aparece en cadenas de 3 o mas
     }
 };
 
-vector<trigMemGlobal>* trigsMaybeActivate;
+memTriggers* trigsMaybeActivate;
+///hay 2 tipos de triggers de memoria, estaticos y dinamicos. Los estaticos son los de accesos a la memoria global
+///y de pieza directos, que se conocen cuando se arma el holder y quedan fijos. Los dinamicos son el resto (indirectos,
+///tile y other). Funcionan mas o menos como los trigger posicionales, se crean durante las condiciones (lectura) y
+///se activan durante accion (en escritura) y se eliminan
 
 //se podrían meter templates para evitar copiar y pegar, pero no vale la pena
 struct globalaWrite:public getter{
@@ -78,6 +78,8 @@ struct globalaWrite:public getter{
         return &memGlobal[ind];
     }
 };
+///en una escritura que cambie el valor se activan todos los triggers asociados que no sean del mismo holder.
+///tile tiene una condicion mas (que no haya variado el step), y other tambien (que no hayan variado dos steps)
 struct globalaRead:public getterCond{
     int ind;
     int* val_;
@@ -106,24 +108,15 @@ struct globalaiWrite:public getter{
         return &memGlobal[ind];
     }
 };
+///puede que se activen falsos positivos en indirectos, lo que causa que se recorra un recalculo que no encuentra su
+///normalHolder. Solo pasa una vez porque los indirectos son dinamicos, se eliminan despues de usarse
 struct globalaiRead:public getterCond{
     getterCond* g;
     int indDebug;
     globalaiRead(getterCond* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-
-        bool notSet=true;
-        for(trigMemGlobal& tmg:memGlobalTriggers[ind])
-            if(tmg.gc==this){
-                goto afterSetup;
-            }
-        memGlobalTriggers[ind].push_back({actualHolder.nh,this});
-        afterSetup:
-        ///@optim lo malo de este sistema es que pone triggers dinamicos que nunca se van, y pueden estar
-        //soltando triggers falso positivo a cada rato si se lee una memoria en alguna rama que no se ejecuta seguido.
-        //Podría manejarse con un mecanismo de aging, pero como es algo raro en una mecanica que ya es rara, puede
-        //que lo mas eficiente sea no hacer nada
+        memGlobalTriggers[ind].dinam.push_back(actualHolder.nh);
         int* ret=&memGlobal[ind];
         indDebug=*ret;
         return ret;
@@ -184,11 +177,7 @@ struct piezaaiRead:public getterCond{
     piezaaiRead(getterCond* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-        for(trigMemGlobal& tmg:actualHolder.h->memPiezaTrigs[ind])
-            if(tmg.gc==this)
-                goto afterSetup;
-        actualHolder.h->memPiezaTrigs[ind].push_back({actualHolder.nh,this});
-        afterSetup:
+        actualHolder.h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
         return &actualHolder.h->memPieza[ind];
     }
     virtual void drawDebugMem(){
@@ -214,7 +203,7 @@ struct tileaWrite:public getter{
     tileaWrite(int ind_,v offset_):ind(ind_),offset(offset_){}
     virtual int* val(){
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        trigsMaybeActivate=reinterpret_cast<vector<trigMemGlobal>*>(&t->memTileTrigs[ind]);
+        trigsMaybeActivate=reinterpret_cast<memTriggers*>(&t->memTileTrigs[ind]);
         return &t->memTile[ind];
     }
 };
@@ -227,14 +216,7 @@ struct tileaRead:public getterCond{
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
         int* stepCheck=&actualHolder.tile->step;
         int step=*stepCheck;
-        for(Tile::tileTrigInfo& tti:t->memTileTrigs[ind])
-            if(tti.gc==this){
-                tti.step=step;
-                tti.stepCheck=stepCheck;//creo que no es necesario actualizar este
-                goto afterSetup;
-            }
-        t->memTileTrigs[ind].push_back({actualHolder.nh,this,step,stepCheck});
-        afterSetup:
+        t->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
         return &t->memTile[ind];
     }
     virtual void drawDebugMem(){
@@ -258,7 +240,7 @@ struct tileaiWrite:public getter{
     virtual int* val(){
         int ind=*g->val();
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        trigsMaybeActivate=reinterpret_cast<vector<trigMemGlobal>*>(&t->memTileTrigs[ind]);
+        trigsMaybeActivate=reinterpret_cast<memTriggers*>(&t->memTileTrigs[ind]);
         return &t->memTile[ind];
     }
 };
@@ -272,14 +254,7 @@ struct tileaiRead:public getterCond{
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
         int* stepCheck=&actualHolder.tile->step;
         int step=*stepCheck;
-        for(Tile::tileTrigInfo& tti:t->memTileTrigs[ind])
-            if(tti.gc==this){
-                tti.step=step;
-                tti.stepCheck=stepCheck;//creo que no es necesario actualizar este
-                goto afterSetup;
-            }
-        t->memTileTrigs[ind].push_back({actualHolder.nh,this,step,stepCheck});
-        afterSetup:
+        t->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
         return &t->memTile[ind];
     }
     virtual void drawDebugMem(){
@@ -300,11 +275,6 @@ struct tileaiReadNT:public getter{
 };
 
 ///todos los other asumen que hay una pieza en la posicion actual con una memoria que contenga su indice
-///@optim other deja triggers colgados en las otras piezas, que lo van a activar cada vez que cambien esa memoria
-///lo que no es grave porque siempre se van a ignorar por estar en ramas falsas (cond pieza antes de mother), aun asi
-///es lento. Se podría guardar mas informacion como en tile, solo para tener una condicion con la que eliminar triggers
-///la condicion es que el step de la pieza propia y la que lee no varie. Se puede guardar la suma en vez de cada numero
-///para ahorrar espacio. Haría necesario una version mas de cada accion que escribe
 struct otheraWrite:public getter{
     int ind;
     v offset;
@@ -322,11 +292,7 @@ struct otheraRead:public getterCond{
     otheraRead(int ind_,v offset_):ind(ind_),offset(offset_){}
     virtual int* val(){
         Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
-        for(trigMemGlobal& tmg:h->memPiezaTrigs[ind])
-            if(tmg.gc==this)
-                goto afterSetup;
-        h->memPiezaTrigs[ind].push_back({actualHolder.nh,this});
-        afterSetup:
+        h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
         return &h->memPieza[ind];
     }
     virtual void drawDebugMem(){
@@ -363,11 +329,7 @@ struct otheraiRead:public getterCond{
     virtual int* val(){
         ind=*g->val();
         Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
-        for(trigMemGlobal& tmg:h->memPiezaTrigs[ind])
-            if(tmg.gc==this)
-                goto afterSetup;
-        h->memPiezaTrigs[ind].push_back({actualHolder.nh,this});
-        afterSetup:
+        h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
         return &h->memPieza[ind];
     }
     virtual void drawDebugMem(){
@@ -393,7 +355,6 @@ struct ctea:public getterCond{
     virtual int* val(){
         return &v;
     }
-    virtual int* valFast(){}
     virtual void drawDebugMem(){
             textValMem.setPosition(610,470);
             textValMem.setString(to_string(v));

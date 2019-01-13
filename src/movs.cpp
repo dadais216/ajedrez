@@ -130,6 +130,14 @@ fabAcc(pausa,
 vector<Holder*> reciclaje;
 fabAcc(capt,
     Tile* captT=tablptr->tile(relPos+actualHolder.offset);
+    captT->holder->inPlay=false;
+    //@optim se podria eliminar triggers estaticos en global aca para que no se iteren ni activen en falso
+    //for(memTriggers& mt:memGlobalTriggers)
+    //    remove_if(mt.perma.begin(),mt.perma.end(),[&captT](normalHolder* nh)->bool{
+    //            return nh->h==captT->holder;
+    //          });
+    //el problema esta en recrearlos en spawn. Se tendria que agregar otra rama de polimorfismo para acceder a cada
+    //normalHolder y setear las memorias devuelta y no creo que lo valga
     reciclaje.push_back(captT->holder);
     captT->holder=nullptr;
     captT->step++;
@@ -146,6 +154,7 @@ struct spwn:public acct{
         for(int i=0;i<reciclaje.size();i++){
             Holder* h=reciclaje[i];
             if(h->id==id){//no tomo bandos distintos porque los movimientos estan espejados
+                h->inPlay=true;
                 spwnT->holder=h;
                 h->tile=spwnT;
                 reciclaje.erase(reciclaje.begin()+i);
@@ -200,6 +209,78 @@ fabCond(esp,
     return posAct.x>=0&&posAct.x<tablptr->tam.x&&posAct.y>=0&&posAct.y<tablptr->tam.y;
 )
 
+
+inline bool mcmpCond(getter* a1,getter* a2){
+    return *a1->val()==*a2->val();
+}
+inline bool msetCond(getter* a1,getter* a2){
+    *a1->val()=*a2->val();
+    return true;
+}
+inline bool msetAcc(getter* a1,getter* a2){///version para memorias globales, para activar triggers
+    int* val=a1->val();
+    int before=*val;
+    *val=*a2->val();
+    if(before!=*val){
+        for(normalHolder* nh:trigsMaybeActivate->perma)
+            if(nh->h!=actualHolder.h&&nh->h->inPlay)
+                trigsActivados.push_back(nh);
+        for(normalHolder* nh:trigsMaybeActivate->dinam)
+            if(nh->h!=actualHolder.h&&nh->h->inPlay)
+                trigsActivados.push_back(nh);
+        trigsMaybeActivate->dinam.clear();
+        ///@optim creo que no habria problema en dejar recalcular triggers dinamicos a piezas capturadas. Seria
+        ///un calculo de mas pero no romperia nada y por ahi es mas rapido que poner un if aca?
+    }
+    return true;
+}
+inline bool msetAccTile(getter* a1,getter* a2){///version para tiles que necesitan que la pieza que puso el trigger no se haya movido a demas de que la memoria varie
+    int* val=a1->val();
+    int before=*val;
+    *val=*a2->val();
+    if(before!=*val){
+        vector<Tile::tileTrigInfo>* memTile=reinterpret_cast<vector<Tile::tileTrigInfo>*>(trigsMaybeActivate);
+        for(Tile::tileTrigInfo& tti:*memTile)
+            if(tti.nh->h!=actualHolder.h&&tti.step==*tti.stepCheck)
+                trigsActivados.push_back(tti.nh);
+        memTile->clear();
+    }
+    //el chequeo de step es necesario porque evita que un trigger viejo se active y haga recalcular a una pieza,
+    //ahora en otra tile, que va a repetir su generacion innecesariamente.
+    //other podria tener un chequeo de step parecido, usando el step de la tile donde esta el trigger y la tile
+    //de la pieza que lo puso. Pero no es tan util porque una activacion de trigger viejo solo va a causar un
+    //recalculo que no va a quedar en nada, esta asegurado que no va a generar (por estar despues de una condicion
+    //pieza falsa, o esta dentro de una rama innaccesible o cuando intente generar va a dar falso por esa condicion)
+    //a demas la implementacion en other es mas dificil porque a diferencia de tile other no tiene memoria propia,
+    //la comparte con pieza, y necesitaria guardar la informacion de los steps y relacionarlos.
+    //Y necesitaria una version mas de cada accion. No creo que lo valga, y puede que la implementacion termine siendo
+    //mas lenta
+}
+inline bool maddCond(getter* a1,getter* a2){
+    *a1->val()+=*a2->val();
+    return true;
+}
+inline bool maddAcc(getter* a1,getter* a2){
+    *a1->val()+=*a2->val();
+    ///cargar triggers
+    return true;
+}
+inline bool maddAccTile(getter* a1,getter* a2){
+    *a1->val()+=*a2->val();
+    ///cargar triggers
+    return true;
+}
+inline bool mlessCond(getter* a1,getter* a2){
+    return *a1->val()<*a2->val();
+}
+inline bool mmoreCond(getter* a1,getter* a2){
+    return *a1->val()>*a2->val();
+}
+
+
+
+
+
 RectangleShape backGroundMem;
 Text textValMem;
 
@@ -211,7 +292,7 @@ Text textDebug;
 bool drawDebugTiles;
 bool ZPressed=false;
 int mil=25;
-extern string strNil="-";
+string strNil="-";
 template<void(*drawBlocks)(condt*,bool)> struct debugWrapper:public condt{
     condt* cond;
     debugWrapper(condt* cond_):condt(&strNil),cond(cond_){}

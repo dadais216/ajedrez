@@ -23,7 +23,7 @@ normal::normal(bool make){
     sig=nullptr;
     if(make){
         v pos(0,0);
-        bool changeInLocalMem=false,isLocalAcc=false;
+        bool changeInLocalMem=false;
         while(true){
             if(tokens.empty()) return;
             int tok=tokens.front();
@@ -79,7 +79,8 @@ normal::normal(bool make){
                     getter* g[2];
                     bool write=tok==lector::mset||tok==lector::madd;
                     bool action;
-                    bool writeOnTile;
+                    bool writeOnTile=false;
+                    bool isLocalAcc=false;
                     for(int i=0;i<2;i++){
                         bool left=i==0;
                         int tg[5],j;
@@ -100,7 +101,7 @@ normal::normal(bool make){
                             if(tg[j-1]==lector::mlocal)
                                 if(left){
                                     g[i]=new locala(tg[j]);
-                                    changeInLocalMem=write;
+                                    changeInLocalMem=changeInLocalMem||write;
                                 }else
                                     if(action){
                                         g[i]=new localaAcc(tg[j]);
@@ -135,10 +136,10 @@ normal::normal(bool make){
                                     switch(tg[j-1]){
                                     case lector::mglobal:
                                         g[i]=new globalaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{true,tg[j],static_cast<getterCond*>(g[i])});
+                                        setUpMemTriggersPerNormalHolder.push_back({true,tg[j]});
                                     break;case lector::mpieza:
                                         g[i]=new piezaaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCond*>(g[i])});
+                                        setUpMemTriggersPerNormalHolder.push_back({false,tg[j]});
                                     break;
                                     case lector::mtile: g[i]=new tileaRead(tg[j],pos);break;
                                     case lector::mother: g[i]=new otheraRead(tg[j],pos);break;
@@ -149,7 +150,7 @@ normal::normal(bool make){
                                 if(tg[k]==lector::mlocal)
                                     if(left){
                                         g[i]=new localai(static_cast<getterCond*>(g[i]));
-                                        changeInLocalMem=write;
+                                        changeInLocalMem=changeInLocalMem||write;
                                     }else
                                         if(action){
                                             g[i]=new localaiAcc(g[i]);
@@ -184,10 +185,10 @@ normal::normal(bool make){
                                         switch(tg[k]){
                                         case lector::mglobal:
                                             g[i]=new globalaiRead(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{true,tg[j],static_cast<getterCond*>(g[i])});
+                                            setUpMemTriggersPerNormalHolder.push_back({true,tg[j]});
                                         break;case lector::mpieza:
                                             g[i]=new piezaaiRead(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolder.push_back(normal::setupTrigInfo{false,tg[j],static_cast<getterCond*>(g[i])});
+                                            setUpMemTriggersPerNormalHolder.push_back({false,tg[j]});
                                         break;
                                         case lector::mtile: g[i]=new tileaiRead(static_cast<getterCond*>(g[i]),pos);break;
                                         case lector::mother: g[i]=new otheraiRead(static_cast<getterCond*>(g[i]),pos);break;

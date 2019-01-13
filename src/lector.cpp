@@ -309,7 +309,7 @@ int memGlobalSize;
 int memTileSize;
 void lector::tokenizarPalabra(string linea){
     string palabra=linea.substr(i,j-i);
-    cout<<">>>"<<palabra<<"<<<"<<linea[i]<<"\n";
+    //cout<<">>>"<<palabra<<"<<<"<<linea[i]<<"\n";
     i=j;
     bool esMov=true;
     for(char c:palabra)
