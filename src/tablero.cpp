@@ -62,22 +62,14 @@ void tabl::drawPieces(){
 vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
 void Tile::chargeTriggers(){
     for(Trigger trig:triggers)
-        if(trig.step==trig.tile->step){//la pieza que puso el trigger no se movio desde que lo puso
-            bool is=false;
-            for(normalHolder* n:trigsActivados) ///@optim necesario?
-                if(n==trig.nh){
-                    is=true;
-                    break;
-                }
-            if(!is)
-                trigsActivados.push_back(trig.nh);
-        }
+        if(trig.step==trig.tile->step)//la pieza que puso el trigger no se movio desde que lo puso
+            trigsActivados.push_back(trig.nh);
     triggers.clear();
 }
 void activateTriggers(){
-
-    ///@todo remover duplicados
-
+    //los triggers duplicados (por dos condiciones poniendo dos triggers a un mismo normalHolder, o por
+    //dos lecturas a una memoria dinamica en distintos turnos) no son un problema, no causan calculos extra.
+    //Van a mandarse juntos en la misma activacion, el primero va a causar la generacion y el segundo va a quedar colgado
     if(trigsActivados.size()==0) return;
     if(trigsActivados.size()==1){
         switchToGen=false;

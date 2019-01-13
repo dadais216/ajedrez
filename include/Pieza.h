@@ -42,12 +42,13 @@ struct Holder{
     Tile* tile;
 
     vector<int> memPieza;
-    vector<vector<trigMemGlobal>> memPiezaTrigs;
+    vector<memTriggers> memPiezaTrigs;
     int movSize;
 
     vector<movHolder*> movs;
     int id;
     int bando;
+    bool inPlay;//false cuando la pieza esta generada y capturada. Solo se usa para evitar activar triggers dinamicos a capturados
 };
 struct Base;
 movHolder* crearMovHolder(Holder*,operador*,Base*);

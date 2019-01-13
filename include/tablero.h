@@ -19,7 +19,6 @@ struct Tile{
     vector<int> memTile;
     struct tileTrigInfo{
         normalHolder* nh;//para reaccionar
-        getterCond* gc;//para identificar triggers y no poner de mas
         int step;//step de la tile de la pieza que puso el trigger
         int* stepCheck;//puntero al step de la tile de la pieza que puso el trigger
     };
