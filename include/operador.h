@@ -20,7 +20,7 @@ struct normal:public operador{
     vector<colort*> colors;
     colort* crearColor(v);
     struct setupTrigInfo{
-        bool memGlobal; //global o pieza
+        char type; //0 global 1 pieza 2 turno
         int ind;
     };
     vector<setupTrigInfo> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente

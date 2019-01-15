@@ -9,12 +9,12 @@
 #include <time.h>
 
 Humano::Humano(int bando_,tabl& tablero_)
-    :Jugador(bando_,tablero_) {}
+:Jugador(bando_,tablero_) {}
 
 int dt=0;
 int clickI=0;
 bool confirm;
-bool Humano::turno(){
+void Humano::turno(){
     /*
     dt++;//se podría mover adentro del if?
     if(!clickers.empty()){
@@ -44,41 +44,49 @@ bool Humano::turno(){
         }
     }
     */
-    if(input->click()&&input->inGameRange(_tablero.tam)){
-        for(Clicker* cli:clickers){
-        ///@todo @optim esto se pregunta 60hz
-        ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
-        ///vuelva a meter solapamiento
-            if(cli->update()){ //accionar
+    while(true){
+        sleep(milliseconds(20));
+        input->check();
+        if(debugMode&&window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+            static_cast<Proper*>(j->actual)->init();///@leaks
+            while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
+            throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
+        }
+        if(input->click()&&input->inGameRange(_tablero.tam)){
+            for(Clicker* cli:clickers){
+            ///@todo @optim esto se pregunta 60hz
+            ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
+            ///vuelva a meter solapamiento
+                if(cli->update()){ //accionar
 
+                    clickers.clear();
+                    turno1=!turno1;
+                    drawScreen();
+                    return;
+                }
+            }
+            if(!clickers.empty()){
                 clickers.clear();
                 drawScreen();
-                return false; //true
+            }
+            cout<<"("<<input->get()<<")"<<endl;
+
+
+            act=_tablero.tile(input->get())->holder;
+            if(act&&act->bando==bando){
+                act->makeCli();
+                drawScreen();
             }
         }
-        if(!clickers.empty()){
-            clickers.clear();
-            drawScreen();
-        }
-        cout<<"("<<input->get()<<")"<<endl;
-
-
-        act=_tablero.tile(input->get())->holder;
-        if(act&&act->bando==bando){
-            act->makeCli();
-            drawScreen();
-        }
     }
-    return false;
 }
 
 Aleatorio::Aleatorio(int bando_,tabl& tablero_)
-    :Jugador(bando_,tablero_){
+:Jugador(bando_,tablero_){
     srand(time(NULL));
-    cout<<" uWu ";
 }
 
-bool Aleatorio::turno(){
+void Aleatorio::turno(){
     for(int i=0; i<_tablero.tam.x; i++)
         for(int j=0; j<_tablero.tam.y; j++){
             Holder* act=_tablero.tile(v(i,j))->holder;
@@ -92,5 +100,4 @@ bool Aleatorio::turno(){
         (*it)->accionar();
         clickers.clear();
     }
-    return true;
 }

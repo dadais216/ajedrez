@@ -10,28 +10,22 @@ struct Jugador{
     Holder* act;
     Jugador(int bando_,tabl& tablero_)
         :bando(bando_),_tablero(tablero_) {}
-    virtual bool turno()=0;
+    virtual void turno()=0;
 };
 
-struct Nadie:public Jugador
-{
+struct Nadie:public Jugador{
     Nadie(int bando_,tabl& tablero_):Jugador(bando_,tablero_){}; //al pedo pero como uso referencias tiene que estar
-    virtual bool turno()
-    {
-        return true;
-    }
+    virtual void turno(){}
 };
 
-struct Humano:public Jugador
-{
+struct Humano:public Jugador{
     Humano(int,tabl&);
-    virtual bool turno();
+    virtual void turno();
 };
 
-struct Aleatorio:public Jugador
-{
+struct Aleatorio:public Jugador{
     Aleatorio(int,tabl&);
-    virtual bool turno();
+    virtual void turno();
 };
 
 #endif // JUGADOR_H

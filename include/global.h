@@ -79,13 +79,11 @@ struct drawable
     void* obj;
 };
 
-extern list<int> tokens;
-extern list<pair<drawable,v>> bufferColores;
-extern list<v> limites;
+extern list<int> tokens;///@optim vector
 extern vector<Clicker*> clickers;
-extern bool bOutbounds;
-extern bool cambios;
-extern bool addTrigger;
+extern int turno,turnoAct;
+extern bool turno1;
+
 
 extern bool debugMode;
 extern bool drawDebugTiles;
@@ -137,6 +135,12 @@ extern memTriggers* trigsMaybeActivate;
 extern vector<normalHolder*> trigsActivados;
 extern Trigger triggerInfo;
 extern vector<memTriggers> memGlobalTriggers;
+
+struct turnTrigInfo{
+    Holder* h;
+    normalHolder* nh;
+};
+extern vector<turnTrigInfo> turnoTrigs[2];
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 

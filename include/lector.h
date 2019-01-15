@@ -21,7 +21,7 @@ struct lector{
                 mov,capt,spwn,pausa,pass,
                 vacio,pieza,enemigo,esp,
                 mcmp,mset,madd,mless,mmore,msize,
-                mlocal,mglobal,mpieza,mtile,mother,
+                mlocal,mglobal,mpieza,mtile,mother,turno,posX,posY,
                 desliz,exc,isol,desopt,
                 click,
                 color,sprt,numShow,

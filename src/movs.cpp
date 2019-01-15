@@ -211,7 +211,9 @@ fabCond(esp,
 
 
 inline bool mcmpCond(getter* a1,getter* a2){
-    return *a1->val()==*a2->val();
+    int a=*a1->val(),b=*a2->val();
+    cout<<"CMP "<<a<<" == "<<b<<endl;
+    return a==b;
 }
 inline bool msetCond(getter* a1,getter* a2){
     *a1->val()=*a2->val();

@@ -97,6 +97,11 @@ bool Clicker::update(){
         }
         for(Tile* tile:pisados)
             tile->chargeTriggers();
+        for(turnTrigInfo& tti:turnoTrigs[h->bando==1])
+            if(tti.h!=h)
+                trigsActivados.push_back(tti.nh);
+        turnoAct++;
+        turno=turnoAct/2;
         activateTriggers();
         pisados.clear();
         h->generar();
