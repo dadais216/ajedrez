@@ -23,10 +23,14 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
 :movHolder(h_,org,base_){
     op=org;
     for(auto trigInfo:op->setUpMemTriggersPerNormalHolder)
-        if(trigInfo.memGlobal)
+        switch(trigInfo.type){
+        case 0:
             memGlobalTriggers[trigInfo.ind].perma.push_back(this);
-        else
+        break;case 1:
             h->memPiezaTrigs[trigInfo.ind].perma.push_back(this);
+        break;case 2:
+            turnoTrigs[h->bando==-1].push_back({h,this});
+        }
     memAct.resize(base.movSize);
 }
 v offset;

@@ -75,7 +75,7 @@ Proper::Proper(int id_,int sel1,int sel2)
     :tablero(){
     id=id_;
     j->change(this);
-    debugMode=true;
+    debugMode=false;
 
     auto selec=[&](int sel,int bando)->Jugador*
     {
@@ -130,6 +130,11 @@ Proper::Proper(int id_,int sel1,int sel2)
     init();
 }
 
+//turnoAct se aumenta en cada accionar, es el contador de turnos
+//turno es turnoAct/2, el contador de turnos interpretando un turno como una jugada de los dos jugadores
+int turno,turnoAct;
+bool turno1;
+
 void Proper::init(){
     clickers.clear();
     memMov.resize(0);
@@ -138,6 +143,8 @@ void Proper::init(){
     memGlobalTriggers.resize(0);
     memGlobalSize=0;
     memTileSize=0;
+    turnoAct=2;
+    turno=1;
 
     if(lect.archPiezas.is_open())
         lect.archPiezas.close();
@@ -170,15 +177,15 @@ void Proper::init(){
         }
     }
 
-    turno1=true;
-    antTurno=false;
-
     memset(memGlobal.data(),0,memGlobalSize*sizeof(int));
 
     for(uint i=0; i<lect.matriz.size(); i++){
         for(uint j=0; j<lect.matriz[0].size(); j++){
             Holder* hAct=tablero.tile(v(j,i))->holder;
-            if(hAct) hAct->generar();
+            if(hAct){
+                turno1=hAct->bando==-1;
+                hAct->generar();
+            }
         }
     }
     cout<<endl;
@@ -188,10 +195,9 @@ void Proper::init(){
         }
         cout<<endl;
     }
+    turno1=true;
     drawScreen();
-
 }
-
 
 void Proper::draw(){
     tablero.drawTiles();
@@ -267,20 +273,10 @@ void Proper::draw(){
 }
 
 void Proper::update(){
-    if(debugMode&&window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-        init();//leaks obviamente
-        while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
-    }
-
-    if(antTurno!=turno1)
-    {
-        //drawScreen();
-        antTurno=turno1;
-    }
-    if(turno1)
-        turno1=!primero->turno();
-    else
-        turno1=segundo->turno();
+    try{
+        primero->turno();
+        segundo->turno();
+    }catch(...){}
 }
 
 bool Proper::inRange(v a)

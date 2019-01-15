@@ -2,9 +2,10 @@
 def mover vacio mov pausa color 20 200 115
 def move vacio mov pausa color 115 20 200
 #def passe pass color 235 55 140
+def captura pieza capt mov color 230 10 10
 
 :1 1 #ortog
-{w,a,s,d} mover
+{w,a,s,d} exc captura or mover end
 
 :2 1 #torre
 #msize l 5 mset l0 1 desliz mset ll0 6 madd l0 1 mless l0 5 end 
@@ -29,8 +30,11 @@ def move vacio mov pausa color 115 20 200
 #mcmp p0 0 desliz {w,a,s,d} mover c end
 #mcmp p0 0 d mover
 #desliz mset g0 l0 madd l0 1 mless l0 4 w mover c end
-mcmp t0 0 w mover
-mcmp t0 1 a mover
+#mcmp t0 0 w mover
+#mcmp t0 1 a mover
+#mcmp T 3 w mover
+#s mover
+{w,a,s,d} mover isol mcmp x y {w,a,s,d} mover end
 
 :3 3 #alfil
 #desliz {w,a,s,d} isol mcmp t0 1 mover end end
@@ -44,8 +48,9 @@ mcmp t0 1 a mover
 #mcmp g0 0 a mover
 #mcmp g0 1 w mover
 #mcmp g0 2 s mover
-a mset t0 1 color 0 0 255
-
+#a mset t0 1 color 0 0 255
+mcmp T 4 w mover
+s mover
 
 
 :4 2 #excguy

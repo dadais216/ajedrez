@@ -87,16 +87,27 @@ normal::normal(bool make){
                         for(j=0;;j++){
                             assert(j<5);
                             tg[j]=tokens.front();tokens.pop_front();
-                            if(tg[j]>=900)///@sospechoso no 1000 para tomar algunos numeros negativos
+                            if(tg[j]>=900||tg[j]==lector::turno||tg[j]==lector::posX||tg[j]==lector::posY)///@sospechoso no 1000 para tomar algunos numeros negativos
                                 break;
                         }
                         if(left)
                             action=write&&tg[0]!=lector::mlocal;
-                        tg[j]-=1000;
                         if(j==0){
                             assert(!(write&&left)&&"escritura en constante");
-                            g[i]=new ctea(tg[0]);
+                            switch(tg[0]){
+                            case lector::turno:
+                                g[i]=&turnoa;
+                                setUpMemTriggersPerNormalHolder.push_back({2,0});
+                                break;
+                            case lector::posX:
+                                g[i]=new posX(pos);break;
+                            case lector::posY:
+                                g[i]=new posY(pos);break;
+                            default:
+                                g[i]=new ctea(tg[0]-1000);
+                            }
                         }else{
+                            tg[j]-=1000;
                             bool hasIndirection=j>1;
                             if(tg[j-1]==lector::mlocal)
                                 if(left){
@@ -136,10 +147,10 @@ normal::normal(bool make){
                                     switch(tg[j-1]){
                                     case lector::mglobal:
                                         g[i]=new globalaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back({true,tg[j]});
+                                        setUpMemTriggersPerNormalHolder.push_back({0,tg[j]});
                                     break;case lector::mpieza:
                                         g[i]=new piezaaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back({false,tg[j]});
+                                        setUpMemTriggersPerNormalHolder.push_back({1,tg[j]});
                                     break;
                                     case lector::mtile: g[i]=new tileaRead(tg[j],pos);break;
                                     case lector::mother: g[i]=new otheraRead(tg[j],pos);break;

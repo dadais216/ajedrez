@@ -44,7 +44,6 @@ lector::lector(){
     tablaMem["+="]=madd;
     tablaMem["<"]=mless;
     tablaMem[">"]=mmore;
-
     lista=nullptr;
 }
 
@@ -155,6 +154,9 @@ enPieza:
             CASE(mpieza);
             CASE(mtile);
             CASE(mother);
+            CASE(turno);
+            CASE(posX);
+            CASE(posY);
             CASE(desliz);
             CASE(exc);
             CASE(isol);
@@ -399,10 +401,21 @@ void lector::tokenizarPalabra(string linea){
                     case 'p': lista->push_back(directGetter=mpieza);break;
                     case 't': lista->push_back(directGetter=mtile);break;
                     case 'o': lista->push_back(directGetter=mother);break;
+
+                    case 'T':lista->push_back(lector::turno);goto handleSpecialMem;
+                    case 'x':lista->push_back(lector::posX);goto handleSpecialMem;
+                    case 'y':lista->push_back(lector::posY);goto handleSpecialMem;
                     default:
                         goto gnum;
                     }
                 }
+                handleSpecialMem:
+                directGetter=0;
+                if(k==1){
+                    j++;
+                    goto finalArr;
+                }
+                continue;
                 gnum:
                 int num=getNum(linea);
                 switch(directGetter){
@@ -426,6 +439,7 @@ void lector::tokenizarPalabra(string linea){
                 }
                 lista->push_back(num+1000);
             }
+            finalArr:
             i=j;
             if(linea[j]=='\0')
                 lista->push_back(eol);

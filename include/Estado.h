@@ -43,7 +43,6 @@ struct Proper:public Estado{
     bool inRange(v a); //uso esto?
     tabl tablero;
     int dt,clickI;
-    bool turno1,antTurno;
     Jugador* primero;
     Jugador* segundo;
     Sprite turnoBlanco,turnoNegro;

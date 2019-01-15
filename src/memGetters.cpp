@@ -361,3 +361,35 @@ struct ctea:public getterCond{
             window->draw(textValMem);
     }
 };
+//turno es una memoria global que solo puede ser leida
+vector<turnTrigInfo> turnoTrigs[2];
+struct turnoaObj:public getterCond{
+    turnoaObj(){}
+    virtual int* val(){
+        return &turno;
+    }
+    virtual void drawDebugMem(){}
+};
+turnoaObj turnoa;
+
+//pos se trata como una cte porque no puede variar desde la generacion hasta la accion inclusive
+struct posX:public getterCond{
+    v offset;
+    int val_;
+    posX(v pos):offset(pos){}
+    virtual int* val(){
+        val_=offset.x+actualHolder.nh->offsetAct.x;
+        return &val_;
+    }
+    virtual void drawDebugMem(){}
+};
+struct posY:public getterCond{
+    v offset;
+    int val_;
+    posY(v pos):offset(pos){}
+    virtual int* val(){
+        val_=offset.y+actualHolder.nh->offsetAct.y;
+        return &val_;
+    }
+    virtual void drawDebugMem(){}
+};
