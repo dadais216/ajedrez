@@ -389,6 +389,8 @@ struct posY:public getterCond{
     posY(v pos):offset(pos){}
     virtual int* val(){
         val_=offset.y+actualHolder.nh->offsetAct.y;
+        if(actualHolder.nh->h->bando==-1)
+            val_=tablptr->tam.y-1-val_;
         return &val_;
     }
     virtual void drawDebugMem(){}

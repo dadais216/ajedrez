@@ -62,6 +62,7 @@ extern RenderWindow* window;
 extern Manager<Texture>* imagen;
 
 extern float escala;
+extern float fpsLock;
 extern tabl* tablptr;
 extern vector<Pieza*> piezas;
 <<<<<<< HEAD
@@ -112,11 +113,13 @@ extern v posDebugTile;
 
 void drawScreen();
 
+extern int bandoAct;
+
 extern bool clickExplicit;
 extern bool switchToGen;
 extern bool confirm;
 extern v offset;
-extern int isolCount;
+extern vector<Holder*> justSpawned;
 
 extern int memGlobalSize;
 extern vector<int> memGlobal;

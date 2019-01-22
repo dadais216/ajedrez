@@ -5,8 +5,10 @@
 
 vector<Pieza*> piezas;
 int memLocalSize;
+
+int bandoAct;
 Pieza::Pieza(int _id,int _sn,int memPiezaSize_){
-    id=_id;
+    id=_id;//signo indica bando
     sn=_sn;
     spriteb.setTexture(imagen->get("sprites.png"));
     spriteb.setTextureRect(IntRect(64+sn*64,0,32,32));
@@ -15,6 +17,7 @@ Pieza::Pieza(int _id,int _sn,int memPiezaSize_){
     spriten.setTextureRect(IntRect(64+sn*64+32,0,32,32));
     spriten.setScale(escala,escala);
 
+    bandoAct=sgn(_id);
     while(!tokens.empty()){
 //        for(int tok:tokens){
 //            cout<<tok<<"-";
@@ -143,13 +146,12 @@ void Holder::draw(int n)  //pos en capturados
     window->draw(*sp);
     sp->setScale(escala,escala);
 }
-int isolCount=0;
+vector<normalHolder*> normales;
 void Holder::makeCli(){
-    isolCount++;
     for(movHolder* b:movs){
         if(!b->valorCadena) continue;
-        vector<normalHolder*>* normales=new vector<normalHolder*>;
-        b->cargar(normales);
+        b->cargar(&normales);
+        normales.clear();
     }
     Clicker::drawClickers=true;
 }

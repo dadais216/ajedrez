@@ -2,8 +2,7 @@
 #define BOTON_H
 #include "global.h"
 
-struct Boton
-{
+struct Boton{
     Text text;
     Sprite sprite;
     int n,x,y,escala;
@@ -12,10 +11,9 @@ struct Boton
     void draw();
 };
 
-struct SelJugador
-{
+struct SelJugador{
     int bando;
-    list<Boton*> botones;
+    list<Boton> botones;
     RectangleShape cuadrado;
     SelJugador(int);
     int selected;

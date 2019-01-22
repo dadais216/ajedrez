@@ -15,7 +15,7 @@ struct Jugador{
 
 struct Nadie:public Jugador{
     Nadie(int bando_,tabl& tablero_):Jugador(bando_,tablero_){}; //al pedo pero como uso referencias tiene que estar
-    virtual void turno(){}
+    virtual void turno();
 };
 
 struct Humano:public Jugador{

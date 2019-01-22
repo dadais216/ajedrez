@@ -72,53 +72,68 @@ void Clicker::draw(){
 
 vector<Tile*> pisados;
 
-bool Clicker::update(){
-    //activo&&
-    if(input->get()==clickPos){
-        /*
-        //esto es para confirmar el toque
-        if(mod>1){
-            clickers.clear();
-            clickers.push_back(this);
-            confirm=true;
-            val=0;
-            mod=1;
-            return true;
-        }
-        */
-        Tile* tileBef=h->tile;
-        int stepBef=tileBef->step;
-        accionar(); //por ahora solo capt agrega a pisados
-
-        ///@optim esto esta para movimientos que no mueven la pieza, que son una minoria
-        if(tileBef->step!=stepBef){
-            pisados.push_back(tileBef);
-            pisados.push_back(h->tile);
-        }
-        for(Tile* tile:pisados)
-            tile->chargeTriggers();
-        for(turnTrigInfo& tti:turnoTrigs[h->bando==1])
-            if(tti.h!=h)
-                trigsActivados.push_back(tti.nh);
-        turnoAct++;
-        turno=turnoAct/2;
-        activateTriggers();
-        pisados.clear();
-        h->generar();
-        ///una pieza nunca activa sus propios triggers porque al moverse los invalida
-        ///necesita generar todos sus movimientos devuelta de forma explicita
-        ///esto no es verdadero en movimientos que no mueven la pieza
-
-        cout<<endl;
-        for(int i=0; i<tablptr->tam.y; i++){
-            for(int j=0; j<tablptr->tam.x; j++){
-                cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
-            }
-            cout<<endl;
-        }
+void Clicker::update(){
+    /*
+    //esto es para confirmar el toque
+    if(mod>1){
+        clickers.clear();
+        clickers.push_back(this);
+        confirm=true;
+        val=0;
+        mod=1;
         return true;
     }
-    return false;
+    */
+    Tile* tileBef=h->tile;
+    int stepBef=tileBef->step;
+    accionar(); //por ahora solo capt agrega a pisados
+
+    ///@optim esto esta para movimientos que no mueven la pieza, que son una minoria
+    if(tileBef->step!=stepBef){
+        pisados.push_back(tileBef);
+        pisados.push_back(h->tile);
+        ///@optim piezas que no se mueven no deberian generar todo
+    }
+    for(Tile* tile:pisados)
+        tile->chargeTriggers();
+    for(turnTrigInfo& tti:turnoTrigs[h->bando==-1])
+        if(tti.h!=h)
+            trigsActivados.push_back(tti.nh);
+    turnoAct++;
+    turno=turnoAct/2;
+    activateTriggers();
+    pisados.clear();
+
+    if(h->inPlay)//@optim el if es para evitar kamikases generando movimientos, que pueden ser triggereados y
+        //van a seguir causando recalculos hasta que alguien actualize el step. Si quiero eliminar este if podría
+        //detectar kamikases y agregar un movimiento a la generacion que, de estar la pieza muerta, no genera nada
+        h->generar();
+
+    ///una pieza nunca activa sus propios triggers porque al moverse los invalida
+    ///necesita generar todos sus movimientos devuelta de forma explicita
+    ///piezas que no se mueven no pisan
+
+    for(Holder* s:justSpawned)
+        if(h!=s)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
+            //se saca si implemento el objeto que impide que el kamikase genere sin el if
+            s->generar();
+    justSpawned.clear();
+    //si no se quiere tener este if se podría generar en spwn, pero eso genera recalculos y algunos bugs oscuros
+    //(creo que el bug era que una pieza se capturaba a si misma, ponia triggers, se spawneaba a si misma y los
+    //activaba. Esto por algun motivo rompia a veces)
+
+    /*
+    cout<<endl;
+    for(int i=0; i<tablptr->tam.y; i++){
+        for(int j=0; j<tablptr->tam.x; j++){
+            cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
+        }
+        cout<<endl;
+    }
+    */
+    for(Clicker* cli:clickers)
+        delete cli;
+    clickers.clear();
 }
 
 void Clicker::accionar(){

@@ -1,66 +1,69 @@
+def mover vacio mov color 20 200 115
+def captura enemigo capt mov color 200 10 10
 
-def mover vacio mov pausa color 20 200 115
-def move vacio mov pausa color 115 20 200
-#def passe pass color 235 55 140
-def captura pieza capt mov color 230 10 10
-
-:1 1 #ortog
-{w,a,s,d} exc captura or mover end
+:1 0 #peon
+w mover mset p0 1 exc mcmp y 7 capt spwn 5 or pass end
+{wa,wd} mset p0 1 captura exc mcmp y 7 capt spwn 5 or pass end
+mcmp p0 0 ww mover mset p0 1
 
 :2 1 #torre
-#msize l 5 mset l0 1 desliz mset ll0 6 madd l0 1 mless l0 5 end 
-#mset l0 9 mset g0 l0
-#mset g0 5 mset l0 g0
-#w mover mset g0 8 mset g1 g0
-#msize l 2 msize g 1 mset lg0 4 mcmp l1 4 w mover
-#msize g 1 msize l 1 mcmp gl0 1 w mover
-#msize g 1 msize l 1 mset l1 3 mset gl0 l1 w mover
-#msize g 2 mset gg0 5 w mover
-#msize g 2 mcmp gg0 5 w mover #rompe por no poner triggers dinamicos
-#mset t0 1 desliz {w,a,s,d} mover mset t0 1 c end
-#madd p0 1 mset t0 p0 {w,a,s,d} mover
-#mset l0 p0 desliz mmore l0 0 exc \
-#    {w,a,s,d} mcmp l0 t0 move madd l0 -1 or \
-#end mset p0 l0 c end
-#desliz w mover sn spwn 2 wn c end
-#desliz a mover dn spwn 2 an c end
-#desliz s mover wn spwn 2 sn c end
-#desliz d mover an spwn 2 dn c end
-#desliz d w pieza mcmp o0 0 sn mover c end
-#mcmp p0 0 desliz {w,a,s,d} mover c end
-#mcmp p0 0 d mover
-#desliz mset g0 l0 madd l0 1 mless l0 4 w mover c end
-#mcmp t0 0 w mover
-#mcmp t0 1 a mover
-#mcmp T 3 w mover
-#s mover
-{w,a,s,d} mover isol mcmp x y {w,a,s,d} mover end
+desliz w mover c end w captura
+desliz a mover c end a captura
+desliz d mover c end d captura
+desliz s mover c end s captura
 
-:3 3 #alfil
-#desliz {w,a,s,d} isol mcmp t0 1 mover end end
-#desliz w isol mcmp t0 1 mover end end
-#{w,wa,a,as,s,sd,d,dw} mcmp t0 1 mover mset t0 0
-#{w,a,s,d} exc vacio mover or capt mov color 10 20 30 end
-#mcmp p0 0 mset p0 1 color 0 0 255
-#mcmp p0 1 mset p0 0 color 255 0 0
-#mcmp p0 0 ww pieza mset p0 1 mset o0 1 color 0 0 255
-#mcmp p0 1 ww pieza mcmp o0 1 mset o0 0 mset p0 0 color 255 0 0
-#mcmp g0 0 a mover
-#mcmp g0 1 w mover
-#mcmp g0 2 s mover
-#a mset t0 1 color 0 0 255
-mcmp T 4 w mover
-s mover
+:3 2 #caballo
+{{ww,ss}{a,d},{aa,dd}{w,s}} exc mover or captura end
 
+:4 3 #alfil
+desliz wa mover c end wa captura
+desliz as mover c end as captura
+desliz dw mover c end dw captura
+desliz sd mover c end sd captura
 
-:4 2 #excguy
-desopt aaw mover c or wwa mover c or wwd mover c or ddw mover c end
-desopt aas mover c or ssa mover c or ssd mover c or dds mover c end
-desopt wwa mover c or aaw mover c or aas mover c or ssa mover c end
-desopt wwd mover c or ddw mover c or dds mover c or ssd mover c end
+:5 4 #reina
+desliz w mover c end w captura
+desliz a mover c end a captura
+desliz d mover c end d captura
+desliz s mover c end s captura
+desliz wa mover c end wa captura
+desliz as mover c end as captura
+desliz dw mover c end dw captura
+desliz sd mover c end sd captura
 
-:5 5 #emperador
+:6 5 #rey
+{w,wa,a,as,s,sd,d,dw} exc mover or captura end
+
+:7 5 #emperador
 desliz w end desliz a end \
-desliz isol desliz isol da mover c end d end end s end
+desliz isol desliz isol mover end d end end s end
+
+:9 3 #memoria
+mmore T p0 mset l0 T madd l0 3 mset p0 l0 w mover
+mcmp t0 1 a mover
+mcmp x y d mover
+w pieza mcmp o1 1 ss mover
+mcmp p1 1 aw mover mset t0 1 mset p1 0
+mcmp p1 0 dw mover mset p1 1
+
+:10 3 #memoria no turno
+mcmp t0 1 a mover
+mcmp x y d mover
+w pieza mcmp o1 1 ss mover
+mcmp p1 1 aw mover mset t0 1 mset p1 0
+mcmp p1 0 dw mover mset p1 1
+
+
+:8 0 #test caballos
+#mmore T p0 mset l0 T madd l0 3 mset p0 l0 w mover
+mcmp t0 1 a mover
+mcmp x y d mover
+w pieza mcmp o1 1 ss mover
+mcmp p1 1 aw mover mset t0 1 mset p1 0
+mcmp p1 0 dw mover mset p1 1
+
+
+
+
 
 

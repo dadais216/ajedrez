@@ -11,7 +11,7 @@
 
 struct Pieza{
     Sprite spriteb,spriten;
-    int id; //para hacer copias
+    int id; //para hacer copias. signo indica bando. Hay dos versiones por el tema del espejado en el eje y, la otra opcion era poner ifs cada vez que se pedir la pos relativa
     int sn;
 
     struct base{

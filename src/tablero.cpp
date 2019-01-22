@@ -75,7 +75,8 @@ void activateTriggers(){
     }
     else{
         ///@optim supongo que volcarlo a una matriz es mas rapido que ordenarlo y trocearlo
-        sort(trigsActivados.begin(),trigsActivados.end(),[](normalHolder* a,normalHolder* b)->bool{return a->base.beg<=b->base.beg;});
+        sort(trigsActivados.begin(),trigsActivados.end(),[](normalHolder* a,normalHolder* b)->bool
+             {return a->base.beg<b->base.beg;});
         int i=0;
         while(i<trigsActivados.size()){
             switchToGen=false;

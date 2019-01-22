@@ -30,10 +30,10 @@ normal::normal(bool make){
             tokens.pop_front();
             switch(tok){
             case lector::W:
-                pos.y--; //el espejado se va a tener que hacer cuando se construyan las absolutas
+                pos.y+=bandoAct;
                 break;
             case lector::S:
-                pos.y++;
+                pos.y-=bandoAct;
                 break;
             case lector::D:
                 pos.x++;
@@ -46,6 +46,7 @@ normal::normal(bool make){
                 cond(vacio);
                 cond(pieza);
                 cond(enemigo);
+                cond(pass);
             case lector::esp: conds.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
     #define acc(TOKEN) case lector::TOKEN: accs.push_back(new TOKEN(pos));break
 
@@ -53,8 +54,8 @@ normal::normal(bool make){
                 acc(capt);
                 acc(pausa);
             case lector::spwn:
-                accs.push_back(new spwn(pos,tokens.front()-1000));tokens.pop_front();break;
-
+                accs.push_back(new spwn(pos,(tokens.front()-1000)*bandoAct));tokens.pop_front();break;
+                //spwn n con n positivo quiere decir mismo bando, negativo bando enemigo
             case lector::color:
                 colors.push_back(crearColor(pos));
                 break;
