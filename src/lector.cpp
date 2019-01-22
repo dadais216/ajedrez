@@ -22,6 +22,7 @@ lector::lector(){
     rel(vacio);
     rel(enemigo);
     rel(pieza);
+    rel(pass);
 
     rel(desliz);
     rel(exc);
@@ -67,7 +68,7 @@ int stringToInt(string& s){
 void lector::generarIdsTablero(int n){
     archTablero.open("tableros.txt");
 
-    for(vector<int> ve:matriz)
+    for(vector<int>& ve:matriz)
         ve.clear();
     matriz.clear();//limpio en caso de que se este regenerando
 
@@ -96,7 +97,7 @@ void lector::generarIdsTablero(int n){
 bool tileMemGrowth=false;
 Holder* lector::crearPieza(int n,v pos){
     for(Pieza* p:piezas)
-        if(p->id==abso(n))
+        if(p->id==n)
             return new Holder(sgn(n),p,pos);
 
     archPiezas.clear();
@@ -138,10 +139,10 @@ enPieza:
             CASE(capt);
             CASE(spwn);
             CASE(pausa);
-            CASE(pass);
             CASE(vacio);
             CASE(pieza);
             CASE(enemigo);
+            CASE(pass);
             CASE(esp);
             CASE(msize);
             CASE(mcmp);
@@ -183,14 +184,13 @@ enPieza:
                 t->memTile.resize(memTileSize);
                 t->memTileTrigs.resize(memTileSize);
             }
-
-    Holder* h=new Holder(sgn(n),new Pieza(abso(n),sn,memPiezaSize),pos);
+    Holder* h=new Holder(sgn(n),new Pieza(n,sn,memPiezaSize),pos);
     tokens.clear();
     return h;
 }
 void lector::procesarTokens(list<int>& tokens){
     //aplicar def
-    for(auto it=tokens.begin(); it!=tokens.end(); it++)
+    for(auto it=tokens.begin(); it!=tokens.end(); it++)///@optim tendria mas sentido cargarlo directamente en vez de en 2 pasos
         for(auto ent:defs)
             if(ent.first==*it){
                 it=tokens.erase(it);

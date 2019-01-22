@@ -9,6 +9,7 @@ struct Trigger{
     int step; //valor que se contrasta con el step de la tile. Si son el mismo la pieza que puso el trigger esta en el mismo lugar y no se movio, mh es valido
 };
 struct Tile{
+
     Holder* holder;
     vector<Trigger> triggers;
     //memoria

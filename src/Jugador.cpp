@@ -7,6 +7,7 @@
 #include "../include/Pieza.h"
 #include <stdlib.h>
 #include <time.h>
+#include <ctime>
 
 Humano::Humano(int bando_,tabl& tablero_)
 :Jugador(bando_,tablero_) {}
@@ -53,13 +54,13 @@ void Humano::turno(){
             throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
         }
         if(input->click()&&input->inGameRange(_tablero.tam)){
+            v posClicked=input->get();
             for(Clicker* cli:clickers){
             ///@todo @optim esto se pregunta 60hz
             ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
             ///vuelva a meter solapamiento
-                if(cli->update()){ //accionar
-
-                    clickers.clear();
+                if(posClicked==cli->clickPos){
+                    cli->update();//accionar
                     turno1=!turno1;
                     drawScreen();
                     return;
@@ -81,23 +82,44 @@ void Humano::turno(){
     }
 }
 
+void Nadie::turno(){
+    turnoAct++;
+    ::turno=turnoAct/2;
+}
+
 Aleatorio::Aleatorio(int bando_,tabl& tablero_)
 :Jugador(bando_,tablero_){
     srand(time(NULL));
 }
-
+double sProm=0;
+int cProm=0;
 void Aleatorio::turno(){
+    if(window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+        static_cast<Proper*>(j->actual)->init();///@leaks
+        while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
+        throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
+    }
     for(int i=0; i<_tablero.tam.x; i++)
         for(int j=0; j<_tablero.tam.y; j++){
             Holder* act=_tablero.tile(v(i,j))->holder;
-            if(act&&act->bando==bando)
-                ;//act->pieza->calcularMovimientos(v(i,j));
+            if(act&&act->bando==bando){
+                act->makeCli();
+            }
         }
-    if(clickers.size()>0)
-    {
+    drawScreen();
+    if(clickers.size()>0){
         auto it=clickers.begin();
         advance(it,rand()%clickers.size());
-        (*it)->accionar();
+
+        clock_t t=clock();
+        (*it)->update();
+        sProm+=clock()-t;
+        cProm++;
+        if(cProm==4000){
+            cout<<"promedio: "<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos";
+            exit(0);
+        }
+
         clickers.clear();
     }
 }

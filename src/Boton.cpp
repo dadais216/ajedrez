@@ -1,12 +1,8 @@
 #include "../include/Boton.h"
-
-
 #include "../include/global.h"
 #include "../include/Juego.h"
 
-Boton::Boton(string nomb,int n_,int x_,int y_,int escala_)
-{
-
+Boton::Boton(string nomb,int n_,int x_,int y_,int escala_){
     text.setFont(j->font);
     text.setString(nomb);
     text.setColor(Color::Black);
@@ -21,30 +17,26 @@ Boton::Boton(string nomb,int n_,int x_,int y_,int escala_)
     sprite.setPosition(x,y);
     text.setPosition(x+5,y+10);
     n=n_+1;
-    //cout<<n<<" "<<x<<" "<<y<<endl;
 }
-int Boton::clicked()
-{
+int Boton::clicked(){
     v ve=input->pixel();
-    if(ve.x>=x&&ve.x<=x+64*escala&&ve.y>=y&&ve.y<=y+32*escala) //tiene que depender de escala ahora
+    if(ve.x>=x&&ve.x<=x+64*escala&&ve.y>=y&&ve.y<=y+32*escala)
         return n;
     else
         return 0;
 }
-void Boton::draw()
-{
+void Boton::draw(){
     window->draw(sprite);
     window->draw(text);
 }
 
-SelJugador::SelJugador(int bando_)
-{
+SelJugador::SelJugador(int bando_){
     bando=bando_;
     if(bando==1)
-        botones.push_back(new Boton("nadie",0,540,320,1));
-    botones.push_back(new Boton("humano",1,500+40*bando,360,1));
-    botones.push_back(new Boton("aleatorio",2,500+40*bando,400,1));
-    botones.push_back(new Boton("IA",3,500+40*bando,440,1));
+        botones.push_back(Boton("nadie",0,540,320,1));
+    botones.push_back(Boton("humano",1,500+40*bando,360,1));
+    botones.push_back(Boton("aleatorio",2,500+40*bando,400,1));
+    botones.push_back(Boton("IA",3,500+40*bando,440,1));
 
     cuadrado.setFillColor(Color(0,0,0,0));
     cuadrado.setSize(sf::Vector2f(64, 32));
@@ -53,24 +45,19 @@ SelJugador::SelJugador(int bando_)
 
     selected=1;
 }
-void SelJugador::clicked()
-{
-    for(Boton* b:botones)
-    {
+void SelJugador::clicked(){
+    for(Boton& b:botones){
         int n;
-        if((n=b->clicked()))
-        {
+        if((n=b.clicked())){
             selected=n-1;
-            //cout<<selected<<endl;
             drawScreen();
             return;
         }
     }
 }
-void SelJugador::draw()
-{
-    for(Boton* b:botones)
-        b->draw();
+void SelJugador::draw(){
+    for(Boton& b:botones)
+        b.draw();
     cuadrado.setPosition(500+40*bando,320+40*selected);
     window->draw(cuadrado);
 }

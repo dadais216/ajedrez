@@ -23,18 +23,14 @@ void Arranque::update(){
     if(input->click()&&input->inRange())
         new Selector();
 }
-
-Selector::Selector()
-    :sel1(1),sel2(-1){
+Selector::Selector():sel1(1),sel2(-1){
     j->change(this);
     fstream tableros;
     tableros.open("tableros.txt");
     string linea;
     int j=0;
-    while(getline(tableros,linea))
-    {
-        if(!linea.empty()&&linea[0]=='"')
-        {
+    while(getline(tableros,linea)){
+        if(!linea.empty()&&linea[0]=='"'){
             int i=1;
             for(; linea[i]!='"'; i++);
             botones.push_back(new Boton(linea.substr(1,i-1),j,32+(70*j/420)*140,40+(j*70)%420,2));
@@ -44,23 +40,17 @@ Selector::Selector()
     drawScreen();
 }
 bool debugMode;
-void Selector::draw()
-{
+void Selector::draw(){
     for(Boton* b:botones)
         b->draw();
     sel1.draw();
     sel2.draw();
-    debugMode=false;
 }
-void Selector::update()
-{
-    if(input->click())
-    {
-        for(Boton* b:botones)
-        {
+void Selector::update(){
+    if(input->click()){
+        for(Boton* b:botones){
             int n;
-            if((n=b->clicked()))
-            {
+            if((n=b->clicked())){
                 new Proper(n-1,sel1.selected,sel2.selected);
                 return;
             }
@@ -68,6 +58,10 @@ void Selector::update()
         sel1.clicked();
         sel2.clicked();
     }
+}
+Selector::~Selector(){
+    for(auto* b:botones)
+        delete b;
 }
 
 lector lect;
@@ -77,24 +71,21 @@ Proper::Proper(int id_,int sel1,int sel2)
     j->change(this);
     debugMode=false;
 
-    auto selec=[&](int sel,int bando)->Jugador*
-    {
-        switch(sel)
-        {
-        case 0:
-            return new Nadie(bando,tablero);
-        case 1:
-            return new Humano(bando,tablero);
-        case 2:
-            return new Aleatorio(bando,tablero);
+    int nonHuman=0;
+    auto selec=[&](int sel,int bando)->Jugador*{
+        switch(sel){
+        case 0:nonHuman++;return new Nadie(bando,tablero);
+        case 1:return new Humano(bando,tablero);
+        case 2:nonHuman++;return new Aleatorio(bando,tablero);
             //case 3: return new IA(bando,tablero);
         }
-        return nullptr;
     };
 
-    primero=selec(sel1,-1);
-    segundo=selec(sel2,1);
+    primero=selec(2,-1);
+    segundo=selec(2,1);
 
+    if(nonHuman==2)
+        fpsLock=0.;
 
     turnoBlanco.setTexture(imagen->get("sprites.png"));
     turnoNegro.setTexture(imagen->get("sprites.png"));
@@ -137,12 +128,14 @@ bool turno1;
 
 void Proper::init(){
     clickers.clear();
-    memMov.resize(0);
+    memMov.clear();
     maxMemMovSize=0;
-    memGlobal.resize(0);
-    memGlobalTriggers.resize(0);
+    memGlobal.clear();
+    memGlobalTriggers.clear();
     memGlobalSize=0;
     memTileSize=0;
+    turnoTrigs[0].clear();
+    turnoTrigs[1].clear();
     turnoAct=2;
     turno=1;
 
@@ -209,6 +202,11 @@ void Proper::draw(){
         window->draw(turnoBlanco);
     else
         window->draw(turnoNegro);
+
+    textValMem.setPosition(590,10);
+    textValMem.setString(to_string(turno));
+    window->draw(textValMem);
+
     if(drawDebugTiles){ ///@optim funcion aparte
         window->draw(*tileActDebug);
         if(drawAsterisco){

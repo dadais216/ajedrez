@@ -538,6 +538,17 @@ como la memoria es global no se guarda el estado de cada iteracion, y el trigger
 
 
 
+tiempos
+actual 100 turnos                         - 0.00012107 0.00012184 0.00011613
+caballos caballos sin captura 1000 turnos - 0.00065922 0.00059778 0.00061575
+caballos reinas sin captura 1000 turnos   - 0.00232942 0.00213995 0.00272796
+caballos emperador sin captura 10 turnos  - 3.46553
+caballos memoria 1000 turnos              - 0.00608613 0.00392297 0.00614161
+caballos memoria sin turno 2000 turnos    - 0.00019129 0.00029356 0.00020816
+
+
+
+
 
 
 
@@ -553,6 +564,21 @@ Agregar boton que muestre las memorias. La global se vería todo el tiempo. Si se
 En modo debug se dibuja la memoria de movimiento mientras este se calcula, y se redibujan todas en cada paso
 
 %%%
+
+WhenNoMoves
+Ahora cuando un jugador se queda sin movimientos y es su turno el juego queda en softlock. Se podría dejar asi y listo. Una solucion desde adentro del lenguaje es agregar un boton de rendicion. 
+Se puede agregar un sistema que detecte esto. No estoy seguro de si lo valga, agrega chequeos cada vez que se acciona. Para adaptarse a cada juego posible tiene que chequear si los dos jugadores tienen movimientos posibles despues de cada accionar.
+Se sabe que un jugador tiene movimientos si tiene un holder que tenga un movimiento que tenga su primer movholder con valorCadena verdadero.
+En primera instancia se podría mirar el holder que genera despues de moverse y los que reaccionan para ver si estos hacen algo. Si eso falla se va a tener que recorrer el tablero buscando algun holder que cumpla la condicion. Si no hay ninguno se llega a la conclusion de que no hay movimientos.
+Cuando pasa esto, se corre el codigo WhenNoMoves asociado a ese jugador
+-
+Lo que no me convence de este sistema es que es relativamente lento e invade todos los juegos, cuando no necesariamente todos lo usen, y no es algo totalmente escencial. 
+Por ahi tendria mas sentido como algo opcional para la version compilada
+Cuando los dos jugadores se bloquean al mismo tiempo andaria medio raro, pero supongo que se puede salvar desde el lenguaje. 
+
+
+ 
+
 
 ### IA
 aparentemente el segundo orden es solo usado por la IA. Ya que lo estoy haciendo podría agregar comandos que lo aprovechen, pero la verdad es que no hay mucho que se pueda hacer que no se pueda hacer usando memoria y triggers o every, y esas soluciones suelen ser mas limpias y eficientes. 

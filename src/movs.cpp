@@ -144,6 +144,7 @@ fabAcc(capt,
     pisados.push_back(captT);
 );
 string spwn_str="spwn";
+vector<Holder*> justSpawned;
 struct spwn:public acct{
     v relPos;
     int id;
@@ -155,18 +156,16 @@ struct spwn:public acct{
             Holder* h=reciclaje[i];
             if(h->id==id){//no tomo bandos distintos porque los movimientos estan espejados
                 h->inPlay=true;
+                memset(h->memPieza.data(),0,sizeof(int)*h->memPieza.size());
                 spwnT->holder=h;
                 h->tile=spwnT;
                 reciclaje.erase(reciclaje.begin()+i);
                 goto gen;
             }
         }
-        spwnT->holder=lect.crearPieza(id*actualHolder.h->bando,pos);
+        spwnT->holder=lect.crearPieza(id,pos);
         gen:
-        spwnT->holder->generar();
-        ///@optim se podria generar despues agregando un if al curso principal. Pense meterlo como un trigger
-        ///pero eso llama a recalcular pasandole el primer normalHolder como el que tira el error. Pero encontrar
-        ///ese normalHolder es un problema y los otros holders no terminan de generar sus cosas hasta la primera generacion
+        justSpawned.push_back(spwnT->holder);
         pisados.push_back(spwnT);
     }
 };
@@ -200,20 +199,21 @@ fabCond(pieza,
 )
 fabCond(enemigo,
     setTrigger(pos);
-    if(tablptr->tile(pos+offset)->holder)
-        return tablptr->tile(pos+offset)->holder->bando!=actualHolder.h->bando;
+    Holder* other=tablptr->tile(pos+offset)->holder;
+    if(other)
+        return other->bando!=actualHolder.h->bando;
     return false;
 )
 fabCond(esp,
     v posAct=pos+offset;
     return posAct.x>=0&&posAct.x<tablptr->tam.x&&posAct.y>=0&&posAct.y<tablptr->tam.y;
 )
-
+fabCond(pass,
+    return true;
+)//se usa al final de exc para retornar verdadero aunque las otras ramas hayan fallado
 
 inline bool mcmpCond(getter* a1,getter* a2){
-    int a=*a1->val(),b=*a2->val();
-    cout<<"CMP "<<a<<" == "<<b<<endl;
-    return a==b;
+    return *a1->val()==*a2->val();
 }
 inline bool msetCond(getter* a1,getter* a2){
     *a1->val()=*a2->val();
@@ -264,12 +264,12 @@ inline bool maddCond(getter* a1,getter* a2){
 }
 inline bool maddAcc(getter* a1,getter* a2){
     *a1->val()+=*a2->val();
-    ///cargar triggers
+    ///@todo cargar triggers
     return true;
 }
 inline bool maddAccTile(getter* a1,getter* a2){
     *a1->val()+=*a2->val();
-    ///cargar triggers
+    ///@todo cargar triggers
     return true;
 }
 inline bool mlessCond(getter* a1,getter* a2){

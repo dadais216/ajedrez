@@ -7,10 +7,7 @@ Input* input;
 RenderWindow* window;
 Manager<Texture>* imagen;
 
-Juego::Juego()
-    :_window(VideoMode(640, 512), "ajedrez")
-    ,_input(&_window)
-{
+Juego::Juego():_window(VideoMode(640, 512), "ajedrez"),_input(&_window){
     _imagen.adddir("sprites/");
     _input.check();
     font.loadFromFile("sprites/VL-PGothic-Regular.ttf");
@@ -22,22 +19,18 @@ Juego::Juego()
     actual= new Arranque();
     drawScreen();
 }
-void Juego::gameloop()
-{
+float fpsLock=1./60.;//limite de maximos fps para evitar actualizar demasiado rapido
+void Juego::gameloop(){
     clock.restart();
     float dt=0;
-    while(true)
-    {
-        dt+=clock.restart().asSeconds();
-        while(dt>1./60.)
-        {
-            dt-=1./60.;
+    while(true){
+        dt+=clock.restart().asSeconds();///@todo busy wait? creo que seria mejor un sleep a lo perro
+        while(dt>fpsLock){
+            dt-=fpsLock;
             _input.check();
             actual->update();
-            while (_window.pollEvent(event))
-            {
-                if (event.type == Event::Closed)
-                {
+            while (_window.pollEvent(event)){
+                if (event.type == Event::Closed){
                     _window.close();
                     return;
                 }

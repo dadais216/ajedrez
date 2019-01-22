@@ -244,11 +244,10 @@ void excHolder::cargar(vector<normalHolder*>* norms){
 isolHolder::isolHolder(Holder* h_,isol* org,Base* base_)
 :movHolder(h_,org,base_){
     inside=crearMovHolder(h_,org->inside,base_);
-    selfCount=0;
     valorFinal=valorCadena=true;
 }
 void isolHolder::generar(){
-    tempPos=offset;
+    v tempPos=offset;
     inside->generar();
     offset=tempPos;
     if(sig){
@@ -260,9 +259,6 @@ void isolReaccionar(auto nh,isolHolder* $){
     $->inside->reaccionar(nh);
     if(switchToGen){
         ///@optim podria hacerse un lngjmp
-        //offset=$->tempPos;
-        //if($->sig)
-        //    $->sig->generar();
         switchToGen=false;
     }
     else if($->sig)
@@ -275,17 +271,13 @@ void isolHolder::reaccionar(vector<normalHolder*> nhs){
     isolReaccionar(nhs,this);
 }
 void isolHolder::cargar(vector<normalHolder*>* norms){
-    if(selfCount<isolCount){
-        selfCount=isolCount;
-        vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
-        inside->cargar(&normExt);
-        if(makeClick)
-            clickers.push_back(new Clicker(&normExt,h));
-    }
+    vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
+    inside->cargar(&normExt);
+    if(makeClick&&!normExt.empty())//evitar generar clickers sin normales
+        clickers.push_back(new Clicker(&normExt,h));
     if(sig)
         sig->cargar(norms);
 }
-
 node::node(movHolder* m):mh(m){}
 desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
 :movHolder(h_,org,base_){

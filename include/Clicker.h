@@ -10,10 +10,10 @@ using namespace sf;
 struct Clicker{
     Clicker(vector<normalHolder*>*,Holder*);
     vector<normalHolder*> normales;
-    v clickPos;
+    v clickPos;//a aleatorio y ia no les interesa esto, deberia estar en otra cosa junto con las cosas graficas
     void draw();
     static bool drawClickers;
-    bool update();
+    void update();
     //bool activo;
     //void activacion(int);
     //int val,mod;

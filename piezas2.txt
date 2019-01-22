@@ -86,6 +86,57 @@ desliz exc mcmp l0 0 wan or mcmp l0 1 wdn or mcmp l0 2 sdn or mcmp l0 3 san end 
 :7 0 #ortog
 {w,a,s,d} mover
 
+def mover vacio mov pausa color 20 200 115
+def move vacio mov pausa color 115 20 200
+#def passe pass color 235 55 140
+def captura pieza capt mov color 230 10 10
+
+:1 1 #ortog
+#{w,a,s,d} exc captura or mover end
+#desliz {w,a,s,d} vacio spwn 1 color 20 200 115 pausa c end 
+mmore T 3 w mover
+
+:2 1 #torre
+#exc mcmp x 0 mcmp y 0 desliz sd exc mover or captura end c end or \
+#    mcmp x 14 mcmp y 0 desliz sa exc mover or captura end c end or \
+#    mcmp x 0 mcmp y 14 desliz wd exc mover or captura end c end or \
+#    mcmp x 14 mcmp y 14 desliz wa exc mover or captura end c end or \
+#    mcmp x 0 desliz d exc mover or captura end c end or \
+#    mcmp x 14 desliz a exc mover or captura end c end or \
+#    mcmp y 0 desliz s exc mover or captura end c end or \
+#    mcmp y 14 desliz w exc mover or captura end c end \
+#end 
+{w,a,s,d} mover
+
+:3 3 #alfil
+mset p0 1 mcmp p0 0 desliz w mover mset p0 1 c end w pieza captura mset p0 1 c
+mset p0 1 mcmp p0 0 desliz a mover mset p0 1 c end a pieza captura mset p0 1 c
+mset p0 1 mcmp p0 0 desliz d mover mset p0 1 c end d pieza captura mset p0 1 c
+mset p0 1 mcmp p0 0 desliz s mover mset p0 1 c end s pieza captura mset p0 1 c
+mset p0 0 mcmp p0 1 desliz wa mover mset p0 0 c end wa pieza captura mset p0 0 c
+mset p0 0 mcmp p0 1 desliz wd mover mset p0 0 c end wd pieza captura mset p0 0 c
+mset p0 0 mcmp p0 1 desliz sa mover mset p0 0 c end sa pieza captura mset p0 0 c
+mset p0 0 mcmp p0 1 desliz sd mover mset p0 0 c end sd pieza captura mset p0 0 c
+
+:4 4 #excguy
+mset l0 -1 desliz {w,a,s,d} exc captura madd p0 1 or mover end mless l0 p0 madd l0 1 c end  
+
+:5 5 #emperador
+#desliz w end desliz a end \
+#desliz isol desliz isol da mover c end d end end s end
+{w,a,s,d} vacio mov color 1 1 1
+mmore T 15 mset l0 x mset l1 y \
+desliz w end desliz a end \
+color 0 0 0 exc pieza capt or vacio end \
+    desliz d color 0 0 0 exc pieza capt or vacio end end \
+desliz a end \
+desliz s color 0 0 0 exc pieza capt or vacio end \
+    desliz d color 0 0 0 exc pieza capt or vacio end end \
+desliz a end end \
+desliz mless x l0 d end desliz mmore y l1 w end color 255 255 255 spwn 5
+
+:6 0 #peon
+
 
 
 

@@ -76,8 +76,6 @@ struct isolHolder:public movHolder{
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
     movHolder* inside;
-    int selfCount;
-    v tempPos;
 };
 struct node{
     node(movHolder*);
