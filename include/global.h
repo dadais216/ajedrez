@@ -130,18 +130,22 @@ struct AH{
 };
 extern AH actualHolder;
 
-struct memTriggers{
-    vector<normalHolder*> perma,dinam;
+struct activeTrig{
+    normalHolder* nh;
+    int condIndex;//indice del op->cond. Paso indice en vez de puntero porque conds es un vector en crecimiento. A demas usar punteros no andaria con debugWrap
 };
-
+struct memTriggers{
+    vector<activeTrig> perma,dinam;
+};
 extern memTriggers* trigsMaybeActivate;
-extern vector<normalHolder*> trigsActivados;
+extern vector<activeTrig> trigsActivados;
 extern Trigger triggerInfo;
 extern vector<memTriggers> memGlobalTriggers;
 
 struct turnTrigInfo{
     Holder* h;
     normalHolder* nh;
+    int condIndex;
 };
 extern vector<turnTrigInfo> turnoTrigs[2];
 

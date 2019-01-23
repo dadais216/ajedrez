@@ -115,7 +115,7 @@ void Aleatorio::turno(){
         (*it)->update();
         sProm+=clock()-t;
         cProm++;
-        if(cProm==4000){
+        if(cProm==1000){
             cout<<"promedio: "<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos";
             exit(0);
         }

@@ -25,11 +25,11 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
     for(auto trigInfo:op->setUpMemTriggersPerNormalHolder)
         switch(trigInfo.type){
         case 0:
-            memGlobalTriggers[trigInfo.ind].perma.push_back(this);
+            memGlobalTriggers[trigInfo.ind].perma.push_back({this,trigInfo.c});
         break;case 1:
-            h->memPiezaTrigs[trigInfo.ind].perma.push_back(this);
+            h->memPiezaTrigs[trigInfo.ind].perma.push_back({this,trigInfo.c});
         break;case 2:
-            turnoTrigs[h->bando==-1].push_back({h,this});
+            turnoTrigs[h->bando==-1].push_back({h,this,trigInfo.c});
         }
     memAct.resize(base.movSize);
 }
@@ -56,34 +56,63 @@ void normalHolder::generar(){
     valor=true;
     generarSig();
 }
-void normalHolder::reaccionar(normalHolder* nh){
-    if(nh==this){
-        offset=nh->offsetAct;
+void normalHolder::generarFromCond(int condIndex){
+    //puede que sea medio exagerado un int. Igual creo que el tamaño no importa
+
+    //el objetivo de esta funcion es ser un generar en regenerar mas rapido. Va directo a la condicion
+    //que puso el trigger, en el caso usual saltandose el esp que esta al principio. Si es un movimiento
+    //que puso varios triggers en varias posiciones, se salta las posiciones anteriores al activado
+
+    //se podria optimizar mas para que multiples condiciones que ponen triggers de una normal en una misma posicion
+    //no pongan mas de un trigger, porque no aportaria nada, pero en el lenguaje eso no pasa practicamente nunca.
+    offsetAct=offset;
+    memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
+
+    actualHolder.h=h;
+    actualHolder.nh=this;
+    actualHolder.tile=h->tile;
+    actualHolder.offset=offset;
+    int size=op->conds.size();
+    do{
+        if(!op->conds[condIndex]->check()){
+            valorFinal=valorCadena=valor=false;
+            return;
+        }
+        condIndex++;
+    }while(condIndex!=size);
+    offset=op->lastPos+offset;
+
+    valor=true;
+    generarSig();
+}
+void normalHolder::reaccionar(activeTrig at){
+    if(at.nh==this){
+        offset=at.nh->offsetAct;
         memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
         switchToGen=true;
-        generar();
+        generarFromCond(at.condIndex);
         ///@optim mecanismo para cortar todo si la validez no vario, un lngjmp
         ///@optim si es verdadero hacerlo falso directamente? Creo que los unicos casos donde puede mantenerse verdadero es si
         ///una pieza va y vuelve, y por ahi eso se puede manejar haciendo que active el trigger dos veces o alguna otra cosa.
         ///en estos casos sería mas ineficiente porque se hace el recorrido dos veces, pero son casos muy raros. El general seria
         ///mas eficiente porque se salta un recalculo de una normal entera
     }else if(valor){
-        reaccionarSig(nh);
+        reaccionarSig(at);
     }
 }
-void normalHolder::reaccionar(vector<normalHolder*> nhs){
-    for(normalHolder* nh:nhs){
-        if(nh==this){
-            offset=nh->offsetAct;
+void normalHolder::reaccionar(vector<activeTrig> ats){
+    for(activeTrig& at:ats){
+        if(at.nh==this){
+            offset=at.nh->offsetAct;
             memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
             switchToGen=true;
-            generar();
+            generarFromCond(at.condIndex);
             ///@optim sacar nh del vector?
             return;
         }
     }
     if(valor){
-        reaccionarSig(nhs);
+        reaccionarSig(ats);
     }
 }
 
@@ -135,10 +164,10 @@ void deslizHolder::generar(){
 }
 int x=0;
 bool switchToGen;
-void deslizReaccionar(auto nh,deslizHolder* $){
+void deslizReaccionar(auto at,deslizHolder* $){
     for(int i=0;i<=$->f;i++){
         movHolder* act=$->movs[i];
-        act->reaccionar(nh);
+        act->reaccionar(at);
         if(switchToGen){
             $->lastNotFalse=false;
             for(;act->valorFinal;){
@@ -155,13 +184,13 @@ void deslizReaccionar(auto nh,deslizHolder* $){
             return;
         }
     }
-    $->reaccionarSig(nh);
+    $->reaccionarSig(at);
 }
-void deslizHolder::reaccionar(normalHolder* nh){
-    deslizReaccionar(nh,this);
+void deslizHolder::reaccionar(activeTrig at){
+    deslizReaccionar(at,this);
 }
-void deslizHolder::reaccionar(vector<normalHolder*> nhs){
-    deslizReaccionar(nhs,this);
+void deslizHolder::reaccionar(vector<activeTrig> ats){
+    deslizReaccionar(ats,this);
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;
@@ -194,10 +223,10 @@ void excHolder::generar(){
     valorFinal=valorCadena=valor=false;
     actualBranch=i-1;
 }
-void excReaccionar(auto nh,excHolder* $){
+void excReaccionar(auto at,excHolder* $){
     for(int i=0;i<=$->actualBranch;i++){
         movHolder* branch=$->ops[i];
-        branch->reaccionar(nh);
+        branch->reaccionar(at);
         if(switchToGen){
             if(!branch->valorCadena){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
                 int j;
@@ -225,13 +254,13 @@ void excReaccionar(auto nh,excHolder* $){
         }
     }
     if($->valor)
-        $->reaccionarSig(nh);
+        $->reaccionarSig(at);
 }
-void excHolder::reaccionar(normalHolder* nh){
-    excReaccionar(nh,this);
+void excHolder::reaccionar(activeTrig at){
+    excReaccionar(at,this);
 }
-void excHolder::reaccionar(vector<normalHolder*> nhs){
-    excReaccionar(nhs,this);
+void excHolder::reaccionar(vector<activeTrig> ats){
+    excReaccionar(ats,this);
 }
 void excHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;
@@ -255,20 +284,20 @@ void isolHolder::generar(){
         valorFinal=sig->valorFinal;
     }
 }
-void isolReaccionar(auto nh,isolHolder* $){
-    $->inside->reaccionar(nh);
+void isolReaccionar(auto at,isolHolder* $){
+    $->inside->reaccionar(at);
     if(switchToGen){
         ///@optim podria hacerse un lngjmp
         switchToGen=false;
     }
     else if($->sig)
-        $->sig->reaccionar(nh);
+        $->sig->reaccionar(at);
 }
-void isolHolder::reaccionar(normalHolder* nh){
-    isolReaccionar(nh,this);
+void isolHolder::reaccionar(activeTrig at){
+    isolReaccionar(at,this);
 }
-void isolHolder::reaccionar(vector<normalHolder*> nhs){
-    isolReaccionar(nhs,this);
+void isolHolder::reaccionar(vector<activeTrig> ats){
+    isolReaccionar(ats,this);
 }
 void isolHolder::cargar(vector<normalHolder*>* norms){
     vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
@@ -319,36 +348,36 @@ void desoptHolder::generar(){
     }
     generarSig();
 }
-void reaccionarNodos(auto nh,vector<node*>& nodes,dataPass& dp){
+void reaccionarNodos(auto at,vector<node*>& nodes,dataPass& dp){
     for(node* n:nodes){
-        n->mh->reaccionar(nh);
+        n->mh->reaccionar(at);
         if(switchToGen){
             if(n->mh->valorFinal)
                 generarNodos(n->nodes,dp);
             switchToGen=false;
             continue;
         }
-        reaccionarNodos(nh,n->nodes,dp);
+        reaccionarNodos(at,n->nodes,dp);
     }
 }
-void desoptReaccionar(auto nh,desoptHolder* $){
+void desoptReaccionar(auto at,desoptHolder* $){
     dataPass dp{&static_cast<desopt*>($->op)->ops,$->h,&$->base};
     for(node n:$->nodes){
-        n.mh->reaccionar(nh);
+        n.mh->reaccionar(at);
         if(switchToGen){
             if(n.mh->valorFinal)
                 generarNodos(n.nodes,dp);
             switchToGen=false;
             continue;
         }
-        reaccionarNodos(nh,n.nodes,dp);
+        reaccionarNodos(at,n.nodes,dp);
     }
 }
-void desoptHolder::reaccionar(normalHolder* nh){
-    desoptReaccionar(nh,this);
+void desoptHolder::reaccionar(activeTrig at){
+    desoptReaccionar(at,this);
 }
-void desoptHolder::reaccionar(vector<normalHolder*> nhs){
-    desoptReaccionar(nhs,this);
+void desoptHolder::reaccionar(vector<activeTrig> ats){
+    desoptReaccionar(ats,this);
 }
 void cargarNodos(vector<node*>& nodes,vector<normalHolder*>* norms){
     int res=norms->size();

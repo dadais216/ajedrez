@@ -42,12 +42,12 @@ normal::normal(bool make){
                 pos.x--;
                 break;
                 //cout<<#TOKEN<<endl;
-    #define cond(TOKEN)  case lector::TOKEN: if(debugMode) conds.push_back(new debugMov(new TOKEN(pos))); else conds.push_back(new TOKEN(pos));break
+    #define cond(TOKEN)  case lector::TOKEN: if(debugMode) conds.push_back(new debugMov(new TOKEN(pos,conds.size()))); else conds.push_back(new TOKEN(pos,conds.size()));break
                 cond(vacio);
                 cond(pieza);
                 cond(enemigo);
                 cond(pass);
-            case lector::esp: conds.push_back(new esp(pos));break; //podria agregarse un debug que nomas muestre cuando falle
+            case lector::esp: conds.push_back(new esp(pos,conds.size()));break; //podria agregarse un debug que nomas muestre cuando falle
     #define acc(TOKEN) case lector::TOKEN: accs.push_back(new TOKEN(pos));break
 
                 acc(mov);
@@ -85,6 +85,7 @@ normal::normal(bool make){
                     for(int i=0;i<2;i++){
                         bool left=i==0;
                         int tg[5],j;
+                        int cIndex=conds.size();
                         for(j=0;;j++){
                             assert(j<5);
                             tg[j]=tokens.front();tokens.pop_front();
@@ -148,13 +149,13 @@ normal::normal(bool make){
                                     switch(tg[j-1]){
                                     case lector::mglobal:
                                         g[i]=new globalaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back({0,tg[j]});
+                                        setUpMemTriggersPerNormalHolder.push_back({0,tg[j],cIndex});
                                     break;case lector::mpieza:
                                         g[i]=new piezaaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back({1,tg[j]});
+                                        setUpMemTriggersPerNormalHolder.push_back({1,tg[j],cIndex});
                                     break;
-                                    case lector::mtile: g[i]=new tileaRead(tg[j],pos);break;
-                                    case lector::mother: g[i]=new otheraRead(tg[j],pos);break;
+                                    case lector::mtile: g[i]=new tileaRead(tg[j],pos,cIndex);break;
+                                    case lector::mother: g[i]=new otheraRead(tg[j],pos,cIndex);break;
                                     }
 
                             for(int k=j-2;k>=0;k--){//getters indirectos
@@ -196,14 +197,14 @@ normal::normal(bool make){
                                     else
                                         switch(tg[k]){
                                         case lector::mglobal:
-                                            g[i]=new globalaiRead(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolder.push_back({true,tg[j]});
+                                            g[i]=new globalaiRead(static_cast<getterCond*>(g[i]),cIndex);
+                                            setUpMemTriggersPerNormalHolder.push_back({true,tg[j],cIndex});
                                         break;case lector::mpieza:
-                                            g[i]=new piezaaiRead(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolder.push_back({false,tg[j]});
+                                            g[i]=new piezaaiRead(static_cast<getterCond*>(g[i]),cIndex);
+                                            setUpMemTriggersPerNormalHolder.push_back({false,tg[j],cIndex});
                                         break;
-                                        case lector::mtile: g[i]=new tileaiRead(static_cast<getterCond*>(g[i]),pos);break;
-                                        case lector::mother: g[i]=new otheraiRead(static_cast<getterCond*>(g[i]),pos);break;
+                                        case lector::mtile: g[i]=new tileaiRead(static_cast<getterCond*>(g[i]),pos,cIndex);break;
+                                        case lector::mother: g[i]=new otheraiRead(static_cast<getterCond*>(g[i]),pos,cIndex);break;
                                         }
                             }
                         }

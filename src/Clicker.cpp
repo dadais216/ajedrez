@@ -98,7 +98,7 @@ void Clicker::update(){
         tile->chargeTriggers();
     for(turnTrigInfo& tti:turnoTrigs[h->bando==-1])
         if(tti.h!=h)
-            trigsActivados.push_back(tti.nh);
+            trigsActivados.push_back({tti.nh,tti.condIndex});
     turnoAct++;
     turno=turnoAct/2;
     activateTriggers();

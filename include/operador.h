@@ -22,6 +22,7 @@ struct normal:public operador{
     struct setupTrigInfo{
         char type; //0 global 1 pieza 2 turno
         int ind;
+        int c;//para armar el trigger
     };
     vector<setupTrigInfo> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
     v lastPos;

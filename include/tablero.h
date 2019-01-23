@@ -5,8 +5,9 @@
 
 struct Trigger{
     Tile* tile; //pos donde estaria la pieza que puso el trigger
-    normalHolder* nh; //puntero al movimiento a recalcular
     int step; //valor que se contrasta con el step de la tile. Si son el mismo la pieza que puso el trigger esta en el mismo lugar y no se movio, mh es valido
+    normalHolder* nh; //movimiento a recalcular
+    int condIndex;//movimiento a recalcular
 };
 struct Tile{
 
@@ -19,9 +20,10 @@ struct Tile{
     void chargeTriggers();
     vector<int> memTile;
     struct tileTrigInfo{
-        normalHolder* nh;//para reaccionar
         int step;//step de la tile de la pieza que puso el trigger
         int* stepCheck;//puntero al step de la tile de la pieza que puso el trigger
+        normalHolder* nh;//para reaccionar
+        int condIndex;
     };
     vector<vector<tileTrigInfo>> memTileTrigs;
 };

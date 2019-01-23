@@ -203,7 +203,7 @@ void Proper::draw(){
     else
         window->draw(turnoNegro);
 
-    textValMem.setPosition(590,10);
+    textValMem.setPosition(570,10);
     textValMem.setString(to_string(turno));
     window->draw(textValMem);
 

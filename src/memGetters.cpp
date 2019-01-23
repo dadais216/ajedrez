@@ -112,11 +112,12 @@ struct globalaiWrite:public getter{
 ///normalHolder. Solo pasa una vez porque los indirectos son dinamicos, se eliminan despues de usarse
 struct globalaiRead:public getterCond{
     getterCond* g;
+    int condIndex;
     int indDebug;
-    globalaiRead(getterCond* g_):g(g_){}
+    globalaiRead(getterCond* g_,int condIndex_):g(g_),condIndex(condIndex_){}
     virtual int* val(){
         int ind=*g->val();
-        memGlobalTriggers[ind].dinam.push_back(actualHolder.nh);
+        memGlobalTriggers[ind].dinam.push_back({actualHolder.nh,condIndex});
         int* ret=&memGlobal[ind];
         indDebug=*ret;
         return ret;
@@ -174,10 +175,11 @@ struct piezaaiWrite:public getter{
 };
 struct piezaaiRead:public getterCond{
     getterCond* g;
-    piezaaiRead(getterCond* g_):g(g_){}
+    int condIndex;
+    piezaaiRead(getterCond* g_,int condIndex_):g(g_),condIndex(condIndex_){}
     virtual int* val(){
         int ind=*g->val();
-        actualHolder.h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
+        actualHolder.h->memPiezaTrigs[ind].dinam.push_back({actualHolder.nh,condIndex});
         return &actualHolder.h->memPieza[ind];
     }
     virtual void drawDebugMem(){
@@ -211,12 +213,13 @@ v posDebugTile(0,0);
 struct tileaRead:public getterCond{
     int ind;
     v offset;
-    tileaRead(int ind_,v offset_):ind(ind_),offset(offset_){}
+    int condIndex;
+    tileaRead(int ind_,v offset_,int condIndex_):ind(ind_),offset(offset_),condIndex(condIndex_){}
     virtual int* val(){
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
         int* stepCheck=&actualHolder.tile->step;
         int step=*stepCheck;
-        t->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
+        t->memTileTrigs[ind].push_back({step,stepCheck,actualHolder.nh,condIndex});
         return &t->memTile[ind];
     }
     virtual void drawDebugMem(){
@@ -248,13 +251,14 @@ struct tileaiRead:public getterCond{
     getterCond* g;
     v offset;
     int ind;
-    tileaiRead(getterCond* g_,v offset_):g(g_),offset(offset_){}
+    int condIndex;
+    tileaiRead(getterCond* g_,v offset_,int condIndex_):g(g_),offset(offset_),condIndex(condIndex_){}
     virtual int* val(){
         ind=*g->val();
         Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
         int* stepCheck=&actualHolder.tile->step;
         int step=*stepCheck;
-        t->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
+        t->memTileTrigs[ind].push_back({step,stepCheck,actualHolder.nh,condIndex});
         return &t->memTile[ind];
     }
     virtual void drawDebugMem(){
@@ -289,10 +293,11 @@ int memOtherSize=0;
 struct otheraRead:public getterCond{
     int ind;
     v offset;
-    otheraRead(int ind_,v offset_):ind(ind_),offset(offset_){}
+    int condIndex;
+    otheraRead(int ind_,v offset_,int condIndex_):ind(ind_),offset(offset_),condIndex(condIndex_){}
     virtual int* val(){
         Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
-        h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
+        h->memPiezaTrigs[ind].dinam.push_back({actualHolder.nh,condIndex});
         return &h->memPieza[ind];
     }
     virtual void drawDebugMem(){
@@ -325,11 +330,12 @@ struct otheraiRead:public getterCond{
     getterCond* g;
     v offset;
     int ind;
-    otheraiRead(getterCond* g_,v offset_):g(g_),offset(offset_){}
+    int condIndex;
+    otheraiRead(getterCond* g_,v offset_,int condIndex_):g(g_),offset(offset_),condIndex(condIndex_){}
     virtual int* val(){
         ind=*g->val();
         Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
-        h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
+        h->memPiezaTrigs[ind].dinam.push_back({actualHolder.nh,condIndex});
         return &h->memPieza[ind];
     }
     virtual void drawDebugMem(){

@@ -171,34 +171,36 @@ struct spwn:public acct{
 };
 
 
-template<bool(*chck)(v),string* n> struct cond:public condt{
+template<bool(*chck)(v,int),string* n> struct cond:public condt{
     v pos;
-    cond(v pos_):condt(n),pos(pos_){}
+    int condIndex;///@clean las condiciones que no ponen triggers no lo usan
+    cond(v pos_,int condIndex_):condt(n),pos(pos_),condIndex(condIndex_){}
     virtual bool check(){
-        return chck(pos);
+        return chck(pos,condIndex);
     }
 };
 #define fabCond(NAME,FUNC)\
-inline bool NAME##check(v pos){ \
+inline bool NAME##check(v pos,int condIndex){ \
     FUNC \
 }\
 string str##NAME=#NAME;\
 typedef cond<NAME##check,&str##NAME> NAME;
 
-inline /* o no? */ void setTrigger(v pos){
-    tablptr->tile(pos+offset)->triggers.push_back(Trigger{actualHolder.tile,actualHolder.nh,actualHolder.tile->step});
+
+inline void setTrigger(v pos,int condIndex){
+    tablptr->tile(pos+offset)->triggers.push_back(Trigger{actualHolder.tile,actualHolder.tile->step,actualHolder.nh,condIndex});
 }
 
 fabCond(vacio,
-    setTrigger(pos);
+    setTrigger(pos,condIndex);
     return tablptr->tile(pos+offset)->holder==nullptr;
 )
 fabCond(pieza,
-    setTrigger(pos);
+    setTrigger(pos,condIndex);
     return tablptr->tile(pos+offset)->holder;
 )
 fabCond(enemigo,
-    setTrigger(pos);
+    setTrigger(pos,condIndex);
     Holder* other=tablptr->tile(pos+offset)->holder;
     if(other)
         return other->bando!=actualHolder.h->bando;
@@ -224,12 +226,12 @@ inline bool msetAcc(getter* a1,getter* a2){///version para memorias globales, pa
     int before=*val;
     *val=*a2->val();
     if(before!=*val){
-        for(normalHolder* nh:trigsMaybeActivate->perma)
-            if(nh->h!=actualHolder.h&&nh->h->inPlay)
-                trigsActivados.push_back(nh);
-        for(normalHolder* nh:trigsMaybeActivate->dinam)
-            if(nh->h!=actualHolder.h&&nh->h->inPlay)
-                trigsActivados.push_back(nh);
+        for(activeTrig& at:trigsMaybeActivate->perma)
+            if(at.nh->h!=actualHolder.h&&at.nh->h->inPlay)
+                trigsActivados.push_back(at);
+        for(activeTrig& at:trigsMaybeActivate->dinam)
+            if(at.nh->h!=actualHolder.h&&at.nh->h->inPlay)
+                trigsActivados.push_back(at);
         trigsMaybeActivate->dinam.clear();
         ///@optim creo que no habria problema en dejar recalcular triggers dinamicos a piezas capturadas. Seria
         ///un calculo de mas pero no romperia nada y por ahi es mas rapido que poner un if aca?
@@ -244,7 +246,7 @@ inline bool msetAccTile(getter* a1,getter* a2){///version para tiles que necesit
         vector<Tile::tileTrigInfo>* memTile=reinterpret_cast<vector<Tile::tileTrigInfo>*>(trigsMaybeActivate);
         for(Tile::tileTrigInfo& tti:*memTile)
             if(tti.nh->h!=actualHolder.h&&tti.step==*tti.stepCheck)
-                trigsActivados.push_back(tti.nh);
+                trigsActivados.push_back({tti.nh,tti.condIndex});
         memTile->clear();
     }
     //el chequeo de step es necesario porque evita que un trigger viejo se active y haga recalcular a una pieza,

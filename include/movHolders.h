@@ -11,13 +11,13 @@ struct Base{ ///datos compartidos de un movimiento entero
 struct movHolder{
     movHolder(Holder*,operador*,Base*);
     virtual void generar()=0;
-    virtual void reaccionar(normalHolder*)=0;
-    virtual void reaccionar(vector<normalHolder*>)=0;
+    virtual void reaccionar(activeTrig)=0;
+    virtual void reaccionar(vector<activeTrig>)=0;
     virtual void cargar(vector<normalHolder*>*)=0;
     void generarSig();
-    void reaccionarSig(auto nhs){
+    void reaccionarSig(auto ats){
         if(sig){
-            sig->reaccionar(nhs);
+            sig->reaccionar(ats);
             if(switchToGen){
                 valorCadena=hasClick||sig->valorCadena;
                 valorFinal=sig->valorFinal;
@@ -37,9 +37,10 @@ struct normalHolder:public movHolder{
     normalHolder(Holder*,normal*,Base*);//supongo que ni bien se crea el op le copias las accs
     normal* op;
     virtual void generar();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(activeTrig);
+    virtual void reaccionar(vector<activeTrig>);
     virtual void cargar(vector<normalHolder*>*);
+    void generarFromCond(int);
     void draw();
     void accionar();///desencadena los acct
     bool valor;       //las condiciones del movholder son verdaderas, las acciones guardadas validas
@@ -52,8 +53,8 @@ struct deslizHolder:public movHolder{
     deslizHolder(Holder*,desliz*,Base*);
     desliz* op;
     virtual void generar();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(activeTrig);
+    virtual void reaccionar(vector<activeTrig>);
     virtual void cargar(vector<normalHolder*>*);
     vector<movHolder*> movs;
     int f;
@@ -62,8 +63,8 @@ struct deslizHolder:public movHolder{
 struct excHolder:public movHolder{
     excHolder(Holder*,exc*,Base*);
     virtual void generar();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(activeTrig);
+    virtual void reaccionar(vector<activeTrig>);
     virtual void cargar(vector<normalHolder*>*);
     vector<movHolder*> ops;
     int actualBranch;
@@ -72,8 +73,8 @@ struct excHolder:public movHolder{
 struct isolHolder:public movHolder{
     isolHolder(Holder*,isol*,Base*);
     virtual void generar();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(activeTrig);
+    virtual void reaccionar(vector<activeTrig>);
     virtual void cargar(vector<normalHolder*>*);
     movHolder* inside;
 };
@@ -86,8 +87,8 @@ struct desoptHolder:public movHolder{
     desoptHolder(Holder*,desopt*,Base*);
     desopt* op;
     virtual void generar();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(activeTrig);
+    virtual void reaccionar(vector<activeTrig>);
     virtual void cargar(vector<normalHolder*>*);
     vector<node> nodes;
     vector<int> memAct;
