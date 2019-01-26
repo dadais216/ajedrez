@@ -3,17 +3,16 @@
 
 ///este archivo se compila a traves de operador.cpp
 
-
-color::color(RectangleShape* rs_,v pos_){
-    rs=rs_;
-    pos=pos_;
+v actualPosColor;
+color::color(RectangleShape* rs_){
+    rs=rs_;///@optim es necesario tener un rectangleShape para cada uno? por ahi es mas rapido reutilizar. No usaria memoria dinamica ahi
 }
 void color::draw(){
-    rs->setPosition((pos.x+actualHolder.offset.x)*32*escala,(pos.y+actualHolder.offset.y)*32*escala);
+    rs->setPosition(actualPosColor.x*32*escala,actualPosColor.y*32*escala);
     window->draw(*rs);
 }
 list<RectangleShape*> colores;
-colort* normal::crearColor(v pos){
+colort* crearColor(){
     ///se crea una instancia del sprite y cada colort la guarda en un puntero, se diferencia por tipo
     ///en un parametro de esta funcion, por ahora solo manejo colores
 
@@ -27,11 +26,11 @@ colort* normal::crearColor(v pos){
     tokens.pop_front();
     for(RectangleShape* c:colores)
         if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b)
-            return new color(c,pos);
+            return new color(c);
     RectangleShape* rs=new RectangleShape(Vector2f(32*escala,32*escala));
     rs->setFillColor(sf::Color(r,g,b,40));
     colores.push_back(rs);
-    return new color(rs,pos);
+    return new color(rs);
 }
 
 /*
@@ -100,37 +99,35 @@ struct spwn:public acm{
 };
 */
 
-template<void(*funct)(v),string* n> struct acc:public acct{
-    v relPos;
-    acc(v pos_):acct(n),relPos(pos_){}
+template<void(*funct)(),string* n> struct acc:public acct{
+    acc():acct(n){}
     virtual void func(){
-        funct(relPos);
+        funct();
     }
 };
 
 #define fabAcc(NAME,FUNC) \
-inline void NAME##func(v relPos){ \
+inline void NAME##func(){ \
     FUNC \
 }\
 string str##NAME=#NAME;\
-typedef acc<NAME##func,&str##NAME> NAME;
+typedef acc<NAME##func,&str##NAME> NAME##class;\
+NAME##class NAME;
 
 fabAcc(mov,
-    actualHolder.tile->step++;
-    actualHolder.tile->holder=nullptr;
-    actualHolder.h->tile=tablptr->tile(relPos+actualHolder.offset);
+    actualHolder.h->tile->step++;
+    actualHolder.h->tile->holder=nullptr;
+    actualHolder.h->tile=actualTile;
     actualHolder.h->tile->holder=actualHolder.h;
 )
 
 fabAcc(pausa,
-    ///@optim sacar nh
     drawScreen();
     sleep(milliseconds(40));
 )
 vector<Holder*> reciclaje;
 fabAcc(capt,
-    Tile* captT=tablptr->tile(relPos+actualHolder.offset);
-    captT->holder->inPlay=false;
+    actualTile->holder->inPlay=false;
     //@optim se podria eliminar triggers estaticos en global aca para que no se iteren ni activen en falso
     //for(memTriggers& mt:memGlobalTriggers)
     //    remove_if(mt.perma.begin(),mt.perma.end(),[&captT](normalHolder* nh)->bool{
@@ -138,76 +135,65 @@ fabAcc(capt,
     //          });
     //el problema esta en recrearlos en spawn. Se tendria que agregar otra rama de polimorfismo para acceder a cada
     //normalHolder y setear las memorias devuelta y no creo que lo valga
-    reciclaje.push_back(captT->holder);
-    captT->holder=nullptr;
-    captT->step++;
-    pisados.push_back(captT);
+    reciclaje.push_back(actualTile->holder);
+    actualTile->holder=nullptr;
+    actualTile->step++;
+    pisados.push_back(actualTile);
 );
 string spwn_str="spwn";
 vector<Holder*> justSpawned;
 struct spwn:public acct{
-    v relPos;
     int id;
-    spwn(v pos_,int id_):acct(&spwn_str),relPos(pos_),id(id_){}
+    spwn(int id_):acct(&spwn_str),id(id_){}
     virtual void func(){
-        v pos=relPos+actualHolder.offset;
-        Tile* spwnT=tablptr->tile(pos);
         for(int i=0;i<reciclaje.size();i++){
             Holder* h=reciclaje[i];
             if(h->id==id){//no tomo bandos distintos porque los movimientos estan espejados
                 h->inPlay=true;
                 memset(h->memPieza.data(),0,sizeof(int)*h->memPieza.size());
-                spwnT->holder=h;
-                h->tile=spwnT;
+                actualTile->holder=h;
+                h->tile=actualTile;
                 reciclaje.erase(reciclaje.begin()+i);
                 goto gen;
             }
         }
-        spwnT->holder=lect.crearPieza(id,pos);
+        actualTile->holder=lect.crearPieza(id,actualTile->pos);
         gen:
-        justSpawned.push_back(spwnT->holder);
-        pisados.push_back(spwnT);
+        justSpawned.push_back(actualTile->holder);
+        pisados.push_back(actualTile);
     }
 };
 
 
-template<bool(*chck)(v),string* n> struct cond:public condt{
-    v pos;
-    cond(v pos_):condt(n),pos(pos_){}
+template<bool(*chck)(),string* n> struct cond:public condt{
+    cond():condt(n){}
     virtual bool check(){
-        return chck(pos);
+        return chck();
     }
 };
 #define fabCond(NAME,FUNC)\
-inline bool NAME##check(v pos){ \
+inline bool NAME##check(){ \
     FUNC \
 }\
 string str##NAME=#NAME;\
-typedef cond<NAME##check,&str##NAME> NAME;
+typedef cond<NAME##check,&str##NAME> NAME##class;\
+NAME##class NAME;
 
-inline /* o no? */ void setTrigger(v pos){
-    tablptr->tile(pos+offset)->triggers.push_back(Trigger{actualHolder.tile,actualHolder.nh,actualHolder.tile->step});
-}
+
 
 fabCond(vacio,
-    setTrigger(pos);
-    return tablptr->tile(pos+offset)->holder==nullptr;
+    return actualTile->holder==nullptr;
 )
 fabCond(pieza,
-    setTrigger(pos);
-    return tablptr->tile(pos+offset)->holder;
+    return actualTile->holder;
 )
 fabCond(enemigo,
-    setTrigger(pos);
-    Holder* other=tablptr->tile(pos+offset)->holder;
+    Holder* other=actualTile->holder;
     if(other)
         return other->bando!=actualHolder.h->bando;
     return false;
 )
-fabCond(esp,
-    v posAct=pos+offset;
-    return posAct.x>=0&&posAct.x<tablptr->tam.x&&posAct.y>=0&&posAct.y<tablptr->tam.y;
-)
+
 fabCond(pass,
     return true;
 )//se usa al final de exc para retornar verdadero aunque las otras ramas hayan fallado
@@ -329,7 +315,7 @@ template<void(*drawBlocks)(condt*,bool)> struct debugWrapper:public condt{
 };
 
 inline void drawDebugPos(condt* cond,bool ret){
-    v posAct=static_cast<vacio*>(cond)->pos+offset;
+    v posAct=actualHolder.nh->relPos+offset;
     if(ret){
         posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
         tileActDebug=&posActGood;
@@ -339,7 +325,7 @@ inline void drawDebugPos(condt* cond,bool ret){
         tileActDebug=&posActBad;
         textDebug.setColor(sf::Color(240,70,40,240));
     }
-    posPieza.setPosition(actualHolder.tile->pos.x*32*escala,actualHolder.tile->pos.y*32*escala);
+    posPieza.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
     drawDebugTiles=true;
     drawScreen();
     drawDebugTiles=false;
@@ -357,7 +343,7 @@ inline void drawDebugMem(condt* cond,bool ret){
         textDebug.setColor(sf::Color(78,84,68,100));
     else
         textDebug.setColor(sf::Color(240,70,40,240));
-    posPieza.setPosition(actualHolder.tile->pos.x*32*escala,actualHolder.tile->pos.y*32*escala);
+    posPieza.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
 
     getterMemDebug1=static_cast<mock*>(cond)->i1;
     getterMemDebug2=static_cast<mock*>(cond)->i2;

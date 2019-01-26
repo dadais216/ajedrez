@@ -199,63 +199,59 @@ struct piezaaiReadNT:public getter{
 
 struct tileaWrite:public getter{
     int ind;
-    v offset;
-    tileaWrite(int ind_,v offset_):ind(ind_),offset(offset_){}
+    tileaWrite(int ind_):ind(ind_){}
     virtual int* val(){
-        Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        trigsMaybeActivate=reinterpret_cast<memTriggers*>(&t->memTileTrigs[ind]);
-        return &t->memTile[ind];
+        trigsMaybeActivate=reinterpret_cast<memTriggers*>(&actualTile->memTileTrigs[ind]);
+        return &actualTile->memTile[ind];
     }
 };
 v posDebugTile(0,0);
 struct tileaRead:public getterCond{
     int ind;
-    v offset;
-    tileaRead(int ind_,v offset_):ind(ind_),offset(offset_){}
+    tileaRead(int ind_):ind(ind_){}
     virtual int* val(){
-        Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        int* stepCheck=&actualHolder.tile->step;
+        int* stepCheck=&actualHolder.h->tile->step;
         int step=*stepCheck;
-        t->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
-        return &t->memTile[ind];
+        //en casos como mcmp t0 1 w mover se hacen 2 normales, la primera con mcmp t0 1 sin esp.
+        //este es el unico caso donde hay una cond posicional  sin un esp, se necesita actualizar actualTile
+        //(el esp no es necesario, pero el actualTile se actualiza adentro suyo)
+        actualTile=tablptr->tile(actualHolder.nh->relPos+offset);
+        actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
+        return &actualTile->memTile[ind];
     }
     virtual void drawDebugMem(){
-        posDebugTile=offset+actualHolder.nh->offsetAct;
+        posDebugTile=actualHolder.nh->offsetAct+actualHolder.nh->relPos;
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),105+45*(ind/4-memTileSize/4)));
         window->draw(backGroundMemDebug);
     }
 };
 struct tileaReadNT:public getter{
     int ind;
-    v offset;
-    tileaReadNT(int ind_,v offset_):ind(ind_),offset(offset_){}
+    tileaReadNT(int ind_):ind(ind_){}
     virtual int* val(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[ind];
+        return &actualTile->memTile[ind];
     }
 };
 struct tileaiWrite:public getter{
     getter* g;
-    v offset;
-    tileaiWrite(getter* g_,v offset_):g(g_),offset(offset_){}
+    tileaiWrite(getter* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-        Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        trigsMaybeActivate=reinterpret_cast<memTriggers*>(&t->memTileTrigs[ind]);
-        return &t->memTile[ind];
+        trigsMaybeActivate=reinterpret_cast<memTriggers*>(&actualTile->memTileTrigs[ind]);
+        return &actualTile->memTile[ind];
     }
 };
 struct tileaiRead:public getterCond{
     getterCond* g;
-    v offset;
     int ind;
-    tileaiRead(getterCond* g_,v offset_):g(g_),offset(offset_){}
+    tileaiRead(getterCond* g_):g(g_){}
     virtual int* val(){
         ind=*g->val();
-        Tile* t=tablptr->tile(offset+actualHolder.nh->offsetAct);
-        int* stepCheck=&actualHolder.tile->step;
+        int* stepCheck=&actualHolder.h->tile->step;
         int step=*stepCheck;
-        t->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
-        return &t->memTile[ind];
+        actualTile=tablptr->tile(actualHolder.nh->relPos+offset);
+        actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
+        return &actualTile->memTile[ind];
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
@@ -267,20 +263,18 @@ struct tileaiRead:public getterCond{
 };
 struct tileaiReadNT:public getter{
     getter* g;
-    v offset;
-    tileaiReadNT(getter* g_,v offset_):g(g_),offset(offset_){}
+    tileaiReadNT(getter* g_):g(g_){}
     virtual int* val(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->memTile[*g->val()];
+        return &actualTile->memTile[*g->val()];
     }
 };
 
 ///todos los other asumen que hay una pieza en la posicion actual con una memoria que contenga su indice
 struct otheraWrite:public getter{
     int ind;
-    v offset;
-    otheraWrite(int ind_,v offset_):ind(ind_),offset(offset_){}
+    otheraWrite(int ind_):ind(ind_){}
     virtual int* val(){
-        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
+        Holder* h=actualTile->holder;
         trigsMaybeActivate=&h->memPiezaTrigs[ind];//podria asumir que other nunca se usa sobre uno y sacar el if holder==
         return &h->memPieza[ind];
     }
@@ -288,15 +282,14 @@ struct otheraWrite:public getter{
 int memOtherSize=0;
 struct otheraRead:public getterCond{
     int ind;
-    v offset;
-    otheraRead(int ind_,v offset_):ind(ind_),offset(offset_){}
+    otheraRead(int ind_):ind(ind_){}
     virtual int* val(){
-        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
+        Holder* h=actualTile->holder;
         h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
         return &h->memPieza[ind];
     }
     virtual void drawDebugMem(){
-        posDebugTile=offset+actualHolder.nh->offsetAct;
+        posDebugTile=actualHolder.nh->offsetAct+actualHolder.nh->relPos;
         memOtherSize=actualHolder.nh->h->memPieza.size();
         backGroundMemDebug.setPosition(Vector2f(630+25*(ind%4),105+45*(ind/4-memOtherSize/4)));
         window->draw(backGroundMemDebug);
@@ -304,31 +297,28 @@ struct otheraRead:public getterCond{
 };
 struct otheraReadNT:public getter{
     int ind;
-    v offset;
-    otheraReadNT(int ind_,v offset_):ind(ind_),offset(offset_){}
+    otheraReadNT(int ind_):ind(ind_){}
     virtual int* val(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[ind];
+        return &actualTile->holder->memPieza[ind];
     }
 };
 struct otheraiWrite:public getter{
     getter* g;
-    v offset;
-    otheraiWrite(getter* g_,v offset_):g(g_),offset(offset_){}
+    otheraiWrite(getter* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
+        Holder* h=actualTile->holder;
         trigsMaybeActivate=&h->memPiezaTrigs[ind];
         return &h->memPieza[ind];
     }
 };
 struct otheraiRead:public getterCond{
     getterCond* g;
-    v offset;
     int ind;
-    otheraiRead(getterCond* g_,v offset_):g(g_),offset(offset_){}
+    otheraiRead(getterCond* g_):g(g_){}
     virtual int* val(){
         ind=*g->val();
-        Holder* h=tablptr->tile(offset+actualHolder.nh->offsetAct)->holder;
+        Holder* h=actualTile->holder;
         h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
         return &h->memPieza[ind];
     }
@@ -342,10 +332,9 @@ struct otheraiRead:public getterCond{
 };
 struct otheraiReadNT:public getter{
     getter* g;
-    v offset;
-    otheraiReadNT(getter* g_,v offset_):g(g_),offset(offset_){}
+    otheraiReadNT(getter* g_):g(g_){}
     virtual int* val(){
-        return &tablptr->tile(offset+actualHolder.nh->offsetAct)->holder->memPieza[*g->val()];
+        return &actualTile->holder->memPieza[*g->val()];
     }
 };
 
@@ -373,25 +362,25 @@ struct turnoaObj:public getterCond{
 turnoaObj turnoa;
 
 //pos se trata como una cte porque no puede variar desde la generacion hasta la accion inclusive
-struct posX:public getterCond{
-    v offset;
+struct posXObj:public getterCond{
     int val_;
-    posX(v pos):offset(pos){}
+    posXObj(){}
     virtual int* val(){
-        val_=offset.x+actualHolder.nh->offsetAct.x;
+        val_=offset.x+actualHolder.nh->relPos.x;
         return &val_;
     }
     virtual void drawDebugMem(){}
 };
-struct posY:public getterCond{
-    v offset;
+posXObj posX;
+struct posYObj:public getterCond{
     int val_;
-    posY(v pos):offset(pos){}
+    posYObj(){}
     virtual int* val(){
-        val_=offset.y+actualHolder.nh->offsetAct.y;
+        val_=offset.y+actualHolder.nh->relPos.y;
         if(actualHolder.nh->h->bando==-1)
             val_=tablptr->tam.y-1-val_;
         return &val_;
     }
     virtual void drawDebugMem(){}
 };
+posYObj posY;

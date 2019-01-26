@@ -18,13 +18,13 @@ struct normal:public operador{
     vector<acct*> accs;
     vector<condt*> conds;
     vector<colort*> colors;
-    colort* crearColor(v);
     struct setupTrigInfo{
         char type; //0 global 1 pieza 2 turno
         int ind;
     };
     vector<setupTrigInfo> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
-    v lastPos;
+    v relPos;
+    bool doEsp;
 };
 struct desliz:public operador{
     desliz();
