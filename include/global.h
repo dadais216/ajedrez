@@ -120,6 +120,8 @@ extern bool switchToGen;
 extern bool confirm;
 extern v offset;
 extern vector<Holder*> justSpawned;
+extern Tile* actualTile;
+extern v actualPosColor;
 
 extern int memGlobalSize;
 extern vector<int> memGlobal;
@@ -132,8 +134,6 @@ extern int memOtherSize;
 struct AH{
     Holder* h;
     normalHolder* nh;
-    Tile* tile;
-    v offset;
 };
 extern AH actualHolder;
 

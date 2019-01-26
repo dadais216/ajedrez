@@ -25,7 +25,7 @@ struct colort{
     v pos;
 };
 struct color:public colort{
-    color(RectangleShape*,v);
+    color(RectangleShape*);
     RectangleShape* rs;
     virtual void draw();
 };

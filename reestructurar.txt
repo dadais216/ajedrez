@@ -539,22 +539,110 @@ como la memoria es global no se guarda el estado de cada iteracion, y el trigger
 
 
 tiempos
-actual 100 turnos                         - 0.00012107 0.00012184 0.00011613
-caballos caballos sin captura 1000 turnos - 0.00065922 0.00059778 0.00061575
-caballos reinas sin captura 1000 turnos   - 0.00232942 0.00213995 0.00272796
-caballos emperador sin captura 10 turnos  - 3.46553
-caballos memoria 1000 turnos              - 0.00608613 0.00392297 0.00614161
-caballos memoria sin turno 2000 turnos    - 0.00019129 0.00029356 0.00020816
+base -O3
+actual 100 turnos                         - 0.000021   0.000017   0.000017  0.000022
+caballos caballos sin captura 1000 turnos - 0.000038   0.000056   0.000059
+caballos reinas sin captura 1000 turnos   - 0.000251   0.000262   0.000281
+caballos emperador sin captura 5 turnos   - 0.226628
+caballos memoria 1000 turnos              - 0.000349   0.000377   0.000412
+caballos memoria sin turno 2000 turnos    - 0.000020   0.000013   0.000014
+
+poniendo un trigger por normal por posicion -O3
++no pone mas de un trigger por normal por posicion
++los trigger son de 8 bits
+-cuando recalcula tiene que rehacer todas las condiciones 
+
+mas rapido cuando hay normales con pocas condiciones
+
+actual 100 turnos                         - 15    20    18   21
+caballos caballos sin captura 1000 turnos - 39    39    58
+caballos reinas sin captura 1000 turnos   - 251   262   281
+caballos emperador sin captura 5 turnos   - 226628
+caballos memoria 1000 turnos              - 349   377   412
+caballos memoria sin turno 2000 turnos    - 20    13    14
+test vel reina                            - 178   154   229
+test vel reina con boludeces              - 337   244   340
+caballos peon 2000 turnos                 - 13    17    24   19   15   20
+
+haciendo que los triggers contengan cond que los puso -O3
++recalcula solo las conds necesarias
+-triggers de 12 bits
+-stable_sort
+-pone un trigger por cada cond que pone triggers
+
+mas rapido cuando hay normales con muchas condiciones
+
+actual 100 turnos                         - 19    15  22  19
+caballos caballos sin captura 1000 turnos - 57    46  51
+caballos reinas sin captura 1000 turnos   - 354   242 246
+caballos emperador sin captura 5 turnos   - 195875
+caballos memoria 1000 turnos              crash
+caballos memoria sin turno 2000 turnos    crash
+test vel reina                            - 167   167  169
+test vel reina con boludeces              - 473   524  388
+caballos peon 2000 turnos                 - 17    19   20
 
 
+La diferencia en la mayoria de los casos no es muy significativa
+Me voy a quedar con la version que no pone mas informacion al trigger. Es un codigo mas simple, y parece ser ligeramente mas rapida en el caso mas general (normales con pocas condiciones). Tambien tiene espacio a optimizar, una de las optimizaciones mas recurrentes del otro metodo es saltarse el esp al recalcular, y eso es algo que se podría harcodear.
 
 
+poniendo un trigger por normal por posicion -O3
+actual 100 turnos                         - 15    20    18   21
+caballos caballos sin captura 1000 turnos - 54    52    52
+caballos reinas sin captura 1000 turnos   - 251   262   281
+caballos emperador sin captura 5 turnos   - 226628
+caballos memoria 1000 turnos              - 349   377   412
+caballos memoria sin turno 2000 turnos    - 20    13    14
+test vel reina                            - 178   154   229
+test vel reina con boludeces              - 347   310   340
+caballos peon 2000 turnos                 - 13    17    24   19   15   20
+
+Otra cosa que se podría probar es poner una normal por posicion -O3
++un trigger por normal
++no recalcula innecesariamente (a menos que se trate de cosas de memoria)
++al haber solo un esp (o ninguno) por normal y forzar que este al principio se puede devirtualizar
+-puede que tener muchas normales sea mas lento (aunque en el caso general siempre hay una normal por posicion)
+
+actual 100 turnos                         - 16    18    17   21  12  16
+caballos caballos sin captura 1000 turnos - 39    56    56
+caballos reinas sin captura 1000 turnos   - 240   228   170
+caballos emperador sin captura 5 turnos   - 227063
+caballos memoria 1000 turnos              - 
+caballos memoria sin turno 2000 turnos    - 
+test vel reina                            - 148   135   139
+test vel reina con boludeces              - 464   403   461
+caballos peon 2000 turnos                 - 20    14    16   18   16   13
+
+la reina con boludeces es mas lenta porque tiene un normal-esp exc normal, normal end, donde el trigger lo pone normal-esp. En el otro el trigger lo pone cada normal adentro de exc, por lo que hay que hacer manejo de listas de triggers y eso
+Esto es medio problematico porque cosas como exc mover or capturar end son comunes. Pero bueno, creo que optimizar lo vale. Cosas muy repetidas se pueden poner adentro de una accion nueva. No va a ser un problema para la version compilada (esta puede poner la activacion del trigger donde quiera, no esta limitado a principios de normales)
+
+haciendo que se salte esp en la regeneracion, y haciendo que solo esp ponga triggers
+
+actual 100 turnos                         - 11    13   12   12  12  15 22 15 13
+caballos caballos sin captura 1000 turnos - 52    39    42
+caballos reinas sin captura 1000 turnos   - 245   310   310
+caballos emperador sin captura 5 turnos   - 261658
+caballos memoria 1000 turnos              - 
+caballos memoria sin turno 2000 turnos    - 
+test vel reina                            - 140   140   97 210 136
+test vel reina con boludeces              - 235   257   335
+caballos peon 2000 turnos                 - 20    20    17   14   19   14
+
+Cuando se regenera la normal que puso un trigger no es necesario chequear esp porque esta asegurado que va a ser verdadero. No se puede decir lo mismo de lo que venga despues.
+Se podría hacer otra version de generar sin esp o setear temporalmente esp a false. Habria que ver si lo vale
+
+Cuando una normalHolder no varia su valor de verdad no es necesario seguir recalculando, ya que los otros operadores van a hacer lo mismo que hicieron la vez anterior. Para tener esto en cuenta hay que hacer otra version de generar que haga el chequeo de variacion y meta un longjmp si falla. 
+Cuando hay varios triggers el sistema es mas complicado, solo hace el longjmp si es el ultimo trigger, sino funciona como generar
+Despues de pensarlo un poco no creo que valga la pena. Agrega muchos chequeos para un caso muy raro. Lo peor seria que generara de mas, y eso pasaria especialmente en una generacion redundante de verdadero->verdadero. Y eso no va a pasar practicamente nunca.
+Lo otro es una generacion de falso->falso,que no hace nada dentro de la misma cadena, pero puede que haga que un operador que contenga la cadena haga cosas de mas. Pero ese operador podria tener chequeos que lo eviten (si desliz y exc no hacen nada que no llamen a sig->generar())
+A demas agregar algo asi implica que la normal que puso el trigger es la que tiene la condicion que necesita ser reevaluada, lo que es falso cuando hago w esp exc mover or capturar end y pongo el trigger solo en esp (que seria lo mas rapido, porque levanta un trigger solo)
 
 
+Tambien aprovechando que cada normal tiene su pos saco la pos de cada cond, ahora hay una posActual que es offset+normal->pos directamente
+Esto evita la suma en cada cond y acc, y ahorra memoria. Ahora la mayoria de las cond y acc no tienen algo que las haga unicas, asi que no necesito memoria dinamica.
 
-
-
-
+(mejora en 1 o 2 microsegundos despues de hacer eso)
 
 
 

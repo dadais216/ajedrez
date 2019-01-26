@@ -43,10 +43,12 @@ struct normalHolder:public movHolder{
     void draw();
     void accionar();///desencadena los acct
     bool valor;       //las condiciones del movholder son verdaderas, las acciones guardadas validas
-    v offsetAct;
     vector<int> memAct;
     //no separo entre piezas con y sin memoria porque duplicaria mucho codigo.
     //Cuando haga la version compilada puedo hacer esa optimizacion y cosas mas especificas
+    bool doEsp;//ṕarece que vale la pena tener copias. En especial de este porque lo escribo
+    v offsetAct;
+    v relPos; //pos actual = relPös + offset. Todas las acciones y condiciones la comparten
 };
 struct deslizHolder:public movHolder{
     deslizHolder(Holder*,desliz*,Base*);

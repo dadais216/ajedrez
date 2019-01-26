@@ -93,30 +93,49 @@ Aleatorio::Aleatorio(int bando_,tabl& tablero_)
 }
 double sProm=0;
 int cProm=0;
+double minV=10000;
+double maxV=0;
 void Aleatorio::turno(){
     if(window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
         static_cast<Proper*>(j->actual)->init();///@leaks
         while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
         throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
     }
+    bool alive=false;
     for(int i=0; i<_tablero.tam.x; i++)
         for(int j=0; j<_tablero.tam.y; j++){
             Holder* act=_tablero.tile(v(i,j))->holder;
             if(act&&act->bando==bando){
+                alive=true;
                 act->makeCli();
             }
         }
     drawScreen();
+    if(!alive)
+        while(true){
+            if(window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+                static_cast<Proper*>(j->actual)->init();///@leaks
+                while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
+                throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
+            }
+        }
     if(clickers.size()>0){
         auto it=clickers.begin();
         advance(it,rand()%clickers.size());
 
         clock_t t=clock();
         (*it)->update();
-        sProm+=clock()-t;
+        double val=clock()-t;
+        sProm+=val;
+        if(val>maxV)
+            maxV=val;
+        if(val<minV)
+            minV=val;
         cProm++;
-        if(cProm==4000){
-            cout<<"promedio: "<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos";
+        if(cProm==2000){
+            cout<<"promedio: "<<fixed<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos"<<endl;
+            cout<<"min: "<<minV/CLOCKS_PER_SEC<<endl;
+            cout<<"max: "<<maxV/CLOCKS_PER_SEC<<endl;
             exit(0);
         }
 

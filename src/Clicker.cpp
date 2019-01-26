@@ -23,7 +23,7 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
         clickPos=lastN->posAct;
     else
     */
-    clickPos=static_cast<normal*>(lastN->op)->lastPos+lastN->offsetAct;
+    clickPos=static_cast<normal*>(lastN->op)->relPos+lastN->offsetAct;
 
     //clickPos.show();
     ///solapamientos
@@ -86,7 +86,7 @@ void Clicker::update(){
     */
     Tile* tileBef=h->tile;
     int stepBef=tileBef->step;
-    accionar(); //por ahora solo capt agrega a pisados
+    accionar();
 
     ///@optim esto esta para movimientos que no mueven la pieza, que son una minoria
     if(tileBef->step!=stepBef){
@@ -131,6 +131,7 @@ void Clicker::update(){
         cout<<endl;
     }
     */
+
     for(Clicker* cli:clickers)
         delete cli;
     clickers.clear();

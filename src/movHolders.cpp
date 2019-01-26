@@ -32,41 +32,50 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
             turnoTrigs[h->bando==-1].push_back({h,this});
         }
     memAct.resize(base.movSize);
+    doEsp=op->doEsp;
+    relPos=op->relPos;
 }
 v offset;
+Tile* actualTile;
 AH actualHolder;
 void normalHolder::generar(){
+    actualHolder.h=h;
+    actualHolder.nh=this;
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
     memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
 
-    actualHolder.h=h;
-    actualHolder.nh=this;
-    actualHolder.tile=h->tile;
-    actualHolder.offset=offset;
+    if(doEsp){
+        v actualPos=offset+relPos;
+        if(actualPos.x<0||actualPos.x>=tablptr->tam.x||actualPos.y<0||actualPos.y>=tablptr->tam.y){
+            valorFinal=valorCadena=valor=false;
+            return;
+        }
+        actualTile=tablptr->tile(relPos+offset);
+        actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
+    }
 
     for(condt* c:op->conds)
         if(!c->check()){
             valorFinal=valorCadena=valor=false;
             return;
         }
-    ///@optim aca podría haber un switch para tirar los triggers de pos y mem, no sé si es mejor que tenerlos spameados en los cond
 
-    offset=op->lastPos+offset;
+    offset=relPos+offset;
 
     valor=true;
     generarSig();
 }
 void normalHolder::reaccionar(normalHolder* nh){
     if(nh==this){
-        offset=nh->offsetAct;
+        offset=offsetAct;
         memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
         switchToGen=true;
+        actualTile=tablptr->tile(relPos+offset);
+        actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
+        bool doEspTemp=doEsp;
+        doEsp=false;
         generar();
-        ///@optim mecanismo para cortar todo si la validez no vario, un lngjmp
-        ///@optim si es verdadero hacerlo falso directamente? Creo que los unicos casos donde puede mantenerse verdadero es si
-        ///una pieza va y vuelve, y por ahi eso se puede manejar haciendo que active el trigger dos veces o alguna otra cosa.
-        ///en estos casos sería mas ineficiente porque se hace el recorrido dos veces, pero son casos muy raros. El general seria
-        ///mas eficiente porque se salta un recalculo de una normal entera
+        doEsp=doEspTemp;
     }else if(valor){
         reaccionarSig(nh);
     }
@@ -74,11 +83,16 @@ void normalHolder::reaccionar(normalHolder* nh){
 void normalHolder::reaccionar(vector<normalHolder*> nhs){
     for(normalHolder* nh:nhs){
         if(nh==this){
-            offset=nh->offsetAct;
+            offset=offsetAct;
             memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
             switchToGen=true;
+            actualTile=tablptr->tile(relPos+offset);
+            actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
+            bool doEspTemp=doEsp;
+            doEsp=false;
             generar();
-            ///@optim sacar nh del vector?
+            doEsp=doEspTemp;
+            ///@optim sacar nh del vector
             return;
         }
     }
@@ -90,8 +104,7 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
 void normalHolder::accionar(){
     actualHolder.h=h;
     actualHolder.nh=this;
-    actualHolder.offset=offsetAct;
-    actualHolder.tile=h->tile;
+    actualTile=tablptr->tile(relPos+offsetAct);
     for(acct* ac:op->accs)
         ac->func();
 }
@@ -105,7 +118,7 @@ void normalHolder::cargar(vector<normalHolder*>* norms){
         sig->cargar(norms);
 }
 void normalHolder::draw(){
-    actualHolder.offset=offsetAct;
+    actualPosColor=offsetAct+relPos;
     for(colort* c:op->colors)
         c->draw();
 }

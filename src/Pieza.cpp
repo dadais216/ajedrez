@@ -31,7 +31,6 @@ Pieza::Pieza(int _id,int _sn,int memPiezaSize_){
             normal* n=new normal(false);
             n->conds.push_back(new debugInicial());
             n->sig=op;
-            n->lastPos=v(0,0);
             movs.push_back(Pieza::base{n,memLocalSize});
         }else
             movs.push_back(Pieza::base{op,memLocalSize});
@@ -41,7 +40,11 @@ Pieza::Pieza(int _id,int _sn,int memPiezaSize_){
     function<void(operador*)> showOp=[&showOp](operador* op)->void{
         switch(op->tipo){
         case NORMAL:
-            cout<<"NORMAL ";break;
+            cout<<"NORMAL";
+            if(((normal*)op)->doEsp)
+                cout<<"e";
+            cout<<" ";
+            break;
         case DESLIZ:
             cout<<"DESLIZ (";
             showOp(static_cast<desliz*>(op)->inside);
