@@ -48,6 +48,7 @@ struct Holder{
     vector<movHolder*> movs;
     int id;
     int bando;
+    int genId;
     bool inPlay;//false cuando la pieza esta generada y capturada. Solo se usa para evitar activar triggers dinamicos a capturados
 };
 struct Base;

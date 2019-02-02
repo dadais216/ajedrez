@@ -13,8 +13,10 @@ struct movHolder{
     virtual void generar()=0;
     virtual void reaccionar(normalHolder*)=0;
     virtual void reaccionar(vector<normalHolder*>)=0;
+    virtual void regenerar()=0;
     virtual void cargar(vector<normalHolder*>*)=0;
     void generarSig();
+    void regenerarSig();
     void reaccionarSig(auto nhs){
         if(sig){
             sig->reaccionar(nhs);
@@ -26,7 +28,7 @@ struct movHolder{
     }
     Holder* h;
     movHolder* sig;
-    Base base;
+    Base base;///podria ser un puntero? solo lo usa normal. Algunos otros lo necesitan porque generan normales
     bool valorCadena; //la cadena de movholders es valida. Una cadena va desde la base hasta un clicker o el final
     bool valorFinal;  //se llegó al final. Esto sirve para saber si seguir iterando en un desliz
     bool makeClick;
@@ -39,9 +41,11 @@ struct normalHolder:public movHolder{
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
+    virtual void regenerar();
     virtual void cargar(vector<normalHolder*>*);
     void draw();
     void accionar();///desencadena los acct
+    void regenerar1();
     bool valor;       //las condiciones del movholder son verdaderas, las acciones guardadas validas
     vector<int> memAct;
     //no separo entre piezas con y sin memoria porque duplicaria mucho codigo.
@@ -49,6 +53,8 @@ struct normalHolder:public movHolder{
     bool doEsp;//ṕarece que vale la pena tener copias. En especial de este porque lo escribo
     v offsetAct;
     v relPos; //pos actual = relPös + offset. Todas las acciones y condiciones la comparten
+    int genId;
+    bool untouched;
 };
 struct deslizHolder:public movHolder{
     deslizHolder(Holder*,desliz*,Base*);
@@ -56,6 +62,7 @@ struct deslizHolder:public movHolder{
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
+    virtual void regenerar();
     virtual void cargar(vector<normalHolder*>*);
     vector<movHolder*> movs;
     int f;
@@ -66,6 +73,7 @@ struct excHolder:public movHolder{
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
+    virtual void regenerar();
     virtual void cargar(vector<normalHolder*>*);
     vector<movHolder*> ops;
     int actualBranch;
@@ -76,6 +84,7 @@ struct isolHolder:public movHolder{
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
+    virtual void regenerar(){};
     virtual void cargar(vector<normalHolder*>*);
     movHolder* inside;
 };
@@ -90,6 +99,7 @@ struct desoptHolder:public movHolder{
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
+    virtual void regenerar(){};
     virtual void cargar(vector<normalHolder*>*);
     vector<node> nodes;
     vector<int> memAct;

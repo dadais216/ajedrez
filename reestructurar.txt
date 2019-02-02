@@ -645,6 +645,117 @@ Esto evita la suma en cada cond y acc, y ahorra memoria. Ahora la mayoria de las
 (mejora en 1 o 2 microsegundos despues de hacer eso)
 
 
+---
+
+
+
+La ultima optimizacion importante seria no volver a generar cosas que ya estaban generadas
+Por ejemplo, una torre genera sus movimientos. Una pieza se mueve a una linea, activando un trigger que hace un recalculo que corta la linea. Despues esa pieza se mueve. Ahora, se envia otro trigger que recalcula el movimiento, ve que ahora es verdadero. En este punto, en vez de volver a regenerar toda la linea no hace nada, porque el resto de la linea que se genero antes todavia es valido.
+En un exc al volver a una rama que ya estaba generada no la volveria a generar
+
+El problema obvio es que no esta asegurado que lo que este despues siga siendo valido, puede que en algun punto de la linea mas haya del primer bloqueo se haya puesto otra pieza, cuyo trigger
+
+Esto tiene potencial de acelerar bastante las cosas cuando se usan muchos deslices, porque se salta generar. Pero puede que los controles necesarios para hacerlo terminen haciendolo mas lento
+
+Tiene que hacer una distincion entre generar y regenerar. Regenerar se salta los esps, y necesita hacer algunos chequeos (movimiento generado antes, no haya sido activado por trigger)
+
+se podria tener un bool por movimiento de unresolvedTrigger, que se hace verdadero si no se encuentra la normal correspondiente al algun trigger. Si es verdadero se regenera todo y si es falso no se regenera nada. Seria razonablemente rapido pero maneja algunos casos nomas
+
+se podria poner un bool de untouched (falso cuando un trigger señala), y regenerar solo lo tocado, recorriendo normalmente. Al principio lo pense haciendo que recalcular recorra todo el arbol buscando coincidencias
+Otra opcion seria no tener el booleano y guardar un set de unresolvedTriggers, y solo regenerar los que esten ahi cuando los encuentre.
+Pero como tengo los triggers son punteros puedo acceder directamente y setear un booleano.
+
+
+Entonces:
+-antes de recalcular se accede a cada normal desde el trigger y se setea como touched
+-se recalcula normalmente, pero en vez de llamar a generar se llama a regenerar1
+-regenerar1 es como generar pero no usa esp, recalcula el movimiento. Si es falso retorna, si es verdadero y hay siguiente sigue como regenerar2
+-regenerar2 mira que el movimiento este generado && untouched,  de no estarlo genera. De estarlo toma su validez como resultado de una generacion que no se corre
+
+-cuando se genera se guarda el step de la pieza en cada normal para indicar que fue generado para este movimiento. Turno no sirve porque un movimiento puede generarse en un turno y parte de el regenerarse en otro. El step solo varia cuando la pieza haya hecho un movimiento (el step se actualiza aunque el movimiento no mueva la pieza, y no se actualiza por ningun otro motivo) 
+
+lo unico malo de esto es que cosas como w exc mover or captura end no andarian, porque el trigger esta en la normal de w, y lo que debería estar marcado como touched esta en el exc. 
+Una solucion es hacer que trigger no este siempre en esp, haciendo que la normal tenga 2 bools, uno para esp y otro para trigger. 
+Pero en el 99% de los casos esp y trigger pasan juntos y no me parece que valga meter otro if al curso principal. 
+La restriccion es que no puede haber movimientos posicionales sin un esp antes. Esto hace a la regla de que el esp va despues de wasd mala, el determinante de si la normal tiene o no esp es el primer movimiento posicional que se encuentre (condicion o accion) (memoria de tile es posicional)
+ 
+entonces w exc mover or captura end no se interpretaria como 
+<w esp> exc <mover> or <captura> end       ,sino
+<w> exc <esp mover> or <esp captura> end
+
+lo que es claramente mas lento, porque hace el chequeo de esp dos veces y pone dos triggers. Pero puede que lo valga por las otras optimizaciones. 
+Se podria mover el w adentro del exc para evitar la normal vacia, aun asi las normales vacias tienen su funcion, como en desliz w isol X end Y end
+
+Esto tambien soluciona normales cortadas por localaccs clavando otro esp en la segunda
+
+
+Una solucion alternativa que me parece mejor es agregar una condicion tecnica que ponga las otras normales como touched
+
+<w esp setTouched> exc <mover> or <capturar> end
+
+lo bueno de esto es que seria casi igual de rapido que la basica, nomas agregaria una cond mas.
+Pero va a ser dificil de implementar, porque setTouched necesita punteros a normales que todavia no estan, y esto se tiene que traducir a normalH despues.
+Pero aun asi seria una mejor solucion. 
+setTouched se agrega cuando se detecta que una normal tiene conds posicionales sin un esp, a la normal anterior que tenga esp
+Implementarlo va a ser un quilombo, supongo que se va a hacer despues de armar todo. Va a ser recursivo para manejar exc de forma comoda, y va a tener que hacer un pase especial entre bucles
+w desliz mover w end captura
+<w esp> desliz <mover> <w esp> end <captura>
+esto se manejaria haciendo una distincion entre primera iteracion y las demas. Igual me parece demasiado.
+
+De todas formas este problema es inexistente en la version compilada
+
+antes
+actual 100 turnos                         - 11    13   12   12  12  15 22 15 13
+caballos caballos sin captura 1000 turnos - 52    39    42
+caballos reinas sin captura 1000 turnos   - 245   310   310
+caballos emperador sin captura 5 turnos   - 261658
+caballos memoria 1000 turnos              - 
+caballos memoria sin turno 2000 turnos    - 
+test vel reina                            - 140   140   97 210 136
+test vel reina con boludeces              - 235   257   335
+caballos peon 2000 turnos                 - 20    20    17   14   19   14
+
+despues
+actual 100 turnos                         - 14    15   15   14  19  20 18 17 19
+caballos caballos sin captura 1000 turnos - 55    45    48
+caballos reinas sin captura 1000 turnos   - 245   226   332  170
+caballos emperador sin captura 5 turnos   - 304904
+caballos memoria 1000 turnos              - 285   316   346
+caballos memoria sin turno 2000 turnos    - 17    19    14
+test vel reina                            - 83    85    119
+test vel reina con boludeces              - 351   282   271
+caballos peon 2000 turnos                 - 19    19    16
+
+Desventajas
+-las estructuras donde el trigger no esta puesto por la normalHolder que lo necesita, como w exp mover or captura end, se prohiben, forzando una construccion como esa a usar 2 triggers. Claro que este caso se podría meter adentro de una accion, pero no todos los casos y hace al lenguaje menos versatil
+-la funcion de regenerar cuando genera no es mas rapida que generar. No puede saltarse el esp porque hay casos donde lo necesita. Regenerar cuando no genera aun tiene que hacer cosas como volver a poner triggers y actualizar el offset
+-lo que viene despues de un desliz debe generarse, no se puede regenerar porque necesita generarse siempre y puede no estar señalado por un trigger. 
+-agrega complejidad al codigo
+
+El incremento importante en test vel reina se puede atribuir a que es un test muy artificial. test vel reina con boludeces tambien debería ser mas rapido pero se ve que el costo de poner 2 triggers lo compensa.
+La mayoria de los otros test son iguales.
+El unico incremento relevante es en reinas sin captura, pero no me parece suficiente para justificar tomar la optimizacion
+
+Puede que cuando maneje multiples triggers de otra forma y tenga control sobre como esta la memoria pueda reconsiderar esta idea.
+Pero por ahora hacer esto robusto me parece mucho esfuerzo por poca ganancia.
+
+
+
+
+
+***
+creo que no es necesario hacer recorrer con multiples triggers. Si se necesita marcarlos como touched, pero despues se podria correr solo con el mas chico cuando use memoria propia.
+Esto no es verdadero adentro de un desopt, por lo que tendria que diferenciar y dejar el codigo para este caso
+
+
+
+
+
+
+
+
+
+
 
 
 Graficos

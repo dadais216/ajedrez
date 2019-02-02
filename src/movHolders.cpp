@@ -19,6 +19,14 @@ void movHolder::generarSig(){
     }else
         valorFinal=valorCadena=true;
 }
+void movHolder::regenerarSig(){
+    if(sig){
+        sig->regenerar();
+        valorCadena=hasClick||sig->valorCadena;
+        valorFinal=sig->valorFinal;//sig->valorCadena&&
+    }else
+        valorFinal=valorCadena=true;
+}
 normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
 :movHolder(h_,org,base_){
     op=org;
@@ -39,6 +47,9 @@ v offset;
 Tile* actualTile;
 AH actualHolder;
 void normalHolder::generar(){
+    genId=h->genId;
+    untouched=true;
+
     actualHolder.h=h;
     actualHolder.nh=this;
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
@@ -50,7 +61,7 @@ void normalHolder::generar(){
             valorFinal=valorCadena=valor=false;
             return;
         }
-        actualTile=tablptr->tile(relPos+offset);
+        actualTile=tablptr->tile(actualPos);
         actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
     }
 
@@ -70,12 +81,7 @@ void normalHolder::reaccionar(normalHolder* nh){
         offset=offsetAct;
         memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
         switchToGen=true;
-        actualTile=tablptr->tile(relPos+offset);
-        actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
-        bool doEspTemp=doEsp;
-        doEsp=false;
-        generar();
-        doEsp=doEspTemp;
+        regenerar1();
     }else if(valor){
         reaccionarSig(nh);
     }
@@ -86,12 +92,7 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
             offset=offsetAct;
             memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
             switchToGen=true;
-            actualTile=tablptr->tile(relPos+offset);
-            actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
-            bool doEspTemp=doEsp;
-            doEsp=false;
-            generar();
-            doEsp=doEspTemp;
+            regenerar1();
             ///@optim sacar nh del vector
             return;
         }
@@ -99,6 +100,45 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
     if(valor){
         reaccionarSig(nhs);
     }
+}
+void normalHolder::regenerar1(){
+    untouched=true;
+
+    actualHolder.h=h;
+    actualHolder.nh=this;
+    offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
+    memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
+
+    if(doEsp){
+        v actualPos=offset+relPos;
+        if(actualPos.x<0||actualPos.x>=tablptr->tam.x||actualPos.y<0||actualPos.y>=tablptr->tam.y){
+            valorFinal=valorCadena=valor=false;
+            return;
+        }//este chequeo es necesario cuando se llama porque fallo el genId. Se podria saltar cuando se viene de una
+        //reaccion, ver si vale la pena
+        actualTile=tablptr->tile(relPos+offset);
+        actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
+    }
+
+    for(condt* c:op->conds)
+        if(!c->check()){
+            valorFinal=valorCadena=valor=false;
+            return;
+        }
+
+    offset=relPos+offset;
+
+    valor=true;
+    regenerarSig();
+}
+void normalHolder::regenerar(){
+    if(untouched&&genId==h->genId){
+        offset=offsetAct;
+        if(valor&&sig)
+            sig->regenerar();
+        return;
+    }
+    regenerar1();
 }
 
 void normalHolder::accionar(){
@@ -156,15 +196,23 @@ void deslizReaccionar(auto nh,deslizHolder* $){
             $->lastNotFalse=false;
             for(;act->valorFinal;){
                 i++;
-                if($->movs.size()==i)
-                    $->movs.push_back(crearMovHolder($->h,$->op->inside,&$->base));
-                act=$->movs[i];
-                act->generar();
+                if($->movs.size()==i){
+                    act=crearMovHolder($->h,$->op->inside,&$->base);
+                    $->movs.push_back(act);
+                    act->generar();
+                }else{
+                    act=$->movs[i];
+                    act->regenerar();
+                }
             }
             if(act->valorCadena)
                 $->lastNotFalse=true;
-            $->f=i;
-            $->generarSig();
+            if($->f!=i){
+                $->f=i;
+                $->generarSig();
+            }else{
+                $->regenerarSig();
+            }
             return;
         }
     }
@@ -175,6 +223,36 @@ void deslizHolder::reaccionar(normalHolder* nh){
 }
 void deslizHolder::reaccionar(vector<normalHolder*> nhs){
     deslizReaccionar(nhs,this);
+}
+void deslizHolder::regenerar(){
+    lastNotFalse=false;
+    movHolder* act;
+    int i=0;
+    for(;;){
+        act=movs[i];
+        act->regenerar();
+        if(!act->valorFinal)
+            break;
+        i++;
+        if(movs.size()==i){
+            for(;;){
+                act=crearMovHolder(h,op->inside,&base);
+                movs.push_back(act);
+                act->generar();
+                if(!act->valorFinal)
+                    goto then;
+            }
+        }
+    }
+    then:
+    if(act->valorCadena)
+        lastNotFalse=true;
+    if(f!=i){
+        f=i;
+        generarSig();
+    }else{
+        regenerarSig();
+    }
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;
@@ -217,11 +295,11 @@ void excReaccionar(auto nh,excHolder* $){
                 for(j=0;j<$->ops.size();j++){
                     if(i!=j){
                         movHolder* brancj=$->ops[j];
-                        brancj->generar();
+                        brancj->regenerar();
                         if(brancj->valorCadena){
                             $->valor=true;
                             $->actualBranch=j;
-                            $->generarSig();
+                            $->regenerarSig();
                             return;
                         }
                     }
@@ -232,7 +310,7 @@ void excReaccionar(auto nh,excHolder* $){
             }else{ ///se valido una rama que era invalida
                 $->actualBranch=i;
                 $->valor=true;
-                $->generarSig();
+                $->regenerarSig();
                 return;
             }
         }
@@ -245,6 +323,21 @@ void excHolder::reaccionar(normalHolder* nh){
 }
 void excHolder::reaccionar(vector<normalHolder*> nhs){
     excReaccionar(nhs,this);
+}
+void excHolder::regenerar(){
+    int i;
+    for(i=0;i<ops.size();i++){
+        movHolder* branch=ops[i];
+        branch->regenerar();
+        if(branch->valorCadena){
+            valor=true;
+            actualBranch=i; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que valorCadena==true
+            regenerarSig();
+            return;
+        }
+    }
+    valorFinal=valorCadena=valor=false;
+    actualBranch=i-1;
 }
 void excHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;

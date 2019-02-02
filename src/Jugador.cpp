@@ -111,6 +111,7 @@ void Aleatorio::turno(){
             }
         }
     drawScreen();
+    //sleep(milliseconds(200));
     if(!alive)
         while(true){
             if(window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){

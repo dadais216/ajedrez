@@ -2,8 +2,8 @@ def mover vacio mov color 20 200 115
 def captura enemigo capt mov color 200 10 10
 
 :1 0 #peon
-w mover mset p0 1 exc mcmp y 7 capt spwn 5 or pass end
-{wa,wd} mset p0 1 captura exc mcmp y 7 capt spwn 5 or pass end
+w mover mset p0 1 exc esp mcmp y 7 capt spwn 5 or pass end
+{wa,wd} mset p0 1 captura exc esp mcmp y 7 capt spwn 5 or pass end
 mcmp p0 0 ww mover mset p0 1
 
 :2 1 #torre
@@ -13,7 +13,7 @@ desliz d mover c end d captura
 desliz s mover c end s captura
 
 :3 2 #caballo
-{{ww,ss}{a,d},{aa,dd}{w,s}} exc mover or captura end
+{{ww,ss}{a,d},{aa,dd}{w,s}}n exc esp mover or esp captura end
 
 :4 3 #alfil
 desliz wa mover c end wa captura
@@ -32,7 +32,7 @@ desliz dw mover c end dw captura
 desliz sd mover c end sd captura
 
 :6 5 #rey
-{w,wa,a,as,s,sd,d,dw} exc mover or captura end
+{w,wa,a,as,s,sd,d,dw}n exc esp mover or esp captura end
 
 :7 5 #emperador
 desliz w end desliz a end \
@@ -57,13 +57,24 @@ mcmp p1 0 dw mover mset p1 1
 :8 0 #test caballos
 #{{ww,ss}{a,d},{aa,dd}{w,s}} mover
 #desliz {w,wa,a,as,s,sd,d,dw} mover c end
-#desliz {w,wa,a,as,s,sd,d,dw} exc mover or mcmp l0 2 captura end c end
+#desliz {w,wa,a,as,s,sd,d,dw}n exc esp mover or esp mcmp l0 2 captura end c end
 w mover mset p0 1 exc mcmp y 31 capt spwn 5 or pass end
 {wa,wd} mset p0 1 captura exc mcmp y 31 capt spwn 5 or pass end
 mcmp p0 0 ww mover mset p0 1
 #desliz w end desliz a end \
 #desliz isol desliz isol mover end d end end s end
+#desliz a mover c end
+#desliz exc w mover or w mcmp l0 2 captura end c end
+#desliz exc wa mover or wa mcmp l0 2 captura end c end
+#desliz exc a mover or a mcmp l0 2 captura end c end
+#desliz exc as mover or as mcmp l0 2 captura end c end
+#desliz exc s mover or s mcmp l0 2 captura end c end
+#desliz exc sd mover or sd mcmp l0 2 captura end c end
+#desliz exc d mover or d mcmp l0 2 captura end c end
+#desliz exc dw mover or dw mcmp l0 2 captura end c end
 
 
+:11 1 #test
+{w,s} mover
 
 

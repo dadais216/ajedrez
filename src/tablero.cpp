@@ -62,8 +62,10 @@ void tabl::drawPieces(){
 vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
 void Tile::chargeTriggers(){
     for(Trigger trig:triggers)
-        if(trig.step==trig.tile->step)//la pieza que puso el trigger no se movio desde que lo puso
+        if(trig.step==trig.tile->step){//la pieza que puso el trigger no se movio desde que lo puso
+            trig.nh->untouched=false;
             trigsActivados.push_back(trig.nh);
+        }
     triggers.clear();
 }
 void activateTriggers(){
