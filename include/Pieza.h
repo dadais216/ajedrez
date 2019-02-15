@@ -17,17 +17,17 @@ struct Pieza{
     struct base{
         operador* raiz;
         int memLocalSize;
+        int size;
     };
     vector<base> movs;
 
     int memPiezaSize;
 
 
-    Pieza(int,int,int);
+    Pieza(int,int);
 };
 
 extern vector<Tile*> pisados;
-
 
 struct Holder{
     Holder(int,Pieza*,v);
@@ -43,7 +43,6 @@ struct Holder{
 
     vector<int> memPieza;
     vector<memTriggers> memPiezaTrigs;
-    int movSize;
 
     vector<movHolder*> movs;
     int id;

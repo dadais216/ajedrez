@@ -4,10 +4,11 @@
 #include "../include/operador.h"
 
 vector<Pieza*> piezas;
-int memLocalSize;
 
+int movSize;
 int bandoAct;
-Pieza::Pieza(int _id,int _sn,int memPiezaSize_){
+Pieza::Pieza(int _id,int _sn){
+    //recibe la lista de tokens y el tamaño de la memoria de pieza y las memorias locales
     id=_id;//signo indica bando
     sn=_sn;
     spriteb.setTexture(imagen->get("sprites.png"));
@@ -18,6 +19,8 @@ Pieza::Pieza(int _id,int _sn,int memPiezaSize_){
     spriten.setScale(escala,escala);
 
     bandoAct=sgn(_id);
+    actualBucket=bucketPiezas;
+    int i=0;
     while(!tokens.empty()){
 //        for(int tok:tokens){
 //            cout<<tok<<"-";
@@ -25,17 +28,18 @@ Pieza::Pieza(int _id,int _sn,int memPiezaSize_){
 //        cout<<endl;
 
         clickExplicit=false;
-        memLocalSize=0;
+        movSize=0;
         operador* op=tomar();
+        int memLocalSize=lect.memLocalSizes[i++];
         if(debugMode){
-            normal* n=new normal(false);
-            n->conds.push_back(new debugInicial());
+            normal* n=bucketAdd<normal>(false);
+            n->conds.init(1,bucketAdd<debugInicial>());
             n->sig=op;
             movs.push_back(Pieza::base{n,memLocalSize});
         }else
             movs.push_back(Pieza::base{op,memLocalSize});
     }
-    memPiezaSize=memPiezaSize_;
+    memPiezaSize=lect.memPiezaSize;
 
     function<void(operador*)> showOp=[&showOp](operador* op)->void{
         switch(op->tipo){
@@ -86,17 +90,16 @@ movHolder* crearMovHolder(Holder* h,operador* op,Base* base){
     movHolder* m;
     switch(op->tipo){
     case NORMAL:
-        m=new normalHolder(h,static_cast<normal*>(op),base);break;
+        m=bucketAdd<normalHolder>(h,static_cast<normal*>(op),base);break;
     case DESLIZ:
-        m=new deslizHolder(h,static_cast<desliz*>(op),base);break;
+        m=bucketAdd<deslizHolder>(h,static_cast<desliz*>(op),base);break;
     case EXC:
-        m=new excHolder(h,static_cast<exc*>(op),base);break;
+        m=bucketAdd<excHolder>(h,static_cast<exc*>(op),base);break;
     case ISOL:
-        m=new isolHolder(h,static_cast<isol*>(op),base);break;
+        m=bucketAdd<isolHolder>(h,static_cast<isol*>(op),base);break;
     case DESOPT:
-        m=new desoptHolder(h,static_cast<desopt*>(op),base);
+        m=bucketAdd<desoptHolder>(h,static_cast<desopt*>(op),base);
     }
-    ///m->makeClick=op->makeClick; @??? este codigo dejaba m->makeClick sin setear y no entendi por que. Lo movi a los constructores y anda
     if(op->sig)
         m->sig=crearMovHolder(h,op->sig,base);
     else
@@ -108,13 +111,16 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     id=p->id;
     pieza=p;
     tile=tablptr->tile(pos_);
+
+    actualBucket=bucketHolders;
+
     movs.reserve(sizeof(movHolder*)*pieza->movs.size());
     memPieza.resize(p->memPiezaSize);
     memPiezaTrigs.resize(p->memPiezaSize);
     for(Pieza::base& b:pieza->movs){
         Base* base=new Base;
         base->beg=nullptr;
-        base->movSize=b.memLocalSize;
+        base->memLocalSize=b.memLocalSize;
         movs.push_back(crearMovHolder(this,b.raiz,base));
         delete base;
     }
@@ -160,7 +166,7 @@ void Holder::generar(){
     for(movHolder* m:movs){
         offset=tile->pos;
         ///@optim ver si resulta comodo para el lenguaje hacer que la memoria de movimiento arranque en 0
-        memset(memMov.data(),0,m->base.movSize*sizeof(int));
+        memset(memMov.data(),0,m->base.memLocalSize*sizeof(int));
         m->generar();
     }
 }

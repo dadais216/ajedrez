@@ -11,10 +11,7 @@ RectangleShape backGroundMemDebug;
 
 struct locala:public getterCond{
     int ind;
-    locala(int ind_):ind(ind_){
-        if(ind>=memLocalSize)
-            memLocalSize=ind+1;
-    }
+    locala(int ind_):ind(ind_){}
     virtual int* val(){
         return &memMov[ind];
     }
@@ -22,17 +19,14 @@ struct locala:public getterCond{
         return &memMov[ind];
     }
     virtual void drawDebugMem(){
-        int memSize=actualHolder.nh->base.movSize;
+        int memSize=actualHolder.nh->base.memLocalSize;
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
         window->draw(backGroundMemDebug);
     }
 };
 struct localaAcc:public getter{
     int ind;
-    localaAcc(int ind_):ind(ind_){
-        if(ind>=memLocalSize)
-            memLocalSize=ind+1;///@innecesario?
-    }
+    localaAcc(int ind_):ind(ind_){}
     virtual int* val(){
         return &actualHolder.nh->memAct[ind];
     }
@@ -49,7 +43,7 @@ struct localai:public getterCond{
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        int memSize=actualHolder.nh->base.movSize;
+        int memSize=actualHolder.nh->base.memLocalSize;
         backGroundMemDebug.setPosition(Vector2f(530+25*(before%4),405+45*(before/4-memSize/4)));
         window->draw(backGroundMemDebug);
     }

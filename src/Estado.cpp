@@ -65,6 +65,7 @@ Selector::~Selector(){
 }
 
 lector lect;
+Bucket* bucketPiezas,*bucketHolders;
 Proper::Proper(int id_,int sel1,int sel2)
     :tablero(){
     id=id_;
@@ -81,8 +82,8 @@ Proper::Proper(int id_,int sel1,int sel2)
         }
     };
 
-    primero=selec(2,-1);
-    segundo=selec(2,1);
+    primero=selec(1,-1);
+    segundo=selec(0,1);
 
     if(nonHuman==2)
         fpsLock=0.;
@@ -117,6 +118,9 @@ Proper::Proper(int id_,int sel1,int sel2)
     backGroundMemDebug.setSize(Vector2f(20,40));
     textValMem.setColor(Color::Black);
     textValMem.setFont(j->font);
+
+    lastBucket=&bucketPiezas;new Bucket();
+    lastBucket=&bucketHolders;new Bucket();
 
     init();
 }
@@ -217,7 +221,7 @@ void Proper::draw(){
     if(drawDebugTiles||drawMemDebug){
         window->draw(posPieza);
         window->draw(textDebug);
-        int memSize=actualHolder.nh->base.movSize;
+        int memSize=actualHolder.nh->base.memLocalSize;
         for(int i=0;i<memSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
             window->draw(backGroundMem);

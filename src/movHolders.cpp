@@ -31,7 +31,7 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
         break;case 2:
             turnoTrigs[h->bando==-1].push_back({h,this});
         }
-    memAct.resize(base.movSize);
+    memAct.resize(base.memLocalSize);
     doEsp=op->doEsp;
     relPos=op->relPos;
 }
@@ -42,7 +42,7 @@ void normalHolder::generar(){
     actualHolder.h=h;
     actualHolder.nh=this;
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
-    memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
+    memcpy(memAct.data(),memMov.data(),base.memLocalSize*sizeof(int));
 
     if(doEsp){
         v actualPos=offset+relPos;
@@ -68,7 +68,7 @@ void normalHolder::generar(){
 void normalHolder::reaccionar(normalHolder* nh){
     if(nh==this){
         offset=offsetAct;
-        memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
+        memcpy(memMov.data(),memAct.data(),base.memLocalSize*sizeof(int));
         switchToGen=true;
         actualTile=tablptr->tile(relPos+offset);
         actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
@@ -84,7 +84,7 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
     for(normalHolder* nh:nhs){
         if(nh==this){
             offset=offsetAct;
-            memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
+            memcpy(memMov.data(),memAct.data(),base.memLocalSize*sizeof(int));
             switchToGen=true;
             actualTile=tablptr->tile(relPos+offset);
             actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
@@ -298,7 +298,7 @@ desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
     nodes.reserve(org->ops.size()*sizeof(node));///@todo @optim temporal, eventualmente voy a usar buckets
     for(operador* opos:org->ops)
         nodes.emplace_back(crearMovHolder(h,opos,&base));
-    memAct.resize(base.movSize);
+    memAct.resize(base.memLocalSize);
 }
 struct dataPass{
     vector<operador*>* ops;
@@ -322,13 +322,13 @@ void desoptHolder::generar(){
     ///la iteracion inicial no necesita indireccion y no tiene un movimiento raiz
     dataPass dp{&static_cast<desopt*>(op)->ops,h,&base};
     v offsetAct=offset;
-    memcpy(memAct.data(),memMov.data(),base.movSize*sizeof(int));
+    memcpy(memAct.data(),memMov.data(),base.memLocalSize*sizeof(int));
     for(node& n:nodes){
         n.mh->generar();
         if(n.mh->valorFinal)
             generarNodos(n.nodes,dp);
         offset=offsetAct;
-        memcpy(memMov.data(),memAct.data(),base.movSize*sizeof(int));
+        memcpy(memMov.data(),memAct.data(),base.memLocalSize*sizeof(int));
     }
     generarSig();
 }

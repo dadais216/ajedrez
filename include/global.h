@@ -20,6 +20,9 @@
 #include <unordered_set>
 #include <string.h>
 
+#include "Bucket.h"
+
+
 using namespace std;
 using namespace sf;
 
@@ -120,9 +123,12 @@ extern int memGlobalSize;
 extern vector<int> memGlobal;
 extern vector<int> memMov;
 extern int maxMemMovSize;
-extern int memLocalSize;
 extern int memTileSize;
 extern int memOtherSize;
+
+extern int movSize;
+
+extern Bucket* bucketPiezas,*bucketHolders;
 
 struct AH{
     Holder* h;
