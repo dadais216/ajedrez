@@ -14,25 +14,27 @@ struct operador{
 };
 struct normal:public operador{
     normal(bool);
-    void debug();
-    vector<acct*> accs;
-    vector<condt*> conds;
-    vector<colort*> colors;
+    ///@optim esto podria estar adentro del bucket, antes de la informacion especifica. Lector puede pasar
+    ///la longitud de cada uno de estos vectores.
+    barray<acct*> accs;
+    barray<condt*> conds;
+    barray<colort*> colors;
     struct setupTrigInfo{
         char type; //0 global 1 pieza 2 turno
         int ind;
     };
-    vector<setupTrigInfo> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
+    barray<setupTrigInfo> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
     v relPos;
     bool doEsp;
 };
 struct desliz:public operador{
     desliz();
     operador* inside;
+    int deslizInsideSize;
 };
 struct exc:public operador{
     exc();
-    vector<operador*> ops;
+    barray<operador*> ops;
 };
 struct isol:public operador{
     isol();
@@ -41,6 +43,8 @@ struct isol:public operador{
 struct desopt:public operador{
     desopt();
     vector<operador*> ops;
+    //barray<operador*> ops;
+    int desoptInsideSize;
 };
 
 

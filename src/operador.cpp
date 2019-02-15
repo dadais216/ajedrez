@@ -18,16 +18,33 @@ string str_less="less";
 string str_more="more";
 
 normal::normal(bool make){
+    vector<acct*> accsTemp;
+    vector<condt*> condsTemp;
+    vector<colort*> colorsTemp;
+    vector<normal::setupTrigInfo> setUpMemTriggersPerNormalHolderTemp;
+    auto setupBarrays=[&](){
+        //cargo listas de punteros despues del resto de memoria de la normal.
+        //Lo pongo al final en vez de al principio para evitar tener que hacer un analisis
+        //previo a la carga para saber hasta donde llega la normal y que cosas tiene.
+        //supongo que que este antes o despues tiene el mismo efecto en la cache
+        accs.init(accsTemp.size(),accsTemp.data());
+        conds.init(condsTemp.size(),condsTemp.data());
+        colors.init(colorsTemp.size(),colorsTemp.data());
+        setUpMemTriggersPerNormalHolder.init(setUpMemTriggersPerNormalHolderTemp.size(),setUpMemTriggersPerNormalHolderTemp.data());
+    };
+
+    movSize+=sizeof(normalHolder);///@todo tambien sumar memLocalSize
     tipo=NORMAL;
     hasClick=makeClick=false;
     sig=nullptr;
     relPos=v(0,0);
     doEsp=false;
     bool posTriggerableCond=false;
+    int actionCount=0,conditionCount=0,colorCount=0,sMTPNHCount=0;
     if(make){
         bool changeInLocalMem=false;
         while(true){
-            if(tokens.empty()) return;
+            if(tokens.empty()) return;///@optim creo que no se activa nunca, no deberia
             int tok=tokens.front();
             tokens.pop_front();
             switch(tok){
@@ -39,9 +56,10 @@ normal::normal(bool make){
                 //antes nomas cortaba en cuando hubo una cond posicional antes. Ahora lo hago por cualquiera
                 //porque sino cosas como mcmp p0 1 w mover ponen un trigger en w aun cuando mcmp es falso
                 //por ahi no vale la pena cortar por eso igual.
-                if(!conds.empty()||!accs.empty()){
+                if(!condsTemp.empty()||!accsTemp.empty()){
                     tokens.push_front(tok);
-                    sig=new normal(true);
+                    setupBarrays();
+                    sig=bucketAdd<normal>(true);
                     return;
                     //nueva normal
                 }else{
@@ -54,7 +72,7 @@ normal::normal(bool make){
                 }
                 break;
                 //cout<<#TOKEN<<endl;
-    #define cond(TOKEN)  case lector::TOKEN: if(debugMode) conds.push_back(new debugMov(&TOKEN)); else conds.push_back(&TOKEN);
+    #define cond(TOKEN)  case lector::TOKEN: if(debugMode) condsTemp.push_back(bucketAdd<debugMov>(&TOKEN)); else condsTemp.push_back(&TOKEN);
                 cond(vacio);break;
                 cond(pieza);break;
                 cond(enemigo);break;
@@ -62,26 +80,19 @@ normal::normal(bool make){
             case lector::esp:
             doEsp=true;
             break;
-    #define acc(TOKEN) case lector::TOKEN: accs.push_back(&TOKEN);break
+    #define acc(TOKEN) case lector::TOKEN: accsTemp.push_back(&TOKEN);break
 
                 acc(mov);
                 acc(capt);
                 acc(pausa);
             case lector::spwn:
-                accs.push_back(new spwn((tokens.front()-1000)*bandoAct));tokens.pop_front();break;
+                accsTemp.push_back(bucketAdd<spwn>((tokens.front()-1000)*bandoAct));tokens.pop_front();break;
                 //spwn n con n positivo quiere decir mismo bando, negativo bando enemigo
             case lector::color:
-                colors.push_back(crearColor());
+                colorsTemp.push_back(crearColor());
                 break;
     //       colorr(sprt);
     //       colorr(numShow);
-            case lector::msize:
-                {
-                    int size=tokens.front()-1000;tokens.pop_front();
-                    if(size>memLocalSize)
-                        memLocalSize=size;
-                }
-                break;
             case lector::mcmp:
             case lector::mset:
             case lector::madd:
@@ -112,121 +123,121 @@ normal::normal(bool make){
                             switch(tg[0]){
                             case lector::turno:
                                 g[i]=&turnoa;
-                                setUpMemTriggersPerNormalHolder.push_back({2,0});
+                                setUpMemTriggersPerNormalHolderTemp.push_back({2,0});
                                 break;
                             case lector::posX:
                                 g[i]=&posX;break;
                             case lector::posY:
                                 g[i]=&posY;break;
                             default:
-                                g[i]=new ctea(tg[0]-1000);
+                                g[i]=bucketAdd<ctea>(tg[0]-1000);
                             }
                         }else{
                             tg[j]-=1000;
                             bool hasIndirection=j>1;
                             if(tg[j-1]==lector::mlocal)
                                 if(left){
-                                    g[i]=new locala(tg[j]);
+                                    g[i]=bucketAdd<locala>(tg[j]);
                                     changeInLocalMem=changeInLocalMem||write;
                                 }else
                                     if(action){
-                                        g[i]=new localaAcc(tg[j]);
+                                        g[i]=bucketAdd<localaAcc>(tg[j]);
                                         isLocalAcc=true;
                                     }else
-                                        g[i]=new locala(tg[j]);
+                                        g[i]=bucketAdd<locala>(tg[j]);
                             else
                                 if(action)
                                     if(hasIndirection)
                                         switch(tg[j-1]){
-                                        case lector::mglobal: g[i]=new globalaReadNT(tg[j]); break;
-                                        case lector::mpieza: g[i]=new piezaaReadNT(tg[j]);break;
-                                        case lector::mtile: g[i]=new tileaReadNT(tg[j]);break;
-                                        case lector::mother: g[i]=new otheraReadNT(tg[j]);break;
+                                        case lector::mglobal: g[i]=bucketAdd<globalaReadNT>(tg[j]); break;
+                                        case lector::mpieza: g[i]=bucketAdd<piezaaReadNT>(tg[j]);break;
+                                        case lector::mtile: g[i]=bucketAdd<tileaReadNT>(tg[j]);break;
+                                        case lector::mother: g[i]=bucketAdd<otheraReadNT>(tg[j]);break;
                                         }
                                     else
                                         if(left)
                                             switch(tg[j-1]){
-                                            case lector::mglobal: g[i]=new globalaWrite(tg[j]); break;
-                                            case lector::mpieza: g[i]=new piezaaWrite(tg[j]);break;
-                                            case lector::mtile: g[i]=new tileaWrite(tg[j]);writeOnTile=true;break;
-                                            case lector::mother: g[i]=new otheraWrite(tg[j]);break;
+                                            case lector::mglobal: g[i]=bucketAdd<globalaWrite>(tg[j]); break;
+                                            case lector::mpieza: g[i]=bucketAdd<piezaaWrite>(tg[j]);break;
+                                            case lector::mtile: g[i]=bucketAdd<tileaWrite>(tg[j]);writeOnTile=true;break;
+                                            case lector::mother: g[i]=bucketAdd<otheraWrite>(tg[j]);break;
                                             }
                                         else
                                             switch(tg[j-1]){
-                                            case lector::mglobal: g[i]=new globalaReadNT(tg[j]); break;
-                                            case lector::mpieza: g[i]=new piezaaReadNT(tg[j]);break;
-                                            case lector::mtile: g[i]=new tileaReadNT(tg[j]);break;
-                                            case lector::mother: g[i]=new otheraReadNT(tg[j]);break;
+                                            case lector::mglobal: g[i]=bucketAdd<globalaReadNT>(tg[j]); break;
+                                            case lector::mpieza: g[i]=bucketAdd<piezaaReadNT>(tg[j]);break;
+                                            case lector::mtile: g[i]=bucketAdd<tileaReadNT>(tg[j]);break;
+                                            case lector::mother: g[i]=bucketAdd<otheraReadNT>(tg[j]);break;
                                             }
                                 else
                                     switch(tg[j-1]){
                                     case lector::mglobal:
-                                        g[i]=new globalaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back({0,tg[j]});
+                                        g[i]=bucketAdd<globalaRead>(tg[j]);
+                                        setUpMemTriggersPerNormalHolderTemp.push_back({0,tg[j]});
                                     break;case lector::mpieza:
-                                        g[i]=new piezaaRead(tg[j]);
-                                        setUpMemTriggersPerNormalHolder.push_back({1,tg[j]});
+                                        g[i]=bucketAdd<piezaaRead>(tg[j]);
+                                        setUpMemTriggersPerNormalHolderTemp.push_back({1,tg[j]});
                                     break;
-                                    case lector::mtile: g[i]=new tileaRead(tg[j]);break;
-                                    case lector::mother: g[i]=new otheraRead(tg[j]);break;
+                                    case lector::mtile: g[i]=bucketAdd<tileaRead>(tg[j]);break;
+                                    case lector::mother: g[i]=bucketAdd<otheraRead>(tg[j]);break;
                                     }
 
                             for(int k=j-2;k>=0;k--){//getters indirectos
                                 hasIndirection=k>0;
                                 if(tg[k]==lector::mlocal)
                                     if(left){
-                                        g[i]=new localai(static_cast<getterCond*>(g[i]));
+                                        g[i]=bucketAdd<localai>(static_cast<getterCond*>(g[i]));
                                         changeInLocalMem=changeInLocalMem||write;
                                     }else
                                         if(action){
-                                            g[i]=new localaiAcc(g[i]);
+                                            g[i]=bucketAdd<localaiAcc>(g[i]);
                                             isLocalAcc=true;
                                         }else
-                                            g[i]=new localai(static_cast<getterCond*>(g[i]));
+                                            g[i]=bucketAdd<localai>(static_cast<getterCond*>(g[i]));
                                 else
                                     if(action)
                                         if(hasIndirection)
                                             switch(tg[k]){
-                                            case lector::mglobal: g[i]=new globalaiReadNT(g[i]); break;
-                                            case lector::mpieza: g[i]=new piezaaiReadNT(g[i]);break;
-                                            case lector::mtile: g[i]=new tileaiReadNT(g[i]);break;
-                                            case lector::mother: g[i]=new otheraiReadNT(g[i]);break;
+                                            case lector::mglobal: g[i]=bucketAdd<globalaiReadNT>(g[i]); break;
+                                            case lector::mpieza: g[i]=bucketAdd<piezaaiReadNT>(g[i]);break;
+                                            case lector::mtile: g[i]=bucketAdd<tileaiReadNT>(g[i]);break;
+                                            case lector::mother: g[i]=bucketAdd<otheraiReadNT>(g[i]);break;
                                             }
                                         else
                                             if(left)
                                                 switch(tg[k]){
-                                                case lector::mglobal: g[i]=new globalaiWrite(g[i]); break;
-                                                case lector::mpieza: g[i]=new piezaaiWrite(g[i]);break;
-                                                case lector::mtile: g[i]=new tileaiWrite(g[i]);break;
-                                                case lector::mother: g[i]=new otheraiWrite(g[i]);break;
+                                                case lector::mglobal: g[i]=bucketAdd<globalaiWrite>(g[i]); break;
+                                                case lector::mpieza: g[i]=bucketAdd<piezaaiWrite>(g[i]);break;
+                                                case lector::mtile: g[i]=bucketAdd<tileaiWrite>(g[i]);break;
+                                                case lector::mother: g[i]=bucketAdd<otheraiWrite>(g[i]);break;
                                                 }
                                             else
                                                 switch(tg[k]){
-                                                case lector::mglobal: g[i]=new globalaiReadNT(g[i]); break;
-                                                case lector::mpieza: g[i]=new piezaaiReadNT(g[i]);break;
-                                                case lector::mtile: g[i]=new tileaiReadNT(g[i]);break;
-                                                case lector::mother: g[i]=new otheraiReadNT(g[i]);break;
+                                                case lector::mglobal: g[i]=bucketAdd<globalaiReadNT>(g[i]); break;
+                                                case lector::mpieza: g[i]=bucketAdd<piezaaiReadNT>(g[i]);break;
+                                                case lector::mtile: g[i]=bucketAdd<tileaiReadNT>(g[i]);break;
+                                                case lector::mother: g[i]=bucketAdd<otheraiReadNT>(g[i]);break;
                                                 }
                                     else
                                         switch(tg[k]){
                                         case lector::mglobal:
-                                            g[i]=new globalaiRead(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolder.push_back({true,tg[j]});
+                                            g[i]=bucketAdd<globalaiRead>(static_cast<getterCond*>(g[i]));
+                                            setUpMemTriggersPerNormalHolderTemp.push_back({true,tg[j]});
                                         break;case lector::mpieza:
-                                            g[i]=new piezaaiRead(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolder.push_back({false,tg[j]});
+                                            g[i]=bucketAdd<piezaaiRead>(static_cast<getterCond*>(g[i]));
+                                            setUpMemTriggersPerNormalHolderTemp.push_back({false,tg[j]});
                                         break;
-                                        case lector::mtile: g[i]=new tileaiRead(static_cast<getterCond*>(g[i]));break;
-                                        case lector::mother: g[i]=new otheraiRead(static_cast<getterCond*>(g[i]));break;
+                                        case lector::mtile: g[i]=bucketAdd<tileaiRead>(static_cast<getterCond*>(g[i]));break;
+                                        case lector::mother: g[i]=bucketAdd<otheraiRead>(static_cast<getterCond*>(g[i]));break;
                                         }
                             }
                         }
                     }
                     if(action){
                         #define memCase(F) case lector::m##F: if(writeOnTile) \
-                                                                    accs.push_back(new macc<m##F##AccTile,&str_##F>(g[0],g[1]));\
+                                                                    accsTemp.push_back(new macc<m##F##AccTile,&str_##F>(g[0],g[1]));\
                                                                 else \
-                                                                    accs.push_back(new macc<m##F##Acc,&str_##F>(g[0],g[1]));break;
+                                                                    accsTemp.push_back(new macc<m##F##Acc,&str_##F>(g[0],g[1]));break;
                             switch(tok){
                             memCase(set);
                             memCase(add);
@@ -234,17 +245,17 @@ normal::normal(bool make){
                         #undef memCase
                         ///manejo de locales en acciones que usen memoria local que haya cambiado
                         if(isLocalAcc&&changeInLocalMem){
-                            sig=new normal(true);
-                            auto& accsSig=static_cast<normal*>(sig)->accs;
-                            accsSig.insert(accsSig.begin(),accs.back());
-                            accs.pop_back();
+                            auto* localAccTemp=accsTemp.back();accsTemp.pop_back();
+                            setupBarrays();
+                            accsTemp.push_back(localAccTemp);
+                            sig=bucketAdd<normal>(true);
                             return;
                         }
                     }
                     else{
                         #define memCase(F) case lector::m##F: if(debugMode) \
-                        conds.push_back(new debugMem(new mcond<m##F##Cond,&str_##F>(g[0],g[1]))); \
-                        else conds.push_back(new mcond<m##F##Cond,&str_##F>(g[0],g[1])); break;
+                        condsTemp.push_back(new debugMem(new mcond<m##F##Cond,&str_##F>(g[0],g[1]))); \
+                        else condsTemp.push_back(new mcond<m##F##Cond,&str_##F>(g[0],g[1])); break;
                         switch(tok){
                             memCase(cmp);
                             memCase(set);
@@ -265,37 +276,44 @@ normal::normal(bool make){
             case lector::sep:
                 //cout<<"sep"<<endl;
                 separator=true;
+                setupBarrays();
                 return;
             case lector::eol:
                 hasClick=makeClick=true;
+                setupBarrays();
                 return;
             case lector::end:
                 //cout<<"lim"<<endl;
+                setupBarrays();
                 return;
             case lector::click:
                 hasClick=makeClick=true;
                 clickExplicit=true;
+                setupBarrays();
                 sig=tomar();
                 ///@todo mirar casos raros como dos clicks seguidos
                 return;
             default:
                 tokens.push_front(tok);
                 sig=tomar();
-                //hasClick=sig->hasClick;
+                setupBarrays();
                 return;
             }
         }
     }
 }
 
-void normal::debug(){
-
-}
-
 desliz::desliz(){
     tipo=DESLIZ;
     makeClick=false;
+
+    int movSizeTemp=movSize;
+    movSize=0;
     inside=tomar();
+    v& tam=tablptr->tam;
+    deslizInsideSize=movSize*(tam.x>tam.y?tam.x:tam.y)*2;///@todo agregar posibilidad de elegir cuando se reserva
+    movSize=movSizeTemp+sizeof(deslizHolder)+deslizInsideSize;
+
     sig=keepOn(&makeClick);
 
     if(makeClick)
@@ -309,11 +327,16 @@ desliz::desliz(){
 }
 exc::exc(){
     tipo=EXC;
+    movSize+=sizeof(excHolder);
+    vector<operador*> opsTemp;
     do{
         separator=false;
         operador* op=tomar();
-        ops.push_back(op);
+        opsTemp.push_back(op);
     }while(separator);
+
+    ops.init(opsTemp.size(),opsTemp.data());
+
     makeClick=false;
     sig=keepOn(&makeClick);
     if(makeClick)
@@ -333,6 +356,8 @@ isol::isol(){
     hasClick=true;
     makeClick=false;
     bool clickExplicitBack=clickExplicit;
+
+    movSize+=sizeof(isolHolder);
     inside=tomar();
     if(!clickExplicit)
         makeClick=true;
@@ -341,11 +366,28 @@ isol::isol(){
 }
 desopt::desopt(){
     tipo=DESOPT;
+    int movSizeTemp=movSize;
+    movSize=0;
+    //vector<operador*> opsTemp;
     do{
         separator=false;
         operador* op=tomar();
         ops.push_back(op);
+        //opsTemp.push_back(op);
     }while(separator);
+    //ops.init(opsTemp.size(),opsTemp.data());
+
+    int ramasEnProfundidad=1;
+    int sumRamas=0;
+    for(int i=0;i<3;i++){///@todo 3 es profundidad. Como con desliz, agregar opcion de editar
+        ramasEnProfundidad*=ops.size();
+        sumRamas+=ramasEnProfundidad;
+    }
+    desoptInsideSize=movSize*sumRamas;
+    //va a ser un valor muy desproporcionado para profundidades altas. Puede que sea mejor usar alguna mecanica
+    //de reutilizacion. Las piezas que usen todas las ramas a la vez serían mas rapidas que lo mismo usando memoria
+    //dinamica. El problema esta en piezas que reserven mucho y usen poco
+
     makeClick=false;
     sig=keepOn(&makeClick);
     if(makeClick)
@@ -388,7 +430,7 @@ operador* tomar(){
     if(tokens.empty()) return nullptr;
     int tok=tokens.front();
     tokens.pop_front();
-#define caseTomar(TOKEN) case lector::TOKEN: return new TOKEN
+#define caseTomar(TOKEN) case lector::TOKEN: return bucketAdd<TOKEN>()
     switch(tok)
     {
     caseTomar(desliz);
@@ -402,6 +444,6 @@ operador* tomar(){
         return nullptr;
     default:
         tokens.push_front(tok);
-        return new normal(true);
+        return bucketAdd<normal>(true);
     }
 }

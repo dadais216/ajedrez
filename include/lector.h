@@ -18,8 +18,8 @@ struct lector{
     Holder* crearPieza(int,v);
     enum token {def,llaveizq,llaveder,coma,lineJoin,
                 W,A,S,D,N,
-                mov,capt,spwn,pausa,pass,
-                vacio,pieza,enemigo,esp,
+                mov,capt,spwn,pausa,
+                vacio,pieza,enemigo,pass,esp,
                 mcmp,mset,madd,mless,mmore,msize,
                 mlocal,mglobal,mpieza,mtile,mother,turno,posX,posY,
                 desliz,exc,isol,desopt,
@@ -36,11 +36,13 @@ struct lector{
     int extra;
 
     int memPiezaSize;
+    vector<int> memLocalSizes;
 
     void centinela(string,char);
     void tokenizarPalabra(string);
     void tokenizarCaracter(char);
     void tokenizarLinea(string);
+    void cerrarLinea();
     int getNum(string&);
     void cargarDefs();
     void procesarTokens(list<int>&);

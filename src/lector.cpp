@@ -106,6 +106,8 @@ Holder* lector::crearPieza(int n,v pos){
     int sn;
     tileMemGrowth=false;
     memPiezaSize=0;
+    memLocalSizes.resize(1);
+    memLocalSizes[0]=0;
     while(getline(archPiezas,linea)){
         if(linea.empty()) continue;
         if(linea[0]==':'){
@@ -184,7 +186,7 @@ enPieza:
                 t->memTile.resize(memTileSize);
                 t->memTileTrigs.resize(memTileSize);
             }
-    Holder* h=new Holder(sgn(n),new Pieza(n,sn,memPiezaSize),pos);
+    Holder* h=new Holder(sgn(n),new Pieza(n,sn),pos);
     tokens.clear();
     return h;
 }
@@ -203,13 +205,16 @@ void lector::procesarTokens(list<int>& tokens){
 
     //aplicar llaves
     bool loop=true;
+    int numeroLinea;//para manejar incersion de memLocalSize en movimientos con llaves
     while(loop){
         loop=false;
+        numeroLinea=0;
         list<int>::iterator inicioLinea=tokens.begin();
         for(auto izq=tokens.begin();izq!=tokens.end();++izq){
             if(*izq==eol){
                 inicioLinea=izq;
                 ++inicioLinea;
+                numeroLinea++;
             }
             else if(*izq==llaveizq){
                 loop=true;
@@ -252,6 +257,8 @@ void lector::procesarTokens(list<int>& tokens){
                                     jt=it;
                                     ++jt;
                                     tokens.splice(pos,exp,exp.begin(),exp.end());
+
+                                    memLocalSizes.insert(memLocalSizes.begin()+numeroLinea,memLocalSizes[numeroLinea]);
                                 }
                             }
                             while(it!=act.end());
@@ -268,7 +275,7 @@ void lector::procesarTokens(list<int>& tokens){
         //list<int>::iterator jt=it++;
         list<int>::iterator jt=it;
         ++jt;
-        if(*it==N&&*jt==esp||*it==lineJoin&&*jt==eol){
+        if(*it==N&&*jt==esp){
             tokens.erase(jt);
             it=tokens.erase(it);
             ----it;
@@ -335,7 +342,7 @@ void lector::tokenizarPalabra(string linea){
         ///@maybe 4 numero opcional para transparencia
         i=j;
         if(linea[j]=='\0')
-            lista->push_back(eol);
+            cerrarLinea();
         return;
     }
     if(palabra=="msize"){
@@ -344,22 +351,24 @@ void lector::tokenizarPalabra(string linea){
         do{j++;}while(linea[j]==' ');
         int num=getNum(linea);
         switch(c){
-        case 'l': //cargar msize y el valor para determinar memLocalSize en operador
-            lista->push_back(msize);
-            if(num>=maxMemMovSize)
-                maxMemMovSize=num;
-            lista->push_back(num+1000);
+        //los tamaños de memorias se determinan aca
+        case 'l': //uso un vector porque una pieza tiene un localSize por movimiento.
+            if(num>memLocalSizes.back()){
+                memLocalSizes.back()=num;
+                if(num>maxMemMovSize)
+                    maxMemMovSize=num;
+            }
             break;
-        case 'g'://el resto se determina aca directamente
-            if(num>=memGlobalSize)
+        case 'g':
+            if(num>memGlobalSize)
                 memGlobalSize=num;
             break;
         case 'p':
-            if(num>=memPiezaSize)
+            if(num>memPiezaSize)
                 memPiezaSize=num;
             break;
         case 't':
-            if(num>=memTileSize){
+            if(num>memTileSize){
                 memTileSize=num;
                 tileMemGrowth=true;
             }
@@ -369,7 +378,7 @@ void lector::tokenizarPalabra(string linea){
         }
         i=j;
         if(linea[j]=='\0')
-            lista->push_back(eol);
+            cerrarLinea();
         return;
     }
     if(palabra=="spwn"){
@@ -379,7 +388,7 @@ void lector::tokenizarPalabra(string linea){
         lista->push_back(num+1000);
         i=j;
         if(linea[j]=='\0')
-            lista->push_back(eol);
+            cerrarLinea();
         return;
     }
     for(auto t:tabla)
@@ -420,8 +429,11 @@ void lector::tokenizarPalabra(string linea){
                 int num=getNum(linea);
                 switch(directGetter){
                 case mlocal:
-                    if(num>=maxMemMovSize)
-                        maxMemMovSize=num+1;
+                    if(num>=memLocalSizes.back()){
+                        memLocalSizes.back()=num+1;
+                        if(num>=maxMemMovSize)
+                            maxMemMovSize=num+1;
+                    }
                     break;
                 case mglobal:
                     if(num>=memGlobalSize)
@@ -442,7 +454,7 @@ void lector::tokenizarPalabra(string linea){
             finalArr:
             i=j;
             if(linea[j]=='\0')
-                lista->push_back(eol);
+                cerrarLinea();
             return;
         }
     if(lista!=&tokens){ //se esta llamando desde cargarDefs
@@ -477,13 +489,22 @@ void lector::tokenizarCaracter(char c){
         if(doEsp){
             lista->push_back(esp);
             doEsp=false;
-            lista->push_back(eol);
+            cerrarLinea();
         }else{
             if(!lista->empty()&&lista->back()!=eol){//no es una linea vacia
-                lista->push_back(eol);
+                cerrarLinea();
             }
         }
         break;
+    }
+}
+void lector::cerrarLinea(){
+    if(lista->back()==lineJoin)
+        lista->pop_back();
+    else{
+        if(lista==&tokens)
+            memLocalSizes.push_back(0);
+        lista->push_back(eol);
     }
 }
 

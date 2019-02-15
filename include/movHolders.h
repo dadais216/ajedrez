@@ -5,7 +5,7 @@
 
 struct Base{ ///datos compartidos de un movimiento entero
     movHolder* beg;
-    int movSize;
+    int memLocalSize;
 };
 
 struct movHolder{
@@ -26,7 +26,7 @@ struct movHolder{
     }
     Holder* h;
     movHolder* sig;
-    Base base;
+    Base base;///@optim pointer
     bool valorCadena; //la cadena de movholders es valida. Una cadena va desde la base hasta un clicker o el final
     bool valorFinal;  //se llegó al final. Esto sirve para saber si seguir iterando en un desliz
     bool makeClick;
