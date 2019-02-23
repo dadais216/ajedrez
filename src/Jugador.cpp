@@ -132,11 +132,11 @@ void Aleatorio::turno(){
         if(val<minV)
             minV=val;
         cProm++;
-        if(cProm==2000){
+        if(cProm==200){
             cout<<"promedio: "<<fixed<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos"<<endl;
             cout<<"min: "<<minV/CLOCKS_PER_SEC<<endl;
             cout<<"max: "<<maxV/CLOCKS_PER_SEC<<endl;
-            exit(0);
+            //exit(0);
         }
 
         clickers.clear();

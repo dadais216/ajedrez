@@ -186,6 +186,7 @@ enPieza:
                 t->memTile.resize(memTileSize);
                 t->memTileTrigs.resize(memTileSize);
             }
+
     Holder* h=new Holder(sgn(n),new Pieza(n,sn),pos);
     tokens.clear();
     return h;

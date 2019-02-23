@@ -23,7 +23,8 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
         clickPos=lastN->posAct;
     else
     */
-    clickPos=static_cast<normal*>(lastN->op)->relPos+lastN->offsetAct;
+
+    clickPos=lastN->op->relPos+lastN->offsetAct;
 
     //clickPos.show();
     ///solapamientos

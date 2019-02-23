@@ -20,6 +20,8 @@ Pieza::Pieza(int _id,int _sn){
 
     bandoAct=sgn(_id);
     actualBucket=bucketPiezas;
+    lastBucket=&bucketPiezas;
+    vector<Pieza::base> movsTemp;
     int i=0;
     while(!tokens.empty()){
 //        for(int tok:tokens){
@@ -30,15 +32,19 @@ Pieza::Pieza(int _id,int _sn){
         clickExplicit=false;
         movSize=0;
         operador* op=tomar();
-        int memLocalSize=lect.memLocalSizes[i++];
+        assert(movSize<bucketSize);
+        memLocalSizeAct=lect.memLocalSizes[i++];
+        /*
         if(debugMode){
             normal* n=bucketAdd<normal>(false);
             n->conds.init(1,bucketAdd<debugInicial>());
             n->sig=op;
-            movs.push_back(Pieza::base{n,memLocalSize});
-        }else
-            movs.push_back(Pieza::base{op,memLocalSize});
+            movsTemp.push_back({n,memLocalSizeAct});
+        }else*/
+        movsTemp.push_back({op,memLocalSizeAct,movSize});
     }
+    movs.init(movsTemp.size(),movsTemp.data());
+
     memPiezaSize=lect.memPiezaSize;
 
     function<void(operador*)> showOp=[&showOp](operador* op)->void{
@@ -86,26 +92,40 @@ Pieza::Pieza(int _id,int _sn){
 
     piezas.push_back(this);
 }
-movHolder* crearMovHolder(Holder* h,operador* op,Base* base){
-    movHolder* m;
+
+void crearMovHolder(char** place,Holder* h,operador* op,Base* base){
+    char* placeBack=*place;
     switch(op->tipo){
     case NORMAL:
-        m=bucketAdd<normalHolder>(h,static_cast<normal*>(op),base);break;
+        *place+=sizeof(normalHolder);
+        new(placeBack)normalHolder(h,static_cast<normal*>(op),base,place);
+        break;
     case DESLIZ:
-        m=bucketAdd<deslizHolder>(h,static_cast<desliz*>(op),base);break;
+        *place+=sizeof(deslizHolder);
+        new(placeBack)deslizHolder(h,((desliz*)op),base,place);
+        break;
     case EXC:
-        m=bucketAdd<excHolder>(h,static_cast<exc*>(op),base);break;
+        *place+=sizeof(excHolder);
+        new(placeBack)excHolder(h,static_cast<exc*>(op),base,place);
+        break;
     case ISOL:
-        m=bucketAdd<isolHolder>(h,static_cast<isol*>(op),base);break;
+        *place+=sizeof(isolHolder);
+        new(placeBack)isolHolder(h,static_cast<isol*>(op),base);
+        break;
     case DESOPT:
-        m=bucketAdd<desoptHolder>(h,static_cast<desopt*>(op),base);
+        *place+=sizeof(desoptHolder);
+        new(placeBack)desoptHolder(h,static_cast<desopt*>(op),base);
     }
-    if(op->sig)
-        m->sig=crearMovHolder(h,op->sig,base);
+    if(op->sig){
+        ((movHolder*)placeBack)->sig=(movHolder*)*place;
+        crearMovHolder(place,h,op->sig,base);
+    }
     else
-        m->sig=nullptr;
-    return m;
+        ((movHolder*)placeBack)->sig=nullptr;
 }
+
+
+
 Holder::Holder(int _bando,Pieza* p,v pos_){
     bando=_bando;
     id=p->id;
@@ -113,17 +133,24 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     tile=tablptr->tile(pos_);
 
     actualBucket=bucketHolders;
+    lastBucket=&bucketHolders;
 
-    movs.reserve(sizeof(movHolder*)*pieza->movs.size());
+    ///@todo sacar temporal
+    movs.reserve(p->movs.count());
+    vector<movHolder*> movsTemp;
+
     memPieza.resize(p->memPiezaSize);
     memPiezaTrigs.resize(p->memPiezaSize);
     for(Pieza::base& b:pieza->movs){
-        Base* base=new Base;
+        actualBucket->enoughSize(b.size);
+        Base* base=new Base;///@todo sacar esto
         base->beg=nullptr;
         base->memLocalSize=b.memLocalSize;
-        movs.push_back(crearMovHolder(this,b.raiz,base));
+        movsTemp.push_back((movHolder*)actualBucket->head);
+        crearMovHolder(&actualBucket->head,this,b.raiz,base);
         delete base;
     }
+    movs.copy(movsTemp.data());
     inPlay=true;
 }
 Holder::~Holder(){

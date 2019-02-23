@@ -17,6 +17,8 @@ string str_add="add";
 string str_less="less";
 string str_more="more";
 
+int memLocalSizeAct;
+
 normal::normal(bool make){
     vector<acct*> accsTemp;
     vector<condt*> condsTemp;
@@ -33,14 +35,13 @@ normal::normal(bool make){
         setUpMemTriggersPerNormalHolder.init(setUpMemTriggersPerNormalHolderTemp.size(),setUpMemTriggersPerNormalHolderTemp.data());
     };
 
-    movSize+=sizeof(normalHolder);///@todo tambien sumar memLocalSize
+    movSize+=sizeof(normalHolder)+memLocalSizeAct;
     tipo=NORMAL;
     hasClick=makeClick=false;
     sig=nullptr;
     relPos=v(0,0);
     doEsp=false;
     bool posTriggerableCond=false;
-    int actionCount=0,conditionCount=0,colorCount=0,sMTPNHCount=0;
     if(make){
         bool changeInLocalMem=false;
         while(true){
@@ -311,8 +312,10 @@ desliz::desliz(){
     movSize=0;
     inside=tomar();
     v& tam=tablptr->tam;
-    deslizInsideSize=movSize*(tam.x>tam.y?tam.x:tam.y)*2;///@todo agregar posibilidad de elegir cuando se reserva
-    movSize=movSizeTemp+sizeof(deslizHolder)+deslizInsideSize;
+    //iteraciones necesarias para recorrer el tablero en linea recta.
+    iterSize=movSize;
+    insideSize=movSize*((tam.x>tam.y?tam.x:tam.y))*2;///@todo agregar posibilidad de elegir cuando se reserva
+    movSize=movSizeTemp+sizeof(deslizHolder)+insideSize;
 
     sig=keepOn(&makeClick);
 
@@ -327,15 +330,20 @@ desliz::desliz(){
 }
 exc::exc(){
     tipo=EXC;
-    movSize+=sizeof(excHolder);
+    int movSizeTemp=movSize;
+    movSize=0;
+
     vector<operador*> opsTemp;
     do{
         separator=false;
         operador* op=tomar();
         opsTemp.push_back(op);
     }while(separator);
-
     ops.init(opsTemp.size(),opsTemp.data());
+    movSize+=ops.size();
+
+    insideSize=movSize;
+    movSize=movSizeTemp+sizeof(excHolder)+insideSize;
 
     makeClick=false;
     sig=keepOn(&makeClick);
