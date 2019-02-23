@@ -30,11 +30,13 @@ struct normal:public operador{
 struct desliz:public operador{
     desliz();
     operador* inside;
-    int deslizInsideSize;
+    size_t insideSize;
+    size_t iterSize;
 };
 struct exc:public operador{
     exc();
     barray<operador*> ops;
+    int insideSize;//tamaño de movHolders + lo que ocupe ops
 };
 struct isol:public operador{
     isol();

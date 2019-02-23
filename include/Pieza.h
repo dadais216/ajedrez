@@ -19,7 +19,7 @@ struct Pieza{
         int memLocalSize;
         int size;
     };
-    vector<base> movs;
+    barray<base> movs;
 
     int memPiezaSize;
 
@@ -27,6 +27,7 @@ struct Pieza{
     Pieza(int,int);
 };
 
+extern int memLocalSizeAct;
 extern vector<Tile*> pisados;
 
 struct Holder{
@@ -44,13 +45,13 @@ struct Holder{
     vector<int> memPieza;
     vector<memTriggers> memPiezaTrigs;
 
-    vector<movHolder*> movs;
+    barray<movHolder*> movs;
     int id;
     int bando;
     bool inPlay;//false cuando la pieza esta generada y capturada. Solo se usa para evitar activar triggers dinamicos a capturados
 };
 struct Base;
-movHolder* crearMovHolder(Holder*,operador*,Base*);
+void crearMovHolder(char**,Holder*,operador*,Base*);
 
 
 

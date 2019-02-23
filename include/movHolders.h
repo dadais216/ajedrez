@@ -34,7 +34,7 @@ struct movHolder{
     ///@optim meter estos bools en una variable
 };
 struct normalHolder:public movHolder{
-    normalHolder(Holder*,normal*,Base*);//supongo que ni bien se crea el op le copias las accs
+    normalHolder(Holder*,normal*,Base*,char**);//supongo que ni bien se crea el op le copias las accs
     normal* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
@@ -43,7 +43,7 @@ struct normalHolder:public movHolder{
     void draw();
     void accionar();///desencadena los acct
     bool valor;       //las condiciones del movholder son verdaderas, las acciones guardadas validas
-    vector<int> memAct;
+    barray<int> memAct;
     //no separo entre piezas con y sin memoria porque duplicaria mucho codigo.
     //Cuando haga la version compilada puedo hacer esa optimizacion y cosas mas especificas
     bool doEsp;//ṕarece que vale la pena tener copias. En especial de este porque lo escribo
@@ -51,23 +51,27 @@ struct normalHolder:public movHolder{
     v relPos; //pos actual = relPös + offset. Todas las acciones y condiciones la comparten
 };
 struct deslizHolder:public movHolder{
-    deslizHolder(Holder*,desliz*,Base*);
+    deslizHolder(Holder*,desliz*,Base*,char**);
     desliz* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
-    vector<movHolder*> movs;
+    barray<void> movs;
+    int cantElems;//cantidad de iteraciones armadas
+    void maybeAddIteration(int);
     int f;
     bool lastNotFalse;
 };
 struct excHolder:public movHolder{
-    excHolder(Holder*,exc*,Base*);
+    excHolder(Holder*,exc*,Base*,char**);
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
-    vector<movHolder*> ops;
+    barray<movHolder*> ops;
+    ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
+    ///no estoy seguro de si seria mas rapido
     int actualBranch;
     bool valor;
 };
@@ -92,7 +96,7 @@ struct desoptHolder:public movHolder{
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
     vector<node> nodes;
-    vector<int> memAct;
+    barray<int> memAct;
 };
 
 //estos son todos los operadores. Püede que agregue uno más para movimientos no deterministicos

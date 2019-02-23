@@ -19,7 +19,7 @@ void movHolder::generarSig(){
     }else
         valorFinal=valorCadena=true;
 }
-normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
+normalHolder::normalHolder(Holder* h_,normal* org,Base* base_,char** head)
 :movHolder(h_,org,base_){
     op=org;
     for(auto trigInfo:op->setUpMemTriggersPerNormalHolder)
@@ -31,7 +31,9 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_)
         break;case 2:
             turnoTrigs[h->bando==-1].push_back({h,this});
         }
-    memAct.resize(base.memLocalSize);
+    memAct.begptr=(int*)*head;
+    memAct.endptr=(int*)*head+base_->memLocalSize;
+    *head=(char*)memAct.endptr;
     doEsp=op->doEsp;
     relPos=op->relPos;
 }
@@ -42,7 +44,7 @@ void normalHolder::generar(){
     actualHolder.h=h;
     actualHolder.nh=this;
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
-    memcpy(memAct.data(),memMov.data(),base.memLocalSize*sizeof(int));
+    memcpy(memAct.begptr,memMov.data(),base.memLocalSize*sizeof(int));
 
     if(doEsp){
         v actualPos=offset+relPos;
@@ -68,7 +70,7 @@ void normalHolder::generar(){
 void normalHolder::reaccionar(normalHolder* nh){
     if(nh==this){
         offset=offsetAct;
-        memcpy(memMov.data(),memAct.data(),base.memLocalSize*sizeof(int));
+        memcpy(memMov.data(),memAct.begptr,base.memLocalSize*sizeof(int));
         switchToGen=true;
         actualTile=tablptr->tile(relPos+offset);
         actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
@@ -84,7 +86,7 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
     for(normalHolder* nh:nhs){
         if(nh==this){
             offset=offsetAct;
-            memcpy(memMov.data(),memAct.data(),base.memLocalSize*sizeof(int));
+            memcpy(memMov.data(),memAct.begptr,base.memLocalSize*sizeof(int));
             switchToGen=true;
             actualTile=tablptr->tile(relPos+offset);
             actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
@@ -111,7 +113,6 @@ void normalHolder::accionar(){
 void normalHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;///@optim poner if antes de llamada
     norms->push_back(this);
-    //cout<<"#"<<makeClick<<"  ";
     if(makeClick)
         clickers.push_back(new Clicker(norms,h));
     if(sig)
@@ -122,24 +123,36 @@ void normalHolder::draw(){
     for(colort* c:op->colors)
         c->draw();
 }
-deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_)
+deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_,char** head)
 :movHolder(h_,org,base_){
     op=org;
-    movs.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
-    movs.push_back(crearMovHolder(h,org->inside,&base));
+    movs.begptr=*head;
+    movs.endptr=(char*)movs.begptr+org->insideSize;
+    movs.elem.setSize(org->iterSize);
+    crearMovHolder(head,h,org->inside,&base);//crear primera iteracion
+//    cout<<"!!!!"<<actualBucket->head-(char*)movs.begptr<<" == "<<org->iterSize<<"???????????"<<endl;
+    *head=(char*)movs.endptr;
+    cantElems=1;
+}
+void deslizHolder::maybeAddIteration(int i){
+    if(cantElems==i){
+        char* place=(char*)movs.begptr+movs.elem.size()*i;//crearMovHolder necesita **
+        crearMovHolder(&place,h,op->inside,&base);
+        cantElems++;
+        assert(cantElems<=movs.count());
+    }
 }
 void deslizHolder::generar(){
     lastNotFalse=false;
     movHolder* act;
     int i=0;
     for(;;){
-        act=movs[i];
+        act=(movHolder*)movs[i];
         act->generar();
         if(!act->valorFinal)
             break;
         i++;
-        if(movs.size()==i)
-            movs.push_back(crearMovHolder(h,op->inside,&base));
+        maybeAddIteration(i);
     }
     if(act->valorCadena)
         lastNotFalse=true;
@@ -150,15 +163,14 @@ int x=0;
 bool switchToGen;
 void deslizReaccionar(auto nh,deslizHolder* $){
     for(int i=0;i<=$->f;i++){
-        movHolder* act=$->movs[i];
+        movHolder* act=(movHolder*)$->movs[i];
         act->reaccionar(nh);
         if(switchToGen){
             $->lastNotFalse=false;
             for(;act->valorFinal;){
                 i++;
-                if($->movs.size()==i)
-                    $->movs.push_back(crearMovHolder($->h,$->op->inside,&$->base));
-                act=$->movs[i];
+                $->maybeAddIteration(i);
+                act=(movHolder*)$->movs[i];
                 act->generar();
             }
             if(act->valorCadena)
@@ -179,23 +191,28 @@ void deslizHolder::reaccionar(vector<normalHolder*> nhs){
 void deslizHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;
     for(int i=0;i<(lastNotFalse?f+1:f);i++){
-        movs[i]->cargar(norms);
+        ((movHolder*)movs[i])->cargar(norms);
     }
     if(makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
         clickers.push_back(new Clicker(norms,h));
     if(sig)
         sig->cargar(norms);
 }
-excHolder::excHolder(Holder* h_,exc* org,Base* base_)
+excHolder::excHolder(Holder* h_,exc* org,Base* base_,char** head)
 :movHolder(h_,org,base_){
-    ops.reserve(10*sizeof(movHolder));///@todo @optim temporal, eventualmente voy a usar buckets
-    for(operador* opos:org->ops)
-        ops.push_back(crearMovHolder(h,opos,&base));
+    ops.begptr=(movHolder**)*head;
+    ops.endptr=(movHolder**)(*head+org->ops.size());
+    *head=(char*)ops.endptr;
+    int i=0;
+    for(operador* opos:org->ops){
+        *(ops.begptr+i++)=(movHolder*)*head;
+        crearMovHolder(head,h,opos,&base);
+    }
 }
 void excHolder::generar(){
     int i;
-    for(i=0;i<ops.size();i++){
-        movHolder* branch=ops[i];
+    for(i=0;i<ops.count();i++){
+        movHolder* branch=*ops[i];
         branch->generar();
         if(branch->valorCadena){
             valor=true;
@@ -209,14 +226,14 @@ void excHolder::generar(){
 }
 void excReaccionar(auto nh,excHolder* $){
     for(int i=0;i<=$->actualBranch;i++){
-        movHolder* branch=$->ops[i];
+        movHolder* branch=*$->ops[i];
         branch->reaccionar(nh);
         if(switchToGen){
             if(!branch->valorCadena){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
                 int j;
-                for(j=0;j<$->ops.size();j++){
+                for(j=0;j<$->ops.count();j++){
                     if(i!=j){
-                        movHolder* brancj=$->ops[j];
+                        movHolder* brancj=*$->ops[j];
                         brancj->generar();
                         if(brancj->valorCadena){
                             $->valor=true;
@@ -248,7 +265,7 @@ void excHolder::reaccionar(vector<normalHolder*> nhs){
 }
 void excHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;
-    ops[actualBranch]->cargar(norms);
+    (*(ops[actualBranch]))->cargar(norms);
     if(makeClick)
         clickers.push_back(new Clicker(norms,h));
     if(sig)
@@ -256,7 +273,9 @@ void excHolder::cargar(vector<normalHolder*>* norms){
 }
 isolHolder::isolHolder(Holder* h_,isol* org,Base* base_)
 :movHolder(h_,org,base_){
-    inside=crearMovHolder(h_,org->inside,base_);
+    ///temporal, puse cualquier cosa ahi. Deberia recivir head por parametro
+    inside=(movHolder*)actualBucket->head;
+    crearMovHolder(&actualBucket->head,h_,org->inside,base_);
     valorFinal=valorCadena=true;
 }
 void isolHolder::generar(){
@@ -297,8 +316,8 @@ desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
     op=org;
     nodes.reserve(org->ops.size()*sizeof(node));///@todo @optim temporal, eventualmente voy a usar buckets
     for(operador* opos:org->ops)
-        nodes.emplace_back(crearMovHolder(h,opos,&base));
-    memAct.resize(base.memLocalSize);
+        ;///nodes.emplace_back(crearMovHolder(h,opos,&base));
+    //memAct.resize(base.memLocalSize);
 }
 struct dataPass{
     vector<operador*>* ops;
@@ -309,7 +328,7 @@ struct dataPass{
 void generarNodos(vector<node*>& nodes,dataPass& dp){
     if(nodes.empty())
         for(operador* opos:*(dp.ops))
-            nodes.push_back(new node(crearMovHolder(dp.h,opos,dp.b)));
+            ;///nodes.push_back(new node(crearMovHolder(dp.h,opos,dp.b)));
     v offsetAct=offset;
     for(node* n:nodes){
         n->mh->generar();
@@ -322,13 +341,13 @@ void desoptHolder::generar(){
     ///la iteracion inicial no necesita indireccion y no tiene un movimiento raiz
     dataPass dp{&static_cast<desopt*>(op)->ops,h,&base};
     v offsetAct=offset;
-    memcpy(memAct.data(),memMov.data(),base.memLocalSize*sizeof(int));
+    memcpy(memAct.begptr,memMov.data(),base.memLocalSize*sizeof(int));
     for(node& n:nodes){
         n.mh->generar();
         if(n.mh->valorFinal)
             generarNodos(n.nodes,dp);
         offset=offsetAct;
-        memcpy(memMov.data(),memAct.data(),base.memLocalSize*sizeof(int));
+        memcpy(memMov.data(),memAct.begptr,base.memLocalSize*sizeof(int));
     }
     generarSig();
 }

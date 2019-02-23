@@ -28,7 +28,7 @@ struct localaAcc:public getter{
     int ind;
     localaAcc(int ind_):ind(ind_){}
     virtual int* val(){
-        return &actualHolder.nh->memAct[ind];
+        return actualHolder.nh->memAct[ind];
     }
 };
 struct localai:public getterCond{
@@ -53,7 +53,7 @@ struct localaiAcc:public getter{//aparece en cadenas de 3 o mas
     getter* g;
     localaiAcc(getter* g_):g(g_){}
     virtual int* val(){
-        return &actualHolder.nh->memAct[*g->val()];
+        return actualHolder.nh->memAct[*g->val()];
     }
 };
 

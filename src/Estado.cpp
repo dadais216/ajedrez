@@ -82,8 +82,8 @@ Proper::Proper(int id_,int sel1,int sel2)
         }
     };
 
-    primero=selec(1,-1);
-    segundo=selec(0,1);
+    primero=selec(2,-1);
+    segundo=selec(2,1);
 
     if(nonHuman==2)
         fpsLock=0.;
