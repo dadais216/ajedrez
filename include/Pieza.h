@@ -43,8 +43,8 @@ struct Holder{
     Pieza* pieza;
     Tile* tile;
 
-    vector<int> memPieza;
-    vector<memTriggers> memPiezaTrigs;
+    barray<int> memPieza;
+    barray<memTriggers> memPiezaTrigs;
 
     barray<movHolder*> movs;
     int id;

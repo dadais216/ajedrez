@@ -31,9 +31,9 @@ Pieza::Pieza(int _id,int _sn){
 
         clickExplicit=false;
         movSize=0;
+        memLocalSizeAct=lect.memLocalSizes[i++];
         operador* op=tomar();
         assert(movSize<bucketSize);
-        memLocalSizeAct=lect.memLocalSizes[i++];
         /*
         if(debugMode){
             normal* n=bucketAdd<normal>(false);
@@ -110,11 +110,11 @@ void crearMovHolder(char** place,Holder* h,operador* op,Base* base){
         break;
     case ISOL:
         *place+=sizeof(isolHolder);
-        new(placeBack)isolHolder(h,static_cast<isol*>(op),base);
+        new(placeBack)isolHolder(h,static_cast<isol*>(op),base,place);
         break;
     case DESOPT:
         *place+=sizeof(desoptHolder);
-        new(placeBack)desoptHolder(h,static_cast<desopt*>(op),base);
+        new(placeBack)desoptHolder(h,static_cast<desopt*>(op),base,place);
     }
     if(op->sig){
         ((movHolder*)placeBack)->sig=(movHolder*)*place;
@@ -131,27 +131,41 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     id=p->id;
     pieza=p;
     tile=tablptr->tile(pos_);
+    inPlay=true;
 
     actualBucket=bucketHolders;
     lastBucket=&bucketHolders;
 
     ///@todo sacar temporal
     movs.reserve(p->movs.count());
-    vector<movHolder*> movsTemp;
+    int i=0;
 
-    memPieza.resize(p->memPiezaSize);
-    memPiezaTrigs.resize(p->memPiezaSize);
+    memPieza.reserve(p->memPiezaSize);
+    memset(memPieza.begptr,0,p->memPiezaSize*sizeof(int));
+
+    memPiezaTrigs.reserve(p->memPiezaSize);
+    for(int j=0;j<memPiezaTrigs.count();j++)
+        new(memPiezaTrigs[j])memTriggers();
+    //por ahora decidi hacer que los triggers usen memoria dinamica, porque es dificil determinar cuantos van a ser
+    //se podria pedir al usuario que marque eso, pero es una idea muy compleja para dejarla al aire,
+    //causando crashes si no se toca. Como default se podria inferir que es la cantidad de others que se usen,
+    //pero no puedo saber eso en esta etapa porque no proceso todos los operadores antes de arrancar con los holders.
+    //y esto romperia con triggers dinamicos y spawns.
+    //Supongo que si cambio mi opinion sobre esto va a ser recien en la version compilada, donde si tengo ganas
+    //podria hacer todo un sistema para inferir cuales son los triggers potencialmente usados en cualquier tipo de
+    //memoria. De todas formas no es algo muy importante, causaria un solo fallo de cache, y al menos en caso de
+    //pieza, nomas se usa cuando hay others y son bastante niche
+
     for(Pieza::base& b:pieza->movs){
-        actualBucket->enoughSize(b.size);
-        Base* base=new Base;///@todo sacar esto
-        base->beg=nullptr;
-        base->memLocalSize=b.memLocalSize;
-        movsTemp.push_back((movHolder*)actualBucket->head);
-        crearMovHolder(&actualBucket->head,this,b.raiz,base);
-        delete base;
+        actualBucket->enoughSize(b.size);//asegurar que un movimiento este contenido en un mismo bucket
+
+        Base base{nullptr,b.memLocalSize};
+        ///@todo esta base es innecesaria. memLocalSize se puede consultar de operador, no deberia tardar tiempo
+        ///porque se le consultan otras cosas tambien. Beg podría ser parte de actualHolder.
+
+        *movs[i++]=(movHolder*)actualBucket->head;
+        crearMovHolder(&actualBucket->head,this,b.raiz,&base);
     }
-    movs.copy(movsTemp.data());
-    inPlay=true;
 }
 Holder::~Holder(){
     uniqueIds.erase(find(uniqueIds.begin(),uniqueIds.end(),uniqueId));

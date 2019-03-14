@@ -150,7 +150,7 @@ struct spwn:public acct{
             Holder* h=reciclaje[i];
             if(h->id==id){//no tomo bandos distintos porque los movimientos estan espejados
                 h->inPlay=true;
-                memset(h->memPieza.data(),0,sizeof(int)*h->memPieza.size());
+                memset(h->memPieza.begptr,0,sizeof(int)*h->memPieza.size());
                 actualTile->holder=h;
                 h->tile=actualTile;
                 reciclaje.erase(reciclaje.begin()+i);

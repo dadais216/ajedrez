@@ -44,9 +44,11 @@ struct isol:public operador{
 };
 struct desopt:public operador{
     desopt();
-    vector<operador*> ops;
-    //barray<operador*> ops;
+    barray<operador*> ops;
+    barray<int> movSizes;//tamaño de cada movimiento, incluyendo puntero al proximo cluster
     int desoptInsideSize;
+    int clusterSize;
+    int dinamClusterBaseOffset;
 };
 
 

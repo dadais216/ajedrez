@@ -135,15 +135,15 @@ struct piezaaWrite:public getter{
     int ind;
     piezaaWrite(int ind_):ind(ind_){}
     virtual int* val(){
-        trigsMaybeActivate=&actualHolder.h->memPiezaTrigs[ind];
-        return &actualHolder.h->memPieza[ind];
+        trigsMaybeActivate=actualHolder.h->memPiezaTrigs[ind];
+        return actualHolder.h->memPieza[ind];
     }
 };
 struct piezaaRead:public getterCond{
     int ind;
     piezaaRead(int ind_):ind(ind_){}
     virtual int* val(){
-        return &actualHolder.h->memPieza[ind];
+        return actualHolder.h->memPieza[ind];
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-actualHolder.h->memPieza.size()/4)));
@@ -154,7 +154,7 @@ struct piezaaReadNT:public getter{
     int ind;
     piezaaReadNT(int ind_):ind(ind_){}
     virtual int* val(){
-        return &actualHolder.h->memPieza[ind];
+        return actualHolder.h->memPieza[ind];
     }
 };
 struct piezaaiWrite:public getter{
@@ -162,8 +162,8 @@ struct piezaaiWrite:public getter{
     piezaaiWrite(getter* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-        trigsMaybeActivate=&actualHolder.h->memPiezaTrigs[ind];
-        return &actualHolder.h->memPieza[ind];
+        trigsMaybeActivate=actualHolder.h->memPiezaTrigs[ind];
+        return actualHolder.h->memPieza[ind];
     }
 };
 struct piezaaiRead:public getterCond{
@@ -171,8 +171,8 @@ struct piezaaiRead:public getterCond{
     piezaaiRead(getterCond* g_):g(g_){}
     virtual int* val(){
         int ind=*g->val();
-        actualHolder.h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
-        return &actualHolder.h->memPieza[ind];
+        actualHolder.h->memPiezaTrigs[ind]->dinam.push_back(actualHolder.nh);
+        return actualHolder.h->memPieza[ind];
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
@@ -187,7 +187,7 @@ struct piezaaiReadNT:public getter{
     getter* g;
     piezaaiReadNT(getter* g_):g(g_){}
     virtual int* val(){
-        return &actualHolder.h->memPieza[*g->val()];
+        return actualHolder.h->memPieza[*g->val()];
     }
 };
 
@@ -269,8 +269,8 @@ struct otheraWrite:public getter{
     otheraWrite(int ind_):ind(ind_){}
     virtual int* val(){
         Holder* h=actualTile->holder;
-        trigsMaybeActivate=&h->memPiezaTrigs[ind];//podria asumir que other nunca se usa sobre uno y sacar el if holder==
-        return &h->memPieza[ind];
+        trigsMaybeActivate=h->memPiezaTrigs[ind];//podria asumir que other nunca se usa sobre uno y sacar el if holder==
+        return h->memPieza[ind];
     }
 };
 int memOtherSize=0;
@@ -279,8 +279,8 @@ struct otheraRead:public getterCond{
     otheraRead(int ind_):ind(ind_){}
     virtual int* val(){
         Holder* h=actualTile->holder;
-        h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
-        return &h->memPieza[ind];
+        h->memPiezaTrigs[ind]->dinam.push_back(actualHolder.nh);
+        return h->memPieza[ind];
     }
     virtual void drawDebugMem(){
         posDebugTile=actualHolder.nh->offsetAct+actualHolder.nh->relPos;
@@ -293,7 +293,7 @@ struct otheraReadNT:public getter{
     int ind;
     otheraReadNT(int ind_):ind(ind_){}
     virtual int* val(){
-        return &actualTile->holder->memPieza[ind];
+        return actualTile->holder->memPieza[ind];
     }
 };
 struct otheraiWrite:public getter{
@@ -302,8 +302,8 @@ struct otheraiWrite:public getter{
     virtual int* val(){
         int ind=*g->val();
         Holder* h=actualTile->holder;
-        trigsMaybeActivate=&h->memPiezaTrigs[ind];
-        return &h->memPieza[ind];
+        trigsMaybeActivate=h->memPiezaTrigs[ind];
+        return h->memPieza[ind];
     }
 };
 struct otheraiRead:public getterCond{
@@ -313,8 +313,8 @@ struct otheraiRead:public getterCond{
     virtual int* val(){
         ind=*g->val();
         Holder* h=actualTile->holder;
-        h->memPiezaTrigs[ind].dinam.push_back(actualHolder.nh);
-        return &h->memPieza[ind];
+        h->memPiezaTrigs[ind]->dinam.push_back(actualHolder.nh);
+        return h->memPieza[ind];
     }
     virtual void drawDebugMem(){
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
@@ -328,7 +328,7 @@ struct otheraiReadNT:public getter{
     getter* g;
     otheraiReadNT(getter* g_):g(g_){}
     virtual int* val(){
-        return &actualTile->holder->memPieza[*g->val()];
+        return actualTile->holder->memPieza[*g->val()];
     }
 };
 

@@ -3,6 +3,6 @@
 
 Bucket* actualBucket;
 Bucket** lastBucket;//bucketPieza o bucketHolder
-int bucketSize=100000;
+int bucketSize=100000000;
 
 

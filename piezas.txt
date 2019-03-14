@@ -68,10 +68,11 @@ desliz isol desliz isol mover end d end end s end
 desliz exc w mover or a mover end c end
 
 :9 1
-desliz w mover c end
+#desopt wa mover or wd mover end
+desopt wwa mover or wwd mover or aaw mover or ddw mover end 
+s mover
 
 :10 2
-exc w mover or a mover end
-
+{a,d} mover
 
 

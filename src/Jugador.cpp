@@ -123,6 +123,9 @@ void Aleatorio::turno(){
         auto it=clickers.begin();
         advance(it,rand()%clickers.size());
 
+        sleep(milliseconds(120));
+
+
         clock_t t=clock();
         (*it)->update();
         double val=clock()-t;
