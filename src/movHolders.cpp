@@ -27,13 +27,14 @@ normalHolder::normalHolder(Holder* h_,normal* org,Base* base_,char** head)
         case 0:
             memGlobalTriggers[trigInfo.ind].perma.push_back(this);
         break;case 1:
-            h->memPiezaTrigs[trigInfo.ind].perma.push_back(this);
+            h->memPiezaTrigs[trigInfo.ind]->perma.push_back(this);
         break;case 2:
             turnoTrigs[h->bando==-1].push_back({h,this});
         }
     memAct.begptr=(int*)*head;
-    memAct.endptr=(int*)*head+base_->memLocalSize;
+    memAct.endptr=((int*)*head)+base_->memLocalSize;
     *head=(char*)memAct.endptr;
+
     doEsp=op->doEsp;
     relPos=op->relPos;
 }
@@ -130,7 +131,6 @@ deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_,char** head)
     movs.endptr=(char*)movs.begptr+org->insideSize;
     movs.elem.setSize(org->iterSize);
     crearMovHolder(head,h,org->inside,&base);//crear primera iteracion
-//    cout<<"!!!!"<<actualBucket->head-(char*)movs.begptr<<" == "<<org->iterSize<<"???????????"<<endl;
     *head=(char*)movs.endptr;
     cantElems=1;
 }
@@ -271,11 +271,10 @@ void excHolder::cargar(vector<normalHolder*>* norms){
     if(sig)
         sig->cargar(norms);
 }
-isolHolder::isolHolder(Holder* h_,isol* org,Base* base_)
+isolHolder::isolHolder(Holder* h_,isol* org,Base* base_,char** head)
 :movHolder(h_,org,base_){
-    ///temporal, puse cualquier cosa ahi. Deberia recivir head por parametro
-    inside=(movHolder*)actualBucket->head;
-    crearMovHolder(&actualBucket->head,h_,org->inside,base_);
+    inside=(movHolder*)*head;
+    crearMovHolder(head,h_,org->inside,base_);
     valorFinal=valorCadena=true;
 }
 void isolHolder::generar(){
@@ -310,34 +309,32 @@ void isolHolder::cargar(vector<normalHolder*>* norms){
     if(sig)
         sig->cargar(norms);
 }
-node::node(movHolder* m):mh(m){}
-desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_)
+desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_,char** head)
 :movHolder(h_,org,base_){
     op=org;
-    nodes.reserve(org->ops.size()*sizeof(node));///@todo @optim temporal, eventualmente voy a usar buckets
-    for(operador* opos:org->ops)
-        ;///nodes.emplace_back(crearMovHolder(h,opos,&base));
-    //memAct.resize(base.memLocalSize);
-}
-struct dataPass{
-    vector<operador*>* ops;
-    Holder* h;
-    Base* b;
-};
-///@optim stack dp global?
-void generarNodos(vector<node*>& nodes,dataPass& dp){
-    if(nodes.empty())
-        for(operador* opos:*(dp.ops))
-            ;///nodes.push_back(new node(crearMovHolder(dp.h,opos,dp.b)));
-    v offsetAct=offset;
-    for(node* n:nodes){
-        n->mh->generar();
-        if(n->mh->valorFinal)
-            generarNodos(n->nodes,dp);
-        offset=offsetAct;
+    char* nextIteration=*head;
+    char* headFirst=*head;
+    for(operador* opos:org->ops){//armar base
+        assert(sizeof(movHolder*)==sizeof(char*));//debe haber una forma menos sospechosa de hacer esto
+        **((movHolder***)head)=(movHolder*)(nextIteration+=op->clusterSize);//head apunta a puntero al proximo cluester de movimientos,
+        *head+=sizeof(node*);//que corresponde a la proxima iteracion de este movHolder
+        crearMovHolder(head,h,opos,&base);
     }
+    for(int i=0;i<org->ops.count();i++){//armar primer iteracion
+        for(operador* opos:org->ops){
+            **(movHolder***)head=nullptr;//cuando se use apunta a un espacio dinamico
+            *head+=sizeof(node*);
+            crearMovHolder(head,h,opos,&base);
+        }
+    }
+    *head=headFirst+op->desoptInsideSize;
+    //memAct.resize(base.memLocalSize);
+    valorCadena=valorFinal=true;
 }
+
+
 void desoptHolder::generar(){
+    /*
     ///la iteracion inicial no necesita indireccion y no tiene un movimiento raiz
     dataPass dp{&static_cast<desopt*>(op)->ops,h,&base};
     v offsetAct=offset;
@@ -350,57 +347,143 @@ void desoptHolder::generar(){
         memcpy(memMov.data(),memAct.begptr,base.memLocalSize*sizeof(int));
     }
     generarSig();
-}
-void reaccionarNodos(auto nh,vector<node*>& nodes,dataPass& dp){
-    for(node* n:nodes){
-        n->mh->reaccionar(nh);
-        if(switchToGen){
-            if(n->mh->valorFinal)
-                generarNodos(n->nodes,dp);
-            switchToGen=false;
-            continue;
-        }
-        reaccionarNodos(nh,n->nodes,dp);
+    */
+    ///se tiene la base y primera iteracion construidos, rondas mas alla de estas usan el resto de memoria
+    ///de forma dinamica. Es un punto intermedio entre tener todo construido y reservar mucha memoria que probablemente
+    ///no se use, y hacer todo dinamico y estar reconstruyendo operadores en cada generacion
+    ///Seria lo mas optimizado para la dama
+
+    //creo que con limpiar la caja de movHolders de la primera iteracion antes de la generacion total
+    //y sobreescribir el espacio dinamico
+    //no deberia haber ningun problema de construcciones kakeadas y cosas asi
+    dinamClusterHead=movs()+op->dinamClusterBaseOffset;
+
+
+    int clusterOffset=0;
+    char* correspondingCluster=movs()+op->clusterSize;
+
+    v offsetAct=offset;
+    for(int tam:op->movSizes){
+        node* firstIter=(node*)(movs()+clusterOffset);
+        //puede que sea mas rapido no usar un puntero para la primera iteracion, no sé
+        movHolder* actualMov=(movHolder*)(firstIter+1);
+
+        actualMov->generar();
+        if(actualMov->valorFinal){
+            firstIter->iter=(node*)correspondingCluster;
+            int clusterOffset2=0;
+            v offsetAct2=offset;
+            for(int tam:op->movSizes){
+                node* secondIter=(node*)((char*)firstIter->iter+clusterOffset2);
+                movHolder* actualMov2=(movHolder*)(secondIter+1);
+
+                actualMov2->generar();
+                if(actualMov2->valorFinal){
+                    secondIter->iter=(node*)dinamClusterHead;
+                    construirYGenerarNodo();
+                }else
+                    secondIter->iter=nullptr;
+                clusterOffset2+=tam;
+                offset=offsetAct2;
+            }
+        }else
+            firstIter->iter=nullptr;
+        clusterOffset+=tam;
+        correspondingCluster+=op->clusterSize;
+        offset=offsetAct;
     }
 }
-void desoptReaccionar(auto nh,desoptHolder* $){
-    dataPass dp{&static_cast<desopt*>($->op)->ops,$->h,&$->base};
-    for(node n:$->nodes){
-        n.mh->reaccionar(nh);
+void desoptHolder::construirYGenerarNodo(){
+    char* clusterBeg=dinamClusterHead;
+    assert(dinamClusterHead<movs()+op->desoptInsideSize);
+    for(operador* opos:op->ops){
+        *(movHolder**)dinamClusterHead=nullptr;
+        dinamClusterHead+=sizeof(node);
+        crearMovHolder(&dinamClusterHead,h,opos,&base);
+    }
+    int clusterOffset=0;
+    v offsetAct=offset;
+    for(int tam:op->movSizes){
+        node* nextIter=(node*)(clusterBeg+clusterOffset);
+        movHolder* actualMov=(movHolder*)(nextIter+1);
+
+        actualMov->generar();
+        if(actualMov->valorFinal){
+            nextIter->iter=(node*)dinamClusterHead;
+            construirYGenerarNodo();
+        }
+        clusterOffset+=tam;
+        offset=offsetAct;
+    }
+}
+void desoptHolder::generarNodo(node* iter){//iter valido
+    int clusterOffset=0;
+    v offsetAct=offset;
+    for(int tam:op->movSizes){
+        node* nextIter=(node*)((char*)iter+clusterOffset);
+        movHolder* actualMov=(movHolder*)(nextIter+1);
+        actualMov->generar();
+        if(actualMov->valorFinal){
+            if(nextIter->iter){
+                generarNodo(nextIter->iter);
+            }else{
+                nextIter->iter=(node*)dinamClusterHead;
+                construirYGenerarNodo();
+            }
+        }
+        clusterOffset+=tam;
+        offset=offsetAct;
+    }
+}
+void desoptReaccionar(auto nh,desoptHolder* $,desoptHolder::node* iter){
+    int offset=0;
+    for(int tam:$->op->movSizes){
+        desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+offset);
+        movHolder* actualMov=(movHolder*)(nextIter+1);
+        offset+=tam;
+
+        actualMov->reaccionar(nh);
         if(switchToGen){
-            if(n.mh->valorFinal)
-                generarNodos(n.nodes,dp);
+            if(actualMov->valorFinal){
+                if(nextIter->iter)
+                    $->generarNodo(nextIter->iter);
+                else{
+                    nextIter->iter=(desoptHolder::node*)$->dinamClusterHead;
+                    $->construirYGenerarNodo();
+                }
+            }
             switchToGen=false;
             continue;
         }
-        reaccionarNodos(nh,n.nodes,dp);
+        desoptReaccionar(nh,$,nextIter->iter);
     }
 }
 void desoptHolder::reaccionar(normalHolder* nh){
-    desoptReaccionar(nh,this);
+    desoptReaccionar(nh,this,(node*)movs());
 }
 void desoptHolder::reaccionar(vector<normalHolder*> nhs){
-    desoptReaccionar(nhs,this);
+    desoptReaccionar(nhs,this,(node*)movs());
 }
-void cargarNodos(vector<node*>& nodes,vector<normalHolder*>* norms){
+void desoptHolder::cargarNodos(node* iter,vector<normalHolder*>* norms){
     int res=norms->size();
-    for(node* n:nodes){
-        n->mh->cargar(norms);
-        if(n->mh->valorFinal)
-            cargarNodos(n->nodes,norms);
+    int offset=0;
+    for(int tam:op->movSizes){
+        node* nextIter=(node*)((char*)iter+offset);
+        movHolder* actualMov=(movHolder*)(nextIter+1);
+        if(actualMov->valorFinal){
+            actualMov->cargar(norms);
+            assert(nextIter->iter);
+            cargarNodos(nextIter->iter,norms);
+        }else if(makeClick&&!norms->empty()){
+            clickers.push_back(new Clicker(norms,h));
+        }
+        offset+=tam;
         norms->resize(res);
     }
 }
 void desoptHolder::cargar(vector<normalHolder*>* norms){
-    int res=norms->size();
-    norms->reserve(100);///@todo buckets
-    for(node& n:nodes){
-        n.mh->cargar(norms);
-        if(n.mh->valorFinal)
-            cargarNodos(n.nodes,norms);
-        norms->resize(res);
-    }
-    if(sig)
+    cargarNodos((node*)movs(),norms);
+    if(sig)//puede que decida prohibir poner cosas despues de un desopt, obligar a envolver en un isol si se quiere
         sig->cargar(norms);
 }
 /*

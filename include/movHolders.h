@@ -76,30 +76,32 @@ struct excHolder:public movHolder{
     bool valor;
 };
 struct isolHolder:public movHolder{
-    isolHolder(Holder*,isol*,Base*);
+    isolHolder(Holder*,isol*,Base*,char**);
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
     movHolder* inside;
 };
-struct node{
-    node(movHolder*);
-    movHolder* mh;
-    vector<node*> nodes;
-};
+
 struct desoptHolder:public movHolder{
-    desoptHolder(Holder*,desopt*,Base*);
+    desoptHolder(Holder*,desopt*,Base*,char**);
     desopt* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
-    vector<node> nodes;
-    barray<int> memAct;
+    struct node{
+        node* iter;
+        //movimiento
+    };
+    char* dinamClusterHead;
+    void generarNodo(node*);
+    void construirYGenerarNodo();
+    void cargarNodos(node*,vector<normalHolder*>*);
+    char* movs(){
+        return (char*)this+sizeof(desoptHolder);
+    }
 };
-
-//estos son todos los operadores. Püede que agregue uno más para movimientos no deterministicos
-
 
 #endif // MOVHOLDERS_H

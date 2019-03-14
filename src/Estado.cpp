@@ -70,7 +70,7 @@ Proper::Proper(int id_,int sel1,int sel2)
     :tablero(){
     id=id_;
     j->change(this);
-    debugMode=false;
+    debugMode=true;
 
     int nonHuman=0;
     auto selec=[&](int sel,int bando)->Jugador*{
@@ -82,8 +82,8 @@ Proper::Proper(int id_,int sel1,int sel2)
         }
     };
 
-    primero=selec(2,-1);
-    segundo=selec(2,1);
+    primero=selec(1,-1);
+    segundo=selec(0,1);
 
     if(nonHuman==2)
         fpsLock=0.;
@@ -230,7 +230,7 @@ void Proper::draw(){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),305+45*(i/4-memGlobalSize/4)));
             window->draw(backGroundMem);
         }
-        int memPiezaSize=actualHolder.h->memPieza.size();
+        int memPiezaSize=actualHolder.h->memPieza.count();
         for(int i=0;i<memPiezaSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),205+45*(i/4-memPiezaSize/4)));
             window->draw(backGroundMem);
@@ -255,7 +255,7 @@ void Proper::draw(){
         }
         for(int i=0;i<memPiezaSize;i++){
             textValMem.setPosition(530+25*(i%4),210+45*(i/4-memPiezaSize/4));
-            textValMem.setString(to_string(actualHolder.h->memPieza[i]));
+            textValMem.setString(to_string(*actualHolder.h->memPieza[i]));
             window->draw(textValMem);
         }
         for(int i=0;i<memTileSize;i++){
@@ -266,7 +266,7 @@ void Proper::draw(){
         if(memOtherSize){
             for(int i=0;i<memOtherSize;i++){
                 textValMem.setPosition(530+25*(i%4),160+45*(i/4-memOtherSize/4));
-                textValMem.setString(to_string(tablptr->tile(posDebugTile)->holder->memPieza[i]));
+                textValMem.setString(to_string(*tablptr->tile(posDebugTile)->holder->memPieza[i]));
                 window->draw(textValMem);
             }
             memOtherSize=0;

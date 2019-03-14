@@ -35,7 +35,7 @@ normal::normal(bool make){
         setUpMemTriggersPerNormalHolder.init(setUpMemTriggersPerNormalHolderTemp.size(),setUpMemTriggersPerNormalHolderTemp.data());
     };
 
-    movSize+=sizeof(normalHolder)+memLocalSizeAct;
+    movSize+=sizeof(normalHolder)+memLocalSizeAct*sizeof(int);
     tipo=NORMAL;
     hasClick=makeClick=false;
     sig=nullptr;
@@ -376,25 +376,37 @@ desopt::desopt(){
     tipo=DESOPT;
     int movSizeTemp=movSize;
     movSize=0;
-    //vector<operador*> opsTemp;
+    vector<operador*> opsTemp;
+    vector<int> sizesTemp;
+    int branches=0;
     do{
+        int movSizeTemp=movSize;
         separator=false;
         operador* op=tomar();
-        ops.push_back(op);
-        //opsTemp.push_back(op);
+        opsTemp.push_back(op);
+        sizesTemp.push_back(movSize-movSizeTemp);
+        branches++;
     }while(separator);
-    //ops.init(opsTemp.size(),opsTemp.data());
+    ops.init(opsTemp.size(),opsTemp.data());
+    for(int& i:sizesTemp) i+=sizeof(desoptHolder::node*);//sumar espacio puntero a cluster
+    movSize+=branches*sizeof(desoptHolder::node*);
 
-    int ramasEnProfundidad=1;
-    int sumRamas=0;
-    for(int i=0;i<3;i++){///@todo 3 es profundidad. Como con desliz, agregar opcion de editar
-        ramasEnProfundidad*=ops.size();
-        sumRamas+=ramasEnProfundidad;
-    }
-    desoptInsideSize=movSize*sumRamas;
+    movSizes.init(branches,sizesTemp.data());
+
+    clusterSize=movSize;
+    dinamClusterBaseOffset=clusterSize+clusterSize*branches;
+    desoptInsideSize=clusterSize+clusterSize*branches+clusterSize*4;//4 es la cantidad de slots del espacio dinamico. Hacer que
+    //se pueda determinar otros valores como con desliz
+    movSize=movSizeTemp+sizeof(desoptHolder)+desoptInsideSize;
     //va a ser un valor muy desproporcionado para profundidades altas. Puede que sea mejor usar alguna mecanica
     //de reutilizacion. Las piezas que usen todas las ramas a la vez serían mas rapidas que lo mismo usando memoria
     //dinamica. El problema esta en piezas que reserven mucho y usen poco
+    //me parece que lo mejor no es tener esta mecanica de profundidad, o solo dejarla como default. Para
+    //piezas como la dama reserva mucho mas de lo que usa innecesariamente. Seria mejor reservar una cantidad especificada,
+    //y reutilizarla en cada generacion.
+    //con el sistema actual una dama de profundidad 3 reservaria 4+4*4+4*4*4=84 bloques, y una cadena de 4 romperia
+    //todo. Con el otro sistema se podria hacer algo razonable, como reservar 14. Eso manejaria mejor las cadenas
+    //largas, y usa mejor la memoria, reserva menos y lo que usa queda contiguo.
 
     makeClick=false;
     sig=keepOn(&makeClick);
