@@ -20,7 +20,7 @@ struct lector{
                 W,A,S,D,N,
                 mov,capt,spwn,pausa,
                 vacio,pieza,enemigo,pass,esp,
-                mcmp,mset,madd,mless,mmore,msize,
+                mcmp,mset,madd,mless,mmore,mdist,msize,
                 mlocal,mglobal,mpieza,mtile,mother,turno,posX,posY,
                 desliz,exc,isol,desopt,
                 click,
@@ -38,10 +38,10 @@ struct lector{
     int memPiezaSize;
     vector<int> memLocalSizes;
 
-    void centinela(string,char);
-    void tokenizarPalabra(string);
+    void centinela(string&,char);
+    void tokenizarPalabra(string&);
     void tokenizarCaracter(char);
-    void tokenizarLinea(string);
+    void tokenizarLinea(string&);
     void cerrarLinea();
     int getNum(string&);
     void cargarDefs();

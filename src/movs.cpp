@@ -264,6 +264,9 @@ inline bool mlessCond(getter* a1,getter* a2){
 inline bool mmoreCond(getter* a1,getter* a2){
     return *a1->val()>*a2->val();
 }
+inline bool mdistCond(getter* a1,getter* a2){
+    return *a1->val()!=*a2->val();
+}
 
 
 

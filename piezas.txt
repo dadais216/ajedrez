@@ -1,5 +1,5 @@
-def mover vacio mov color 20 200 115
-def captura enemigo capt mov color 200 10 10
+def mover vacio mov color 20 200 115 pausa
+def captura pieza capt mov color 200 10 10
 
 :1 0 #peon
 #w mover mset p0 1 exc mcmp y 7 capt spwn 5 or isol mcmp p0 0 w mover mset p0 1 end end
@@ -67,12 +67,27 @@ desliz isol desliz isol mover end d end end s end
 #desliz {w,wa,a,as,s,sd,d,dw} mover c end
 desliz exc w mover or a mover end c end
 
-:9 1
+:9 7
 #desopt wa mover or wd mover end
-desopt wwa mover or wwd mover or aaw mover or ddw mover end 
-s mover
+#desopt wwa mover or wwd mover or aaw mover or ddw mover end 
+#s mover
+#desopt wa mover madd l0 1 mless l0 2 or wd mover madd l0 1 mless l0 4 end
+#mset l0 -1 desopt \
+#       mdist l0 3 wa captura wa mover pausa mset l0 0 or \
+#       mdist l0 2 wd captura wd mover pausa mset l0 1 or \
+#       mdist l0 1 sa captura sa mover pausa mset l0 2 or \
+#       mdist l0 0 sd captura sd mover pausa mset l0 3 end #dama que no se banca bucles
+           #l0 iterador, l1 tamaño, l2 en adelante array de posiciones
+def newPos mset l0 2 desliz mless l0 l1 exc mdist x ll0 madd l0 2 or madd l0 1 mdist y ll0 madd l0 1 end end mcmp l0 l1
+def addPos mset ll1 x madd l1 1 mset ll1 y madd l1 1 
+msize l 20 mset l1 2 desopt \
+       wa captura wa mover newPos addPos c or \
+       wd captura wd mover newPos addPos c or \
+       sa captura sa mover newPos addPos c or \
+       sd captura sd mover newPos addPos c end
+
 
 :10 2
-{a,d} mover
+{a,d,w,s} mover
 
 

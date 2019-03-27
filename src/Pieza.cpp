@@ -11,11 +11,11 @@ Pieza::Pieza(int _id,int _sn){
     //recibe la lista de tokens y el tamaño de la memoria de pieza y las memorias locales
     id=_id;//signo indica bando
     sn=_sn;
-    spriteb.setTexture(imagen->get("sprites.png"));
-    spriteb.setTextureRect(IntRect(64+sn*64,0,32,32));
+    spriteb.setTexture(imagen->get("piezas.png"));
+    spriteb.setTextureRect(IntRect(sn*64%384,(sn*64/384)*32,32,32));
     spriteb.setScale(escala,escala);
-    spriten.setTexture(imagen->get("sprites.png"));
-    spriten.setTextureRect(IntRect(64+sn*64+32,0,32,32));
+    spriten.setTexture(imagen->get("piezas.png"));
+    spriten.setTextureRect(IntRect(sn*64%384+32,(sn*64/384)*32,32,32));
     spriten.setScale(escala,escala);
 
     bandoAct=sgn(_id);
@@ -206,7 +206,6 @@ void Holder::makeCli(){
 void Holder::generar(){
     for(movHolder* m:movs){
         offset=tile->pos;
-        ///@optim ver si resulta comodo para el lenguaje hacer que la memoria de movimiento arranque en 0
         memset(memMov.data(),0,m->base.memLocalSize*sizeof(int));
         m->generar();
     }

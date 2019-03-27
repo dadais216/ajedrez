@@ -16,6 +16,7 @@ string str_set="set";
 string str_add="add";
 string str_less="less";
 string str_more="more";
+string str_dist="dist";
 
 int memLocalSizeAct;
 
@@ -99,6 +100,7 @@ normal::normal(bool make){
             case lector::madd:
             case lector::mless:
             case lector::mmore:
+            case lector::mdist:
                 {
                     ///hay 2 tipos de operaciones en memoria no local
                     ///condiciones que leen
@@ -259,6 +261,7 @@ normal::normal(bool make){
                         else condsTemp.push_back(new mcond<m##F##Cond,&str_##F>(g[0],g[1])); break;
                         switch(tok){
                             memCase(cmp);
+                            memCase(dist);
                             memCase(set);
                             memCase(add);
                             memCase(less);
@@ -395,18 +398,9 @@ desopt::desopt(){
 
     clusterSize=movSize;
     dinamClusterBaseOffset=clusterSize+clusterSize*branches;
-    desoptInsideSize=clusterSize+clusterSize*branches+clusterSize*4;//4 es la cantidad de slots del espacio dinamico. Hacer que
-    //se pueda determinar otros valores como con desliz
+    desoptInsideSize=clusterSize+clusterSize*branches+clusterSize*24;//12 es la cantidad de slots del espacio dinamico
+    //@todo hacerse pueda determinar otros valores como con desliz
     movSize=movSizeTemp+sizeof(desoptHolder)+desoptInsideSize;
-    //va a ser un valor muy desproporcionado para profundidades altas. Puede que sea mejor usar alguna mecanica
-    //de reutilizacion. Las piezas que usen todas las ramas a la vez serían mas rapidas que lo mismo usando memoria
-    //dinamica. El problema esta en piezas que reserven mucho y usen poco
-    //me parece que lo mejor no es tener esta mecanica de profundidad, o solo dejarla como default. Para
-    //piezas como la dama reserva mucho mas de lo que usa innecesariamente. Seria mejor reservar una cantidad especificada,
-    //y reutilizarla en cada generacion.
-    //con el sistema actual una dama de profundidad 3 reservaria 4+4*4+4*4*4=84 bloques, y una cadena de 4 romperia
-    //todo. Con el otro sistema se podria hacer algo razonable, como reservar 14. Eso manejaria mejor las cadenas
-    //largas, y usa mejor la memoria, reserva menos y lo que usa queda contiguo.
 
     makeClick=false;
     sig=keepOn(&makeClick);
