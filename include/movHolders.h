@@ -99,6 +99,8 @@ struct desoptHolder:public movHolder{
     void generarNodo(node*);
     void construirYGenerarNodo();
     void cargarNodos(node*,vector<normalHolder*>*);
+
+
     char* movs(){
         return (char*)this+sizeof(desoptHolder);
     }

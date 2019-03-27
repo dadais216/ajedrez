@@ -39,12 +39,14 @@ lector::lector(){
     rel(madd);
     rel(mless);
     rel(mmore);
+    rel(mdist);
     #undef rel
     tablaMem["=="]=mcmp;
     tablaMem["="]=mset;
     tablaMem["+="]=madd;
     tablaMem["<"]=mless;
     tablaMem[">"]=mmore;
+    tablaMem["!="]=mdist;
     lista=nullptr;
 }
 
@@ -152,6 +154,7 @@ enPieza:
             CASE(madd);
             CASE(mless);
             CASE(mmore);
+            CASE(mdist);
             CASE(mlocal);
             CASE(mglobal);
             CASE(mpieza);
@@ -286,7 +289,7 @@ void lector::procesarTokens(list<int>& tokens){
             it=tokens.erase(it);
     }
 }
-void lector::tokenizarLinea(string linea){
+void lector::tokenizarLinea(string& linea){
     i=0,j=0;
     for(;j<linea.length()+1;j++){
         switch(linea[j]){
@@ -301,7 +304,7 @@ void lector::tokenizarLinea(string linea){
         }
     }
 }
-void lector::centinela(string linea,char c){
+void lector::centinela(string& linea,char c){
     if(hayAtras){
         tokenizarPalabra(linea);
         hayAtras=false;
@@ -317,10 +320,14 @@ int lector::getNum(string& linea){//arranca con j en el primer numero
 }
 int memGlobalSize;
 int memTileSize;
-void lector::tokenizarPalabra(string linea){
+void lector::tokenizarPalabra(string& linea){
     string palabra=linea.substr(i,j-i);
     //cout<<">>>"<<palabra<<"<<<"<<linea[i]<<"\n";
     i=j;
+    if(palabra=="def"&&lista==&tokens){
+        linea="";
+        return;
+    }
     bool esMov=true;
     for(char c:palabra)
         if(c!='w'&&c!='a'&&c!='s'&&c!='d'&&c!='n'){
@@ -351,36 +358,40 @@ void lector::tokenizarPalabra(string linea){
         char c=linea[j];
         do{j++;}while(linea[j]==' ');
         int num=getNum(linea);
-        switch(c){
-        //los tamaños de memorias se determinan aca
-        case 'l': //uso un vector porque una pieza tiene un localSize por movimiento.
-            if(num>memLocalSizes.back()){
-                memLocalSizes.back()=num;
-                if(num>maxMemMovSize)
-                    maxMemMovSize=num;
+        if(lista==&tokens){//@hack para evitar que cargarDef entre por aca cuando esta parseando para buscar defs. Puede que se
+                //quede para evitar crashes en caso de que haya un msize en un def, lo que no deberia hacerse
+                //se podria hacer andar pero no se si lo vale
+            switch(c){
+            //los tamaños de memorias se determinan aca
+            case 'l': //uso un vector porque una pieza tiene un localSize por movimiento.
+                if(num>memLocalSizes.back()){
+                    memLocalSizes.back()=num;
+                    if(num>maxMemMovSize)
+                        maxMemMovSize=num;
+                }
+                break;
+            case 'g':
+                if(num>memGlobalSize)
+                    memGlobalSize=num;
+                break;
+            case 'p':
+                if(num>memPiezaSize)
+                    memPiezaSize=num;
+                break;
+            case 't':
+                if(num>memTileSize){
+                    memTileSize=num;
+                    tileMemGrowth=true;
+                }
+                break;
+            default:
+                assert(false&&"msize invalido");
             }
-            break;
-        case 'g':
-            if(num>memGlobalSize)
-                memGlobalSize=num;
-            break;
-        case 'p':
-            if(num>memPiezaSize)
-                memPiezaSize=num;
-            break;
-        case 't':
-            if(num>memTileSize){
-                memTileSize=num;
-                tileMemGrowth=true;
-            }
-            break;
-        default:
-            assert(false&&"msize invalido");
+            i=j;
+            if(linea[j]=='\0')
+                cerrarLinea();
+            return;
         }
-        i=j;
-        if(linea[j]=='\0')
-            cerrarLinea();
-        return;
     }
     if(palabra=="spwn"){
         lista->push_back(spwn);
@@ -428,26 +439,28 @@ void lector::tokenizarPalabra(string linea){
                 continue;
                 gnum:
                 int num=getNum(linea);
-                switch(directGetter){
-                case mlocal:
-                    if(num>=memLocalSizes.back()){
-                        memLocalSizes.back()=num+1;
-                        if(num>=maxMemMovSize)
-                            maxMemMovSize=num+1;
-                    }
-                    break;
-                case mglobal:
-                    if(num>=memGlobalSize)
-                        memGlobalSize=num+1;
-                    break;
-                case mpieza:
-                    if(num>=memPiezaSize)
-                        memPiezaSize=num+1;
-                    break;
-                case mtile:
-                    if(num>=memTileSize){
-                        memTileSize=num+1;
-                        tileMemGrowth=true;
+                if(lista==&tokens){
+                    switch(directGetter){
+                    case mlocal:
+                        if(num>=memLocalSizes.back()){
+                            memLocalSizes.back()=num+1;
+                            if(num>=maxMemMovSize)
+                                maxMemMovSize=num+1;
+                        }
+                        break;
+                    case mglobal:
+                        if(num>=memGlobalSize)
+                            memGlobalSize=num+1;
+                        break;
+                    case mpieza:
+                        if(num>=memPiezaSize)
+                            memPiezaSize=num+1;
+                        break;
+                    case mtile:
+                        if(num>=memTileSize){
+                            memTileSize=num+1;
+                            tileMemGrowth=true;
+                        }
                     }
                 }
                 lista->push_back(num+1000);
@@ -521,10 +534,12 @@ void lector::cargarDefs(){
         ///@maybe cargar todo en una linea y procesarlo, para tener defs, llaves y linejoins en def
 
         if(linea.empty()) continue;
-        if(linea[0]==':') break;
         if(!lista)
             lista=new list<int>;
         tokenizarLinea(linea);
+        ///@optim ineficiente ahora que dejo tener defs en todos lados, estoy tokenizando todo el archivo solo
+        ///para buscar defs. No cambio nada ahora porque supongo que en un futuro voy a cambiar todo esto por
+        ///un parser con scanner comun
 
         if(lista->empty()) continue;
         if(lista->front()==def){

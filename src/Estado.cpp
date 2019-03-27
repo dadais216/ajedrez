@@ -83,13 +83,13 @@ Proper::Proper(int id_,int sel1,int sel2)
     };
 
     primero=selec(1,-1);
-    segundo=selec(0,1);
+    segundo=selec(1,1);
 
     if(nonHuman==2)
         fpsLock=0.;
 
-    turnoBlanco.setTexture(imagen->get("sprites.png"));
-    turnoNegro.setTexture(imagen->get("sprites.png"));
+    turnoBlanco.setTexture(imagen->get("tiles.png"));
+    turnoNegro.setTexture(imagen->get("tiles.png"));
     turnoBlanco.setTextureRect(IntRect(0,0,32,32));
     turnoNegro.setTextureRect(IntRect(32,0,32,32));
     turnoBlanco.setScale(12,16);

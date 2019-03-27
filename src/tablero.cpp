@@ -24,8 +24,8 @@ void tabl::armar(v a){
             matriz[i][j]=tile;
         }
 
-    b.setTexture(imagen->get("sprites.png"));
-    n.setTexture(imagen->get("sprites.png"));
+    b.setTexture(imagen->get("tiles.png"));
+    n.setTexture(imagen->get("tiles.png"));
     b.setScale(escala,escala);
     n.setScale(escala,escala);
     b.setTextureRect(IntRect(0,0,32,32));

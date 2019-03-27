@@ -281,6 +281,7 @@ void isolHolder::generar(){
     v tempPos=offset;
     inside->generar();
     offset=tempPos;
+    ///@todo reestablecer memoria
     if(sig){
         sig->generar();
         valorFinal=sig->valorFinal;
@@ -309,6 +310,8 @@ void isolHolder::cargar(vector<normalHolder*>* norms){
     if(sig)
         sig->cargar(norms);
 }
+
+vector<int> memGenStack;//copia de memoria actual para reestablecer en el cambio de rama en generaciones. Es un stack de arrays aplanado
 desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_,char** head)
 :movHolder(h_,org,base_){
     op=org;
@@ -328,34 +331,16 @@ desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_,char** head)
         }
     }
     *head=headFirst+op->desoptInsideSize;
-    //memAct.resize(base.memLocalSize);
     valorCadena=valorFinal=true;
 }
-
-
 void desoptHolder::generar(){
-    /*
-    ///la iteracion inicial no necesita indireccion y no tiene un movimiento raiz
-    dataPass dp{&static_cast<desopt*>(op)->ops,h,&base};
-    v offsetAct=offset;
-    memcpy(memAct.begptr,memMov.data(),base.memLocalSize*sizeof(int));
-    for(node& n:nodes){
-        n.mh->generar();
-        if(n.mh->valorFinal)
-            generarNodos(n.nodes,dp);
-        offset=offsetAct;
-        memcpy(memMov.data(),memAct.begptr,base.memLocalSize*sizeof(int));
-    }
-    generarSig();
-    */
-    ///se tiene la base y primera iteracion construidos, rondas mas alla de estas usan el resto de memoria
-    ///de forma dinamica. Es un punto intermedio entre tener todo construido y reservar mucha memoria que probablemente
-    ///no se use, y hacer todo dinamico y estar reconstruyendo operadores en cada generacion
-    ///Seria lo mas optimizado para la dama
+    //se tiene la base y primera iteracion construidos, rondas mas alla de estas usan el resto de memoria
+    //de forma dinamica. Es un punto intermedio entre tener todo construido y reservar mucha memoria que probablemente
+    //no se use, y hacer todo dinamico y estar reconstruyendo operadores en cada generacion
+    //Seria lo mas optimizado para la dama
 
-    //creo que con limpiar la caja de movHolders de la primera iteracion antes de la generacion total
-    //y sobreescribir el espacio dinamico
-    //no deberia haber ningun problema de construcciones kakeadas y cosas asi
+    //con limpiar la caja de movHolders de la primera iteracion antes de la generacion total
+    //y sobreescribir el espacio dinamico no deberia haber ningun problema de construcciones kakeadas y cosas asi
     dinamClusterHead=movs()+op->dinamClusterBaseOffset;
 
 
@@ -363,6 +348,9 @@ void desoptHolder::generar(){
     char* correspondingCluster=movs()+op->clusterSize;
 
     v offsetAct=offset;
+
+    memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
+
     for(int tam:op->movSizes){
         node* firstIter=(node*)(movs()+clusterOffset);
         //puede que sea mas rapido no usar un puntero para la primera iteracion, no sé
@@ -373,6 +361,8 @@ void desoptHolder::generar(){
             firstIter->iter=(node*)correspondingCluster;
             int clusterOffset2=0;
             v offsetAct2=offset;
+            memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
+
             for(int tam:op->movSizes){
                 node* secondIter=(node*)((char*)firstIter->iter+clusterOffset2);
                 movHolder* actualMov2=(movHolder*)(secondIter+1);
@@ -385,13 +375,17 @@ void desoptHolder::generar(){
                     secondIter->iter=nullptr;
                 clusterOffset2+=tam;
                 offset=offsetAct2;
+                memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
             }
+            memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
         }else
             firstIter->iter=nullptr;
         clusterOffset+=tam;
         correspondingCluster+=op->clusterSize;
         offset=offsetAct;
+        memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
     }
+    memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
 }
 void desoptHolder::construirYGenerarNodo(){
     char* clusterBeg=dinamClusterHead;
@@ -403,6 +397,8 @@ void desoptHolder::construirYGenerarNodo(){
     }
     int clusterOffset=0;
     v offsetAct=offset;
+    memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
+
     for(int tam:op->movSizes){
         node* nextIter=(node*)(clusterBeg+clusterOffset);
         movHolder* actualMov=(movHolder*)(nextIter+1);
@@ -414,11 +410,14 @@ void desoptHolder::construirYGenerarNodo(){
         }
         clusterOffset+=tam;
         offset=offsetAct;
+        memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
     }
+    memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
 }
 void desoptHolder::generarNodo(node* iter){//iter valido
     int clusterOffset=0;
     v offsetAct=offset;
+    memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
     for(int tam:op->movSizes){
         node* nextIter=(node*)((char*)iter+clusterOffset);
         movHolder* actualMov=(movHolder*)(nextIter+1);
@@ -433,7 +432,9 @@ void desoptHolder::generarNodo(node* iter){//iter valido
         }
         clusterOffset+=tam;
         offset=offsetAct;
+        memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
     }
+    memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
 }
 void desoptReaccionar(auto nh,desoptHolder* $,desoptHolder::node* iter){
     int offset=0;
@@ -443,19 +444,18 @@ void desoptReaccionar(auto nh,desoptHolder* $,desoptHolder::node* iter){
         offset+=tam;
 
         actualMov->reaccionar(nh);
-        if(switchToGen){
-            if(actualMov->valorFinal){
+        if(actualMov->valorFinal){
+            if(switchToGen){
                 if(nextIter->iter)
                     $->generarNodo(nextIter->iter);
                 else{
                     nextIter->iter=(desoptHolder::node*)$->dinamClusterHead;
                     $->construirYGenerarNodo();
                 }
-            }
-            switchToGen=false;
-            continue;
+            }else
+                desoptReaccionar(nh,$,nextIter->iter);
         }
-        desoptReaccionar(nh,$,nextIter->iter);
+        switchToGen=false;
     }
 }
 void desoptHolder::reaccionar(normalHolder* nh){

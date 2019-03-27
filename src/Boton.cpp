@@ -6,8 +6,8 @@ Boton::Boton(string nomb,int n_,int x_,int y_,int escala_){
     text.setFont(j->font);
     text.setString(nomb);
     text.setColor(Color::Black);
-    sprite.setTexture(imagen->get("sprites.png"));
-    sprite.setTextureRect(IntRect(14*32,0,64,32));
+    sprite.setTexture(imagen->get("tiles.png"));
+    sprite.setTextureRect(IntRect(0,32,64,32));
 
     escala=escala_;
     sprite.setScale(escala_,escala_);
