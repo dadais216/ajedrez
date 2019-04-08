@@ -71,18 +71,18 @@ void activateTriggers(){
     if(trigsActivados.size()==0) return;
     if(trigsActivados.size()==1){
         switchToGen=false;
-        trigsActivados[0]->base.beg->reaccionar(trigsActivados[0]);
+        trigsActivados[0]->base->beg->reaccionar(trigsActivados[0]);
     }
     else{
         ///@optim supongo que volcarlo a una matriz es mas rapido que ordenarlo y trocearlo
         sort(trigsActivados.begin(),trigsActivados.end(),[](normalHolder* a,normalHolder* b)->bool
-             {return a->base.beg<b->base.beg;});
+             {return a->base->beg<b->base->beg;});
         int i=0;
         while(i<trigsActivados.size()){
             switchToGen=false;
-            movHolder* base=trigsActivados[i]->base.beg;
+            movHolder* base=trigsActivados[i]->base->beg;
             int j=i+1;
-            while(j<trigsActivados.size()&&trigsActivados[j]->base.beg==base)
+            while(j<trigsActivados.size()&&trigsActivados[j]->base->beg==base)
                 j++;
             if(j==i+1)
                 base->reaccionar(trigsActivados[i]);

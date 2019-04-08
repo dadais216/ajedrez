@@ -211,10 +211,10 @@ inline bool msetAcc(getter* a1,getter* a2){///version para memorias globales, pa
     *val=*a2->val();
     if(before!=*val){
         for(normalHolder* nh:trigsMaybeActivate->perma)
-            if(nh->h!=actualHolder.h&&nh->h->inPlay)
+            if(nh->base->h!=actualHolder.h&&nh->base->h->inPlay)
                 trigsActivados.push_back(nh);
         for(normalHolder* nh:trigsMaybeActivate->dinam)
-            if(nh->h!=actualHolder.h&&nh->h->inPlay)
+            if(nh->base->h!=actualHolder.h&&nh->base->h->inPlay)
                 trigsActivados.push_back(nh);
         trigsMaybeActivate->dinam.clear();
         ///@optim creo que no habria problema en dejar recalcular triggers dinamicos a piezas capturadas. Seria
@@ -229,7 +229,7 @@ inline bool msetAccTile(getter* a1,getter* a2){///version para tiles que necesit
     if(before!=*val){
         vector<Tile::tileTrigInfo>* memTile=reinterpret_cast<vector<Tile::tileTrigInfo>*>(trigsMaybeActivate);
         for(Tile::tileTrigInfo& tti:*memTile)
-            if(tti.nh->h!=actualHolder.h&&tti.step==*tti.stepCheck)
+            if(tti.nh->base->h!=actualHolder.h&&tti.step==*tti.stepCheck)
                 trigsActivados.push_back(tti.nh);
         memTile->clear();
     }

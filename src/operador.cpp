@@ -42,7 +42,6 @@ normal::normal(bool make){
     sig=nullptr;
     relPos=v(0,0);
     doEsp=false;
-    bool posTriggerableCond=false;
     if(make){
         bool changeInLocalMem=false;
         while(true){

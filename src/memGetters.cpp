@@ -19,7 +19,7 @@ struct locala:public getterCond{
         return &memMov[ind];
     }
     virtual void drawDebugMem(){
-        int memSize=actualHolder.nh->base.memLocalSize;
+        int memSize=actualHolder.nh->base->memLocalSize;
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
         window->draw(backGroundMemDebug);
     }
@@ -43,7 +43,7 @@ struct localai:public getterCond{
         backGroundMemDebug.setFillColor(sf::Color(178,235,221));
         g->drawDebugMem();
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        int memSize=actualHolder.nh->base.memLocalSize;
+        int memSize=actualHolder.nh->base->memLocalSize;
         backGroundMemDebug.setPosition(Vector2f(530+25*(before%4),405+45*(before/4-memSize/4)));
         window->draw(backGroundMemDebug);
     }
@@ -284,7 +284,7 @@ struct otheraRead:public getterCond{
     }
     virtual void drawDebugMem(){
         posDebugTile=actualHolder.nh->offsetAct+actualHolder.nh->relPos;
-        memOtherSize=actualHolder.nh->h->memPieza.size();
+        memOtherSize=actualHolder.nh->base->h->memPieza.size();
         backGroundMemDebug.setPosition(Vector2f(630+25*(ind%4),105+45*(ind/4-memOtherSize/4)));
         window->draw(backGroundMemDebug);
     }
@@ -371,7 +371,7 @@ struct posYObj:public getterCond{
     posYObj(){}
     virtual int* val(){
         val_=offset.y+actualHolder.nh->relPos.y;
-        if(actualHolder.nh->h->bando==-1)
+        if(actualHolder.nh->base->h->bando==-1)
             val_=tablptr->tam.y-1-val_;
         return &val_;
     }

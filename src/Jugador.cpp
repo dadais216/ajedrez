@@ -123,7 +123,7 @@ void Aleatorio::turno(){
         auto it=clickers.begin();
         advance(it,rand()%clickers.size());
 
-        sleep(milliseconds(120));
+        //sleep(milliseconds(120));
 
 
         clock_t t=clock();
@@ -135,11 +135,14 @@ void Aleatorio::turno(){
         if(val<minV)
             minV=val;
         cProm++;
-        if(cProm==200){
-            cout<<"promedio: "<<fixed<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos"<<endl;
-            cout<<"min: "<<minV/CLOCKS_PER_SEC<<endl;
-            cout<<"max: "<<maxV/CLOCKS_PER_SEC<<endl;
-            //exit(0);
+        if(cProm==1000){
+            cout<<"normalSize  "<<sizeof(normalHolder)
+            <<"\nbucketMovSize  "<<bucketHolders->head-bucketHolders->data
+            <<"\nbucketOpSize  "<<bucketPiezas->head-bucketPiezas->data
+            <<"\npromedio: "<<fixed<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos"
+            <<"\nmin: "<<minV/CLOCKS_PER_SEC
+            <<"\nmax: "<<maxV/CLOCKS_PER_SEC<<endl;
+            exit(0);
         }
 
         clickers.clear();

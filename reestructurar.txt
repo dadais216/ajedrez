@@ -647,6 +647,42 @@ Esto evita la suma en cada cond y acc, y ahorra memoria. Ahora la mayoria de las
 
 
 
+Aplicando memoria contigua
+
+actual 100 turnos                         - 17    12   12   15  13  15 20 16 14
+caballos caballos sin captura 1000 turnos - 47    45    48  31
+caballos reinas sin captura 1000 turnos   - 255   142   194
+caballos emperador sin captura 5 turnos   - 185508
+caballos memoria 1000 turnos              - 
+caballos memoria sin turno 2000 turnos    - 
+test vel reina 1000                       - 115   82    115 113 114
+test vel reina con boludeces 1000         - 237   253   255         
+caballos peon 2000 turnos                 - 18    19    15   16   19   13
+
+tamaños
+normal 112
+movs   143168
+ops    34832
+
+base puntero
+actual 100 turnos                         - 14    16   19   17  15  13 13 13 12
+caballos peon 2000 turnos                 - 19    20    14   19   16   19 13
+test vel reina 1000                       - 135   116    115 97 113
+normal 96
+movs   126528
+ops    34832
+#parece ser que es ligeramente mas lento (o no?). Lo voy a dejar estar porque ahorra memoria y eso va a ser importante ahora que voy a empezar a copiar pedazos importantes durante el runtime. Ademas la memoria va a ser cada vez mas chica, y la realentizacion que esto tiene va a bajar con eso.
+
+
+
+
+
+
+
+
+
+
+
 Graficos
 Agregar boton que muestre las memorias. La global se vería todo el tiempo. Si se toca un espacio se dibuja la memoria de tile y la de pieza si hay una pieza en esa pos.
 En modo debug se dibuja la memoria de movimiento mientras este se calcula, y se redibujan todas en cada paso

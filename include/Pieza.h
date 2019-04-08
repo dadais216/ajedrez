@@ -53,7 +53,7 @@ struct Holder{
     bool inPlay;//false cuando la pieza esta generada y capturada. Solo se usa para evitar activar triggers dinamicos a capturados
 };
 struct Base;
-void crearMovHolder(char**,Holder*,operador*,Base*);
+void crearMovHolder(char**,operador*,Base*);
 
 
 

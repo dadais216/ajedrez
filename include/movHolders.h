@@ -4,12 +4,19 @@
 #include "global.h"
 
 struct Base{ ///datos compartidos de un movimiento entero
+    Holder* h;
     movHolder* beg;
-    int memLocalSize;
+    int memLocalSize;//este es cte entre todos los holders por lo que podria estar en algun lugar del lado de operador
 };
+//@optim? se podria hacer que esta base sea global durante la generacion para no tenerla apuntada desde cada
+//movholder. el problema esta que durante la reaccion necesito recuperar esa informacion, y la unica forma de
+//hacerlo es cargandolo en los triggers, lo que puede que termine haciendo todo mas lento?
+//@optim lo que se podria hacer para solucionar esto es guardar en operador el offset de la base, y usar eso
+//en lugar de informacion en trigger para recuperar el estado en reaccion (osea, cambiaria un puntero en cada
+//movHolder por un offset en normal y el uso de una global)
 
 struct movHolder{
-    movHolder(Holder*,operador*,Base*);
+    movHolder(operador*,Base*);
     virtual void generar()=0;
     virtual void reaccionar(normalHolder*)=0;
     virtual void reaccionar(vector<normalHolder*>)=0;
@@ -24,9 +31,8 @@ struct movHolder{
             }
         }
     }
-    Holder* h;
+    Base* base;
     movHolder* sig;
-    Base base;///@optim pointer
     bool valorCadena; //la cadena de movholders es valida. Una cadena va desde la base hasta un clicker o el final
     bool valorFinal;  //se llegó al final. Esto sirve para saber si seguir iterando en un desliz
     bool makeClick;
@@ -34,7 +40,7 @@ struct movHolder{
     ///@optim meter estos bools en una variable
 };
 struct normalHolder:public movHolder{
-    normalHolder(Holder*,normal*,Base*,char**);//supongo que ni bien se crea el op le copias las accs
+    normalHolder(normal*,Base*,char**);//supongo que ni bien se crea el op le copias las accs
     normal* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
@@ -51,7 +57,7 @@ struct normalHolder:public movHolder{
     v relPos; //pos actual = relPös + offset. Todas las acciones y condiciones la comparten
 };
 struct deslizHolder:public movHolder{
-    deslizHolder(Holder*,desliz*,Base*,char**);
+    deslizHolder(desliz*,Base*,char**);
     desliz* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
@@ -64,7 +70,7 @@ struct deslizHolder:public movHolder{
     bool lastNotFalse;
 };
 struct excHolder:public movHolder{
-    excHolder(Holder*,exc*,Base*,char**);
+    excHolder(exc*,Base*,char**);
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
@@ -76,7 +82,7 @@ struct excHolder:public movHolder{
     bool valor;
 };
 struct isolHolder:public movHolder{
-    isolHolder(Holder*,isol*,Base*,char**);
+    isolHolder(isol*,Base*,char**);
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
@@ -85,7 +91,7 @@ struct isolHolder:public movHolder{
 };
 
 struct desoptHolder:public movHolder{
-    desoptHolder(Holder*,desopt*,Base*,char**);
+    desoptHolder(desopt*,Base*,char**);
     desopt* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
