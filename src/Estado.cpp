@@ -70,7 +70,7 @@ Proper::Proper(int id_,int sel1,int sel2)
     :tablero(){
     id=id_;
     j->change(this);
-    debugMode=true;
+    debugMode=false;
 
     int nonHuman=0;
     auto selec=[&](int sel,int bando)->Jugador*{
@@ -82,8 +82,8 @@ Proper::Proper(int id_,int sel1,int sel2)
         }
     };
 
-    primero=selec(1,-1);
-    segundo=selec(1,1);
+    primero=selec(2,-1);
+    segundo=selec(0,1);
 
     if(nonHuman==2)
         fpsLock=0.;
@@ -221,7 +221,7 @@ void Proper::draw(){
     if(drawDebugTiles||drawMemDebug){
         window->draw(posPieza);
         window->draw(textDebug);
-        int memSize=actualHolder.nh->base.memLocalSize;
+        int memSize=actualHolder.nh->base->memLocalSize;
         for(int i=0;i<memSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
             window->draw(backGroundMem);

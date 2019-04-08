@@ -2,11 +2,10 @@
 #include "Clicker.h"
 #include "Pieza.h"
 
-movHolder::movHolder(Holder* h_,operador* op,Base* base_){
+movHolder::movHolder(operador* op,Base* base_){
     if(!base_->beg)
         base_->beg=this;
-    base=*base_;
-    h=h_;
+    base=base_;
     makeClick=op->makeClick;
     hasClick=op->hasClick;
 }
@@ -19,17 +18,17 @@ void movHolder::generarSig(){
     }else
         valorFinal=valorCadena=true;
 }
-normalHolder::normalHolder(Holder* h_,normal* org,Base* base_,char** head)
-:movHolder(h_,org,base_){
+normalHolder::normalHolder(normal* org,Base* base_,char** head)
+:movHolder(org,base_){
     op=org;
     for(auto trigInfo:op->setUpMemTriggersPerNormalHolder)
         switch(trigInfo.type){
         case 0:
             memGlobalTriggers[trigInfo.ind].perma.push_back(this);
         break;case 1:
-            h->memPiezaTrigs[trigInfo.ind]->perma.push_back(this);
+            base->h->memPiezaTrigs[trigInfo.ind]->perma.push_back(this);
         break;case 2:
-            turnoTrigs[h->bando==-1].push_back({h,this});
+            turnoTrigs[base->h->bando==-1].push_back({base->h,this});
         }
     memAct.begptr=(int*)*head;
     memAct.endptr=((int*)*head)+base_->memLocalSize;
@@ -42,10 +41,10 @@ v offset;
 Tile* actualTile;
 AH actualHolder;
 void normalHolder::generar(){
-    actualHolder.h=h;
+    actualHolder.h=base->h;///@optim mover esto mas atras
     actualHolder.nh=this;
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
-    memcpy(memAct.begptr,memMov.data(),base.memLocalSize*sizeof(int));
+    memcpy(memAct.begptr,memMov.data(),base->memLocalSize*sizeof(int));
 
     if(doEsp){
         v actualPos=offset+relPos;
@@ -54,7 +53,7 @@ void normalHolder::generar(){
             return;
         }
         actualTile=tablptr->tile(relPos+offset);
-        actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
+        actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
     }
 
     for(condt* c:op->conds)
@@ -71,10 +70,10 @@ void normalHolder::generar(){
 void normalHolder::reaccionar(normalHolder* nh){
     if(nh==this){
         offset=offsetAct;
-        memcpy(memMov.data(),memAct.begptr,base.memLocalSize*sizeof(int));
+        memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
         switchToGen=true;
         actualTile=tablptr->tile(relPos+offset);
-        actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
+        actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
         bool doEspTemp=doEsp;
         doEsp=false;
         generar();
@@ -87,10 +86,10 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
     for(normalHolder* nh:nhs){
         if(nh==this){
             offset=offsetAct;
-            memcpy(memMov.data(),memAct.begptr,base.memLocalSize*sizeof(int));
+            memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
             switchToGen=true;
             actualTile=tablptr->tile(relPos+offset);
-            actualTile->triggers.push_back(Trigger{h->tile,this,h->tile->step});
+            actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
             bool doEspTemp=doEsp;
             doEsp=false;
             generar();
@@ -105,7 +104,7 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
 }
 
 void normalHolder::accionar(){
-    actualHolder.h=h;
+    actualHolder.h=base->h;
     actualHolder.nh=this;
     actualTile=tablptr->tile(relPos+offsetAct);
     for(acct* ac:op->accs)
@@ -115,7 +114,7 @@ void normalHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;///@optim poner if antes de llamada
     norms->push_back(this);
     if(makeClick)
-        clickers.push_back(new Clicker(norms,h));
+        clickers.push_back(new Clicker(norms,base->h));
     if(sig)
         sig->cargar(norms);
 }
@@ -124,20 +123,20 @@ void normalHolder::draw(){
     for(colort* c:op->colors)
         c->draw();
 }
-deslizHolder::deslizHolder(Holder* h_,desliz* org,Base* base_,char** head)
-:movHolder(h_,org,base_){
+deslizHolder::deslizHolder(desliz* org,Base* base_,char** head)
+:movHolder(org,base_){
     op=org;
     movs.begptr=*head;
     movs.endptr=(char*)movs.begptr+org->insideSize;
     movs.elem.setSize(org->iterSize);
-    crearMovHolder(head,h,org->inside,&base);//crear primera iteracion
+    crearMovHolder(head,org->inside,base);//crear primera iteracion
     *head=(char*)movs.endptr;
     cantElems=1;
 }
 void deslizHolder::maybeAddIteration(int i){
     if(cantElems==i){
         char* place=(char*)movs.begptr+movs.elem.size()*i;//crearMovHolder necesita **
-        crearMovHolder(&place,h,op->inside,&base);
+        crearMovHolder(&place,op->inside,base);
         cantElems++;
         assert(cantElems<=movs.count());
     }
@@ -194,19 +193,19 @@ void deslizHolder::cargar(vector<normalHolder*>* norms){
         ((movHolder*)movs[i])->cargar(norms);
     }
     if(makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
-        clickers.push_back(new Clicker(norms,h));
+        clickers.push_back(new Clicker(norms,base->h));
     if(sig)
         sig->cargar(norms);
 }
-excHolder::excHolder(Holder* h_,exc* org,Base* base_,char** head)
-:movHolder(h_,org,base_){
+excHolder::excHolder(exc* org,Base* base_,char** head)
+:movHolder(org,base_){
     ops.begptr=(movHolder**)*head;
     ops.endptr=(movHolder**)(*head+org->ops.size());
     *head=(char*)ops.endptr;
     int i=0;
     for(operador* opos:org->ops){
         *(ops.begptr+i++)=(movHolder*)*head;
-        crearMovHolder(head,h,opos,&base);
+        crearMovHolder(head,opos,base);
     }
 }
 void excHolder::generar(){
@@ -267,14 +266,14 @@ void excHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;
     (*(ops[actualBranch]))->cargar(norms);
     if(makeClick)
-        clickers.push_back(new Clicker(norms,h));
+        clickers.push_back(new Clicker(norms,base->h));
     if(sig)
         sig->cargar(norms);
 }
-isolHolder::isolHolder(Holder* h_,isol* org,Base* base_,char** head)
-:movHolder(h_,org,base_){
+isolHolder::isolHolder(isol* org,Base* base_,char** head)
+:movHolder(org,base_){
     inside=(movHolder*)*head;
-    crearMovHolder(head,h_,org->inside,base_);
+    crearMovHolder(head,org->inside,base_);
     valorFinal=valorCadena=true;
 }
 void isolHolder::generar(){
@@ -306,14 +305,14 @@ void isolHolder::cargar(vector<normalHolder*>* norms){
     vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
     inside->cargar(&normExt);
     if(makeClick&&!normExt.empty())//evitar generar clickers sin normales
-        clickers.push_back(new Clicker(&normExt,h));
+        clickers.push_back(new Clicker(&normExt,base->h));
     if(sig)
         sig->cargar(norms);
 }
 
 vector<int> memGenStack;//copia de memoria actual para reestablecer en el cambio de rama en generaciones. Es un stack de arrays aplanado
-desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_,char** head)
-:movHolder(h_,org,base_){
+desoptHolder::desoptHolder(desopt* org,Base* base_,char** head)
+:movHolder(org,base_){
     op=org;
     char* nextIteration=*head;
     char* headFirst=*head;
@@ -321,13 +320,13 @@ desoptHolder::desoptHolder(Holder* h_,desopt* org,Base* base_,char** head)
         assert(sizeof(movHolder*)==sizeof(char*));//debe haber una forma menos sospechosa de hacer esto
         **((movHolder***)head)=(movHolder*)(nextIteration+=op->clusterSize);//head apunta a puntero al proximo cluester de movimientos,
         *head+=sizeof(node*);//que corresponde a la proxima iteracion de este movHolder
-        crearMovHolder(head,h,opos,&base);
+        crearMovHolder(head,opos,base);
     }
     for(int i=0;i<org->ops.count();i++){//armar primer iteracion
         for(operador* opos:org->ops){
             **(movHolder***)head=nullptr;//cuando se use apunta a un espacio dinamico
             *head+=sizeof(node*);
-            crearMovHolder(head,h,opos,&base);
+            crearMovHolder(head,opos,base);
         }
     }
     *head=headFirst+op->desoptInsideSize;
@@ -393,7 +392,7 @@ void desoptHolder::construirYGenerarNodo(){
     for(operador* opos:op->ops){
         *(movHolder**)dinamClusterHead=nullptr;
         dinamClusterHead+=sizeof(node);
-        crearMovHolder(&dinamClusterHead,h,opos,&base);
+        crearMovHolder(&dinamClusterHead,opos,base);
     }
     int clusterOffset=0;
     v offsetAct=offset;
@@ -475,7 +474,7 @@ void desoptHolder::cargarNodos(node* iter,vector<normalHolder*>* norms){
             assert(nextIter->iter);
             cargarNodos(nextIter->iter,norms);
         }else if(makeClick&&!norms->empty()){
-            clickers.push_back(new Clicker(norms,h));
+            clickers.push_back(new Clicker(norms,base->h));
         }
         offset+=tam;
         norms->resize(res);

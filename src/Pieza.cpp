@@ -93,32 +93,32 @@ Pieza::Pieza(int _id,int _sn){
     piezas.push_back(this);
 }
 
-void crearMovHolder(char** place,Holder* h,operador* op,Base* base){
+void crearMovHolder(char** place,operador* op,Base* base){
     char* placeBack=*place;
     switch(op->tipo){
     case NORMAL:
         *place+=sizeof(normalHolder);
-        new(placeBack)normalHolder(h,static_cast<normal*>(op),base,place);
+        new(placeBack)normalHolder(static_cast<normal*>(op),base,place);
         break;
     case DESLIZ:
         *place+=sizeof(deslizHolder);
-        new(placeBack)deslizHolder(h,((desliz*)op),base,place);
+        new(placeBack)deslizHolder(((desliz*)op),base,place);
         break;
     case EXC:
         *place+=sizeof(excHolder);
-        new(placeBack)excHolder(h,static_cast<exc*>(op),base,place);
+        new(placeBack)excHolder(static_cast<exc*>(op),base,place);
         break;
     case ISOL:
         *place+=sizeof(isolHolder);
-        new(placeBack)isolHolder(h,static_cast<isol*>(op),base,place);
+        new(placeBack)isolHolder(static_cast<isol*>(op),base,place);
         break;
     case DESOPT:
         *place+=sizeof(desoptHolder);
-        new(placeBack)desoptHolder(h,static_cast<desopt*>(op),base,place);
+        new(placeBack)desoptHolder(static_cast<desopt*>(op),base,place);
     }
     if(op->sig){
         ((movHolder*)placeBack)->sig=(movHolder*)*place;
-        crearMovHolder(place,h,op->sig,base);
+        crearMovHolder(place,op->sig,base);
     }
     else
         ((movHolder*)placeBack)->sig=nullptr;
@@ -157,14 +157,14 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     //pieza, nomas se usa cuando hay others y son bastante niche
 
     for(Pieza::base& b:pieza->movs){
-        actualBucket->enoughSize(b.size);//asegurar que un movimiento este contenido en un mismo bucket
+        actualBucket->enoughSize(b.size+sizeof(Base));//asegurar que un movimiento este contenido en un mismo bucket
 
-        Base base{nullptr,b.memLocalSize};
-        ///@todo esta base es innecesaria. memLocalSize se puede consultar de operador, no deberia tardar tiempo
-        ///porque se le consultan otras cosas tambien. Beg podría ser parte de actualHolder.
+        new(actualBucket->head)Base({this,nullptr,b.memLocalSize});
+        Base* base=(Base*)actualBucket->head;
+        actualBucket->head+=sizeof(Base);
 
         *movs[i++]=(movHolder*)actualBucket->head;
-        crearMovHolder(&actualBucket->head,this,b.raiz,&base);
+        crearMovHolder(&actualBucket->head,b.raiz,base);
     }
 }
 void Holder::draw()
@@ -206,7 +206,7 @@ void Holder::makeCli(){
 void Holder::generar(){
     for(movHolder* m:movs){
         offset=tile->pos;
-        memset(memMov.data(),0,m->base.memLocalSize*sizeof(int));
+        memset(memMov.data(),0,m->base->memLocalSize*sizeof(int));
         m->generar();
     }
 }
