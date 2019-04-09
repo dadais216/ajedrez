@@ -10,7 +10,7 @@
 struct operador{
     int tipo;
     operador* sig;
-    bool makeClick,hasClick;
+    int32_t bools;//makeClick, hasClick, doEsp en normal
 };
 struct normal:public operador{
     normal(bool);
@@ -25,7 +25,6 @@ struct normal:public operador{
     };
     barray<setupTrigInfo> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
     v relPos;
-    bool doEsp;
 };
 struct desliz:public operador{
     desliz();
@@ -53,8 +52,7 @@ struct desopt:public operador{
 
 
 operador* tomar();
-operador* keepOn(bool*);
-bool operarAislado(operador*,bool);
+operador* keepOn(int32_t*);
 void crearClicker();
 
 #endif // OPERADOR_H

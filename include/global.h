@@ -4,7 +4,6 @@
 #include <fstream>
 #include <vector>
 #include <list>
-#include <forward_list>
 #include <map>
 #include <utility>
 #include <iostream>
@@ -19,6 +18,7 @@
 #include <algorithm>
 #include <unordered_set>
 #include <string.h>
+#include <stdint.h>
 
 #include "Bucket.h"
 
@@ -152,5 +152,14 @@ struct turnTrigInfo{
 extern vector<turnTrigInfo> turnoTrigs[2];
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
+
+extern const int32_t valorCadena;//la cadena de movholders es valida. Una cadena va desde la base hasta un clicker o el final
+extern const int32_t valorFinal;//se llegó al final. Esto sirve para saber si seguir iterando en un desliz
+extern const int32_t valor;//lo usa normal para saber si sus condiciones son verdaderas,y exc si tiene una rama valida
+extern const int32_t lastNotFalse;//lo usa desliz
+extern const int32_t makeClick;
+extern const int32_t hasClick;
+extern const int32_t doEsp;//se usa en normalh
+
 
 #endif

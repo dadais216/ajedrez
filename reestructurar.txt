@@ -674,6 +674,21 @@ ops    34832
 #parece ser que es ligeramente mas lento (o no?). Lo voy a dejar estar porque ahorra memoria y eso va a ser importante ahora que voy a empezar a copiar pedazos importantes durante el runtime. Ademas la memoria va a ser cada vez mas chica, y la realentizacion que esto tiene va a bajar con eso.
 
 
+stuffed bools
+actual 100 turnos                         - 16    16   16   18  13  12 15 13 14
+caballos peon 2000 turnos                 - 20    20    19   19   13   18 15
+test vel reina 1000                       - 100   128    181 179 80 79 116
+normal 80
+movs   107968
+ops    33376
+#noto que hay mas variacion entre corridas, si se mira nomas los minimos ahora es mas rapido que antes
+
+
+
+
+
+
+
 
 
 
