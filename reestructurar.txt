@@ -684,7 +684,13 @@ ops    33376
 #noto que hay mas variacion entre corridas, si se mira nomas los minimos ahora es mas rapido que antes
 
 
-
+checks de kamikase y spawns fuera de la linea principal, clickers aplanados
+actual 100 turnos                         - 12    12   13   16  15  15 11 12 12
+caballos peon 2000 turnos                 - 13    14    10   12   14   14 14
+test vel reina 1000                       - 111   115    113 117 88 78 157
+normal 80
+movs   108736
+ops    33376
 
 
 

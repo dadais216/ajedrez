@@ -15,7 +15,6 @@ struct Base{ ///datos compartidos de un movimiento entero
 //en lugar de informacion en trigger para recuperar el estado en reaccion (osea, cambiaria un puntero en cada
 //movHolder por un offset en normal y el uso de una global)
 
-
 struct movHolder{
     movHolder(operador*,Base*);
     virtual void generar()=0;
@@ -107,5 +106,21 @@ struct desoptHolder:public movHolder{
         return (char*)this+sizeof(desoptHolder);
     }
 };
+
+
+struct movHolderMock{//para que spawner y kamikase no hereden datos que no usan
+    virtual void generar()=0;
+    Base* base;
+};
+struct spawnerGen:public movHolderMock{
+    spawnerGen(Base*);
+    virtual void generar();
+};
+struct kamikaseCntrl:public movHolderMock{
+    kamikaseCntrl(Base*);
+    virtual void generar();
+};
+//se los podria hacer heredar de un nivel mas arriba para ahorrar un poco de memoria
+
 
 #endif // MOVHOLDERS_H

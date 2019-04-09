@@ -124,7 +124,7 @@ void normalHolder::cargar(vector<normalHolder*>* norms){
     if(!(bools&valorCadena)) return;
     norms->push_back(this);
     if(bools&makeClick)
-        clickers.push_back(new Clicker(norms,base->h));
+        clickers.emplace_back(norms,base->h);
     if(sig)
         sig->cargar(norms);
 }
@@ -205,7 +205,7 @@ void deslizHolder::cargar(vector<normalHolder*>* norms){
         ((movHolder*)movs[i])->cargar(norms);
     }
     if(bools&makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
-        clickers.push_back(new Clicker(norms,base->h));
+        clickers.emplace_back(norms,base->h);
     if(sig)
         sig->cargar(norms);
 }
@@ -278,7 +278,7 @@ void excHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;
     (*(ops[actualBranch]))->cargar(norms);
     if(makeClick)
-        clickers.push_back(new Clicker(norms,base->h));
+        clickers.emplace_back(norms,base->h);
     if(sig)
         sig->cargar(norms);
 }
@@ -317,7 +317,7 @@ void isolHolder::cargar(vector<normalHolder*>* norms){
     vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
     inside->cargar(&normExt);
     if(bools&makeClick&&!normExt.empty())//evitar generar clickers sin normales
-        clickers.push_back(new Clicker(&normExt,base->h));
+        clickers.emplace_back(norms,base->h);
     if(sig)
         sig->cargar(norms);
 }
@@ -486,7 +486,7 @@ void desoptHolder::cargarNodos(node* iter,vector<normalHolder*>* norms){
             assert(nextIter->iter);
             cargarNodos(nextIter->iter,norms);
         }else if(makeClick&&!norms->empty()){
-            clickers.push_back(new Clicker(norms,base->h));
+            clickers.emplace_back(norms,base->h);
         }
         offset+=tam;
         norms->resize(res);
@@ -502,11 +502,54 @@ desopt actua como un isol respecto a lo que esta antes y despues.
 De no hacerlo todo lo que venga despues tendria que agregarse al final de cada rama, lo que no
 es obvio por la forma en que se escribe
 
-
 Si se quiere hacer algo como desliz A optar B , C end D c end se tiene que escribir
 A desopt BD c A , CD c A end
 Esto refleja lo que se hace y no oscurece la cantidad de calculos distintos que se hacen
 (de la otra forma se podría pensar que D y A se calculan una vez en lugar de por cada rama)
 @testarVelocidad con A a la izquierda, sin partir con c
-
 */
+
+
+spawnerGen::spawnerGen(Base* base_){
+    base=base_;
+}
+void spawnerGen::generar(){
+    if(justSpawned.empty())
+        return;
+
+    vector<Holder*> justSpawnedL(justSpawned);//@optim estaria bueno usar el stack para estas cosas
+    justSpawned.clear();//evitar bucles infinitos
+
+    for(Holder* s:justSpawnedL)
+        if(base->h!=s)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
+            s->generar();
+}
+/*
+void spawnerGen::reaccionar(normalHolder* nh){
+    assert(false);
+}
+void spawnerGen::reaccionar(vector<normalHolder*> nhs){
+    assert(false);
+}
+void spawnerGen::cargar(vector<normalHolder*>* norms){
+}
+*/
+kamikaseCntrl::kamikaseCntrl(Base* base_){
+    base=base_;
+}
+void kamikaseCntrl::generar(){
+    if(!base->h->inPlay)
+        throw nullptr;
+}
+/*
+void kamikaseCntrl::reaccionar(normalHolder* nh){
+    assert(false);
+}
+void kamikaseCntrl::reaccionar(vector<normalHolder*> nhs){
+    assert(false);
+}
+void kamikaseCntrl::cargar(vector<normalHolder*>* norms){
+}*/
+
+//si spawnea y muere en el mismo turno no pasa nada porque spawn corre antes de kamikase
+//si se suicida y se spawnea a si mismo

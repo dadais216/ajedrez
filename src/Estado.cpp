@@ -83,7 +83,7 @@ Proper::Proper(int id_,int sel1,int sel2)
     };
 
     primero=selec(2,-1);
-    segundo=selec(0,1);
+    segundo=selec(2,1);
 
     if(nonHuman==2)
         fpsLock=0.;
@@ -199,8 +199,8 @@ void Proper::init(){
 void Proper::draw(){
     tablero.drawTiles();
     if(Clicker::drawClickers)
-        for(Clicker* cli:clickers)
-            cli->draw();
+        for(Clicker& cli:clickers)
+            cli.draw();
     tablero.drawPieces();
     if(turno1)
         window->draw(turnoBlanco);

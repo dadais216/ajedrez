@@ -23,6 +23,8 @@ struct Pieza{
 
     int memPiezaSize;
 
+    bool kamikase,spawner;
+
 
     Pieza(int,int);
 };

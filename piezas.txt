@@ -54,10 +54,10 @@ mcmp p1 0 dw mover mset p1 1
 #desliz isol desliz isol mover end d end end s end
 #w mover mcmp l0 l1
 #desliz exc w mover or a mover end c end
-#w mover mset p0 1 exc mcmp y 31 capt spwn 5 or pass end
-#{wa,wd} mset p0 1 captura exc mcmp y 31 capt spwn 5 or pass end
-#ww mcmp p0 0 mover mset p0 1
-desliz {w,wa,a,as,s,sd,d,dw} mover c end
+w mover mset p0 1 exc mcmp y 31 capt spwn 5 or pass end
+{wa,wd} mset p0 1 captura exc mcmp y 31 capt spwn 5 or pass end
+ww mcmp p0 0 mover mset p0 1
+#desliz {w,wa,a,as,s,sd,d,dw} mover c end
 
 :9 7
 #desopt wa mover or wd mover end

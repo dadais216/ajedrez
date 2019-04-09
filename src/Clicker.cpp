@@ -7,7 +7,7 @@
 
 bool Clicker::drawClickers;
 
-vector<Clicker*> clickers;
+vector<Clicker> clickers;
 
 Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
     normales=*normales_;
@@ -105,20 +105,15 @@ void Clicker::update(){
     activateTriggers();
     pisados.clear();
 
-    if(h->inPlay)//@optim el if es para evitar kamikases generando movimientos, que pueden ser triggereados y
-        //van a seguir causando recalculos hasta que alguien actualize el step. Si quiero eliminar este if podría
-        //detectar kamikases y agregar un movimiento a la generacion que, de estar la pieza muerta, no genera nada
+    try{
         h->generar();
+    }catch(...){}//lngjmp para kamikases
 
     ///una pieza nunca activa sus propios triggers porque al moverse los invalida
     ///necesita generar todos sus movimientos devuelta de forma explicita
     ///piezas que no se mueven no pisan
 
-    for(Holder* s:justSpawned)
-        if(h!=s)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
-            //se saca si implemento el objeto que impide que el kamikase genere sin el if
-            s->generar();
-    justSpawned.clear();
+
     //si no se quiere tener este if se podría generar en spwn, pero eso genera recalculos y algunos bugs oscuros
     //(creo que el bug era que una pieza se capturaba a si misma, ponia triggers, se spawneaba a si misma y los
     //activaba. Esto por algun motivo rompia a veces)
@@ -133,8 +128,6 @@ void Clicker::update(){
     }
     */
 
-    for(Clicker* cli:clickers)
-        delete cli;
     clickers.clear();
 }
 
