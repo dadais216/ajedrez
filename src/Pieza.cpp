@@ -51,7 +51,7 @@ Pieza::Pieza(int _id,int _sn){
         switch(op->tipo){
         case NORMAL:
             cout<<"NORMAL";
-            if(((normal*)op)->doEsp)
+            if(((normal*)op)->bools&doEsp)
                 cout<<"e";
             cout<<" ";
             break;
@@ -199,7 +199,7 @@ void Holder::draw(int n)  //pos en capturados
 vector<normalHolder*> normales;
 void Holder::makeCli(){
     for(movHolder* b:movs){
-        if(!b->valorCadena) continue;
+        if(!(b->bools&valorCadena)) continue;
         b->cargar(&normales);
         normales.clear();
     }

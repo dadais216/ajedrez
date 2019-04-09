@@ -15,6 +15,7 @@ struct Base{ ///datos compartidos de un movimiento entero
 //en lugar de informacion en trigger para recuperar el estado en reaccion (osea, cambiaria un puntero en cada
 //movHolder por un offset en normal y el uso de una global)
 
+
 struct movHolder{
     movHolder(operador*,Base*);
     virtual void generar()=0;
@@ -26,18 +27,17 @@ struct movHolder{
         if(sig){
             sig->reaccionar(nhs);
             if(switchToGen){
-                valorCadena=hasClick||sig->valorCadena;
-                valorFinal=sig->valorFinal;
+                if(bools&hasClick||sig->bools&valorCadena)
+                    bools|=valorCadena;
+                else
+                    bools&=~valorCadena;
+                bools|=sig->bools&valorFinal;
             }
         }
     }
     Base* base;
     movHolder* sig;
-    bool valorCadena; //la cadena de movholders es valida. Una cadena va desde la base hasta un clicker o el final
-    bool valorFinal;  //se llegó al final. Esto sirve para saber si seguir iterando en un desliz
-    bool makeClick;
-    bool hasClick;
-    ///@optim meter estos bools en una variable
+    int32_t bools;
 };
 struct normalHolder:public movHolder{
     normalHolder(normal*,Base*,char**);//supongo que ni bien se crea el op le copias las accs
@@ -48,11 +48,9 @@ struct normalHolder:public movHolder{
     virtual void cargar(vector<normalHolder*>*);
     void draw();
     void accionar();///desencadena los acct
-    bool valor;       //las condiciones del movholder son verdaderas, las acciones guardadas validas
     barray<int> memAct;
     //no separo entre piezas con y sin memoria porque duplicaria mucho codigo.
     //Cuando haga la version compilada puedo hacer esa optimizacion y cosas mas especificas
-    bool doEsp;//ṕarece que vale la pena tener copias. En especial de este porque lo escribo
     v offsetAct;
     v relPos; //pos actual = relPös + offset. Todas las acciones y condiciones la comparten
 };
@@ -67,7 +65,6 @@ struct deslizHolder:public movHolder{
     int cantElems;//cantidad de iteraciones armadas
     void maybeAddIteration(int);
     int f;
-    bool lastNotFalse;
 };
 struct excHolder:public movHolder{
     excHolder(exc*,Base*,char**);
@@ -79,7 +76,6 @@ struct excHolder:public movHolder{
     ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
     ///no estoy seguro de si seria mas rapido
     int actualBranch;
-    bool valor;
 };
 struct isolHolder:public movHolder{
     isolHolder(isol*,Base*,char**);

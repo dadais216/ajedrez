@@ -38,10 +38,9 @@ normal::normal(bool make){
 
     movSize+=sizeof(normalHolder)+memLocalSizeAct*sizeof(int);
     tipo=NORMAL;
-    hasClick=makeClick=false;
+    bools&=~(hasClick|makeClick|doEsp);
     sig=nullptr;
     relPos=v(0,0);
-    doEsp=false;
     if(make){
         bool changeInLocalMem=false;
         while(true){
@@ -79,7 +78,7 @@ normal::normal(bool make){
                 cond(enemigo);break;
                 cond(pass);break;
             case lector::esp:
-            doEsp=true;
+                bools|=doEsp;
             break;
     #define acc(TOKEN) case lector::TOKEN: accsTemp.push_back(&TOKEN);break
 
@@ -282,7 +281,7 @@ normal::normal(bool make){
                 setupBarrays();
                 return;
             case lector::eol:
-                hasClick=makeClick=true;
+                bools|=hasClick|makeClick;
                 setupBarrays();
                 return;
             case lector::end:
@@ -290,7 +289,7 @@ normal::normal(bool make){
                 setupBarrays();
                 return;
             case lector::click:
-                hasClick=makeClick=true;
+                bools|=hasClick|makeClick;
                 clickExplicit=true;
                 setupBarrays();
                 sig=tomar();
@@ -308,7 +307,7 @@ normal::normal(bool make){
 
 desliz::desliz(){
     tipo=DESLIZ;
-    makeClick=false;
+    bools&=~makeClick;
 
     int movSizeTemp=movSize;
     movSize=0;
@@ -319,14 +318,14 @@ desliz::desliz(){
     insideSize=movSize*((tam.x>tam.y?tam.x:tam.y))*2;///@todo agregar posibilidad de elegir cuando se reserva
     movSize=movSizeTemp+sizeof(deslizHolder)+insideSize;
 
-    sig=keepOn(&makeClick);
+    sig=keepOn(&bools);
 
-    if(makeClick)
-        hasClick=true;
+    if(bools&makeClick)
+        bools|=hasClick;
     else
         for(operador* op=inside;op!=nullptr;op=op->sig)
-            if(op->hasClick){
-                hasClick=true;
+            if(op->bools&hasClick){
+                bools|=hasClick;
                 break;
             }
 }
@@ -347,15 +346,15 @@ exc::exc(){
     insideSize=movSize;
     movSize=movSizeTemp+sizeof(excHolder)+insideSize;
 
-    makeClick=false;
-    sig=keepOn(&makeClick);
-    if(makeClick)
-        hasClick=true;
+    bools&=~makeClick;
+    sig=keepOn(&bools);
+    if(bools&makeClick)
+        bools|=hasClick;
     else{
-        hasClick=false;
+        bools&=~hasClick;
         for(operador* op:ops)
-            if(op->hasClick){
-                hasClick=true;
+            if(op->bools&hasClick){
+                bools|=hasClick;
                 break;
             }
     }
@@ -363,16 +362,16 @@ exc::exc(){
 }
 isol::isol(){
     tipo=ISOL;
-    hasClick=true;
-    makeClick=false;
+    bools|=hasClick;
+    bools&=~makeClick;
     bool clickExplicitBack=clickExplicit;
 
     movSize+=sizeof(isolHolder);
     inside=tomar();
     if(!clickExplicit)
-        makeClick=true;
+        bools|=makeClick;
     clickExplicit=clickExplicitBack;
-    sig=keepOn(&makeClick);
+    sig=keepOn(&bools);
 }
 desopt::desopt(){
     tipo=DESOPT;
@@ -401,37 +400,37 @@ desopt::desopt(){
     //@todo hacerse pueda determinar otros valores como con desliz
     movSize=movSizeTemp+sizeof(desoptHolder)+desoptInsideSize;
 
-    makeClick=false;
-    sig=keepOn(&makeClick);
-    if(makeClick)
-        hasClick=makeClick;
+    bools&=~makeClick;
+    sig=keepOn(&bools);
+    if(bools&makeClick)
+        bools|=hasClick;
     else{
-        hasClick=false;
+        bools&=~hasClick;
         for(operador* op:ops)
-            if(op->hasClick){
-                hasClick=true;
+            if(op->bools&hasClick){
+                bools|=hasClick;
                 break;
             }
     }
 }
 
 //mira si hay algun token adelante que genere un operador
-operador* keepOn(bool* makeClick){
+operador* keepOn(int32_t* bools){
     if(tokens.empty())
         return nullptr;
     switch(tokens.front())
     {
     case lector::click:
-        *makeClick=true;
+        *bools|=makeClick;
         tokens.pop_front();
-        return keepOn(makeClick);
+        return keepOn(bools);
     case lector::sep:
         separator=true;
         tokens.pop_front();
         return nullptr;
     case lector::eol:
         if(!clickExplicit)
-            *makeClick=true;
+            *bools|=makeClick;
     case lector::end:
         tokens.pop_front();
         return nullptr;

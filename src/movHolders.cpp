@@ -2,21 +2,32 @@
 #include "Clicker.h"
 #include "Pieza.h"
 
+const int32_t valorCadena=1;
+const int32_t valorFinal=1<<1;
+const int32_t valor=1<<2;
+const int32_t lastNotFalse=1<<2;
+const int32_t makeClick=1<<3;
+const int32_t hasClick=1<<4;
+const int32_t doEsp=1<<5;
+
+
 movHolder::movHolder(operador* op,Base* base_){
     if(!base_->beg)
         base_->beg=this;
     base=base_;
-    makeClick=op->makeClick;
-    hasClick=op->hasClick;
+    bools|=op->bools;//setea makeClick, hasClick y doEsp en normalh
 }
 void movHolder::generarSig(){
     //se llama cuando valor == true
     if(sig){
         sig->generar();
-        valorCadena=hasClick||sig->valorCadena;
-        valorFinal=sig->valorFinal;//sig->valorCadena&&
+        if(bools&hasClick||sig->bools&valorCadena)//puede que haya una forma de no usar el if?
+            bools|=valorCadena;
+        else
+            bools&=~valorCadena;
+        bools|=sig->bools&valorFinal;
     }else
-        valorFinal=valorCadena=true;
+        bools|=valorFinal|valorCadena;
 }
 normalHolder::normalHolder(normal* org,Base* base_,char** head)
 :movHolder(org,base_){
@@ -34,7 +45,6 @@ normalHolder::normalHolder(normal* org,Base* base_,char** head)
     memAct.endptr=((int*)*head)+base_->memLocalSize;
     *head=(char*)memAct.endptr;
 
-    doEsp=op->doEsp;
     relPos=op->relPos;
 }
 v offset;
@@ -46,10 +56,10 @@ void normalHolder::generar(){
     offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
     memcpy(memAct.begptr,memMov.data(),base->memLocalSize*sizeof(int));
 
-    if(doEsp){
+    if(bools&doEsp){
         v actualPos=offset+relPos;
         if(actualPos.x<0||actualPos.x>=tablptr->tam.x||actualPos.y<0||actualPos.y>=tablptr->tam.y){
-            valorFinal=valorCadena=valor=false;
+            bools&=~(valorFinal|valorCadena|valor);
             return;
         }
         actualTile=tablptr->tile(relPos+offset);
@@ -58,13 +68,13 @@ void normalHolder::generar(){
 
     for(condt* c:op->conds)
         if(!c->check()){
-            valorFinal=valorCadena=valor=false;
+            bools&=~(valorFinal|valorCadena|valor);
             return;
         }
 
     offset=relPos+offset;
 
-    valor=true;
+    bools|=valor;
     generarSig();
 }
 void normalHolder::reaccionar(normalHolder* nh){
@@ -74,10 +84,10 @@ void normalHolder::reaccionar(normalHolder* nh){
         switchToGen=true;
         actualTile=tablptr->tile(relPos+offset);
         actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
-        bool doEspTemp=doEsp;
-        doEsp=false;
+        int32_t doEspTemp=bools&doEsp;
+        bools&=~doEsp;
         generar();
-        doEsp=doEspTemp;
+        bools|=doEspTemp;
     }else if(valor){
         reaccionarSig(nh);
     }
@@ -90,10 +100,10 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
             switchToGen=true;
             actualTile=tablptr->tile(relPos+offset);
             actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
-            bool doEspTemp=doEsp;
-            doEsp=false;
+            int32_t doEspTemp=bools&doEsp;
+            bools&=~doEsp;
             generar();
-            doEsp=doEspTemp;
+            bools|=doEspTemp;
             ///@optim sacar nh del vector
             return;
         }
@@ -111,9 +121,9 @@ void normalHolder::accionar(){
         ac->func();
 }
 void normalHolder::cargar(vector<normalHolder*>* norms){
-    if(!valorCadena) return;///@optim poner if antes de llamada
+    if(!(bools&valorCadena)) return;
     norms->push_back(this);
-    if(makeClick)
+    if(bools&makeClick)
         clickers.push_back(new Clicker(norms,base->h));
     if(sig)
         sig->cargar(norms);
@@ -142,19 +152,20 @@ void deslizHolder::maybeAddIteration(int i){
     }
 }
 void deslizHolder::generar(){
-    lastNotFalse=false;
     movHolder* act;
     int i=0;
     for(;;){
         act=(movHolder*)movs[i];
         act->generar();
-        if(!act->valorFinal)
+        if(!(act->bools&valorFinal))
             break;
         i++;
         maybeAddIteration(i);
     }
-    if(act->valorCadena)
-        lastNotFalse=true;
+    if(act->bools&valorCadena)
+        bools|=lastNotFalse;
+    else
+        bools&=~lastNotFalse;
     f=i;
     generarSig();
 }
@@ -165,15 +176,16 @@ void deslizReaccionar(auto nh,deslizHolder* $){
         movHolder* act=(movHolder*)$->movs[i];
         act->reaccionar(nh);
         if(switchToGen){
-            $->lastNotFalse=false;
-            for(;act->valorFinal;){
+            for(;act->bools&valorFinal;){
                 i++;
                 $->maybeAddIteration(i);
                 act=(movHolder*)$->movs[i];
                 act->generar();
             }
-            if(act->valorCadena)
-                $->lastNotFalse=true;
+            if(act->bools&valorCadena)
+                $->bools|=lastNotFalse;
+            else
+                $->bools&=~lastNotFalse;
             $->f=i;
             $->generarSig();
             return;
@@ -188,11 +200,11 @@ void deslizHolder::reaccionar(vector<normalHolder*> nhs){
     deslizReaccionar(nhs,this);
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
-    if(!valorCadena) return;
-    for(int i=0;i<(lastNotFalse?f+1:f);i++){
+    if(!(bools&valorCadena)) return;
+    for(int i=0;i<(bools&lastNotFalse?f+1:f);i++){
         ((movHolder*)movs[i])->cargar(norms);
     }
-    if(makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
+    if(bools&makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
         clickers.push_back(new Clicker(norms,base->h));
     if(sig)
         sig->cargar(norms);
@@ -213,14 +225,14 @@ void excHolder::generar(){
     for(i=0;i<ops.count();i++){
         movHolder* branch=*ops[i];
         branch->generar();
-        if(branch->valorCadena){
-            valor=true;
+        if(branch->bools&valorCadena){
+            bools|=valor;
             actualBranch=i; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que valorCadena==true
             generarSig();
             return;
         }
     }
-    valorFinal=valorCadena=valor=false;
+    bools&=~(valorFinal|valorCadena|valor);
     actualBranch=i-1;
 }
 void excReaccionar(auto nh,excHolder* $){
@@ -228,32 +240,32 @@ void excReaccionar(auto nh,excHolder* $){
         movHolder* branch=*$->ops[i];
         branch->reaccionar(nh);
         if(switchToGen){
-            if(!branch->valorCadena){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
+            if(!(branch->bools&valorCadena)){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
                 int j;
                 for(j=0;j<$->ops.count();j++){
                     if(i!=j){
                         movHolder* brancj=*$->ops[j];
                         brancj->generar();
-                        if(brancj->valorCadena){
-                            $->valor=true;
+                        if(brancj->bools&valorCadena){
+                            $->bools|=valor;
                             $->actualBranch=j;
                             $->generarSig();
                             return;
                         }
                     }
                 }
-                $->valorCadena=$->valor=false;
+                $->bools&=~(valorCadena|valor);
                 $->actualBranch=j-1;
                 return;
             }else{ ///se valido una rama que era invalida
                 $->actualBranch=i;
-                $->valor=true;
+                $->bools|=valor;
                 $->generarSig();
                 return;
             }
         }
     }
-    if($->valor)
+    if($->bools&valor)
         $->reaccionarSig(nh);
 }
 void excHolder::reaccionar(normalHolder* nh){
@@ -274,7 +286,7 @@ isolHolder::isolHolder(isol* org,Base* base_,char** head)
 :movHolder(org,base_){
     inside=(movHolder*)*head;
     crearMovHolder(head,org->inside,base_);
-    valorFinal=valorCadena=true;
+    bools|=valorFinal|valorCadena;
 }
 void isolHolder::generar(){
     v tempPos=offset;
@@ -283,7 +295,7 @@ void isolHolder::generar(){
     ///@todo reestablecer memoria
     if(sig){
         sig->generar();
-        valorFinal=sig->valorFinal;
+        bools|=sig->bools&valorFinal;///necesario?
     }
 }
 void isolReaccionar(auto nh,isolHolder* $){
@@ -304,7 +316,7 @@ void isolHolder::reaccionar(vector<normalHolder*> nhs){
 void isolHolder::cargar(vector<normalHolder*>* norms){
     vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
     inside->cargar(&normExt);
-    if(makeClick&&!normExt.empty())//evitar generar clickers sin normales
+    if(bools&makeClick&&!normExt.empty())//evitar generar clickers sin normales
         clickers.push_back(new Clicker(&normExt,base->h));
     if(sig)
         sig->cargar(norms);
@@ -330,7 +342,7 @@ desoptHolder::desoptHolder(desopt* org,Base* base_,char** head)
         }
     }
     *head=headFirst+op->desoptInsideSize;
-    valorCadena=valorFinal=true;
+    bools|=valorCadena|valorFinal;
 }
 void desoptHolder::generar(){
     //se tiene la base y primera iteracion construidos, rondas mas alla de estas usan el resto de memoria
@@ -356,7 +368,7 @@ void desoptHolder::generar(){
         movHolder* actualMov=(movHolder*)(firstIter+1);
 
         actualMov->generar();
-        if(actualMov->valorFinal){
+        if(actualMov->bools&valorFinal){
             firstIter->iter=(node*)correspondingCluster;
             int clusterOffset2=0;
             v offsetAct2=offset;
@@ -367,7 +379,7 @@ void desoptHolder::generar(){
                 movHolder* actualMov2=(movHolder*)(secondIter+1);
 
                 actualMov2->generar();
-                if(actualMov2->valorFinal){
+                if(actualMov2->bools&valorFinal){
                     secondIter->iter=(node*)dinamClusterHead;
                     construirYGenerarNodo();
                 }else
@@ -403,7 +415,7 @@ void desoptHolder::construirYGenerarNodo(){
         movHolder* actualMov=(movHolder*)(nextIter+1);
 
         actualMov->generar();
-        if(actualMov->valorFinal){
+        if(actualMov->bools&valorFinal){
             nextIter->iter=(node*)dinamClusterHead;
             construirYGenerarNodo();
         }
@@ -421,7 +433,7 @@ void desoptHolder::generarNodo(node* iter){//iter valido
         node* nextIter=(node*)((char*)iter+clusterOffset);
         movHolder* actualMov=(movHolder*)(nextIter+1);
         actualMov->generar();
-        if(actualMov->valorFinal){
+        if(actualMov->bools&valorFinal){
             if(nextIter->iter){
                 generarNodo(nextIter->iter);
             }else{
@@ -443,7 +455,7 @@ void desoptReaccionar(auto nh,desoptHolder* $,desoptHolder::node* iter){
         offset+=tam;
 
         actualMov->reaccionar(nh);
-        if(actualMov->valorFinal){
+        if(actualMov->bools&valorFinal){
             if(switchToGen){
                 if(nextIter->iter)
                     $->generarNodo(nextIter->iter);
@@ -469,7 +481,7 @@ void desoptHolder::cargarNodos(node* iter,vector<normalHolder*>* norms){
     for(int tam:op->movSizes){
         node* nextIter=(node*)((char*)iter+offset);
         movHolder* actualMov=(movHolder*)(nextIter+1);
-        if(actualMov->valorFinal){
+        if(actualMov->bools&valorFinal){
             actualMov->cargar(norms);
             assert(nextIter->iter);
             cargarNodos(nextIter->iter,norms);
