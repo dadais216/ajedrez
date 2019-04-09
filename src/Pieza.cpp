@@ -21,6 +21,13 @@ Pieza::Pieza(int _id,int _sn){
     bandoAct=sgn(_id);
     actualBucket=bucketPiezas;
     lastBucket=&bucketPiezas;
+
+    spawner=false;
+    kamikase=false;
+
+    if(id==1||id==-1)
+        spawner=true;///@hack
+
     vector<Pieza::base> movsTemp;
     int i=0;
     while(!tokens.empty()){
@@ -137,7 +144,7 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     lastBucket=&bucketHolders;
 
     ///@todo sacar temporal
-    movs.reserve(p->movs.count());
+    movs.reserve(p->movs.count()+(p->kamikase?1:0)+(p->spawner?1:0));
     int i=0;
 
     memPieza.reserve(p->memPiezaSize);
@@ -155,6 +162,23 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     //podria hacer todo un sistema para inferir cuales son los triggers potencialmente usados en cualquier tipo de
     //memoria. De todas formas no es algo muy importante, causaria un solo fallo de cache, y al menos en caso de
     //pieza, nomas se usa cuando hay others y son bastante niche
+
+    if(pieza->spawner){
+        new(actualBucket->head)Base({this,nullptr,0});
+        Base* base=(Base*)actualBucket->head;
+        actualBucket->head+=sizeof(Base);
+        *movs[i++]=(movHolder*)actualBucket->head;
+        new(actualBucket->head)spawnerGen(base);
+        actualBucket->head+=sizeof(spawnerGen);
+    }
+    if(pieza->kamikase){
+        new(actualBucket->head)Base({this,nullptr,0});
+        Base* base=(Base*)actualBucket->head;
+        actualBucket->head+=sizeof(Base);
+        *movs[i++]=(movHolder*)actualBucket->head;
+        new(actualBucket->head)kamikaseCntrl(base);
+        actualBucket->head+=sizeof(kamikaseCntrl);
+    }
 
     for(Pieza::base& b:pieza->movs){
         actualBucket->enoughSize(b.size+sizeof(Base));//asegurar que un movimiento este contenido en un mismo bucket

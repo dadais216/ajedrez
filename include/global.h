@@ -84,7 +84,6 @@ struct drawable
 };
 
 extern list<int> tokens;///@optim vector
-extern vector<Clicker*> clickers;
 extern int turno,turnoAct;
 extern bool turno1;
 

@@ -21,4 +21,6 @@ struct Clicker{
     Holder* h;
 };
 
+extern vector<Clicker> clickers;
+
 #endif // CLICKER_H

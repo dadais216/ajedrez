@@ -55,12 +55,12 @@ void Humano::turno(){
         }
         if(input->click()&&input->inGameRange(_tablero.tam)){
             v posClicked=input->get();
-            for(Clicker* cli:clickers){
+            for(Clicker& cli:clickers){
             ///@todo @optim esto se pregunta 60hz
             ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
             ///vuelva a meter solapamiento
-                if(posClicked==cli->clickPos){
-                    cli->update();//accionar
+                if(posClicked==cli.clickPos){
+                    cli.update();//accionar
                     turno1=!turno1;
                     drawScreen();
                     return;
@@ -127,7 +127,7 @@ void Aleatorio::turno(){
 
 
         clock_t t=clock();
-        (*it)->update();
+        (*it).update();
         double val=clock()-t;
         sProm+=val;
         if(val>maxV)
@@ -135,7 +135,7 @@ void Aleatorio::turno(){
         if(val<minV)
             minV=val;
         cProm++;
-        if(cProm==1000){
+        if(cProm==2000){
             cout<<"normalSize  "<<sizeof(normalHolder)
             <<"\nbucketMovSize  "<<bucketHolders->head-bucketHolders->data
             <<"\nbucketOpSize  "<<bucketPiezas->head-bucketPiezas->data
