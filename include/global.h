@@ -108,7 +108,6 @@ extern v posDebugTile;
 
 void drawScreen();
 
-extern int bandoAct;
 
 extern bool clickExplicit;
 extern bool switchToGen;

@@ -1,6 +1,7 @@
 #include "../include/global.h"
 #include "../include/lector.h"
 #include "../include/Pieza.h"
+#include "tablero.h"
 
 list<int> tokens;
 lector::lector(){
@@ -99,8 +100,8 @@ void lector::generarIdsTablero(int n){
 bool tileMemGrowth=false;
 Holder* lector::crearPieza(int n,v pos){
     for(Pieza* p:piezas)
-        if(p->id==n)
-            return new Holder(sgn(n),p,pos);
+        if(p->id==abso(n))
+            return new Holder(n>0,p,pos);
 
     archPiezas.clear();
     archPiezas.seekg(0, ios::beg);
@@ -190,7 +191,7 @@ enPieza:
                 t->memTileTrigs.resize(memTileSize);
             }
 
-    Holder* h=new Holder(sgn(n),new Pieza(n,sn),pos);
+    Holder* h=new Holder(n>0,new Pieza(abso(n),sn),pos);
     tokens.clear();
     return h;
 }

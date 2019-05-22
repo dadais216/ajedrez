@@ -1,6 +1,7 @@
 #include "../include/tablero.h"
 #include "../include/global.h"
 #include "../include/Pieza.h"
+#include "movHolders.h"
 
 float escala;
 tabl* tablptr;
@@ -73,7 +74,9 @@ void activateTriggers(){
     if(trigsActivados.size()==0) return;
     if(trigsActivados.size()==1){
         switchToGen=false;
-        trigsActivados[0]->base->beg->reaccionar(trigsActivados[0]);
+        Base* base=trigsActivados[0]->base;
+        actualHolder.h=base->h;
+        base->beg->reaccionar(trigsActivados[0]);
     }
     else{
         ///@optim supongo que volcarlo a una matriz es mas rapido que ordenarlo y trocearlo
@@ -86,10 +89,12 @@ void activateTriggers(){
             int j=i+1;
             while(j<trigsActivados.size()&&trigsActivados[j]->base->beg==base)
                 j++;
+            actualHolder.h=base->base->h;
             if(j==i+1)
                 base->reaccionar(trigsActivados[i]);
-            else
+            else{
                 base->reaccionar(vector<normalHolder*>(&trigsActivados[i],&trigsActivados[j]));//espero que no haga una copia
+            }
             i=j;
         }
     }

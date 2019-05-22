@@ -64,8 +64,8 @@ normal::normal(bool make){
                     //nueva normal
                 }else{
                     switch(tok){
-                    case lector::W: relPos.y+=bandoAct;break;
-                    case lector::S: relPos.y-=bandoAct;break;
+                    case lector::W: relPos.y--;break;
+                    case lector::S: relPos.y++;break;
                     case lector::D: relPos.x++;break;
                     case lector::A: relPos.x--;break;
                     }
@@ -86,7 +86,7 @@ normal::normal(bool make){
                 acc(capt);
                 acc(pausa);
             case lector::spwn:
-                accsTemp.push_back(bucketAdd<spwn>((tokens.front()-1000)*bandoAct));tokens.pop_front();break;
+                accsTemp.push_back(bucketAdd<spwn>((tokens.front()-1000)));tokens.pop_front();break;
                 //spwn n con n positivo quiere decir mismo bando, negativo bando enemigo
             case lector::color:
                 colorsTemp.push_back(crearColor());

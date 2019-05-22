@@ -1,5 +1,7 @@
 #include "movs.h"
 #include "Pieza.h"
+#include "memGetters.h"
+#include "movHolders.h"
 
 ///este archivo se compila a traves de operador.cpp
 
@@ -140,6 +142,7 @@ fabAcc(capt,
     actualTile->step++;
     pisados.push_back(actualTile);
 );
+
 string spwn_str="spwn";
 vector<Holder*> justSpawned;
 struct spwn:public acct{
@@ -148,7 +151,7 @@ struct spwn:public acct{
     virtual void func(){
         for(int i=0;i<reciclaje.size();i++){
             Holder* h=reciclaje[i];
-            if(h->id==id){//no tomo bandos distintos porque los movimientos estan espejados
+            if(h->id==abso(id)){//reciclo piezas enemigas tambien
                 h->inPlay=true;
                 memset(h->memPieza.begptr,0,sizeof(int)*h->memPieza.size());
                 actualTile->holder=h;
@@ -159,6 +162,7 @@ struct spwn:public acct{
         }
         actualTile->holder=lect.crearPieza(id,actualTile->pos);
         gen:
+        actualTile->holder->bando=id>0?actualHolder.h->bando:!actualHolder.h->bando;//el signo de id indica si se quiere el mismo bando u opuesto
         justSpawned.push_back(actualTile->holder);
         pisados.push_back(actualTile);
     }
@@ -318,7 +322,7 @@ template<void(*drawBlocks)(condt*,bool)> struct debugWrapper:public condt{
 };
 
 inline void drawDebugPos(condt* cond,bool ret){
-    v posAct=actualHolder.nh->relPos+offset;
+    v posAct=actualHolder.nh->pos;
     if(ret){
         posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
         tileActDebug=&posActGood;

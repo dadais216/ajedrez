@@ -1,12 +1,7 @@
 #ifndef PIEZA_H
 #define PIEZA_H
-//#include <cstdarg>
-#include "tablero.h"
+
 #include "global.h"
-#include "operador.h"
-#include "movs.h"
-#include "movHolders.h"
-#include "memGetters.h"
 
 
 struct Pieza{
@@ -49,7 +44,7 @@ struct Holder{
 
     barray<movHolder*> movs;
     int id;
-    int bando;
+    bool bando;
     bool inPlay;//false cuando la pieza esta generada y capturada. Solo se usa para evitar activar triggers dinamicos a capturados
 };
 struct Base;

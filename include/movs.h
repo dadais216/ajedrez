@@ -1,9 +1,6 @@
 #ifndef MOVS_H
 #define MOVS_H
 
-#include "Pieza.h"
-#include "memGetters.h"
-#include "movHolders.h"
 
 //antes separaba acct en posicionales y de memoria, pero como estoy usando polimorfismo para los dos da lo mismo
 //supongo que abstraer las cosas en comun en pos y mem reduce un poco el nivel de instrucciones, pero dentro de todo

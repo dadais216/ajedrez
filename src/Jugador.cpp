@@ -5,11 +5,13 @@
 #include "../include/tablero.h"
 #include "../include/Estado.h"
 #include "../include/Pieza.h"
+#include "movHolders.h"
+
 #include <stdlib.h>
 #include <time.h>
 #include <ctime>
 
-Humano::Humano(int bando_,tabl& tablero_)
+Humano::Humano(bool bando_,tabl& tablero_)
 :Jugador(bando_,tablero_) {}
 
 int dt=0;
@@ -87,7 +89,7 @@ void Nadie::turno(){
     ::turno=turnoAct/2;
 }
 
-Aleatorio::Aleatorio(int bando_,tabl& tablero_)
+Aleatorio::Aleatorio(bool bando_,tabl& tablero_)
 :Jugador(bando_,tablero_){
     srand(time(NULL));
 }
@@ -135,7 +137,7 @@ void Aleatorio::turno(){
         if(val<minV)
             minV=val;
         cProm++;
-        if(cProm==2000){
+        if(cProm==100){
             cout<<"normalSize  "<<sizeof(normalHolder)
             <<"\nbucketMovSize  "<<bucketHolders->head-bucketHolders->data
             <<"\nbucketOpSize  "<<bucketPiezas->head-bucketPiezas->data

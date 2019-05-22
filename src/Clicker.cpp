@@ -4,10 +4,12 @@
 #include "../include/Pieza.h"
 #include "../include/Juego.h"
 #include "movHolders.h"
+#include "tablero.h"
 
 bool Clicker::drawClickers;
 
 vector<Clicker> clickers;
+v getActualPos(v,v);
 
 Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
     normales=*normales_;
@@ -24,7 +26,8 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
     else
     */
 
-    clickPos=lastN->op->relPos+lastN->offsetAct;
+    actualHolder.h=h;
+    clickPos=lastN->pos;
 
     //clickPos.show();
     ///solapamientos
@@ -97,7 +100,7 @@ void Clicker::update(){
     }
     for(Tile* tile:pisados)
         tile->chargeTriggers();
-    for(turnTrigInfo& tti:turnoTrigs[h->bando==-1])
+    for(turnTrigInfo& tti:turnoTrigs[h->bando])///@todo mirar que este bien
         if(tti.h!=h)
             trigsActivados.push_back(tti.nh);
     turnoAct++;
