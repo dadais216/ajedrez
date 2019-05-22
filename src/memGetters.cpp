@@ -209,12 +209,12 @@ struct tileaRead:public getterCond{
         //en casos como mcmp t0 1 w mover se hacen 2 normales, la primera con mcmp t0 1 sin esp.
         //este es el unico caso donde hay una cond posicional  sin un esp, se necesita actualizar actualTile
         //(el esp no es necesario, pero el actualTile se actualiza adentro suyo)
-        actualTile=tablptr->tile(actualHolder.nh->relPos+offset);
+        actualTile=tablptr->tile(actualHolder.nh->pos);
         actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
         return &actualTile->memTile[ind];
     }
     virtual void drawDebugMem(){
-        posDebugTile=actualHolder.nh->offsetAct+actualHolder.nh->relPos;
+        posDebugTile=actualHolder.nh->pos;
         backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),105+45*(ind/4-memTileSize/4)));
         window->draw(backGroundMemDebug);
     }
@@ -243,7 +243,7 @@ struct tileaiRead:public getterCond{
         ind=*g->val();
         int* stepCheck=&actualHolder.h->tile->step;
         int step=*stepCheck;
-        actualTile=tablptr->tile(actualHolder.nh->relPos+offset);
+        actualTile=tablptr->tile(actualHolder.nh->pos);
         actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
         return &actualTile->memTile[ind];
     }
@@ -283,7 +283,7 @@ struct otheraRead:public getterCond{
         return h->memPieza[ind];
     }
     virtual void drawDebugMem(){
-        posDebugTile=actualHolder.nh->offsetAct+actualHolder.nh->relPos;
+        posDebugTile=actualHolder.nh->pos;
         memOtherSize=actualHolder.nh->base->h->memPieza.size();
         backGroundMemDebug.setPosition(Vector2f(630+25*(ind%4),105+45*(ind/4-memOtherSize/4)));
         window->draw(backGroundMemDebug);
@@ -370,9 +370,11 @@ struct posYObj:public getterCond{
     int val_;
     posYObj(){}
     virtual int* val(){
-        val_=offset.y+actualHolder.nh->relPos.y;
-        if(actualHolder.nh->base->h->bando==-1)
-            val_=tablptr->tam.y-1-val_;
+        if(actualHolder.nh->base->h->bando){
+            val_=offset.y+actualHolder.nh->relPos.y;
+        }else{
+            val_=tablptr->tam.y-1-offset.y-actualHolder.nh->relPos.y;
+        }
         return &val_;
     }
     virtual void drawDebugMem(){}

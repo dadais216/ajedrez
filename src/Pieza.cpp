@@ -2,14 +2,15 @@
 #include "../include/Pieza.h"
 #include "../include/Clicker.h"
 #include "../include/operador.h"
+#include "movHolders.h"
+#include "tablero.h"
 
 vector<Pieza*> piezas;
 
 int movSize;
-int bandoAct;
 Pieza::Pieza(int _id,int _sn){
     //recibe la lista de tokens y el tamaño de la memoria de pieza y las memorias locales
-    id=_id;//signo indica bando
+    id=_id;
     sn=_sn;
     spriteb.setTexture(imagen->get("piezas.png"));
     spriteb.setTextureRect(IntRect(sn*64%384,(sn*64/384)*32,32,32));
@@ -18,15 +19,14 @@ Pieza::Pieza(int _id,int _sn){
     spriten.setTextureRect(IntRect(sn*64%384+32,(sn*64/384)*32,32,32));
     spriten.setScale(escala,escala);
 
-    bandoAct=sgn(_id);
     actualBucket=bucketPiezas;
     lastBucket=&bucketPiezas;
 
     spawner=false;
     kamikase=false;
 
-    if(id==1||id==-1)
-        spawner=true;///@hack
+//    if(id==1||id==-1)
+//        spawner=true;///@hack
 
     vector<Pieza::base> movsTemp;
     int i=0;
@@ -144,6 +144,10 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     lastBucket=&bucketHolders;
 
     ///@todo sacar temporal
+    if(id==1){
+        p->spawner=true;
+    }
+
     movs.reserve(p->movs.count()+(p->kamikase?1:0)+(p->spawner?1:0));
     int i=0;
 
@@ -231,6 +235,7 @@ void Holder::makeCli(){
 }
 
 void Holder::generar(){
+    actualHolder.h=this;
     for(movHolder* m:movs){
         offset=tile->pos;
         memset(memMov.data(),0,m->base->memLocalSize*sizeof(int));

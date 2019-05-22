@@ -10,6 +10,8 @@
 #include "../include/Jugador.h"
 #include "../include/Input.h"
 #include "../include/Juego.h"
+#include "movHolders.h"
+#include "memGetters.h"
 
 Estado::Estado() {}
 
@@ -73,7 +75,7 @@ Proper::Proper(int id_,int sel1,int sel2)
     debugMode=false;
 
     int nonHuman=0;
-    auto selec=[&](int sel,int bando)->Jugador*{
+    auto selec=[&](int sel,bool bando)->Jugador*{
         switch(sel){
         case 0:nonHuman++;return new Nadie(bando,tablero);
         case 1:return new Humano(bando,tablero);
@@ -82,8 +84,8 @@ Proper::Proper(int id_,int sel1,int sel2)
         }
     };
 
-    primero=selec(2,-1);
-    segundo=selec(2,1);
+    primero=selec(2,false);
+    segundo=selec(2,true);
 
     if(nonHuman==2)
         fpsLock=0.;
@@ -180,7 +182,7 @@ void Proper::init(){
         for(uint j=0; j<lect.matriz[0].size(); j++){
             Holder* hAct=tablero.tile(v(j,i))->holder;
             if(hAct){
-                turno1=hAct->bando==-1;
+                turno1=hAct->bando;///@check
                 hAct->generar();
             }
         }

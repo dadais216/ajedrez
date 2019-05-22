@@ -1,6 +1,10 @@
 #include "movHolders.h"
 #include "Clicker.h"
 #include "Pieza.h"
+#include "operador.h"
+#include "tablero.h"
+#include "movs.h"
+
 
 const int32_t valorCadena=1;
 const int32_t valorFinal=1<<1;
@@ -9,7 +13,6 @@ const int32_t lastNotFalse=1<<2;
 const int32_t makeClick=1<<3;
 const int32_t hasClick=1<<4;
 const int32_t doEsp=1<<5;
-
 
 movHolder::movHolder(operador* op,Base* base_){
     if(!base_->beg)
@@ -39,7 +42,7 @@ normalHolder::normalHolder(normal* org,Base* base_,char** head)
         break;case 1:
             base->h->memPiezaTrigs[trigInfo.ind]->perma.push_back(this);
         break;case 2:
-            turnoTrigs[base->h->bando==-1].push_back({base->h,this});
+            turnoTrigs[base->h->bando].push_back({base->h,this}); ///@check
         }
     memAct.begptr=(int*)*head;
     memAct.endptr=((int*)*head)+base_->memLocalSize;
@@ -50,44 +53,41 @@ normalHolder::normalHolder(normal* org,Base* base_,char** head)
 v offset;
 Tile* actualTile;
 AH actualHolder;
-void normalHolder::generar(){
-    actualHolder.h=base->h;///@optim mover esto mas atras
-    actualHolder.nh=this;
-    offsetAct=offset;///se setea el offset con el que arrancó la normal para tenerlo cuando se recalcula. Cuando se recalcula se setea devuelta al pedo, pero bueno. No justifica hacer una funcion aparte para el recalculo
-    memcpy(memAct.begptr,memMov.data(),base->memLocalSize*sizeof(int));
-
-    if(bools&doEsp){
-        v actualPos=offset+relPos;
-        if(actualPos.x<0||actualPos.x>=tablptr->tam.x||actualPos.y<0||actualPos.y>=tablptr->tam.y){
-            bools&=~(valorFinal|valorCadena|valor);
-            return;
-        }
-        actualTile=tablptr->tile(relPos+offset);
-        actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
-    }
-
+inline void normalHolder::generarProper(){
+    actualHolder.nh=this;//lo usan algunas cosas de memoria y debug
     for(condt* c:op->conds)
         if(!c->check()){
             bools&=~(valorFinal|valorCadena|valor);
             return;
         }
-
-    offset=relPos+offset;
+    offset=pos;
 
     bools|=valor;
     generarSig();
 }
+void normalHolder::generar(){
+    memcpy(memAct.begptr,memMov.data(),base->memLocalSize*sizeof(int));
+
+    pos=getActualPos(relPos,offset);//pos se calcula siempre porque se usa para actualizar offset
+    if(bools&doEsp){
+        if(pos.x<0||pos.x>=tablptr->tam.x||pos.y<0||pos.y>=tablptr->tam.y){
+            bools&=~(valorFinal|valorCadena|valor);
+            return;
+        }
+        actualTile=tablptr->tile(pos);
+        actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
+    }
+    generarProper();
+}
 void normalHolder::reaccionar(normalHolder* nh){
     if(nh==this){
-        offset=offsetAct;
         memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
         switchToGen=true;
-        actualTile=tablptr->tile(relPos+offset);
+        actualTile=tablptr->tile(pos);
         actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
-        int32_t doEspTemp=bools&doEsp;
-        bools&=~doEsp;
-        generar();
-        bools|=doEspTemp;
+        offset=getOffset(relPos,pos);//se restaura para tener algo en caso de que falle la condicion
+        //esto nomas es relevante mientras desliz, exc (y desopt?) no guarden estado, y creo que va a cambiar eso
+        generarProper();
     }else if(valor){
         reaccionarSig(nh);
     }
@@ -95,15 +95,12 @@ void normalHolder::reaccionar(normalHolder* nh){
 void normalHolder::reaccionar(vector<normalHolder*> nhs){
     for(normalHolder* nh:nhs){
         if(nh==this){
-            offset=offsetAct;
             memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
             switchToGen=true;
-            actualTile=tablptr->tile(relPos+offset);
+            actualTile=tablptr->tile(pos);
             actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
-            int32_t doEspTemp=bools&doEsp;
-            bools&=~doEsp;
-            generar();
-            bools|=doEspTemp;
+            offset=getOffset(relPos,pos);
+            generarProper();
             ///@optim sacar nh del vector
             return;
         }
@@ -116,7 +113,7 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
 void normalHolder::accionar(){
     actualHolder.h=base->h;
     actualHolder.nh=this;
-    actualTile=tablptr->tile(relPos+offsetAct);
+    actualTile=tablptr->tile(pos);
     for(acct* ac:op->accs)
         ac->func();
 }
@@ -129,7 +126,7 @@ void normalHolder::cargar(vector<normalHolder*>* norms){
         sig->cargar(norms);
 }
 void normalHolder::draw(){
-    actualPosColor=offsetAct+relPos;
+    actualPosColor=pos;
     for(colort* c:op->colors)
         c->draw();
 }
@@ -517,23 +514,13 @@ void spawnerGen::generar(){
     if(justSpawned.empty())
         return;
 
-    vector<Holder*> justSpawnedL(justSpawned);//@optim estaria bueno usar el stack para estas cosas
+    vector<Holder*> justSpawnedL(justSpawned);//@optim estaria bueno usar el stack para estas cosas, o un move
     justSpawned.clear();//evitar bucles infinitos
 
     for(Holder* s:justSpawnedL)
         if(base->h!=s)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
             s->generar();
 }
-/*
-void spawnerGen::reaccionar(normalHolder* nh){
-    assert(false);
-}
-void spawnerGen::reaccionar(vector<normalHolder*> nhs){
-    assert(false);
-}
-void spawnerGen::cargar(vector<normalHolder*>* norms){
-}
-*/
 kamikaseCntrl::kamikaseCntrl(Base* base_){
     base=base_;
 }
@@ -541,15 +528,6 @@ void kamikaseCntrl::generar(){
     if(!base->h->inPlay)
         throw nullptr;
 }
-/*
-void kamikaseCntrl::reaccionar(normalHolder* nh){
-    assert(false);
-}
-void kamikaseCntrl::reaccionar(vector<normalHolder*> nhs){
-    assert(false);
-}
-void kamikaseCntrl::cargar(vector<normalHolder*>* norms){
-}*/
-
 //si spawnea y muere en el mismo turno no pasa nada porque spawn corre antes de kamikase
-//si se suicida y se spawnea a si mismo
+
+

@@ -2,6 +2,7 @@
 #define MOVHOLDERS_H
 
 #include "global.h"
+#include "Pieza.h"
 
 struct Base{ ///datos compartidos de un movimiento entero
     Holder* h;
@@ -14,6 +15,16 @@ struct Base{ ///datos compartidos de un movimiento entero
 //@optim lo que se podria hacer para solucionar esto es guardar en operador el offset de la base, y usar eso
 //en lugar de informacion en trigger para recuperar el estado en reaccion (osea, cambiaria un puntero en cada
 //movHolder por un offset en normal y el uso de una global)
+inline v getActualPos(v relPos,v offset){
+    bool negate=actualHolder.h->bando;
+    relPos.y=(relPos.y^-negate)+negate;
+    return relPos+offset;
+}
+inline v getOffset(v relPos,v pos){
+    bool negate=actualHolder.h->bando;
+    relPos.y=(relPos.y^-negate)+negate;
+    return pos-relPos;
+}
 
 struct movHolder{
     movHolder(operador*,Base*);
@@ -42,6 +53,7 @@ struct normalHolder:public movHolder{
     normalHolder(normal*,Base*,char**);//supongo que ni bien se crea el op le copias las accs
     normal* op;
     virtual void generar();
+    void generarProper();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>);
     virtual void cargar(vector<normalHolder*>*);
@@ -50,8 +62,8 @@ struct normalHolder:public movHolder{
     barray<int> memAct;
     //no separo entre piezas con y sin memoria porque duplicaria mucho codigo.
     //Cuando haga la version compilada puedo hacer esa optimizacion y cosas mas especificas
-    v offsetAct;
     v relPos; //pos actual = relPös + offset. Todas las acciones y condiciones la comparten
+    v pos; //pos actual
 };
 struct deslizHolder:public movHolder{
     deslizHolder(desliz*,Base*,char**);
@@ -110,6 +122,9 @@ struct desoptHolder:public movHolder{
 
 struct movHolderMock{//para que spawner y kamikase no hereden datos que no usan
     virtual void generar()=0;
+    virtual void reaccionar(normalHolder*){assert(false);};
+    virtual void reaccionar(vector<normalHolder*>){assert(false);};
+    virtual void cargar(vector<normalHolder*>*){};
     Base* base;
 };
 struct spawnerGen:public movHolderMock{
@@ -120,7 +135,6 @@ struct kamikaseCntrl:public movHolderMock{
     kamikaseCntrl(Base*);
     virtual void generar();
 };
-//se los podria hacer heredar de un nivel mas arriba para ahorrar un poco de memoria
 
 
 #endif // MOVHOLDERS_H
