@@ -85,8 +85,7 @@ void normalHolder::reaccionar(normalHolder* nh){
         switchToGen=true;
         actualTile=tablptr->tile(pos);
         actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
-        offset=getOffset(relPos,pos);//se restaura para tener algo en caso de que falle la condicion
-        //esto nomas es relevante mientras desliz, exc (y desopt?) no guarden estado, y creo que va a cambiar eso
+        //offset se restaura cuando este generar sea valido o en caso de que no lo sea por el operador que lo contenga
         generarProper();
     }else if(valor){
         reaccionarSig(nh);
@@ -99,7 +98,6 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
             switchToGen=true;
             actualTile=tablptr->tile(pos);
             actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
-            offset=getOffset(relPos,pos);
             generarProper();
             ///@optim sacar nh del vector
             return;
@@ -136,13 +134,14 @@ deslizHolder::deslizHolder(desliz* org,Base* base_,char** head)
     movs.begptr=*head;
     movs.endptr=(char*)movs.begptr+org->insideSize;
     movs.elem.setSize(org->iterSize);
+    *head+=sizeof(v);
     crearMovHolder(head,org->inside,base);//crear primera iteracion
     *head=(char*)movs.endptr;
     cantElems=1;
 }
 void deslizHolder::maybeAddIteration(int i){
     if(cantElems==i){
-        char* place=(char*)movs.begptr+movs.elem.size()*i;//crearMovHolder necesita **
+        char* place=(char*)movs.begptr+movs.elem.size()*i+sizeof(v);//crearMovHolder necesita **
         crearMovHolder(&place,op->inside,base);
         cantElems++;
         assert(cantElems<=movs.count());
@@ -152,10 +151,13 @@ void deslizHolder::generar(){
     movHolder* act;
     int i=0;
     for(;;){
-        act=(movHolder*)movs[i];
+        *((v*)movs[i])=offset;
+        act=(movHolder*)((char*)movs[i]+sizeof(v));
         act->generar();
-        if(!(act->bools&valorFinal))
+        if(!(act->bools&valorFinal)){
+            offset=*(v*)movs[i];
             break;
+        }
         i++;
         maybeAddIteration(i);
     }
@@ -170,15 +172,17 @@ int x=0;
 bool switchToGen;
 void deslizReaccionar(auto nh,deslizHolder* $){
     for(int i=0;i<=$->f;i++){
-        movHolder* act=(movHolder*)$->movs[i];
+        movHolder* act=(movHolder*)((char*)$->movs[i]+sizeof(v));
         act->reaccionar(nh);
         if(switchToGen){
             for(;act->bools&valorFinal;){
                 i++;
                 $->maybeAddIteration(i);
-                act=(movHolder*)$->movs[i];
+                *((v*)$->movs[i])=offset;
+                act=(movHolder*)((char*)$->movs[i]+sizeof(v));
                 act->generar();
             }
+            offset=*(v*)$->movs[i];
             if(act->bools&valorCadena)
                 $->bools|=lastNotFalse;
             else
@@ -199,7 +203,7 @@ void deslizHolder::reaccionar(vector<normalHolder*> nhs){
 void deslizHolder::cargar(vector<normalHolder*>* norms){
     if(!(bools&valorCadena)) return;
     for(int i=0;i<(bools&lastNotFalse?f+1:f);i++){
-        ((movHolder*)movs[i])->cargar(norms);
+        ((movHolder*)((char*)movs[i]+sizeof(v)))->cargar(norms);
     }
     if(bools&makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
         clickers.emplace_back(norms,base->h);
@@ -219,6 +223,7 @@ excHolder::excHolder(exc* org,Base* base_,char** head)
 }
 void excHolder::generar(){
     int i;
+    offsetBefore=offset;
     for(i=0;i<ops.count();i++){
         movHolder* branch=*ops[i];
         branch->generar();
@@ -228,6 +233,7 @@ void excHolder::generar(){
             generarSig();
             return;
         }
+        offset=offsetBefore;
     }
     bools&=~(valorFinal|valorCadena|valor);
     actualBranch=i-1;
@@ -287,9 +293,14 @@ isolHolder::isolHolder(isol* org,Base* base_,char** head)
 }
 void isolHolder::generar(){
     v tempPos=offset;
+    void* memStack=alloca(base->memLocalSize*sizeof(int));
+    memcpy(memStack,memMov.data(),base->memLocalSize*sizeof(int));
+
     inside->generar();
+
     offset=tempPos;
-    ///@todo reestablecer memoria
+    memcpy(memMov.data(),memStack,base->memLocalSize*sizeof(int));
+
     if(sig){
         sig->generar();
         bools|=sig->bools&valorFinal;///necesario?

@@ -87,6 +87,7 @@ struct excHolder:public movHolder{
     ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
     ///no estoy seguro de si seria mas rapido
     int actualBranch;
+    v offsetBefore;
 };
 struct isolHolder:public movHolder{
     isolHolder(isol*,Base*,char**);

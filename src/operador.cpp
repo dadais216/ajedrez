@@ -314,8 +314,9 @@ desliz::desliz(){
     inside=tomar();
     v& tam=tablptr->tam;
     //iteraciones necesarias para recorrer el tablero en linea recta.
-    iterSize=movSize;
-    insideSize=movSize*((tam.x>tam.y?tam.x:tam.y))*2;///@todo agregar posibilidad de elegir cuando se reserva
+    assert(sizeof(v)==2*sizeof(int));
+    iterSize=movSize+sizeof(v);
+    insideSize=iterSize*((tam.x>tam.y?tam.x:tam.y))*2;///@todo agregar posibilidad de elegir cuando se reserva
     movSize=movSizeTemp+sizeof(deslizHolder)+insideSize;
 
     sig=keepOn(&bools);

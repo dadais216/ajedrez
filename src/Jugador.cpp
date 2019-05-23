@@ -137,7 +137,7 @@ void Aleatorio::turno(){
         if(val<minV)
             minV=val;
         cProm++;
-        if(cProm==100){
+        if(cProm==-1){
             cout<<"normalSize  "<<sizeof(normalHolder)
             <<"\nbucketMovSize  "<<bucketHolders->head-bucketHolders->data
             <<"\nbucketOpSize  "<<bucketPiezas->head-bucketPiezas->data

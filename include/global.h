@@ -19,6 +19,7 @@
 #include <unordered_set>
 #include <string.h>
 #include <stdint.h>
+#include "alloca.h"
 
 #include "Bucket.h"
 
