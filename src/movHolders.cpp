@@ -67,7 +67,6 @@ inline void normalHolder::generarProper(){
 }
 void normalHolder::generar(){
     memcpy(memAct.begptr,memMov.data(),base->memLocalSize*sizeof(int));
-
     pos=getActualPos(relPos,offset);//pos se calcula siempre porque se usa para actualizar offset
     if(bools&doEsp){
         if(pos.x<0||pos.x>=tablptr->tam.x||pos.y<0||pos.y>=tablptr->tam.y){
@@ -85,11 +84,20 @@ void normalHolder::reaccionar(normalHolder* nh){
         switchToGen=true;
         actualTile=tablptr->tile(pos);
         actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
-        offset=getOffset(relPos,pos);//se restaura para tener algo en caso de que falle la condicion
-        //esto nomas es relevante mientras desliz, exc (y desopt?) no guarden estado, y creo que va a cambiar eso
         generarProper();
+        if(!(bools&valorFinal)){
+            offset=getOffset(relPos,pos);
+            memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
+            //esta restauracion esta para que el operador que contenga reciba el offset y mem local correcta
+            //la alternativa a hacer esto es que todos los operadores contenedores guarden offset y memoria local
+            //para cada iteración/rama, lo que tambien tiene sus desventajas.
+        }
     }else if(valor){
         reaccionarSig(nh);
+        if(!(bools&valorFinal)){
+            offset=getOffset(relPos,pos);
+            memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
+        }
     }
 }
 void normalHolder::reaccionar(vector<normalHolder*> nhs){
@@ -99,14 +107,21 @@ void normalHolder::reaccionar(vector<normalHolder*> nhs){
             switchToGen=true;
             actualTile=tablptr->tile(pos);
             actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
-            offset=getOffset(relPos,pos);
             generarProper();
+            if(!(bools&valorFinal)){
+                offset=getOffset(relPos,pos);
+                memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
+            }
             ///@optim sacar nh del vector
             return;
         }
     }
     if(valor){
         reaccionarSig(nhs);
+        if(!(bools&valorFinal)){
+            offset=getOffset(relPos,pos);
+            memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
+        }
     }
 }
 
@@ -152,10 +167,13 @@ void deslizHolder::generar(){
     movHolder* act;
     int i=0;
     for(;;){
+        v offsetOrg=offset;
         act=(movHolder*)movs[i];
         act->generar();
-        if(!(act->bools&valorFinal))
+        if(!(act->bools&valorFinal)){
+            offset=offsetOrg;
             break;
+        }
         i++;
         maybeAddIteration(i);
     }
@@ -219,15 +237,20 @@ excHolder::excHolder(exc* org,Base* base_,char** head)
 }
 void excHolder::generar(){
     int i;
+    v offsetOrg=offset;
     for(i=0;i<ops.count();i++){
         movHolder* branch=*ops[i];
         branch->generar();
         if(branch->bools&valorCadena){
+            //si una rama con un clicker puso el clicker y despues fallo se toma como rama buena,
+            //pero la pos vuelve al origen. Medio raro. Por ahora lo dejo asi porque asi esta el sistema,
+            //si se quiere hacer algo distinto no sería problema agregarlo en la version compilada
             bools|=valor;
             actualBranch=i; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que valorCadena==true
             generarSig();
             return;
         }
+        offset=offsetOrg;
     }
     bools&=~(valorFinal|valorCadena|valor);
     actualBranch=i-1;
@@ -355,7 +378,7 @@ void desoptHolder::generar(){
     int clusterOffset=0;
     char* correspondingCluster=movs()+op->clusterSize;
 
-    v offsetAct=offset;
+    v offsetOrg=offset;
 
     memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
 
@@ -368,7 +391,7 @@ void desoptHolder::generar(){
         if(actualMov->bools&valorFinal){
             firstIter->iter=(node*)correspondingCluster;
             int clusterOffset2=0;
-            v offsetAct2=offset;
+            v offsetOrg2=offset;
             memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
 
             for(int tam:op->movSizes){
@@ -382,7 +405,7 @@ void desoptHolder::generar(){
                 }else
                     secondIter->iter=nullptr;
                 clusterOffset2+=tam;
-                offset=offsetAct2;
+                offset=offsetOrg2;
                 memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
             }
             memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
@@ -390,7 +413,7 @@ void desoptHolder::generar(){
             firstIter->iter=nullptr;
         clusterOffset+=tam;
         correspondingCluster+=op->clusterSize;
-        offset=offsetAct;
+        offset=offsetOrg;
         memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
     }
     memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
@@ -404,7 +427,7 @@ void desoptHolder::construirYGenerarNodo(){
         crearMovHolder(&dinamClusterHead,opos,base);
     }
     int clusterOffset=0;
-    v offsetAct=offset;
+    v offsetOrg=offset;
     memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
 
     for(int tam:op->movSizes){
@@ -417,14 +440,14 @@ void desoptHolder::construirYGenerarNodo(){
             construirYGenerarNodo();
         }
         clusterOffset+=tam;
-        offset=offsetAct;
+        offset=offsetOrg;
         memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
     }
     memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
 }
 void desoptHolder::generarNodo(node* iter){//iter valido
     int clusterOffset=0;
-    v offsetAct=offset;
+    v offsetOrg=offset;
     memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
     for(int tam:op->movSizes){
         node* nextIter=(node*)((char*)iter+clusterOffset);
@@ -439,7 +462,7 @@ void desoptHolder::generarNodo(node* iter){//iter valido
             }
         }
         clusterOffset+=tam;
-        offset=offsetAct;
+        offset=offsetOrg;
         memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
     }
     memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());

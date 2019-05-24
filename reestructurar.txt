@@ -711,6 +711,13 @@ normal 80
 movs   107968
 ops    16688
 
+hacer que la posicion se restaure en casos de varias cadenas adentro de desliz y exc. Va a hacer el programa mas lento pero es necesario para ser consistente
+actual 100 turnos                         - 13    13   12   15  12  15 15 12 11
+caballos peon 2000 turnos                 - 14    10    13   14   14   14 14
+test vel reina 1000                       - 109   76    77 178 110 102 111
+normal 80
+movs   108736
+ops    33376
 
 
 
