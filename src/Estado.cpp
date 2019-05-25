@@ -72,7 +72,7 @@ Proper::Proper(int id_,int sel1,int sel2)
     :tablero(){
     id=id_;
     j->change(this);
-    debugMode=false;
+    debugMode=true;
 
     int nonHuman=0;
     auto selec=[&](int sel,bool bando)->Jugador*{
@@ -84,8 +84,8 @@ Proper::Proper(int id_,int sel1,int sel2)
         }
     };
 
-    primero=selec(2,false);
-    segundo=selec(2,true);
+    primero=selec(1,false);
+    segundo=selec(0,true);
 
     if(nonHuman==2)
         fpsLock=0.;

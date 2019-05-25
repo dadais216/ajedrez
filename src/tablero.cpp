@@ -91,7 +91,9 @@ void activateTriggers(){
             if(j==i+1)
                 base->reaccionar(trigsActivados[i]);
             else{
-                base->reaccionar(vector<normalHolder*>(&trigsActivados[i],&trigsActivados[j]));//espero que no haga una copia
+                vector<normalHolder*> nhs(&trigsActivados[i],&trigsActivados[j]);
+                //estaria bueno no hacer una copia, no es muy importante igual
+                base->reaccionar(&nhs);
             }
             i=j;
         }

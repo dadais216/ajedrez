@@ -30,7 +30,7 @@ struct movHolder{
     movHolder(operador*,Base*);
     virtual void generar()=0;
     virtual void reaccionar(normalHolder*)=0;
-    virtual void reaccionar(vector<normalHolder*>)=0;
+    virtual void reaccionar(vector<normalHolder*>*)=0;
     virtual void cargar(vector<normalHolder*>*)=0;
     void generarSig();
     void reaccionarSig(auto nhs){
@@ -55,7 +55,7 @@ struct normalHolder:public movHolder{
     virtual void generar();
     void generarProper();
     virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(vector<normalHolder*>*);
     virtual void cargar(vector<normalHolder*>*);
     void draw();
     void accionar();///desencadena los acct
@@ -70,7 +70,7 @@ struct deslizHolder:public movHolder{
     desliz* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(vector<normalHolder*>*);
     virtual void cargar(vector<normalHolder*>*);
     barray<void> movs;
     int cantElems;//cantidad de iteraciones armadas
@@ -81,7 +81,7 @@ struct excHolder:public movHolder{
     excHolder(exc*,Base*,char**);
     virtual void generar();
     virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(vector<normalHolder*>*);
     virtual void cargar(vector<normalHolder*>*);
     barray<movHolder*> ops;
     ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
@@ -92,7 +92,7 @@ struct isolHolder:public movHolder{
     isolHolder(isol*,Base*,char**);
     virtual void generar();
     virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(vector<normalHolder*>*);
     virtual void cargar(vector<normalHolder*>*);
     movHolder* inside;
 };
@@ -102,15 +102,15 @@ struct desoptHolder:public movHolder{
     desopt* op;
     virtual void generar();
     virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>);
+    virtual void reaccionar(vector<normalHolder*>*);
     virtual void cargar(vector<normalHolder*>*);
     struct node{
         node* iter;
         //movimiento
     };
     char* dinamClusterHead;
-    void generarNodo(node*);
-    void construirYGenerarNodo();
+    void generarNodo(node*,int);
+    void construirYGenerarNodo(int);
     void cargarNodos(node*,vector<normalHolder*>*);
 
 
@@ -123,7 +123,7 @@ struct desoptHolder:public movHolder{
 struct movHolderMock{//para que spawner y kamikase no hereden datos que no usan
     virtual void generar()=0;
     virtual void reaccionar(normalHolder*){assert(false);};
-    virtual void reaccionar(vector<normalHolder*>){assert(false);};
+    virtual void reaccionar(vector<normalHolder*>*){assert(false);};
     virtual void cargar(vector<normalHolder*>*){};
     Base* base;
 };

@@ -100,8 +100,8 @@ void normalHolder::reaccionar(normalHolder* nh){
         }
     }
 }
-void normalHolder::reaccionar(vector<normalHolder*> nhs){
-    for(normalHolder* nh:nhs){
+void normalHolder::reaccionar(vector<normalHolder*>* nhs){
+    for(normalHolder* nh:*nhs){
         if(nh==this){
             memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
             switchToGen=true;
@@ -211,7 +211,7 @@ void deslizReaccionar(auto nh,deslizHolder* $){
 void deslizHolder::reaccionar(normalHolder* nh){
     deslizReaccionar(nh,this);
 }
-void deslizHolder::reaccionar(vector<normalHolder*> nhs){
+void deslizHolder::reaccionar(vector<normalHolder*>* nhs){
     deslizReaccionar(nhs,this);
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
@@ -291,7 +291,7 @@ void excReaccionar(auto nh,excHolder* $){
 void excHolder::reaccionar(normalHolder* nh){
     excReaccionar(nh,this);
 }
-void excHolder::reaccionar(vector<normalHolder*> nhs){
+void excHolder::reaccionar(vector<normalHolder*>* nhs){
     excReaccionar(nhs,this);
 }
 void excHolder::cargar(vector<normalHolder*>* norms){
@@ -310,12 +310,15 @@ isolHolder::isolHolder(isol* org,Base* base_,char** head)
 }
 void isolHolder::generar(){
     v tempPos=offset;
+    void* memTemp=alloca(base->memLocalSize*sizeof(int));
+    memcpy(memTemp,memMov.data(),base->memLocalSize*sizeof(int));
     inside->generar();
     offset=tempPos;
-    ///@todo reestablecer memoria
+    memcpy(memMov.data(),memTemp,base->memLocalSize*sizeof(int));
     if(sig){
         sig->generar();
-        bools|=sig->bools&valorFinal;///necesario?
+        bools&=~valorFinal;
+        bools|=sig->bools&valorFinal;
     }
 }
 void isolReaccionar(auto nh,isolHolder* $){
@@ -330,7 +333,7 @@ void isolReaccionar(auto nh,isolHolder* $){
 void isolHolder::reaccionar(normalHolder* nh){
     isolReaccionar(nh,this);
 }
-void isolHolder::reaccionar(vector<normalHolder*> nhs){
+void isolHolder::reaccionar(vector<normalHolder*>* nhs){
     isolReaccionar(nhs,this);
 }
 void isolHolder::cargar(vector<normalHolder*>* norms){
@@ -380,7 +383,11 @@ void desoptHolder::generar(){
 
     v offsetOrg=offset;
 
-    memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
+    int localMemSize=base->memLocalSize*sizeof(int);
+    void* memTemp=alloca(localMemSize);
+    memcpy(memTemp,memMov.data(),localMemSize);
+
+    void* memTemp2=alloca(localMemSize);
 
     for(int tam:op->movSizes){
         node* firstIter=(node*)(movs()+clusterOffset);
@@ -392,7 +399,7 @@ void desoptHolder::generar(){
             firstIter->iter=(node*)correspondingCluster;
             int clusterOffset2=0;
             v offsetOrg2=offset;
-            memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
+            memcpy(memTemp2,memMov.data(),localMemSize);
 
             for(int tam:op->movSizes){
                 node* secondIter=(node*)((char*)firstIter->iter+clusterOffset2);
@@ -401,24 +408,22 @@ void desoptHolder::generar(){
                 actualMov2->generar();
                 if(actualMov2->bools&valorFinal){
                     secondIter->iter=(node*)dinamClusterHead;
-                    construirYGenerarNodo();
+                    construirYGenerarNodo(localMemSize);
                 }else
                     secondIter->iter=nullptr;
                 clusterOffset2+=tam;
                 offset=offsetOrg2;
-                memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
+                memcpy(memMov.data(),memTemp2,localMemSize);
             }
-            memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
         }else
             firstIter->iter=nullptr;
         clusterOffset+=tam;
         correspondingCluster+=op->clusterSize;
         offset=offsetOrg;
-        memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
+        memcpy(memMov.data(),memTemp,localMemSize);
     }
-    memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
 }
-void desoptHolder::construirYGenerarNodo(){
+void desoptHolder::construirYGenerarNodo(int localMemSize){
     char* clusterBeg=dinamClusterHead;
     assert(dinamClusterHead<movs()+op->desoptInsideSize);
     for(operador* opos:op->ops){
@@ -428,7 +433,8 @@ void desoptHolder::construirYGenerarNodo(){
     }
     int clusterOffset=0;
     v offsetOrg=offset;
-    memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
+    void* memTemp=alloca(localMemSize);
+    memcpy(memTemp,memMov.data(),localMemSize);
 
     for(int tam:op->movSizes){
         node* nextIter=(node*)(clusterBeg+clusterOffset);
@@ -437,35 +443,35 @@ void desoptHolder::construirYGenerarNodo(){
         actualMov->generar();
         if(actualMov->bools&valorFinal){
             nextIter->iter=(node*)dinamClusterHead;
-            construirYGenerarNodo();
+            construirYGenerarNodo(localMemSize);
         }
         clusterOffset+=tam;
         offset=offsetOrg;
-        memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
+        memcpy(memMov.data(),memTemp,localMemSize);
     }
-    memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
 }
-void desoptHolder::generarNodo(node* iter){//iter valido
+void desoptHolder::generarNodo(node* iter,int localMemSize){//iter valido
     int clusterOffset=0;
     v offsetOrg=offset;
-    memGenStack.insert(memGenStack.end(),memMov.begin(),memMov.end());
+
+    void* memTemp=alloca(localMemSize);
+    memcpy(memTemp,memMov.data(),localMemSize);
     for(int tam:op->movSizes){
         node* nextIter=(node*)((char*)iter+clusterOffset);
         movHolder* actualMov=(movHolder*)(nextIter+1);
         actualMov->generar();
         if(actualMov->bools&valorFinal){
             if(nextIter->iter){
-                generarNodo(nextIter->iter);
+                generarNodo(nextIter->iter,localMemSize);
             }else{
                 nextIter->iter=(node*)dinamClusterHead;
-                construirYGenerarNodo();
+                construirYGenerarNodo(localMemSize);
             }
         }
         clusterOffset+=tam;
         offset=offsetOrg;
-        memMov.assign(memGenStack.end()-memMov.size(),memGenStack.end());
+        memcpy(memMov.data(),memTemp,localMemSize);
     }
-    memGenStack.erase(memGenStack.end()-memMov.size(),memGenStack.end());
 }
 void desoptReaccionar(auto nh,desoptHolder* $,desoptHolder::node* iter){
     int offset=0;
@@ -478,10 +484,10 @@ void desoptReaccionar(auto nh,desoptHolder* $,desoptHolder::node* iter){
         if(actualMov->bools&valorFinal){
             if(switchToGen){
                 if(nextIter->iter)
-                    $->generarNodo(nextIter->iter);
+                    $->generarNodo(nextIter->iter,$->base->memLocalSize*sizeof(int));
                 else{
                     nextIter->iter=(desoptHolder::node*)$->dinamClusterHead;
-                    $->construirYGenerarNodo();
+                    $->construirYGenerarNodo($->base->memLocalSize*sizeof(int));
                 }
             }else
                 desoptReaccionar(nh,$,nextIter->iter);
@@ -492,7 +498,7 @@ void desoptReaccionar(auto nh,desoptHolder* $,desoptHolder::node* iter){
 void desoptHolder::reaccionar(normalHolder* nh){
     desoptReaccionar(nh,this,(node*)movs());
 }
-void desoptHolder::reaccionar(vector<normalHolder*> nhs){
+void desoptHolder::reaccionar(vector<normalHolder*>* nhs){
     desoptReaccionar(nhs,this,(node*)movs());
 }
 void desoptHolder::cargarNodos(node* iter,vector<normalHolder*>* norms){

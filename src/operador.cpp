@@ -315,7 +315,7 @@ desliz::desliz(){
     v& tam=tablptr->tam;
     //iteraciones necesarias para recorrer el tablero en linea recta.
     iterSize=movSize;
-    insideSize=movSize*((tam.x>tam.y?tam.x:tam.y))*2;///@todo agregar posibilidad de elegir cuando se reserva
+    insideSize=movSize*((tam.x>tam.y?tam.x:tam.y))*20;///@todo agregar posibilidad de elegir cuando se reserva
     movSize=movSizeTemp+sizeof(deslizHolder)+insideSize;
 
     sig=keepOn(&bools);
@@ -396,7 +396,7 @@ desopt::desopt(){
 
     clusterSize=movSize;
     dinamClusterBaseOffset=clusterSize+clusterSize*branches;
-    desoptInsideSize=clusterSize+clusterSize*branches+clusterSize*24;//12 es la cantidad de slots del espacio dinamico
+    desoptInsideSize=clusterSize+clusterSize*branches+clusterSize*1024;//12 es la cantidad de slots del espacio dinamico
     //@todo hacerse pueda determinar otros valores como con desliz
     movSize=movSizeTemp+sizeof(desoptHolder)+desoptInsideSize;
 

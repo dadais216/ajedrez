@@ -723,9 +723,6 @@ ops    33376
 
 
 
-
-
-
 Graficos
 Agregar boton que muestre las memorias. La global se vería todo el tiempo. Si se toca un espacio se dibuja la memoria de tile y la de pieza si hay una pieza en esa pos.
 En modo debug se dibuja la memoria de movimiento mientras este se calcula, y se redibujan todas en cada paso

@@ -39,15 +39,7 @@ desliz sd mover c end sd captura
 
 :7 5 #emperador
 desliz w end desliz a end \
-desliz isol desliz isol mover end d end end s end
-
-#:9 3 #memoria
-#mmore T p0 mset l0 T madd l0 3 mset p0 l0 w mover
-mcmp t0 1 a mover
-mcmp x y d mover
-w pieza mcmp o1 1 ss mover
-mcmp p1 1 aw mover mset t0 1 mset p1 0
-mcmp p1 0 dw mover mset p1 1
+desliz isol desliz isol mover c end d end end s end
 
 :8 0 #test caballos
 #{{ww,ss}{a,d},{aa,dd}{w,s}} mover
@@ -69,8 +61,8 @@ desliz {w,wa,a,as,s,sd,d,dw} mover c end
 
 :9 7
 #desopt wa mover or wd mover end
-#desopt wwa mover or wwd mover or aaw mover or ddw mover end 
-#s mover
+desopt wwa isol mover c end or wwd isol mover c end or aaw isol mover c end or ddw isol mover c end end 
+s mover
 #desopt wa mover madd l0 1 mless l0 2 or wd mover madd l0 1 mless l0 4 end
 #mset l0 -1 desopt \
 #       mdist l0 3 wa captura wa mover pausa mset l0 0 or \
@@ -78,16 +70,25 @@ desliz {w,wa,a,as,s,sd,d,dw} mover c end
 #       mdist l0 1 sa captura sa mover pausa mset l0 2 or \
 #       mdist l0 0 sd captura sd mover pausa mset l0 3 end #dama que no se banca bucles
            #l0 iterador, l1 tamaño, l2 en adelante array de posiciones
-def newPos mset l0 2 desliz mless l0 l1 exc mdist x ll0 madd l0 2 or madd l0 1 mdist y ll0 madd l0 1 end end mcmp l0 l1
-def addPos mset ll1 x madd l1 1 mset ll1 y madd l1 1 
-msize l 20 mset l1 2 desopt \
-       wa captura wa mover newPos addPos c or \
-       wd captura wd mover newPos addPos c or \
-       sa captura sa mover newPos addPos c or \
-       sd captura sd mover newPos addPos c end
+#def newPos mset l0 2 desliz mless l0 l1 exc mdist x ll0 madd l0 2 or madd l0 1 mdist y ll0 madd l0 1 end end mcmp l0 l1
+#def addPos mset ll1 x madd l1 1 mset ll1 y madd l1 1 
+#msize l 20 mset l1 2 desopt \
+#       wa captura wa mover newPos addPos c or \
+#       wd captura wd mover newPos addPos c or \
+#       sa captura sa mover newPos addPos c or \
+#       sd captura sd mover newPos addPos c end
 
 
 :10 2
 {a,d,w,s} mover
+
+:11 3 #memoria
+#mmore T p0 mset l0 T madd l0 3 mset p0 l0 w mover
+mcmp t0 1 a mover
+mcmp x y d mover
+w pieza mcmp o1 1 ss mover
+mcmp p1 1 aw mover mset t0 1 mset p1 0
+mcmp p1 0 dw mover mset p1 1
+
 
 
