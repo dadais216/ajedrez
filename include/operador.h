@@ -39,6 +39,7 @@ struct exc:public operador{
 };
 struct isol:public operador{
     isol();
+    int size;
     operador* inside;
 };
 struct desopt:public operador{

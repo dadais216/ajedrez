@@ -59,9 +59,8 @@ normal::normal(bool make){
                 if(!condsTemp.empty()||!accsTemp.empty()){
                     tokens.push_front(tok);
                     setupBarrays();
-                    sig=bucketAdd<normal>(true);
+                    sig=bucketAdd<normal>(true);//nueva normal
                     return;
-                    //nueva normal
                 }else{
                     switch(tok){
                     case lector::W: relPos.y--;break;
@@ -179,7 +178,7 @@ normal::normal(bool make){
                                         g[i]=bucketAdd<piezaaRead>(tg[j]);
                                         setUpMemTriggersPerNormalHolderTemp.push_back({1,tg[j]});
                                     break;
-                                    case lector::mtile: g[i]=bucketAdd<tileaRead>(tg[j]);break;
+                                    case lector::mtile: g[i]=bucketAdd<tileaRead>(tg[j]);bools|=doEsp;break;//esp para el caso de que sea antes de un movimiento
                                     case lector::mother: g[i]=bucketAdd<otheraRead>(tg[j]);break;
                                     }
 
@@ -228,7 +227,7 @@ normal::normal(bool make){
                                             g[i]=bucketAdd<piezaaiRead>(static_cast<getterCond*>(g[i]));
                                             setUpMemTriggersPerNormalHolderTemp.push_back({false,tg[j]});
                                         break;
-                                        case lector::mtile: g[i]=bucketAdd<tileaiRead>(static_cast<getterCond*>(g[i]));break;
+                                        case lector::mtile: g[i]=bucketAdd<tileaiRead>(static_cast<getterCond*>(g[i]));bools|=doEsp;break;
                                         case lector::mother: g[i]=bucketAdd<otheraiRead>(static_cast<getterCond*>(g[i]));break;
                                         }
                             }
@@ -315,7 +314,7 @@ desliz::desliz(){
     v& tam=tablptr->tam;
     //iteraciones necesarias para recorrer el tablero en linea recta.
     iterSize=movSize;
-    insideSize=movSize*((tam.x>tam.y?tam.x:tam.y))*20;///@todo agregar posibilidad de elegir cuando se reserva
+    insideSize=movSize*((tam.x>tam.y?tam.x:tam.y))*2;///@todo agregar posibilidad de elegir cuando se reserva
     movSize=movSizeTemp+sizeof(deslizHolder)+insideSize;
 
     sig=keepOn(&bools);
@@ -366,8 +365,12 @@ isol::isol(){
     bools&=~makeClick;
     bool clickExplicitBack=clickExplicit;
 
-    movSize+=sizeof(isolHolder);
+    int movSizeTemp=movSize;
+    movSize=sizeof(isolHolder);
     inside=tomar();
+    size=movSize;
+    movSize+=movSizeTemp;
+
     if(!clickExplicit)
         bools|=makeClick;
     clickExplicit=clickExplicitBack;

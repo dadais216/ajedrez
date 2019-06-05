@@ -717,7 +717,15 @@ caballos peon 2000 turnos                 - 14    10    13   14   14   14 14
 test vel reina 1000                       - 109   76    77 178 110 102 111
 normal 80
 movs   108736
-ops    33376
+ops    16688
+
+saltar reacciones en iteraciones y entre ramas aprovechando que la memoria es contigua y se tiene la pos de nh
+actual 100 turnos                         - 12    14   15   11  10  14 13 14 15
+caballos peon 2000 turnos                 - 15    11    13   10  13   10 15
+test vel reina 1000                       - 83   82   70 59 67 85 62
+normal 80
+movs   108736
+ops    16688
 
 
 

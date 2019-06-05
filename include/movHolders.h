@@ -71,6 +71,7 @@ struct deslizHolder:public movHolder{
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>*);
+    void reaccionarNh(normalHolder*);
     virtual void cargar(vector<normalHolder*>*);
     barray<void> movs;
     int cantElems;//cantidad de iteraciones armadas
@@ -82,10 +83,12 @@ struct excHolder:public movHolder{
     virtual void generar();
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>*);
+    void reaccionarNh(normalHolder* nh);
     virtual void cargar(vector<normalHolder*>*);
     barray<movHolder*> ops;
     ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
     ///no estoy seguro de si seria mas rapido
+    int size;
     int actualBranch;
 };
 struct isolHolder:public movHolder{
@@ -94,6 +97,7 @@ struct isolHolder:public movHolder{
     virtual void reaccionar(normalHolder*);
     virtual void reaccionar(vector<normalHolder*>*);
     virtual void cargar(vector<normalHolder*>*);
+    int size;
     movHolder* inside;
 };
 

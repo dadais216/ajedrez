@@ -65,6 +65,7 @@ void Tile::chargeTriggers(){
             trigsActivados.push_back(trig.nh);
     triggers.clear();
 }
+int contador=0;
 void activateTriggers(){
     //los triggers duplicados (por dos condiciones poniendo dos triggers a un mismo normalHolder, o por
     //dos lecturas a una memoria dinamica en distintos turnos) no son un problema, no causan calculos extra.
@@ -92,6 +93,7 @@ void activateTriggers(){
                 base->reaccionar(trigsActivados[i]);
             else{
                 vector<normalHolder*> nhs(&trigsActivados[i],&trigsActivados[j]);
+                sort(nhs.begin(),nhs.end(),[](normalHolder* a,normalHolder* b)->bool{return a<b;});
                 //estaria bueno no hacer una copia, no es muy importante igual
                 base->reaccionar(&nhs);
             }

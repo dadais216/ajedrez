@@ -5,7 +5,6 @@
 #include "tablero.h"
 #include "movs.h"
 
-
 const int32_t valorCadena=1;
 const int32_t valorFinal=1<<1;
 const int32_t valor=1<<2;
@@ -74,6 +73,15 @@ void normalHolder::generar(){
             return;
         }
         actualTile=tablptr->tile(pos);
+        //los triggers se ponen aca y se reponen en la reaccion. Las normales esp ahora son
+        //las normales que se originan despues de un movimiento. (o hacen miran memoria de tile)
+        //antes eran las normales que contenian un chequeo posicional, como vacio o memoria de tile,
+        //lo que tiene mas sentido. Decidi ir por este otro camino porque la gran mayoria de normales
+        //que siguen un movimiento hacen un chequeo posicional (creo que las que no se podrian reescribir siempre),
+        //y hacerlo por posicion tiene el problema de que en cosas como w exc mover or captura end, que son comunes,
+        //se esta poniendo un trigger en las dos ramas de exc en vez de antes de este, lo que no aprovecha la normal
+        //de w que va a estar ahi de todas formas y hace que se tengan multiples triggers, lo que es mas caro.
+        //Puede que se pueda hacer un sistema mejor en la version compilada, aunque no sé si lo vale.
         actualTile->triggers.push_back(Trigger{base->h->tile,this,base->h->tile->step});
     }
     generarProper();
@@ -101,7 +109,8 @@ void normalHolder::reaccionar(normalHolder* nh){
     }
 }
 void normalHolder::reaccionar(vector<normalHolder*>* nhs){
-    for(normalHolder* nh:*nhs){
+    for(int i=0;i<nhs->size();++i){
+        normalHolder* nh=(*nhs)[i];
         if(nh==this){
             memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
             switchToGen=true;
@@ -112,7 +121,7 @@ void normalHolder::reaccionar(vector<normalHolder*>* nhs){
                 offset=getOffset(relPos,pos);
                 memcpy(memMov.data(),memAct.begptr,base->memLocalSize*sizeof(int));
             }
-            ///@optim sacar nh del vector
+            nhs->erase(nhs->begin()+i);//puede que no lo valga
             return;
         }
     }
@@ -145,6 +154,12 @@ void normalHolder::draw(){
     for(colort* c:op->colors)
         c->draw();
 }
+//esta version del desliz retrocede a la posicion de inicio de una iteracion si la iteracion falla
+//esto la hace mas consistente en casos donde se usen multiples normales y cosas asi. Pero para
+//casos comunes como la torre no se usa, agrega codigo y almacenamiento, y lo mas importante es
+//que genera multiples triggers. No vale la pena agregar otra version ahora para no hacer bloat,
+//pero en la version compilada podria estar. Tambien se podria agregar instrucciones bizarras
+//solo de desliz sin mucho problema, como cambiar la pos de retorno o breaks.
 deslizHolder::deslizHolder(desliz* org,Base* base_,char** head)
 :movHolder(org,base_){
     op=org;
@@ -186,33 +201,42 @@ void deslizHolder::generar(){
 }
 int x=0;
 bool switchToGen;
-void deslizReaccionar(auto nh,deslizHolder* $){
-    for(int i=0;i<=$->f;i++){
-        movHolder* act=(movHolder*)$->movs[i];
-        act->reaccionar(nh);
-        if(switchToGen){
-            for(;act->bools&valorFinal;){
-                i++;
-                $->maybeAddIteration(i);
-                act=(movHolder*)$->movs[i];
-                act->generar();
-            }
-            if(act->bools&valorCadena)
-                $->bools|=lastNotFalse;
-            else
-                $->bools&=~lastNotFalse;
-            $->f=i;
-            $->generarSig();
+void deslizHolder::reaccionar(normalHolder* nh){
+    if((char*)nh<(char*)this+op->insideSize)
+        reaccionarNh(nh);
+    else
+        reaccionarSig(nh);
+}
+void deslizHolder::reaccionar(vector<normalHolder*>* nhs){
+    if((char*)(*nhs)[0]<(char*)this+op->insideSize)
+        reaccionarNh((*nhs)[0]);
+    else
+        reaccionarSig(nhs);
+}
+inline void deslizHolder::reaccionarNh(normalHolder* nh){
+    assert((char*)nh>(char*)this);
+    intptr_t diff=(char*)nh-(char*)this;
+    int iter=diff/op->iterSize;
+    for(int i=0;i<iter;++i){
+        if(!(((movHolder*)movs[i])->bools&valorFinal)){
             return;
         }
     }
-    $->reaccionarSig(nh);
-}
-void deslizHolder::reaccionar(normalHolder* nh){
-    deslizReaccionar(nh,this);
-}
-void deslizHolder::reaccionar(vector<normalHolder*>* nhs){
-    deslizReaccionar(nhs,this);
+    movHolder* act=(movHolder*)movs[iter];
+    act->reaccionar(nh);
+    assert(switchToGen);
+    for(;act->bools&valorFinal;){
+        iter++;
+        maybeAddIteration(iter);
+        act=(movHolder*)movs[iter];
+        act->generar();
+    }
+    if(act->bools&valorCadena)
+        bools|=lastNotFalse;
+    else
+        bools&=~lastNotFalse;
+    f=iter;
+    generarSig();
 }
 void deslizHolder::cargar(vector<normalHolder*>* norms){
     if(!(bools&valorCadena)) return;
@@ -229,6 +253,7 @@ excHolder::excHolder(exc* org,Base* base_,char** head)
     ops.begptr=(movHolder**)*head;
     ops.endptr=(movHolder**)(*head+org->ops.size());
     *head=(char*)ops.endptr;
+    size=org->insideSize+sizeof(excHolder);
     int i=0;
     for(operador* opos:org->ops){
         *(ops.begptr+i++)=(movHolder*)*head;
@@ -255,44 +280,63 @@ void excHolder::generar(){
     bools&=~(valorFinal|valorCadena|valor);
     actualBranch=i-1;
 }
-void excReaccionar(auto nh,excHolder* $){
-    for(int i=0;i<=$->actualBranch;i++){
-        movHolder* branch=*$->ops[i];
-        branch->reaccionar(nh);
-        if(switchToGen){
-            if(!(branch->bools&valorCadena)){ ///si el ab al recalcularse se invalida generar todo devuelta, saltandolo
-                int j;
-                for(j=0;j<$->ops.count();j++){
-                    if(i!=j){
-                        movHolder* brancj=*$->ops[j];
-                        brancj->generar();
-                        if(brancj->bools&valorCadena){
-                            $->bools|=valor;
-                            $->actualBranch=j;
-                            $->generarSig();
-                            return;
-                        }
-                    }
-                }
-                $->bools&=~(valorCadena|valor);
-                $->actualBranch=j-1;
-                return;
-            }else{ ///se valido una rama que era invalida
-                $->actualBranch=i;
-                $->bools|=valor;
-                $->generarSig();
-                return;
-            }
+inline void excHolder::reaccionarNh(normalHolder* nh){
+    movHolder* branch;
+    int i;
+    for(i=1;i<=actualBranch;++i){
+        movHolder* nextBranch=*ops[i];
+        if(nextBranch>nh){
+            branch=*ops[i-1];
+            goto branchFound;
         }
     }
-    if($->bools&valor)
-        $->reaccionarSig(nh);
+    branch=*ops[actualBranch];
+branchFound:
+    branch->reaccionar(nh);
+    if(switchToGen){//solo falso si la nh es innaccesible, por ejemplo esta en la parte invalida de un desliz
+        if(!(branch->bools&valorCadena)){ //si el ab al recalcularse se invalida generar todo devuelta, saltandolo
+            int j;
+            for(j=0;j<ops.count();j++){
+                if(i-1!=j){
+                    movHolder* brancj=*ops[j];
+                    brancj->generar();
+                    if(brancj->bools&valorCadena){
+                        bools|=valor;
+                        actualBranch=j;
+                        generarSig();
+                        return;
+                    }
+                }
+            }
+            bools&=~(valorCadena|valor);
+            actualBranch=j-1;
+        }else{ //se valido una rama que era invalida
+            actualBranch=i-1;
+            bools|=valor;
+            generarSig();
+        }
+    }
 }
 void excHolder::reaccionar(normalHolder* nh){
-    excReaccionar(nh,this);
+    if((char*)nh-(char*)this<size){
+        reaccionarNh(nh);
+    }else if(bools&valor)
+        reaccionarSig(nh);
 }
 void excHolder::reaccionar(vector<normalHolder*>* nhs){
-    excReaccionar(nhs,this);
+    //no puedo asumir que la primera normal es la que va a causar el cambio a generacion
+    //porque puede que esta este en un lugar innaccesible
+    for(normalHolder* nh:*nhs){
+        if((char*)nh-(char*)this<size){
+            reaccionarNh(nh);
+            if(switchToGen){
+                break;
+            }
+        }else{
+            reaccionarSig(nh);
+            return;
+        }
+    }
 }
 void excHolder::cargar(vector<normalHolder*>* norms){
     if(!valorCadena) return;
@@ -307,6 +351,7 @@ isolHolder::isolHolder(isol* org,Base* base_,char** head)
     inside=(movHolder*)*head;
     crearMovHolder(head,org->inside,base_);
     bools|=valorFinal|valorCadena;
+    size=org->size;
 }
 void isolHolder::generar(){
     v tempPos=offset;
@@ -321,20 +366,27 @@ void isolHolder::generar(){
         bools|=sig->bools&valorFinal;
     }
 }
-void isolReaccionar(auto nh,isolHolder* $){
-    $->inside->reaccionar(nh);
-    if(switchToGen){
-        ///@optim podria hacerse un lngjmp
-        switchToGen=false;
-    }
-    else if($->sig)
-        $->sig->reaccionar(nh);
-}
 void isolHolder::reaccionar(normalHolder* nh){
-    isolReaccionar(nh,this);
+    if((char*)nh-(char*)this<size){
+        inside->reaccionar(nh);
+        if(switchToGen){
+            ///@optim podria hacerse un lngjmp
+            switchToGen=false;
+        }
+    }
+    else if(sig)
+        sig->reaccionar(nh);
 }
 void isolHolder::reaccionar(vector<normalHolder*>* nhs){
-    isolReaccionar(nhs,this);
+    if((char*)(*nhs)[0]-(char*)this<size){
+        inside->reaccionar((*nhs)[0]);
+        if(switchToGen){
+            ///@optim podria hacerse un lngjmp
+            switchToGen=false;
+        }
+    }
+    if(sig)
+        sig->reaccionar(nhs);
 }
 void isolHolder::cargar(vector<normalHolder*>* norms){
     vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
@@ -473,6 +525,16 @@ void desoptHolder::generarNodo(node* iter,int localMemSize){//iter valido
         memcpy(memMov.data(),memTemp,localMemSize);
     }
 }
+void reactIfNh(normalHolder* nh,movHolder* actualMov,int tam){
+    if((char*)nh>=(char*)actualMov&&(char*)nh<(char*)actualMov+tam){
+        actualMov->reaccionar(nh);
+    }
+}
+void reactIfNh(vector<normalHolder*>* nhs,movHolder* actualMov,int tam){
+    for(normalHolder* nh:*nhs){
+        reactIfNh(nh,actualMov,tam);
+    }
+}
 void desoptReaccionar(auto nh,desoptHolder* $,desoptHolder::node* iter){
     int offset=0;
     for(int tam:$->op->movSizes){
@@ -480,7 +542,8 @@ void desoptReaccionar(auto nh,desoptHolder* $,desoptHolder::node* iter){
         movHolder* actualMov=(movHolder*)(nextIter+1);
         offset+=tam;
 
-        actualMov->reaccionar(nh);
+        reactIfNh(nh,actualMov,tam);
+
         if(actualMov->bools&valorFinal){
             if(switchToGen){
                 if(nextIter->iter)
