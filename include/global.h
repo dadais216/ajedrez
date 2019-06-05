@@ -69,13 +69,9 @@ extern float escala;
 extern float fpsLock;
 extern tabl* tablptr;
 extern vector<Pieza*> piezas;
-<<<<<<< HEAD
-extern vector<int> uniqueIds;
 //extern Holder* act;
 //extern v pos;
 //extern v org;
-=======
->>>>>>> f4ac213... movimientos en templates, memoria 2
 
 #include "lector.h"
 extern lector lect;

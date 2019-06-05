@@ -195,9 +195,6 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
         crearMovHolder(&actualBucket->head,b.raiz,base);
     }
 }
-Holder::~Holder(){
-    uniqueIds.erase(find(uniqueIds.begin(),uniqueIds.end(),uniqueId));
-}
 void Holder::draw()
 {
     //todo el sprite debería actualizarse cada vez que se mueve en lugar de cada vez que se dibuja, pero bueno
