@@ -1,7 +1,7 @@
 #include "global.h"
 #include "memGetters.h"
 #include "movHolders.h"
-
+#include "tablero.h"
 
 vector<int> memMov;
 vector<memTriggers> memGlobalTriggers;

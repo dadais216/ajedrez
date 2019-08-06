@@ -2,6 +2,7 @@
 #include "Pieza.h"
 #include "memGetters.h"
 #include "movHolders.h"
+#include "tablero.h"
 
 ///este archivo se compila a traves de operador.cpp
 
