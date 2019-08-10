@@ -1,9 +1,6 @@
 #ifndef PIEZA_H
 #define PIEZA_H
 
-#include "global.h"
-
-
 struct Pieza{
     Sprite spriteb,spriten;
     int id; //para hacer copias. signo indica bando. Hay dos versiones por el tema del espejado en el eje y, la otra opcion era poner ifs cada vez que se pedir la pos relativa
@@ -24,8 +21,11 @@ struct Pieza{
     Pieza(int,int);
 };
 
+vector<Pieza*> piezas;
 extern int memLocalSizeAct;
 extern vector<Tile*> pisados;
+
+struct movHolder;
 
 struct Holder{
     Holder(int,Pieza*,v);

@@ -1,15 +1,3 @@
-#include "../include/operador.h"
-#include "../include/lector.h"
-#include "../include/Clicker.h"
-#include "../include/tablero.h"
-#include "../include/Pieza.h"
-#include "movs.cpp"
-#include "memGetters.cpp"
-
-bool separator;
-bool clickExplicit;///cuando se usa click explicitamente no se pone un click implicitamente
-///al final del movimiento si este termina en una no normal
-///@detail una condicion mejor sería no poner click implicito si el ultimo operador no normal contiene algun click explicito
 
 string str_cmp="cmp";
 string str_set="set";

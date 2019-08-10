@@ -1,11 +1,3 @@
-#include "../include/global.h"
-#include "../include/Pieza.h"
-#include "../include/Clicker.h"
-#include "../include/operador.h"
-#include "movHolders.h"
-#include "tablero.h"
-
-vector<Pieza*> piezas;
 
 int movSize;
 Pieza::Pieza(int _id,int _sn){

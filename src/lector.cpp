@@ -1,8 +1,6 @@
-#include "../include/global.h"
-#include "../include/lector.h"
-#include "../include/Pieza.h"
-#include "tablero.h"
 
+int memGlobalSize;
+int memTileSize;
 list<int> tokens;
 lector::lector(){
     extra=0;
@@ -319,8 +317,6 @@ int lector::getNum(string& linea){//arranca con j en el primer numero
     string numstr=linea.substr(i,j-1);
     return stringToInt(numstr);
 }
-int memGlobalSize;
-int memTileSize;
 void lector::tokenizarPalabra(string& linea){
     string palabra=linea.substr(i,j-i);
     //cout<<">>>"<<palabra<<"<<<"<<linea[i]<<"\n";

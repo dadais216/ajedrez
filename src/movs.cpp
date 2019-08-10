@@ -1,12 +1,5 @@
-#include "movs.h"
-#include "Pieza.h"
-#include "memGetters.h"
-#include "movHolders.h"
-#include "tablero.h"
 
-///este archivo se compila a traves de operador.cpp
 
-v actualPosColor;
 color::color(RectangleShape* rs_){
     rs=rs_;///@optim es necesario tener un rectangleShape para cada uno? por ahi es mas rapido reutilizar. No usaria memoria dinamica ahi
 }
@@ -145,7 +138,6 @@ fabAcc(capt,
 );
 
 string spwn_str="spwn";
-vector<Holder*> justSpawned;
 struct spwn:public acct{
     int id;
     spwn(int id_):acct(&spwn_str),id(id_){}
@@ -278,7 +270,6 @@ inline bool mdistCond(getter* a1,getter* a2){
 
 
 RectangleShape backGroundMem;
-Text textValMem;
 
 RectangleShape posPieza;
 RectangleShape posActGood;

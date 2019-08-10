@@ -1,14 +1,6 @@
 #ifndef JUEGO_H
 #define JUEGO_H
-#include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
-#include <vector>
-using namespace std;
-using namespace sf;
 
-
-#include "Input.h"
-#include "Manager.h"
 struct Estado;
 
 struct Juego
@@ -26,6 +18,12 @@ struct Juego
     void change(Estado*);
 };
 
+Juego* j;
+RenderWindow* window;
+Manager<Texture>* imagen;
 
+void drawScreen(){
+    j->draw();
+}
 
 #endif // JUEGO_H

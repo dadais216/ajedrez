@@ -1,9 +1,5 @@
 #ifndef BUCKET_H
 #define BUCKET_H
-#include <assert.h>
-#include <iostream>
-#include <stdint.h>
-#include <cstring>
 
 struct Bucket;
 extern int bucketSize;

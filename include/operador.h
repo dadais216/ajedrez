@@ -1,8 +1,6 @@
 #ifndef OPERADOR_H
 #define OPERADOR_H
 
-#include "global.h"
-
 ///el motivo de separar los movimientos normales en el operador normal y el normalholder es que toda la informacion
 ///normal (estructura de movimientos, posiciones relativas) se comparte entre todas las piezas del mismo tipo, como tambien
 ///el arbol de operadores. No tiene sentido tenerla copiada.
@@ -55,5 +53,12 @@ struct desopt:public operador{
 operador* tomar();
 operador* keepOn(int32_t*);
 void crearClicker();
+
+
+bool separator;
+bool clickExplicit;///cuando se usa click explicitamente no se pone un click implicitamente
+///al final del movimiento si este termina en una no normal
+///@detail una condicion mejor sería no poner click implicito si el ultimo operador no normal contiene algun click explicito
+
 
 #endif // OPERADOR_H

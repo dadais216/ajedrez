@@ -1,17 +1,4 @@
-#include "../include/Estado.h"
-#include <SFML/Graphics.hpp>
 
-#include "../include/Boton.h"
-#include "../include/tablero.h"
-#include "../include/Clicker.h"
-#include "../include/Pieza.h"
-#include "../include/lector.h"
-#include "../include/operador.h"
-#include "../include/Jugador.h"
-#include "../include/Input.h"
-#include "../include/Juego.h"
-#include "movHolders.h"
-#include "memGetters.h"
 
 Estado::Estado() {}
 
@@ -41,7 +28,6 @@ Selector::Selector():sel1(1),sel2(-1){
     }
     drawScreen();
 }
-bool debugMode;
 void Selector::draw(){
     for(Boton* b:botones)
         b->draw();
@@ -66,8 +52,6 @@ Selector::~Selector(){
         delete b;
 }
 
-lector lect;
-Bucket* bucketPiezas,*bucketHolders;
 Proper::Proper(int id_,int sel1,int sel2)
     :tablero(){
     id=id_;
@@ -127,10 +111,8 @@ Proper::Proper(int id_,int sel1,int sel2)
     init();
 }
 
-//turnoAct se aumenta en cada accionar, es el contador de turnos
-//turno es turnoAct/2, el contador de turnos interpretando un turno como una jugada de los dos jugadores
-int turno,turnoAct;
-bool turno1;
+
+
 
 void Proper::init(){
     clickers.clear();

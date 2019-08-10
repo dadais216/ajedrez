@@ -1,11 +1,6 @@
-#include "../include/Juego.h"
-#include "../include/Estado.h"
-#include "../include/global.h"
 
-Juego* j;
-Input* input;
-RenderWindow* window;
-Manager<Texture>* imagen;
+
+
 
 Juego::Juego():_window(VideoMode(640, 512), "ajedrez"),_input(&_window){
     _imagen.adddir("sprites/");
@@ -51,6 +46,4 @@ void Juego::draw(){
     _window.display();
 }
 
-void drawScreen(){
-    j->draw();
-}
+

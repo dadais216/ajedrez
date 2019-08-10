@@ -1,9 +1,5 @@
-#include "../include/tablero.h"
-#include "../include/global.h"
-#include "../include/Pieza.h"
-#include "movHolders.h"
 
-float escala;
+
 tabl* tablptr;
 
 tabl::tabl(){

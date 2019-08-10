@@ -1,15 +1,5 @@
-#include "../include/Jugador.h"
-#include "../include/global.h"
-#include "../include/Juego.h"
-#include "../include/Clicker.h"
-#include "../include/tablero.h"
-#include "../include/Estado.h"
-#include "../include/Pieza.h"
-#include "movHolders.h"
 
-#include <stdlib.h>
-#include <time.h>
-#include <ctime>
+
 
 Humano::Humano(bool bando_,tabl& tablero_)
 :Jugador(bando_,tablero_) {}

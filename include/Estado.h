@@ -1,15 +1,6 @@
 #ifndef ESTADO_H
 #define ESTADO_H
 
-#include "global.h"
-#include "tablero.h"
-#include "Boton.h"
-
-
-
-using namespace std;
-using namespace sf;
-
 struct Estado{
     Estado();
     virtual void update()=0;
@@ -46,5 +37,13 @@ struct Proper:public Estado{
     Jugador* segundo;
     Sprite turnoBlanco,turnoNegro;
 };
+
+//turnoAct se aumenta en cada accionar, es el contador de turnos
+//turno es turnoAct/2, el contador de turnos interpretando un turno como una jugada de los dos jugadores
+int turno,turnoAct;
+bool turno1;
+
+
+bool debugMode;
 
 #endif // ESTADO_H

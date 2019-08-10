@@ -1,17 +1,4 @@
-#include "movHolders.h"
-#include "Clicker.h"
-#include "Pieza.h"
-#include "operador.h"
-#include "tablero.h"
-#include "movs.h"
 
-const int32_t valorCadena=1;
-const int32_t valorFinal=1<<1;
-const int32_t valor=1<<2;
-const int32_t lastNotFalse=1<<2;
-const int32_t makeClick=1<<3;
-const int32_t hasClick=1<<4;
-const int32_t doEsp=1<<5;
 
 movHolder::movHolder(operador* op,Base* base_){
     if(!base_->beg)
@@ -49,9 +36,7 @@ normalHolder::normalHolder(normal* org,Base* base_,char** head)
 
     relPos=op->relPos;
 }
-v offset;
-Tile* actualTile;
-AH actualHolder;
+
 inline void normalHolder::generarProper(){
     actualHolder.nh=this;//lo usan algunas cosas de memoria y debug
     for(condt* c:op->conds)
@@ -200,7 +185,6 @@ void deslizHolder::generar(){
     generarSig();
 }
 int x=0;
-bool switchToGen;
 void deslizHolder::reaccionar(normalHolder* nh){
     if((char*)nh<(char*)this+op->insideSize)
         reaccionarNh(nh);

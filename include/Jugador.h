@@ -1,9 +1,6 @@
 #ifndef JUGADOR_H
 #define JUGADOR_H
 
-#include "global.h"
-
-
 struct Jugador{
     bool bando;
     tabl& _tablero;

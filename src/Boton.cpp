@@ -1,6 +1,4 @@
-#include "../include/Boton.h"
-#include "../include/global.h"
-#include "../include/Juego.h"
+
 
 Boton::Boton(string nomb,int n_,int x_,int y_,int escala_){
     text.setFont(j->font);

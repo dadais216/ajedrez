@@ -1,12 +1,5 @@
 #ifndef LECTOR_H
 #define LECTOR_H
-#include <fstream>
-#include<vector>
-#include<list>
-#include<map>
-#include "vec.h"
-using namespace std;
-struct Holder;
 
 struct lector{
     lector();
@@ -47,6 +40,7 @@ struct lector{
     void cargarDefs();
     void procesarTokens(list<int>&);
 };
+lector lect;
 
 int stringToInt(string&);
 

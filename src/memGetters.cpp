@@ -1,12 +1,4 @@
-#include "global.h"
-#include "memGetters.h"
-#include "movHolders.h"
-#include "tablero.h"
 
-vector<int> memMov;
-vector<memTriggers> memGlobalTriggers;
-vector<int> memGlobal;
-int maxMemMovSize=0;
 RectangleShape backGroundMemDebug;
 
 struct locala:public getterCond{
@@ -344,8 +336,7 @@ struct ctea:public getterCond{
             window->draw(textValMem);
     }
 };
-//turno es una memoria global que solo puede ser leida
-vector<turnTrigInfo> turnoTrigs[2];
+
 struct turnoaObj:public getterCond{
     turnoaObj(){}
     virtual int* val(){

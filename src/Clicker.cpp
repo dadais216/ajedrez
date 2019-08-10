@@ -1,10 +1,3 @@
-#include "../include/Clicker.h"
-#include "../include/global.h"
-#include "../include/operador.h"
-#include "../include/Pieza.h"
-#include "../include/Juego.h"
-#include "movHolders.h"
-#include "tablero.h"
 
 bool Clicker::drawClickers;
 

@@ -1,6 +1,5 @@
 #ifndef BOTON_H
 #define BOTON_H
-#include "global.h"
 
 struct Boton{
     Text text;

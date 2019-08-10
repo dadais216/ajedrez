@@ -1,8 +1,26 @@
 #ifndef MOVHOLDERS_H
 #define MOVHOLDERS_H
 
-#include "global.h"
-#include "Pieza.h"
+enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
+
+const int32_t valorCadena=1;//la cadena de movholders es valida. Una cadena va desde la base hasta un clicker o el final
+const int32_t valorFinal=1<<1;//se llegó al final. Esto sirve para saber si seguir iterando en un desliz
+const int32_t valor=1<<2;//lo usa normal para saber si sus condiciones son verdaderas,y exc si tiene una rama valida
+const int32_t lastNotFalse=1<<2;//lo usa desliz
+const int32_t makeClick=1<<3;
+const int32_t hasClick=1<<4;
+const int32_t doEsp=1<<5;//se usa en normalh
+
+struct normalHolder;
+struct AH{
+    Holder* h;
+    normalHolder* nh;
+};
+v offset;
+Tile* actualTile;
+AH actualHolder;
+
+bool switchToGen;
 
 struct Base{ ///datos compartidos de un movimiento entero
     Holder* h;
@@ -139,6 +157,5 @@ struct kamikaseCntrl:public movHolderMock{
     kamikaseCntrl(Base*);
     virtual void generar();
 };
-
 
 #endif // MOVHOLDERS_H

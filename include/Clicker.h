@@ -1,11 +1,12 @@
 #ifndef CLICKER_H
 #define CLICKER_H
-#include "vec.h"
-#include <SFML/Graphics.hpp>
 
-using namespace sf;
-
-#include "global.h"
+struct turnTrigInfo{
+    Holder* h;
+    normalHolder* nh;
+};
+//turno es una memoria global que solo puede ser leida
+vector<turnTrigInfo> turnoTrigs[2];
 
 struct Clicker{
     Clicker(vector<normalHolder*>*,Holder*);

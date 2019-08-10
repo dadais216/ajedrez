@@ -1,7 +1,6 @@
 #ifndef VEC_H_INCLUDED
 #define VEC_H_INCLUDED
 
-#include <iostream>
 using namespace std;
 struct v{
     int x;

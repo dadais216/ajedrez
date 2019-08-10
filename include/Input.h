@@ -1,9 +1,5 @@
 #ifndef INPUT_H
 #define INPUT_H
-#include <SFML/Graphics.hpp>
-#include "vec.h"
-using namespace std;
-using namespace sf;
 struct Input
 {
     RenderWindow* window;
@@ -20,4 +16,7 @@ struct Input
     bool clickCont;
     bool click();
 };
+float escala;
+Input* input;
+
 #endif // INPUT_H

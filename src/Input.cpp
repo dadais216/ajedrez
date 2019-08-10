@@ -1,5 +1,3 @@
-#include "../include/Input.h"
-#include "../include/global.h"
 
 Input::Input(RenderWindow* window)
     :window(window),clickCont(true) {}
