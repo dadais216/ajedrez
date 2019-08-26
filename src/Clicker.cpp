@@ -41,8 +41,8 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
 }
 
 void Clicker::draw(){
-    for(normalHolder* n:normales){
-        n->draw();
+  for(normalHolder* n:normales){
+      n->draw();
     }
     /*
     if(!activo) return;

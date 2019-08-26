@@ -1,6 +1,41 @@
 #ifndef BUCKET_H
 #define BUCKET_H
 
+
+
+struct Buckett{
+  char* data;
+  char* head;
+  int size;
+  Buckett* next;
+}
+
+Buckett* allocNewBucket(Buckett* b,int size_=bucketSize){
+  b->size=size_;
+  b->data=b->head=new char[size];//si no compila malloc(size)
+  b->next=nullptr;
+}
+
+//podria ser un define pero perderia la capacidad de retornar
+template<typename T> T* alloc(Buckett* b){
+  if(b->head+sizeof(T)>b->data+b->size){
+    b->next=allocNewBucket(b->next,b->size);
+    b=b->next;
+  }
+  T* ret=new(b->head) T;//uso new para constructores 
+  b->head+=sizeof(T);
+  return ret;
+}
+
+#define getStruct(type,name,from)               \
+  type* name=(type*)from.data;
+
+
+
+
+
+
+
 struct Bucket;
 extern int bucketSize;
 extern Bucket* actualBucket,** lastBucket;

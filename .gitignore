@@ -40,3 +40,7 @@
 bin/*
 obj/*
 bin/Debug/ajedrez
+
+*.files
+game
+

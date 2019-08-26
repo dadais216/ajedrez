@@ -12,6 +12,86 @@ void Arranque::update(){
     if(input->click()&&input->inRange())
         new Selector();
 }
+
+Buckett stateBucket;
+
+void arranqueDraw(){
+  Sprite* portada=(Sprite*)stateBucket->data;
+  window->draw(portada);
+}
+void arranqueInit(){
+  allocNewBucket(&stateBucket);
+  Sprite* portada=alloc<Sprite>(&stateBucket);
+  portada->setTexture(imagen->get("portada.png"));
+  drawScreen(arranqueDraw);
+}
+void updateArranque(){
+  if(input->click()&&input->inRange()){
+    selectorInit();
+    actualStateUpdate=selectorUpdate;
+  }
+}
+void selectorInit(){
+  resetBucket(&stateBucket);
+  botonGraphics* spt=alloc<botonGraphics>(&stateBucket);
+  botonGraphics->sprite.setTexture(image->get("tiles.png"));
+  botonGraphics->sprite.setTextureRect(IntRect(0,32,64,32));
+  botonGraphics->sprite.setScale(2,2);
+  botonGraphics->text.setFont(font);
+  botonGraphics->text.setColor(Color::Black);
+  botonGraphics->text.setScale(1,1);
+  botonGraphics->firstButton=nullptr;
+
+  fstream tableros;
+  tableros.open("tableros.txt");
+  string linea; //podria no usar string 
+  int j=0;
+  while(getline(tableros,linea)){
+    if(!linea.empty()&&linea[0]=='"'){
+      int i=1;
+      for(; linea[i]!='"'; i++);
+
+      boton* b=alloc<boton>(&stateBucket);
+
+      b->name=linea.substr(1,i-1);
+      b->n=j;
+      b->x=32+(70*j/420)*140;
+      b->y=40+(j*70)%420;
+
+      j++;
+    }
+  }
+  drawScreen(selectorDraw);
+} 
+void selectorUpdate(){
+  if(input->click()){
+    for(Boton* b:botones){
+      int n;
+      if((n=b->clicked())){
+        new Proper(n-1,sel1.selected,sel2.selected);
+        return;
+      }
+    }
+    sel1.clicked();
+    sel2.clicked();
+    }
+}
+void selectorDraw(){
+  getStruct(botonGraphics,bg,stateBucket);
+  for(boton* b=bg->firstButton();
+      b;
+      b=b->next){
+    drawButton(b);
+  }
+
+  sel1.draw();
+  sel2.draw();
+} 
+
+
+
+
+
 Selector::Selector():sel1(1),sel2(-1){
     j->change(this);
     fstream tableros;

@@ -1,5 +1,29 @@
 
 
+
+
+
+
+
+
+
+
+#define noSizeAttribute(name,type)\
+type* name(){\
+  return (type*)((char*)this+sizeof(this));\
+}
+//hay un atributo en el ultimo c++ que hace esto tambien, es un poco mejor
+//porque no es un metodo, no hay que poner ()
+
+
+
+
+
+
+
+
+
+
 #include <fstream>
 #include <vector>
 #include <list>
@@ -26,8 +50,6 @@ using namespace std;
 using namespace sf;
 
 #include "Manager.h"
-
-#include "global.h"
 
 #include "vec.h"
 

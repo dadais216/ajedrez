@@ -1,7 +1,25 @@
 
+struct botonGraphics{
+  Sprite sprite;
+  Text text;
+  noSizeAttribute(firstButton,boton);
+}
+
+struct boton{
+  string name;//aca hay una indireccion(y leak) que eventualmente podria sacar
+  int n,x,y;//no es que lo necesite pero ya que estamos
+  boton* next;//next es para eso, si lo dejo como ahora no sirve para nada
+}
+
+void drawButton(boton* b){
+  getStruct(botonGraphics,bg,stateBucket);
+  bg->text.setString(b->name);
+  window.draw(bg->sprite);
+  window.draw(bg->text);
+}
 
 Boton::Boton(string nomb,int n_,int x_,int y_,int escala_){
-    text.setFont(j->font);
+  text.setFont(j->font);
     text.setString(nomb);
     text.setColor(Color::Black);
     sprite.setTexture(imagen->get("tiles.png"));

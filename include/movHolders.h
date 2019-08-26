@@ -138,7 +138,7 @@ struct desoptHolder:public movHolder{
 
     char* movs(){
         return (char*)this+sizeof(desoptHolder);
-    }
+    }//esto se puede implementar en c++17 con [[no_unique_address]]
 };
 
 
