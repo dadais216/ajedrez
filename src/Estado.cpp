@@ -1,18 +1,5 @@
 
 
-Estado::Estado() {}
-
-Arranque::Arranque(){
-    portada.setTexture(imagen->get("portada.png"));
-}
-void Arranque::draw(){
-    window->draw(portada);
-}
-void Arranque::update(){
-    if(input->click()&&input->inRange())
-        new Selector();
-}
-
 Buckett stateBucket;
 
 void arranqueDraw(){
@@ -40,97 +27,78 @@ void selectorInit(){
   botonGraphics->text.setFont(font);
   botonGraphics->text.setColor(Color::Black);
   botonGraphics->text.setScale(1,1);
-  botonGraphics->firstButton=nullptr;
+  
+  botonGraphics->bordeSeleccion->setFillColor(Color(0,0,0,0));
+  botonGraphics->bordeSeleccion->setSize(sf::Vector2f(64, 32));
+  botonGraphics->bordeSeleccion->setOutlineColor(Color::White);
+  botonGraphics->bordeSeleccion->setOutlineThickness(1);
+
+  genPlayerSelector(1);
+  genPlayerSelector(-1);
+
+  firstButton=stateBucket.head;
 
   fstream tableros;
   tableros.open("tableros.txt");
   string linea; //podria no usar string 
   int j=0;
+  boton* lastButton;
   while(getline(tableros,linea)){
     if(!linea.empty()&&linea[0]=='"'){
       int i=1;
       for(; linea[i]!='"'; i++);
 
-      boton* b=alloc<boton>(&stateBucket);
-
-      b->name=linea.substr(1,i-1);
-      b->n=j;
-      b->x=32+(70*j/420)*140;
-      b->y=40+(j*70)%420;
+      lastButton=buttonAllocInit(linea.substr(1,i-1),
+                 j,//j+1?
+                 32+(70*j/420)*140,
+                 40+(j*70)%420);
 
       j++;
     }
   }
+  lastButton->next=nullptr;
   drawScreen(selectorDraw);
 } 
 void selectorUpdate(){
+  getStruct(botonGraphics,bg,stateBucket);
   if(input->click()){
-    for(Boton* b:botones){
-      int n;
-      if((n=b->clicked())){
-        new Proper(n-1,sel1.selected,sel2.selected);
-        return;
+    for(boton* b=bg->firstButton();
+        b;
+        b=b->next){
+      if(buttonClicked(b)){
+        properInit(b->n);
       }
     }
-    sel1.clicked();
-    sel2.clicked();
-    }
+    updatePlayerSelector(bg->player1);
+    updatePlayerSelector(bg->player2);
+  }
 }
 void selectorDraw(){
   getStruct(botonGraphics,bg,stateBucket);
+
+  botonGraphics->sprite.setScale(2f,2f);
+  botonGraphics->text.setScale(2f,2f);
+
   for(boton* b=bg->firstButton();
       b;
       b=b->next){
     drawButton(b);
   }
 
-  sel1.draw();
-  sel2.draw();
+  botonGraphics->sprite.setScale(1f,1f);
+  botonGraphics->text.setScale(1f,1f);
+
+  for(boton* b=ps->firstButton;
+      b;
+      b=b->next){
+    drawButton(b);
+  }
+  bordeSeleccion.setPosition(500+40*bando,320+40*selected);
+  window.draw(cuadrado);
 } 
 
 
 
-
-
-Selector::Selector():sel1(1),sel2(-1){
-    j->change(this);
-    fstream tableros;
-    tableros.open("tableros.txt");
-    string linea;
-    int j=0;
-    while(getline(tableros,linea)){
-        if(!linea.empty()&&linea[0]=='"'){
-            int i=1;
-            for(; linea[i]!='"'; i++);
-            botones.push_back(new Boton(linea.substr(1,i-1),j,32+(70*j/420)*140,40+(j*70)%420,2));
-            j++;
-        }
-    }
-    drawScreen();
-}
-void Selector::draw(){
-    for(Boton* b:botones)
-        b->draw();
-    sel1.draw();
-    sel2.draw();
-}
-void Selector::update(){
-    if(input->click()){
-        for(Boton* b:botones){
-            int n;
-            if((n=b->clicked())){
-                new Proper(n-1,sel1.selected,sel2.selected);
-                return;
-            }
-        }
-        sel1.clicked();
-        sel2.clicked();
-    }
-}
-Selector::~Selector(){
-    for(auto* b:botones)
-        delete b;
-}
 
 Proper::Proper(int id_,int sel1,int sel2)
     :tablero(){

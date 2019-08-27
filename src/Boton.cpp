@@ -2,7 +2,10 @@
 struct botonGraphics{
   Sprite sprite;
   Text text;
-  noSizeAttribute(firstButton,boton);
+
+  RectangleShape bordeSeleccion;
+  PlayerSelector player1,player2;
+  boton* firstButton;
 }
 
 struct boton{
@@ -11,69 +14,56 @@ struct boton{
   boton* next;//next es para eso, si lo dejo como ahora no sirve para nada
 }
 
+boton* buttonAllocInit(string& s,int n,int x,int y){
+  boton* b=alloc<boton>(&stateBucket);
+  b->name=s;
+  b->n=n;
+  b->x=x;
+  b->y=y;
+  b->next=stateBucket->head;
+  return b;
+}
+
 void drawButton(boton* b){
-  getStruct(botonGraphics,bg,stateBucket);
-  bg->text.setString(b->name);
-  window.draw(bg->sprite);
-  window.draw(bg->text);
+  botonGraphics->sprite.setPosition(b->x,b->y);
+  botonGraphics->text.setPosition(b->x+5,b->y+10);
+  botonGraphics->text.setString(b->name);
+  window.draw(botonGraphics->sprite);
+  window.draw(botonGraphics->text);
 }
 
-Boton::Boton(string nomb,int n_,int x_,int y_,int escala_){
-  text.setFont(j->font);
-    text.setString(nomb);
-    text.setColor(Color::Black);
-    sprite.setTexture(imagen->get("tiles.png"));
-    sprite.setTextureRect(IntRect(0,32,64,32));
-
-    escala=escala_;
-    sprite.setScale(escala_,escala_);
-    text.setScale(escala_/2.,escala_/2.);
-    y=y_;
-    x=x_;
-    sprite.setPosition(x,y);
-    text.setPosition(x+5,y+10);
-    n=n_+1;
-}
-int Boton::clicked(){
-    v ve=input->pixel();
-    if(ve.x>=x&&ve.x<=x+64*escala&&ve.y>=y&&ve.y<=y+32*escala)
-        return n;
-    else
-        return 0;
-}
-void Boton::draw(){
-    window->draw(sprite);
-    window->draw(text);
+int buttonClicked(boton* b){
+  v ve=input->pixel();
+  if(ve.x>=b->x&&ve.x<=b->x+128&&ve.y>=b->y&&ve.y<=b->y+64) //puede que este mal
+    return b->n;
+  return 0;
 }
 
-SelJugador::SelJugador(int bando_){
-    bando=bando_;
-    if(bando==1)
-        botones.push_back(Boton("nadie",0,540,320,1));
-    botones.push_back(Boton("humano",1,500+40*bando,360,1));
-    botones.push_back(Boton("aleatorio",2,500+40*bando,400,1));
-    botones.push_back(Boton("IA",3,500+40*bando,440,1));
+struct PlayerSelector{
+  int bando;
+  boton* firstButton;//medio ambiguo que necesite ser linked? ver como termine implementando lo de string en boton, si es un char[20] ya fue
+  int selected;
+};
 
-    cuadrado.setFillColor(Color(0,0,0,0));
-    cuadrado.setSize(sf::Vector2f(64, 32));
-    cuadrado.setOutlineColor(Color::White);
-    cuadrado.setOutlineThickness(1);
+void genPlayerSelector(PlayerSelector* playerSelector,int bando_){
+    playerSelector->bando=bando_;
+    playerSelector->firstButton=stateBucket.head;
+    if(bando_==1){
+      buttonAllocInit("nadie",0,540,320);
+    }
+    buttonAllocInit("humano",1,500+40*bando,360);
+    buttonAllocInit("aleatorio",2,500+40*bando,400);
+    buttonAllocInit("IA",3,500+40*bando,440)->next=nullptr;
 
     selected=1;
 }
-void SelJugador::clicked(){
-    for(Boton& b:botones){
-        int n;
-        if((n=b.clicked())){
-            selected=n-1;
-            drawScreen();
-            return;
-        }
+void updatePlayerSelector(playerSelector* ps){
+  for(boton* b=ps->firstButton;
+      b;
+      b=b->next){
+    if(buttonClicked(b)){
+      ps->selected=b->n;//n-1?
+      drawScreen();
     }
-}
-void SelJugador::draw(){
-    for(Boton& b:botones)
-        b.draw();
-    cuadrado.setPosition(500+40*bando,320+40*selected);
-    window->draw(cuadrado);
+  }
 }

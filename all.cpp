@@ -59,7 +59,9 @@ using namespace sf;
 #include "Input.h"
 #include "Input.cpp"
 
-#include "Juego.h"
+
+#include "main.cpp"
+
 
 #include "Boton.h"
 #include "Boton.cpp"
@@ -74,8 +76,6 @@ using namespace sf;
 #include "Estado.h"
 
 #include "tablero.cpp"
-#include "Juego.cpp"
-#include "main.cpp"
 
 #include "Clicker.h"
 #include "Clicker.cpp"

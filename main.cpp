@@ -1,6 +1,4 @@
 
-#include "include/Juego.h"
-using namespace std;
 
 
 RenderWindow window(VideoMode(640,512),"ajedres");
