@@ -6,6 +6,14 @@
 
 
 
+#if 1
+#define debug(...) __VA_ARGS__
+#else
+#define debug(...)
+#endif
+//decidi tener una version debug y una version no debug, esto me permite hacer mas cosas. Antes para no afectar la velocidad necesitaba meter las cosas debug de forma opcional en lugares donde no molestacen, especificamente en listas de polimorfismo de movs y movholders, lo que me limitaba lo que podia hacer y era incomodo.
+//la cagada de tener una version normal y una version debug es que en este proyecto quiero que el usuario tenga acceso a las cosas debug, por lo que tendria que tener 2 exes del juego. Por lo menos por esta version. Cuando haga la version compilada, como se compila en el momento, puedo tener la opcion de compilar en distintas formas y listo.
+//Otra opcion es dejar la version compilada como la version rapida sin nada, y dejar la interpretada con todas las cosas debug
 
 
 #define noSizeAttribute(name,type)\
@@ -62,9 +70,8 @@ using namespace sf;
 
 #include "main.cpp"
 
-
-#include "Boton.h"
-#include "Boton.cpp"
+#include "arranque.cpp"
+#include "selector.cpp"
 
 #include "tablero.h"
 #include "memGetters.h"

@@ -3,32 +3,62 @@
 
 
 
-struct Buckett{
+//estructura de control. Hay una sola al inicio de la cadena de bloques, tiene la información del ultimo bloque para hacer las alocaciones. De necesitar mas de un bloque hay un puntero al siguiente al inicio de cada bloque. 
+struct bucket{
   char* data;
   char* head;
   int size;
-  Buckett* next;
+  char* firstBlock;
 }
 
-Buckett* allocNewBucket(Buckett* b,int size_=bucketSize){
-  b->size=size_;
-  b->data=b->head=new char[size];//si no compila malloc(size)
-  b->next=nullptr;
+void bucketInit(bucket* b,int size=bucketSize){
+  b->size=size;
+  allocNewBucket(b);
+  b->firstBlock=b->data;
 }
 
+void allocNewBucket(bucket* b){
+  b->data=new char[size];//si no compila malloc(size)
+  ((char*)*b->data)=nullptr;//se podria hacer un nuevo struct con next y despues espacio pero terminaba siendo mas feo el codigo
+  b->head=b->data+=sizeof(char*);
+}
 //podria ser un define pero perderia la capacidad de retornar
-template<typename T> T* alloc(Buckett* b){
+template<typename T> T* alloc(bucket* b){
   if(b->head+sizeof(T)>b->data+b->size){
-    b->next=allocNewBucket(b->next,b->size);
-    b=b->next;
+    char* nextBlock=(char*)*b->data;
+    if(nextBlock==nullptr){
+      char* before=b->data;
+      allocNewBucket(b,b->size);
+      ((char*)*before->data)=b->data;
+    }else{
+      b->head=b->data=nextBlock;
+    }
   }
-  T* ret=new(b->head) T;//uso new para constructores 
+  T* ret=new(b->head) T;//uso new para constructores de sfml y std
   b->head+=sizeof(T);
   return ret;
 }
 
+void resetBucket(bucket* b){
+  b->head=b->data=b->firstBlock;
+}
+void clearBucket(bucket* b){
+  for(char* data=b->firstBlock;
+      data;
+     ){
+    char* before;
+    data=(char*)*data;
+    delete before;//no tengo claro si esto esta borrando 1 char o todo el bloque
+  }
+}
+
 #define getStruct(type,name,from)               \
   type* name=(type*)from.data;
+
+struct barray{
+  char* beg;
+  char* after;
+}
 
 
 

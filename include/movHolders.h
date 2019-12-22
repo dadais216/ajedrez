@@ -22,6 +22,14 @@ AH actualHolder;
 
 bool switchToGen;
 
+struct virtualTableMov{//probar implementar lo mismo con switches a ver que pasa
+  void (*generar)(movHolder*);
+  void (*reaccionar)(movHolder*,normalHolder*);
+  void (*reaccionarVec)(movHolder*,vector<normalHolder*>*);
+  void (*cargar)(movHolder*,vector<normalHolder*>*);
+}
+
+
 struct Base{ ///datos compartidos de un movimiento entero
     Holder* h;
     movHolder* beg;
@@ -45,43 +53,19 @@ inline v getOffset(v relPos,v pos){
 }
 
 struct movHolder{
-    movHolder(operador*,Base*);
-    virtual void generar()=0;
-    virtual void reaccionar(normalHolder*)=0;
-    virtual void reaccionar(vector<normalHolder*>*)=0;
-    virtual void cargar(vector<normalHolder*>*)=0;
-    void generarSig();
-    void reaccionarSig(auto nhs){
-        if(sig){
-            sig->reaccionar(nhs);
-            if(switchToGen){
-                if(bools&hasClick||sig->bools&valorCadena)
-                    bools|=valorCadena;
-                else
-                    bools&=~valorCadena;
-                bools|=sig->bools&valorFinal;
-            }
-        }
-    }
-    Base* base;
+  virtualTableMov* table;
+  Base* base; //ver de pasarselo al trigger como un offset para no tenerlo en cada movHolder, ver arriba
     movHolder* sig;
     int32_t bools;
 };
+
 struct normalHolder:public movHolder{
-    normalHolder(normal*,Base*,char**);//supongo que ni bien se crea el op le copias las accs
     normal* op;
-    virtual void generar();
-    void generarProper();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>*);
-    virtual void cargar(vector<normalHolder*>*);
-    void draw();
-    void accionar();///desencadena los acct
     barray<int> memAct;
     //no separo entre piezas con y sin memoria porque duplicaria mucho codigo.
     //Cuando haga la version compilada puedo hacer esa optimizacion y cosas mas especificas
     v relPos; //pos actual = relPös + offset. Todas las acciones y condiciones la comparten
-    v pos; //pos actual
+    v pos; //pos actual. @check por que se guarda?
 };
 struct deslizHolder:public movHolder{
     deslizHolder(desliz*,Base*,char**);

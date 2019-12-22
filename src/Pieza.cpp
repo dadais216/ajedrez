@@ -228,7 +228,7 @@ void Holder::generar(){
     for(movHolder* m:movs){
         offset=tile->pos;
         memset(memMov.data(),0,m->base->memLocalSize*sizeof(int));
-        m->generar();
+        m->table.generar(m);
     }
 }
 

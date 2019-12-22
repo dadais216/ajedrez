@@ -40,11 +40,13 @@ void Humano::turno(){
     while(true){
         sleep(milliseconds(20));
         input->check();
-        if(debugMode&&window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-            static_cast<Proper*>(j->actual)->init();///@leaks
-            while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
-            throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
-        }
+        debug(
+              if(window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+                static_cast<Proper*>(j->actual)->init();///@leaks
+                while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
+                throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
+              }
+              )
         if(input->click()&&input->inGameRange(_tablero.tam)){
             v posClicked=input->get();
             for(Clicker& cli:clickers){

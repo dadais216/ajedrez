@@ -5,19 +5,21 @@ RenderWindow window(VideoMode(640,512),"ajedres");
 Manager<Texture> image;
 Font font;
 Input input();
-void (*actualStateUpdate)(void);
+void (*actualStateUpdate)();
 
 int main()
 {
   image.adddir("sprites/");
   font.loadFromFile("sprites/VL-PGothic-Regular.ttf");
-  arranqueInit();
 
+  arranqueInit();
 
   float fpsLock=1f/60f; //maximos fps @todo en test de velocidad que sea 0
   Clock clock;//@check investigar bien esto, por ahi deberia usar el mismo
   //que uso para los test de velocidad?
 
+
+  //@todo me gustaría dibujar solo cuando sea necesario, correr a 60fps solo para el input
   float dt=0;
   while(true){
     dt+=clock.restart().asSeconds();
@@ -39,9 +41,8 @@ int main()
   }
 }
 
-void drawScreen(void (*drawState)(void)){
-  window.clear(Color(209,177,158));
-  drawState();
+#define drawScreen(drawFunc) \
+  window.clear(Color(209,177,158));\
+  drawFunc();\
   window.display();
-}
 

@@ -1,6 +1,7 @@
 
 bool Clicker::drawClickers;
 
+//hacer un test de esto, cambiarlo por buckets en stateBucket. Tiene que ser buckets o una estructura asi porque nada asegura que la cantidad de clickers sea menor a los tiles del tablero, aunque sería razonable asumir que lo es en el caso comun
 vector<Clicker> clickers;
 v getActualPos(v,v);
 

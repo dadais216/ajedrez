@@ -1,321 +1,222 @@
 
+struct properState{
+  player player1,player2;
+  Sprite turnoBlanco,turnoNegro;
+  debug(
+        v posPieza;
+        v posActGood;
+        v posActBad;
+        Text textDebug;
+        RectangleShape backgroundMem;
+        RectangleShape backgroundMemDebug;
+        Text textValMem;
+        )
+}
 
-Buckett stateBucket;
 
-void arranqueDraw(){
-  Sprite* portada=(Sprite*)stateBucket->data;
-  window->draw(portada);
-}
-void arranqueInit(){
-  allocNewBucket(&stateBucket);
-  Sprite* portada=alloc<Sprite>(&stateBucket);
-  portada->setTexture(imagen->get("portada.png"));
-  drawScreen(arranqueDraw);
-}
-void updateArranque(){
-  if(input->click()&&input->inRange()){
-    selectorInit();
-    actualStateUpdate=selectorUpdate;
-  }
-}
-void selectorInit(){
+properUpdate();
+properInit(int tableroId_,int player1Id,int player2Id){
   resetBucket(&stateBucket);
-  botonGraphics* spt=alloc<botonGraphics>(&stateBucket);
-  botonGraphics->sprite.setTexture(image->get("tiles.png"));
-  botonGraphics->sprite.setTextureRect(IntRect(0,32,64,32));
-  botonGraphics->sprite.setScale(2,2);
-  botonGraphics->text.setFont(font);
-  botonGraphics->text.setColor(Color::Black);
-  botonGraphics->text.setScale(1,1);
-  
-  botonGraphics->bordeSeleccion->setFillColor(Color(0,0,0,0));
-  botonGraphics->bordeSeleccion->setSize(sf::Vector2f(64, 32));
-  botonGraphics->bordeSeleccion->setOutlineColor(Color::White);
-  botonGraphics->bordeSeleccion->setOutlineThickness(1);
+  getStruct(ps,properState,stateBucket);
 
-  genPlayerSelector(1);
-  genPlayerSelector(-1);
+  int nonHumans=0;
 
-  firstButton=stateBucket.head;
+  int sel=player1Id;
+  bool bando=false;
+ createPlayer:
+  switch(sel){
+  case 0:nonHuman++;nadieInit(bando);break;
+  case 1:humanoInit(bando);break;
+  case 2:nonHuman++;aleatorioInit(bando);break;
+    //case 3: return new IA(bando,tablero);
+  }
+  if(!bando){
+    bando=true;
+    sel=player2Id;
+    goto createPlayer;
+  }
+  if(nonHumans==2)
+    fpsLock=0.;
 
-  fstream tableros;
-  tableros.open("tableros.txt");
-  string linea; //podria no usar string 
-  int j=0;
-  boton* lastButton;
-  while(getline(tableros,linea)){
-    if(!linea.empty()&&linea[0]=='"'){
-      int i=1;
-      for(; linea[i]!='"'; i++);
+  ps->turnoBlanco.setTexture(imagen->get("tiles.png"));
+  ps->turnoNegro.setTexture(imagen->get("tiles.png"));
+  ps->turnoBlanco.setTextureRect(IntRect(0,0,32,32));
+  ps->turnoNegro.setTextureRect(IntRect(32,0,32,32));
+  ps->turnoBlanco.setScale(12,16);
+  ps->turnoNegro.setScale(12,16);
+  ps->turnoBlanco.setPosition(510,0);
+  ps->turnoNegro.setPosition(510,0);
 
-      lastButton=buttonAllocInit(linea.substr(1,i-1),
-                 j,//j+1?
-                 32+(70*j/420)*140,
-                 40+(j*70)%420);
+  debug(
+        posPieza.setFillColor(sf::Color(250,240,190,150));
+        posActGood.setFillColor(sf::Color(180,230,100,100));
+        posActBad.setFillColor(sf::Color(240,70,40,100));
+        textDebug.setFont(j->font);
+        textDebug.setPosition(520,465);
 
-      j++;
+        backGroundMem.setFillColor(sf::Color(240,235,200));
+        backGroundMem.setOutlineColor(sf::Color(195,195,175));
+        backGroundMem.setOutlineThickness(4);
+        backGroundMem.setSize(Vector2f(20,40));
+        backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+        backGroundMemDebug.setOutlineColor(sf::Color(195,195,175));
+        backGroundMemDebug.setOutlineThickness(4);
+        backGroundMemDebug.setSize(Vector2f(20,40));
+        textValMem.setColor(Color::Black);
+        textValMem.setFont(j->font);
+        )
+  lastBucket=&bucketPiezas;new Bucket();
+  lastBucket=&bucketHolders;new Bucket();
+
+  properGameInit();
+}
+
+void properGameInit(){
+  clickers.clear();
+  memMov.clear();
+  maxMemMovSize=0;
+  memGlobal.clear();
+  memGlobalTriggers.clear();
+  memGlobalSize=0;
+  memTileSize=0;
+  turnoTrigs[0].clear();
+  turnoTrigs[1].clear();
+  turnoAct=2;
+  turno=1;
+
+  if(lect.archPiezas.is_open())
+    lect.archPiezas.close();
+  lect.archPiezas.open("piezas.txt");
+
+  lect.generarIdsTablero(id);
+
+  tablero.armar(v(lect.matriz[0].size(),lect.matriz.size()));
+
+  lect.cargarDefs();
+
+  //esto esta aca porque escala se setea en armar
+  posPieza.setSize(Vector2f(32*escala,32*escala));
+  debug(
+        posActGood.setSize(Vector2f(32*escala,32*escala));
+        posActBad.setSize(Vector2f(32*escala,32*escala));
+        )
+
+
+  piezas.clear();
+  cout<<"-----"<<endl;
+  for(uint i=0; i<lect.matriz.size(); i++){
+    for(uint j=0; j<lect.matriz[0].size(); j++){
+      int n=lect.matriz[i][j];
+      v pos(j,i);
+      //cout<<pos<<"  "<<tablero.tam<<endl;
+      if(n)
+        tablero.tile(pos)->holder=lect.crearPieza(n,pos);
+      else
+        tablero.tile(pos)->holder=nullptr;
     }
   }
-  lastButton->next=nullptr;
-  drawScreen(selectorDraw);
-} 
-void selectorUpdate(){
-  getStruct(botonGraphics,bg,stateBucket);
-  if(input->click()){
-    for(boton* b=bg->firstButton();
-        b;
-        b=b->next){
-      if(buttonClicked(b)){
-        properInit(b->n);
+
+  memset(memGlobal.data(),0,memGlobalSize*sizeof(int));
+
+  for(uint i=0; i<lect.matriz.size(); i++){
+    for(uint j=0; j<lect.matriz[0].size(); j++){
+      Holder* hAct=tablero.tile(v(j,i))->holder;
+      if(hAct){
+        turno1=hAct->bando;
+        hAct->generar();
       }
     }
-    updatePlayerSelector(bg->player1);
-    updatePlayerSelector(bg->player2);
   }
-}
-void selectorDraw(){
-  getStruct(botonGraphics,bg,stateBucket);
-
-  botonGraphics->sprite.setScale(2f,2f);
-  botonGraphics->text.setScale(2f,2f);
-
-  for(boton* b=bg->firstButton();
-      b;
-      b=b->next){
-    drawButton(b);
-  }
-
-  botonGraphics->sprite.setScale(1f,1f);
-  botonGraphics->text.setScale(1f,1f);
-
-  for(boton* b=ps->firstButton;
-      b;
-      b=b->next){
-    drawButton(b);
-  }
-  bordeSeleccion.setPosition(500+40*bando,320+40*selected);
-  window.draw(cuadrado);
-} 
-
-
-
-
-Proper::Proper(int id_,int sel1,int sel2)
-    :tablero(){
-    id=id_;
-    j->change(this);
-    debugMode=true;
-
-    int nonHuman=0;
-    auto selec=[&](int sel,bool bando)->Jugador*{
-        switch(sel){
-        case 0:nonHuman++;return new Nadie(bando,tablero);
-        case 1:return new Humano(bando,tablero);
-        case 2:nonHuman++;return new Aleatorio(bando,tablero);
-            //case 3: return new IA(bando,tablero);
-        }
-    };
-
-    primero=selec(1,false);
-    segundo=selec(0,true);
-
-    if(nonHuman==2)
-        fpsLock=0.;
-
-    turnoBlanco.setTexture(imagen->get("tiles.png"));
-    turnoNegro.setTexture(imagen->get("tiles.png"));
-    turnoBlanco.setTextureRect(IntRect(0,0,32,32));
-    turnoNegro.setTextureRect(IntRect(32,0,32,32));
-    turnoBlanco.setScale(12,16);
-    turnoNegro.setScale(12,16);
-    turnoBlanco.setPosition(510,0);
-    turnoNegro.setPosition(510,0);
-
-    ///tiles de debug
-    posPieza.setFillColor(sf::Color(250,240,190,150));
-    posActGood.setFillColor(sf::Color(180,230,100,100));
-    posActBad.setFillColor(sf::Color(240,70,40,100));
-    textDebug.setFont(j->font);
-    textDebug.setPosition(520,465);
-    asterisco.setFont(j->font);
-    asterisco.setPosition(515,450);
-    asterisco.setColor(Color::Black);
-    asterisco.setString("*");
-
-    backGroundMem.setFillColor(sf::Color(240,235,200));
-    backGroundMem.setOutlineColor(sf::Color(195,195,175));
-    backGroundMem.setOutlineThickness(4);
-    backGroundMem.setSize(Vector2f(20,40));
-    backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-    backGroundMemDebug.setOutlineColor(sf::Color(195,195,175));
-    backGroundMemDebug.setOutlineThickness(4);
-    backGroundMemDebug.setSize(Vector2f(20,40));
-    textValMem.setColor(Color::Black);
-    textValMem.setFont(j->font);
-
-    lastBucket=&bucketPiezas;new Bucket();
-    lastBucket=&bucketHolders;new Bucket();
-
-    init();
-}
-
-
-
-
-void Proper::init(){
-    clickers.clear();
-    memMov.clear();
-    maxMemMovSize=0;
-    memGlobal.clear();
-    memGlobalTriggers.clear();
-    memGlobalSize=0;
-    memTileSize=0;
-    turnoTrigs[0].clear();
-    turnoTrigs[1].clear();
-    turnoAct=2;
-    turno=1;
-
-    if(lect.archPiezas.is_open())
-        lect.archPiezas.close();
-    lect.archPiezas.open("piezas.txt");
-
-    lect.generarIdsTablero(id);
-
-    tablero.armar(v(lect.matriz[0].size(),lect.matriz.size()));
-
-    lect.cargarDefs();
-
-    //esto esta aca porque escala se setea en armar
-    posPieza.setSize(Vector2f(32*escala,32*escala));
-    posActGood.setSize(Vector2f(32*escala,32*escala));
-    posActBad.setSize(Vector2f(32*escala,32*escala));
-
-
-
-    piezas.clear();
-    cout<<"-----"<<endl;
-    for(uint i=0; i<lect.matriz.size(); i++){
-        for(uint j=0; j<lect.matriz[0].size(); j++){
-            int n=lect.matriz[i][j];
-            v pos(j,i);
-            //cout<<pos<<"  "<<tablero.tam<<endl;
-            if(n)
-                tablero.tile(pos)->holder=lect.crearPieza(n,pos);
-            else
-                tablero.tile(pos)->holder=nullptr;
-        }
-    }
-
-    memset(memGlobal.data(),0,memGlobalSize*sizeof(int));
-
-    for(uint i=0; i<lect.matriz.size(); i++){
-        for(uint j=0; j<lect.matriz[0].size(); j++){
-            Holder* hAct=tablero.tile(v(j,i))->holder;
-            if(hAct){
-                turno1=hAct->bando;///@check
-                hAct->generar();
-            }
-        }
+  cout<<endl;
+  for(int i=0; i<tablptr->tam.y; i++){
+    for(int j=0; j<tablptr->tam.x; j++){
+      cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
     }
     cout<<endl;
-    for(int i=0; i<tablptr->tam.y; i++){
-        for(int j=0; j<tablptr->tam.x; j++){
-            cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
-        }
-        cout<<endl;
-    }
-    turno1=true;
-    drawScreen();
+  }
+  turno1=true;
+  drawScreen();
 }
 
 void Proper::draw(){
-    tablero.drawTiles();
-    if(Clicker::drawClickers)
-        for(Clicker& cli:clickers)
-            cli.draw();
-    tablero.drawPieces();
-    if(turno1)
-        window->draw(turnoBlanco);
-    else
-        window->draw(turnoNegro);
+  tablero.drawTiles();
+  if(Clicker::drawClickers)
+    for(Clicker& cli:clickers)
+      cli.draw();
+  tablero.drawPieces();
+  if(turno1)
+    window->draw(turnoBlanco);
+  else
+    window->draw(turnoNegro);
 
-    textValMem.setPosition(570,10);
-    textValMem.setString(to_string(turno));
-    window->draw(textValMem);
+  debug(
+        textValMem.setPosition(570,10);
+        textValMem.setString(to_string(turno));
+        window->draw(textValMem);
 
-    if(drawDebugTiles){ ///@optim funcion aparte
-        window->draw(*tileActDebug);
-        if(drawAsterisco){
+          window->draw(*tileActDebug);
+          if(drawAsterisco){
             window->draw(asterisco);
             drawAsterisco=false;
-        }
-    }
-    if(drawDebugTiles||drawMemDebug){
-        window->draw(posPieza);
-        window->draw(textDebug);
-        int memSize=actualHolder.nh->base->memLocalSize;
-        for(int i=0;i<memSize;i++){
+          }
+        
+          window->draw(posPieza);
+          window->draw(textDebug);
+          int memSize=actualHolder.nh->base->memLocalSize;
+          for(int i=0;i<memSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
             window->draw(backGroundMem);
-        }
-        for(int i=0;i<memGlobalSize;i++){
+          }
+          for(int i=0;i<memGlobalSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),305+45*(i/4-memGlobalSize/4)));
             window->draw(backGroundMem);
-        }
-        int memPiezaSize=actualHolder.h->memPieza.count();
-        for(int i=0;i<memPiezaSize;i++){
+          }
+          int memPiezaSize=actualHolder.h->memPieza.count();
+          for(int i=0;i<memPiezaSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),205+45*(i/4-memPiezaSize/4)));
             window->draw(backGroundMem);
-        }
-        for(int i=0;i<memTileSize;i++){
+          }
+          for(int i=0;i<memTileSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),105+45*(i/4-memTileSize/4)));
             window->draw(backGroundMem);
-        }
-        if(getterMemDebug1){
+          }
+          if(getterMemDebug1){
             getterMemDebug1->drawDebugMem();
             getterMemDebug2->drawDebugMem();
-        }
-        for(int i=0;i<memSize;i++){
+          }
+          for(int i=0;i<memSize;i++){
             textValMem.setPosition(530+25*(i%4),410+45*(i/4-memSize/4));
             textValMem.setString(to_string(memMov[i]));
             window->draw(textValMem);
-        }
-        for(int i=0;i<memGlobalSize;i++){
+          }
+          for(int i=0;i<memGlobalSize;i++){
             textValMem.setPosition(530+25*(i%4),310+45*(i/4-memGlobalSize/4));
             textValMem.setString(to_string(memGlobal[i]));
             window->draw(textValMem);
-        }
-        for(int i=0;i<memPiezaSize;i++){
+          }
+          for(int i=0;i<memPiezaSize;i++){
             textValMem.setPosition(530+25*(i%4),210+45*(i/4-memPiezaSize/4));
             textValMem.setString(to_string(*actualHolder.h->memPieza[i]));
             window->draw(textValMem);
-        }
-        for(int i=0;i<memTileSize;i++){
+          }
+          for(int i=0;i<memTileSize;i++){
             textValMem.setPosition(530+25*(i%4),110+45*(i/4-memTileSize/4));
             textValMem.setString(to_string(tablptr->tile(posDebugTile)->memTile[i]));
             window->draw(textValMem);
-        }
-        if(memOtherSize){
-            for(int i=0;i<memOtherSize;i++){
-                textValMem.setPosition(530+25*(i%4),160+45*(i/4-memOtherSize/4));
-                textValMem.setString(to_string(*tablptr->tile(posDebugTile)->holder->memPieza[i]));
-                window->draw(textValMem);
-            }
-            memOtherSize=0;
-        }
-    }
+          }
+        )
 }
 
 void Proper::update(){
-    try{
-        primero->turno();
-        segundo->turno();
-    }catch(...){}
+  try{
+    primero->turno();
+    segundo->turno();
+  }catch(...){}
 }
 
 bool Proper::inRange(v a)
 {
-    return a.x>=0&&a.x<=tablero.tam.x-1&&a.y>=0&&a.y<=tablero.tam.y-1;
+  return a.x>=0&&a.x<=tablero.tam.x-1&&a.y>=0&&a.y<=tablero.tam.y-1;
 }
 
 
