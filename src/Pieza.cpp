@@ -92,12 +92,10 @@ Pieza::Pieza(int _id,int _sn){
     piezas.push_back(this);
 }
 
-void crearMovHolder(char** place,operador* op,Base* base){
-    char* placeBack=*place;
+void crearMovHolder(operador* op,Base* base,char** place=&actualBucket){
     switch(op->tipo){
     case NORMAL:
-        *place+=sizeof(normalHolder);
-        new(placeBack)normalHolder(static_cast<normal*>(op),base,place);
+      init(allocNC<normalHolder>(),(normal*)op,base,place); 
         break;
     case DESLIZ:
         *place+=sizeof(deslizHolder);
@@ -160,31 +158,21 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     //pieza, nomas se usa cuando hay others y son bastante niche
 
     if(pieza->spawner){
-        new(actualBucket->head)Base({this,nullptr,0});
-        Base* base=(Base*)actualBucket->head;
-        actualBucket->head+=sizeof(Base);
-        *movs[i++]=(movHolder*)actualBucket->head;
-        new(actualBucket->head)spawnerGen(base);
-        actualBucket->head+=sizeof(spawnerGen);
+        Base* base=alloc<Base>({this,nullptr,0});
+        *movs[i++]=alloc<spawnerGen>({base});
     }
     if(pieza->kamikase){
-        new(actualBucket->head)Base({this,nullptr,0});
-        Base* base=(Base*)actualBucket->head;
-        actualBucket->head+=sizeof(Base);
-        *movs[i++]=(movHolder*)actualBucket->head;
-        new(actualBucket->head)kamikaseCntrl(base);
-        actualBucket->head+=sizeof(kamikaseCntrl);
+      Base* base=alloc<Base>({this,nullptr,0});
+      *movs[i++]=alloc<kamikaseCntrl>({base});
     }
 
     for(Pieza::base& b:pieza->movs){
-        actualBucket->enoughSize(b.size+sizeof(Base));//asegurar que un movimiento este contenido en un mismo bucket
+        ensureSpace(b.size+sizeof(Base));//asegurar que un movimiento este contenido en un mismo bucket
 
-        new(actualBucket->head)Base({this,nullptr,b.memLocalSize});
-        Base* base=(Base*)actualBucket->head;
-        actualBucket->head+=sizeof(Base);
+        Base* base=allocNC<Base>({this,nullptr,b.memLocalSize});
 
         *movs[i++]=(movHolder*)actualBucket->head;
-        crearMovHolder(&actualBucket->head,b.raiz,base);
+        crearMovHolder(b.raiz,base);
     }
 }
 void Holder::draw()
@@ -217,7 +205,7 @@ vector<normalHolder*> normales;
 void Holder::makeCli(){
     for(movHolder* b:movs){
         if(!(b->bools&valorCadena)) continue;
-        b->cargar(&normales);
+        b->table.cargar(b,&normales);
         normales.clear();
     }
     Clicker::drawClickers=true;

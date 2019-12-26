@@ -11,20 +11,20 @@ struct bucket{
   char* firstBlock;
 }
 
-void bucketInit(bucket* b,int size=bucketSize){
+void bucketInit(bucket* b=actualBucket,int size=bucketSize){
   b->size=size;
   allocNewBucket(b);
   b->firstBlock=b->data;
 }
 
-void allocNewBucket(bucket* b){
-  b->data=new char[size];//si no compila malloc(size)
+void allocNewBucket(bucket* b=actualBucket){
+  b->data=new char[size];
   ((char*)*b->data)=nullptr;//se podria hacer un nuevo struct con next y despues espacio pero terminaba siendo mas feo el codigo
   b->head=b->data+=sizeof(char*);
 }
-//podria ser un define pero perderia la capacidad de retornar
-template<typename T> T* alloc(bucket* b){
-  if(b->head+sizeof(T)>b->data+b->size){
+
+void ensureSpace(size_t size,bucket*b=actualBucket){
+  if(b->head+size>b->data+b->size){
     char* nextBlock=(char*)*b->data;
     if(nextBlock==nullptr){
       char* before=b->data;
@@ -34,10 +34,41 @@ template<typename T> T* alloc(bucket* b){
       b->head=b->data=nextBlock;
     }
   }
-  T* ret=new(b->head) T;//uso new para constructores de sfml y std
+}
+
+template<typename T> T* allocNC(bucket* b=actualBucket){
+  T* ret=new(b->head) T; //uso new para constructores de sfml y std
   b->head+=sizeof(T);
   return ret;
 }
+
+template<typename T> T* allocNC(initializer_list list,bucket* b=actualBucket){
+  T* ret=new(b->head) T=list;
+  b->head+=sizeof(T);//si usara constructures deberia aumentar esto antes de llamarlos en caso de que estos aloquen mas cosas
+  return ret;
+}
+
+template<typename T> T* alloc(bucket* b=actualBucket){
+  ensureSpace(sizeof(T));
+  return allocInitNC(b);
+}
+
+/* si no anda se puede hacer un macro tipo
+   new(actualBucket->head)TIPO(LISTA);
+   TIPO* base=(TIPO*)actualBucket->head;
+   actualBucket->head+=sizeof(TIPO);
+*/
+template<typename T> T* alloc(initializer_list list,bucket* b=actualBucket){
+  ensureSpace(sizeof(T));
+  return allocInitNC(list,b);
+}
+
+
+
+
+
+
+
 
 void resetBucket(bucket* b){
   b->head=b->data=b->firstBlock;
@@ -48,7 +79,7 @@ void clearBucket(bucket* b){
      ){
     char* before;
     data=(char*)*data;
-    delete before;//no tengo claro si esto esta borrando 1 char o todo el bloque
+    delete[] before;
   }
 }
 

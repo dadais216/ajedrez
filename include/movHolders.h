@@ -68,25 +68,12 @@ struct normalHolder:public movHolder{
     v pos; //pos actual. @check por que se guarda?
 };
 struct deslizHolder:public movHolder{
-    deslizHolder(desliz*,Base*,char**);
     desliz* op;
-    virtual void generar();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>*);
-    void reaccionarNh(normalHolder*);
-    virtual void cargar(vector<normalHolder*>*);
     barray<void> movs;
     int cantElems;//cantidad de iteraciones armadas
-    void maybeAddIteration(int);
     int f;
 };
 struct excHolder:public movHolder{
-    excHolder(exc*,Base*,char**);
-    virtual void generar();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>*);
-    void reaccionarNh(normalHolder* nh);
-    virtual void cargar(vector<normalHolder*>*);
     barray<movHolder*> ops;
     ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
     ///no estoy seguro de si seria mas rapido
@@ -94,52 +81,28 @@ struct excHolder:public movHolder{
     int actualBranch;
 };
 struct isolHolder:public movHolder{
-    isolHolder(isol*,Base*,char**);
-    virtual void generar();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>*);
-    virtual void cargar(vector<normalHolder*>*);
     int size;
     movHolder* inside;
 };
 
 struct desoptHolder:public movHolder{
-    desoptHolder(desopt*,Base*,char**);
     desopt* op;
-    virtual void generar();
-    virtual void reaccionar(normalHolder*);
-    virtual void reaccionar(vector<normalHolder*>*);
-    virtual void cargar(vector<normalHolder*>*);
     struct node{
         node* iter;
         //movimiento
     };
     char* dinamClusterHead;
-    void generarNodo(node*,int);
-    void construirYGenerarNodo(int);
-    void cargarNodos(node*,vector<normalHolder*>*);
-
-
-    char* movs(){
-        return (char*)this+sizeof(desoptHolder);
-    }//esto se puede implementar en c++17 con [[no_unique_address]]
 };
 
 
-struct movHolderMock{//para que spawner y kamikase no hereden datos que no usan
-    virtual void generar()=0;
-    virtual void reaccionar(normalHolder*){assert(false);};
-    virtual void reaccionar(vector<normalHolder*>*){assert(false);};
-    virtual void cargar(vector<normalHolder*>*){};
-    Base* base;
+//comparten esto con movHolders
+struct spawnerGen{
+  virtualTableMov* table;
+  Base* base;
 };
-struct spawnerGen:public movHolderMock{
-    spawnerGen(Base*);
-    virtual void generar();
-};
-struct kamikaseCntrl:public movHolderMock{
-    kamikaseCntrl(Base*);
-    virtual void generar();
+struct kamikaseCntrl{
+  virtualTableMov* table;
+  Base* base;
 };
 
 #endif // MOVHOLDERS_H

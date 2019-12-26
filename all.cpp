@@ -24,7 +24,7 @@ type* name(){\
 //porque no es un metodo, no hay que poner ()
 
 
-
+#define fromCast(new,old,type) type new=(type) old;
 
 
 
