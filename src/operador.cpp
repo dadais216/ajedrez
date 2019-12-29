@@ -59,7 +59,8 @@ normal::normal(bool make){
                 }
                 break;
                 //cout<<#TOKEN<<endl;
-    #define cond(TOKEN)  case lector::TOKEN: if(debugMode) condsTemp.push_back(bucketAdd<debugMov>(&TOKEN)); else condsTemp.push_back(&TOKEN);
+#define cond(TOKEN) case lector::TOKEN: \
+              condsTemp.push_back({TOKEN##func debug(,#TOKEN)}) ;break
                 cond(vacio);break;
                 cond(pieza);break;
                 cond(enemigo);break;
@@ -67,8 +68,7 @@ normal::normal(bool make){
             case lector::esp:
                 bools|=doEsp;
             break;
-    #define acc(TOKEN) case lector::TOKEN: accsTemp.push_back(&TOKEN);break
-
+#define acc(TOKEN) case lector::TOKEN: accsTemp.push_back(TOKEN##func);break
                 acc(mov);
                 acc(capt);
                 acc(pausa);

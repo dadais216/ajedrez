@@ -34,11 +34,23 @@ void reaccionarSig(movHolder*m,auto nhs){
 
 inline void generarProperNormalH(normalHolder* n){
   actualHolder.nh=n;//lo usan algunas cosas de memoria y debug
-  for(condt* c:n->op->conds)
-    if(!c->check()){
+
+  actualHolder.buffer=(void(*)(void))n->op->conds.begptr;
+  debug(
+        actualHolder.skipDebugName=true;
+        );
+  int i=0;
+  actualHolder.bufferPos=&i;
+  for(condt c;
+      (c = n->op->conds+i) != n->op->conds.endptr;
+      i++)
+    if(!c.check()){
       n->bools&=~(valorFinal|valorCadena|valor);
       return;
     }
+  debug(
+        actualHolder.skipDebugName=false;
+        );
   offset=n->pos;
 
   n->bools|=valor;
@@ -124,8 +136,15 @@ void accionarNormalH(normalHolder* n){
   actualHolder.h=n->base->h;
   actualHolder.nh=n;
   actualTile=tablptr->tile(n->pos);
-  for(acct* ac:n->op->accs)
-    ac->func();
+
+  int i=0;
+  actualHolder.buffer=n->op->accs.begptr;
+  actualHolder.bufferPos=&i;
+
+  for(void(*func)(void);
+      (func = n->op->accs.begptr+i) != n->op->accs.endptr;
+      i++)
+    func();
 }
 void cargarNormalH(movHolder* m,vector<normalHolder*>* norms){
   fromCast(n,m,normalHolder*);

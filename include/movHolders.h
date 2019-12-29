@@ -12,13 +12,19 @@ const int32_t hasClick=1<<4;
 const int32_t doEsp=1<<5;//se usa en normalh
 
 struct normalHolder;
-struct AH{
-    Holder* h;
-    normalHolder* nh;
-};
+struct {
+  Holder* h;
+  normalHolder* nh;
+
+  void(*)(void)* buffer;
+  int* bufferPos;
+  //no hay un costo en agregar boludeces siempre que no me pase de la cache line
+} actualHolder;//por ahora es global, me gustaria probar a pasarlo por parametro para ver si hay una diferencia de eficiencia. Supuestamente no pero quiero ver que pasa. Si no hay diferencia preferiría que sea no global
+
+
 v offset;
 Tile* actualTile;
-AH actualHolder;
+
 
 bool switchToGen;
 

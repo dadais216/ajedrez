@@ -2,28 +2,22 @@
 #define MOVS_H
 
 //antes separaba acct en posicionales y de memoria, pero como estoy usando polimorfismo para los dos da lo mismo
-//supongo que abstraer las cosas en comun en pos y mem reduce un poco el nivel de instrucciones, pero dentro de todo
-//es lo mismo. Lo que mas ocupa es el clone de pos y ese no se puede abstraer porque el new necesita el tipo propio para
-//que anden las funciones virtuales. Y puede que agregar otro nivel de herencia haga todo un poco mas lento
 struct acct{
-    acct(string* n):nomb(n){};
-    virtual void func()=0;
-    string* nomb;
+  void (*func)(void);
 };
 
 struct condt{
-    condt(string* n):nomb(n){};
-    virtual bool check()=0;
-    string* nomb;
+  bool (*check)(void);//esto queda asi para mantener una coherencia con la version debug
+  debug(
+        char name[16];
+        )
 };
 struct colort{
-    virtual void draw()=0;
-    v pos;
+  void (*draw)(void);//probar con un switch despues
+  v pos;
 };
 struct color:public colort{
-    color(RectangleShape*);
     RectangleShape* rs;
-    virtual void draw();
 };
 /*
 struct drawable

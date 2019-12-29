@@ -95,34 +95,20 @@ struct spwn:public acm{
 };
 */
 
-template<void(*funct)(),string* n> struct acc:public acct{
-    acc():acct(n){}
-    virtual void func(){
-        funct();
-    }
-};
 
-#define fabAcc(NAME,FUNC) \
-inline void NAME##func(){ \
-    FUNC \
-}\
-string str##NAME=#NAME;\
-typedef acc<NAME##func,&str##NAME> NAME##class;\
-NAME##class NAME;
-
-fabAcc(mov,
+void mov(){
     actualHolder.h->tile->step++;
     actualHolder.h->tile->holder=nullptr;
     actualHolder.h->tile=actualTile;
     actualHolder.h->tile->holder=actualHolder.h;
-)
+}
 
-fabAcc(pausa,
+void pausa(){
     drawScreen();
     sleep(milliseconds(40));
-)
+}
 vector<Holder*> reciclaje;
-fabAcc(capt,
+void capt(){
     actualTile->holder->inPlay=false;
     //@optim se podria eliminar triggers estaticos en global aca para que no se iteren ni activen en falso
     //for(memTriggers& mt:memGlobalTriggers)
@@ -135,65 +121,64 @@ fabAcc(capt,
     actualTile->holder=nullptr;
     actualTile->step++;
     pisados.push_back(actualTile);
-);
+}
 
-string spwn_str="spwn";
-struct spwn:public acct{
-    int id;
-    spwn(int id_):acct(&spwn_str),id(id_){}
-    virtual void func(){
-        for(int i=0;i<reciclaje.size();i++){
-            Holder* h=reciclaje[i];
-            if(h->id==abso(id)){//reciclo piezas enemigas tambien
-                h->inPlay=true;
-                memset(h->memPieza.begptr,0,sizeof(int)*h->memPieza.size());
-                actualTile->holder=h;
-                h->tile=actualTile;
-                reciclaje.erase(reciclaje.begin()+i);
-                goto gen;
-            }
+void* getNextInBuffer(){
+  //buffer es el buffer de punteros de funcion actual (sean acct o conds)
+  //bufferPos es un puntero al iterador. Puede que necesite marcar el iterador como volatil?
+
+  debug(
+        if(actualHolder->skipDebugName){
+          *actualHolder.bufferPos++;//mirar bien lo de los tamaños
         }
-        actualTile->holder=lect.crearPieza(id,actualTile->pos);
-        gen:
-        actualTile->holder->bando=id>0?actualHolder.h->bando:!actualHolder.h->bando;//el signo de id indica si se quiere el mismo bando u opuesto
-        justSpawned.push_back(actualTile->holder);
-        pisados.push_back(actualTile);
+        //ver donde meto el codigo de mostrar el debug, si es un macro dentro del check como pienso hacerlo podria mover este codigo ahi
+)
+  
+  return actualHolder.buffer[*(actualHolder.bufferPos)++];
+}
+
+void spawn(){
+  //antes cada acct era un objeto polimorfico en vez de una funcion, por lo que algunos podrian tener datos propios. Como ahora tengo un nivel de indireccion menos no puedo hacer eso, osea lo podría hacer pero tendría algo igual que lo anterior y podría probar otra cosa.
+  //lo que voy a hacer es poner la informacion que necesiten los acc/cond en el mismo buffer en el que estan, despues de si, indicando al que recorre el buffer que los ignore. Lo malo de esto es que por ahi entorpece la iteracion, aunque seguro es mejor que tener un nivel de indireccion mal. Lo otro malo es que cada dato tiene que caber en el tamaño de un puntero de funcion
+
+  int id=(int)getNextInBuffer();
+
+  for(int i=0;i<reciclaje.size();i++){
+    Holder* h=reciclaje[i];
+    if(h->id==abso(id)){//reciclo piezas enemigas tambien
+      h->inPlay=true;
+      memset(h->memPieza.begptr,0,sizeof(int)*h->memPieza.size());
+      actualTile->holder=h;
+      h->tile=actualTile;
+      reciclaje.erase(reciclaje.begin()+i);
+      goto gen;
     }
-};
+  }
+  actualTile->holder=lect.crearPieza(id,actualTile->pos);
+ gen:
+  actualTile->holder->bando=id>0?actualHolder.h->bando:!actualHolder.h->bando;//el signo de id indica si se quiere el mismo bando u opuesto
+  justSpawned.push_back(actualTile->holder);
+  pisados.push_back(actualTile);
+
+}
 
 
-template<bool(*chck)(),string* n> struct cond:public condt{
-    cond():condt(n){}
-    virtual bool check(){
-        return chck();
-    }
-};
-#define fabCond(NAME,FUNC)\
-inline bool NAME##check(){ \
-    FUNC \
-}\
-string str##NAME=#NAME;\
-typedef cond<NAME##check,&str##NAME> NAME##class;\
-NAME##class NAME;
-
-
-
-fabCond(vacio,
+bool vacio(){
     return actualTile->holder==nullptr;
-)
-fabCond(pieza,
+}
+bool pieza(){
     return actualTile->holder;
-)
-fabCond(enemigo,
+}
+bool enemigo(){
     Holder* other=actualTile->holder;
     if(other)
         return other->bando!=actualHolder.h->bando;
     return false;
-)
+}
 
-fabCond(pass,
+bool pass(){
     return true;
-)//se usa al final de exc para retornar verdadero aunque las otras ramas hayan fallado
+}//se usa al final de exc para retornar verdadero aunque las otras ramas hayan fallado
 
 inline bool mcmpCond(getter* a1,getter* a2){
     return *a1->val()==*a2->val();
