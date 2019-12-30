@@ -163,21 +163,29 @@ void spawn(){
 }
 
 
+//tambien podria haber hecho un define tome el nombre y el codigo y construya la funcion, retornando al final como aca. Es lo mismo
+#if debugMode
+#define CONDRET(VAL) debugShowAndWait(__func__,VAL); return VAL
+#else
+#define CONDRET(VAL) return VAL
+#endif
+
+
 bool vacio(){
-    return actualTile->holder==nullptr;
+  CONDRET(actualTile->holder==nullptr);
 }
 bool pieza(){
-    return actualTile->holder;
+  CONDRET(actualTile->holder);
 }
 bool enemigo(){
     Holder* other=actualTile->holder;
     if(other)
-        return other->bando!=actualHolder.h->bando;
-    return false;
+      CONDRET(other->bando!=actualHolder.h->bando);
+    CONDRET(false);
 }
 
 bool pass(){
-    return true;
+  CONDRET(true);
 }//se usa al final de exc para retornar verdadero aunque las otras ramas hayan fallado
 
 inline bool mcmpCond(getter* a1,getter* a2){
@@ -249,102 +257,92 @@ inline bool mmoreCond(getter* a1,getter* a2){
 inline bool mdistCond(getter* a1,getter* a2){
     return *a1->val()!=*a2->val();
 }
+//me imagino que n indirecciones se van a implementar con un bucle for que castee a puntero y deferencie n veces
+//el getter tendria un int que sea n
 
+debug(
+      RectangleShape backGroundMem;
 
+      RectangleShape posPieza;
+      RectangleShape posActGood;
+      RectangleShape posActBad;
+      RectangleShape* tileActDebug;
 
+      Text textDebug;
+      bool drawDebugTiles;
+      bool ZPressed=false;
+      int mil=25;
 
+      bool drawMemDebug;
+      getterCond* getterMemDebug1;
+      getterCond* getterMemDebug2;
 
-RectangleShape backGroundMem;
-
-RectangleShape posPieza;
-RectangleShape posActGood;
-RectangleShape posActBad;
-RectangleShape* tileActDebug;
-Text textDebug;
-bool drawDebugTiles;
-bool ZPressed=false;
-int mil=25;
-string strNil="-";
-template<void(*drawBlocks)(condt*,bool)> struct debugWrapper:public condt{
-    condt* cond;
-    debugWrapper(condt* cond_):condt(&strNil),cond(cond_){}
-    virtual bool check(){
+      void debugShowAndWait(int type){
         bool ret=cond->check();
         textDebug.setString(*cond->nomb);
-        drawBlocks(cond,ret);
+
+        if(type==DEBUGDRAWTILE){
+          v posAct=actualHolder.nh->pos;
+          if(ret){
+            posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
+            tileActDebug=&posActGood;
+            textDebug.setColor(sf::Color(78,84,68,100));
+          }else{
+            posActBad.setPosition(posAct.x*32*escala,posAct.y*32*escala);
+            tileActDebug=&posActBad;
+            textDebug.setColor(sf::Color(240,70,40,240));
+          }
+          posPieza.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
+          drawDebugTiles=true;
+          drawScreen();
+          drawDebugTiles=false;
+        }else{
+
+          //esto lo habia hecho porque como aca solo llegan memConds estoy seguro de que tienen estos campos. Podría haber agregado un nivel de herencia y hacer que todos los memConds hereden de un memCond, pero molestaba y nomas lo necesito aca
+          struct mock:public condt{
+            getterCond* i1;
+            getterCond* i2;
+          };
+          if(ret)
+            textDebug.setColor(sf::Color(78,84,68,100));
+          else
+            textDebug.setColor(sf::Color(240,70,40,240));
+          posPieza.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
+
+          getterMemDebug1=static_cast<mock*>(cond)->i1;
+          getterMemDebug2=static_cast<mock*>(cond)->i2;
+          drawMemDebug=true;
+          drawScreen();
+          drawMemDebug=false;
+          getterMemDebug1=nullptr;
+        }
+
+
+
         ///@cleanup como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
         while(true){
-            sleep(milliseconds(mil));
-            if(!window->hasFocus()) continue;
-            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Z)){
-                if(!ZPressed){
-                    ZPressed=true;
-                    break;
-                }
-            }else
-                ZPressed=false;
-            if(sf::Keyboard::isKeyPressed(sf::Keyboard::X)){
-                if(mil>10) mil-=1;
-                break;
-            }else
-                mil=25;
-            if(sf::Keyboard::isKeyPressed(sf::Keyboard::C)){
-                mil=0;
-                break;
+          sleep(milliseconds(mil));
+          if(!window->hasFocus()) continue;
+          if(sf::Keyboard::isKeyPressed(sf::Keyboard::Z)){
+            if(!ZPressed){
+              ZPressed=true;
+              break;
             }
+          }else
+            ZPressed=false;
+          if(sf::Keyboard::isKeyPressed(sf::Keyboard::X)){
+            if(mil>10) mil-=1;
+            break;
+          }else
+            mil=25;
+          if(sf::Keyboard::isKeyPressed(sf::Keyboard::C)){
+            mil=0;
+            break;
+          }
         }
         return ret;
-    }
-    virtual void debug(){}
-};
+      }
+      );
 
-inline void drawDebugPos(condt* cond,bool ret){
-    v posAct=actualHolder.nh->pos;
-    if(ret){
-        posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
-        tileActDebug=&posActGood;
-        textDebug.setColor(sf::Color(78,84,68,100));
-    }else{
-        posActBad.setPosition(posAct.x*32*escala,posAct.y*32*escala);
-        tileActDebug=&posActBad;
-        textDebug.setColor(sf::Color(240,70,40,240));
-    }
-    posPieza.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
-    drawDebugTiles=true;
-    drawScreen();
-    drawDebugTiles=false;
-}
-typedef debugWrapper<drawDebugPos> debugMov;
-bool drawMemDebug;
-getterCond* getterMemDebug1;
-getterCond* getterMemDebug2;
-inline void drawDebugMem(condt* cond,bool ret){
-    struct mock:public condt{
-        getterCond* i1;
-        getterCond* i2;
-    };
-    if(ret)
-        textDebug.setColor(sf::Color(78,84,68,100));
-    else
-        textDebug.setColor(sf::Color(240,70,40,240));
-    posPieza.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
-
-    getterMemDebug1=static_cast<mock*>(cond)->i1;
-    getterMemDebug2=static_cast<mock*>(cond)->i2;
-    drawMemDebug=true;
-    drawScreen();
-    drawMemDebug=false;
-    getterMemDebug1=nullptr;
-}
-typedef debugWrapper<drawDebugMem> debugMem;
-
-
-Text asterisco;
-bool drawAsterisco=false;
-debugInicial::debugInicial():condt(&strNil){}
-bool debugInicial::check(){
-    drawAsterisco=true;
-    return true;
-}
 
 

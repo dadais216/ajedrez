@@ -1,17 +1,6 @@
 #ifndef MOVS_H
 #define MOVS_H
 
-//antes separaba acct en posicionales y de memoria, pero como estoy usando polimorfismo para los dos da lo mismo
-struct acct{
-  void (*func)(void);
-};
-
-struct condt{
-  bool (*check)(void);//esto queda asi para mantener una coherencia con la version debug
-  debug(
-        char name[16];
-        )
-};
 struct colort{
   void (*draw)(void);//probar con un switch despues
   v pos;
@@ -45,11 +34,6 @@ struct numShow:public acm{
     virtual void debug();
 };
 */
-
-struct debugInicial:public condt{
-    debugInicial();
-    virtual bool check();
-};
 
 
 //antes habia una version por combinacion de getters para ahorrarme hacer los getters polimorficos, pero era mucho bloat

@@ -33,13 +33,6 @@ Pieza::Pieza(int _id,int _sn){
         memLocalSizeAct=lect.memLocalSizes[i++];
         operador* op=tomar();
         assert(movSize<bucketSize);
-        /*
-        if(debugMode){
-            normal* n=bucketAdd<normal>(false);
-            n->conds.init(1,bucketAdd<debugInicial>());
-            n->sig=op;
-            movsTemp.push_back({n,memLocalSizeAct});
-        }else*/
         movsTemp.push_back({op,memLocalSizeAct,movSize});
     }
     movs.init(movsTemp.size(),movsTemp.data());

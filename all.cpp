@@ -4,10 +4,12 @@
 
 
 
+#define debugMode 1
 
-
-#if 1
+#if debugMode
 #define debug(...) __VA_ARGS__
+#define DEBUGDRAWTILE 1
+#define DEBUGDRAWMEM 2
 #else
 #define debug(...)
 #endif

@@ -36,21 +36,15 @@ inline void generarProperNormalH(normalHolder* n){
   actualHolder.nh=n;//lo usan algunas cosas de memoria y debug
 
   actualHolder.buffer=(void(*)(void))n->op->conds.begptr;
-  debug(
-        actualHolder.skipDebugName=true;
-        );
   int i=0;
   actualHolder.bufferPos=&i;
-  for(condt c;
+  for(bool(*c)(void);
       (c = n->op->conds+i) != n->op->conds.endptr;
       i++)
-    if(!c.check()){
+    if(!c()){
       n->bools&=~(valorFinal|valorCadena|valor);
       return;
     }
-  debug(
-        actualHolder.skipDebugName=false;
-        );
   offset=n->pos;
 
   n->bools|=valor;
