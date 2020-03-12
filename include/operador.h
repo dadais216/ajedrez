@@ -6,17 +6,16 @@
 ///el arbol de operadores. No tiene sentido tenerla copiada.
 
 struct operador{
-    int tipo;
+  int tipo;//esto se usa?
     operador* sig;
     int32_t bools;//makeClick, hasClick, doEsp en normal
 };
 struct normal:public operador{
-    normal(bool);
     ///@optim esto podria estar adentro del bucket, antes de la informacion especifica. Lector puede pasar
     ///la longitud de cada uno de estos vectores.
-    barray<acct*> accs;
-    barray<condt*> conds;
-    barray<colort*> colors;
+  barray<void(*)(void)> accs;
+  barray<bool(*)(void)> conds;
+  barray<void(*)(void)> colors;
     struct setupTrigInfo{
         char type; //0 global 1 pieza 2 turno
         int ind;
@@ -25,23 +24,19 @@ struct normal:public operador{
     v relPos;
 };
 struct desliz:public operador{
-    desliz();
     operador* inside;
     size_t insideSize;
     size_t iterSize;
 };
 struct exc:public operador{
-    exc();
     barray<operador*> ops;
     int insideSize;//tamaño de movHolders + lo que ocupe ops
 };
 struct isol:public operador{
-    isol();
     int size;
     operador* inside;
 };
 struct desopt:public operador{
-    desopt();
     barray<operador*> ops;
     barray<int> movSizes;//tamaño de cada movimiento, incluyendo puntero al proximo cluster
     int desoptInsideSize;

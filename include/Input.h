@@ -17,6 +17,5 @@ struct Input
     bool click();
 };
 float escala;
-Input* input;
 
 #endif // INPUT_H

@@ -2,43 +2,45 @@
 #define TABLERO_H
 
 struct Holder;
-struct Tile;
+struct tile;
 struct normalHolder;
+//si usara step en pieza en vez de tiles podría no pasar stepCheck
 struct Trigger{
-    Tile* tile; //pos donde estaria la pieza que puso el trigger
-    normalHolder* nh; //puntero al movimiento a recalcular
-    int step; //valor que se contrasta con el step de la tile. Si son el mismo la pieza que puso el trigger esta en el mismo lugar y no se movio, mh es valido
+  normalHolder* nh; //puntero al movimiento a recalcular
+  int* stepCheck; //step de tile donde estaría la pieza que puso el trigger
+  int step; //valor. Si son el mismo que el check la pieza que puso el trigger esta en el mismo lugar y no se movio, nh es valido
+};
+
+struct triggerBox{
+  Trigger triggers[6];//6 porque hace medir 2 caches y es un numero razonable de triggers
+  triggerBox* next;
 };
 
 struct Tile{
-
-    Holder* holder;
-    vector<Trigger> triggers;
-    //memoria
-    bool color;
-    v pos;
-    int step; //se actualiza por mov, capt y spawn
-    void chargeTriggers();
-    vector<int> memTile;
-    struct tileTrigInfo{
-        normalHolder* nh;//para reaccionar
-        int step;//step de la tile de la pieza que puso el trigger
-        int* stepCheck;//puntero al step de la tile de la pieza que puso el trigger
-    };
-    vector<vector<tileTrigInfo>> memTileTrigs;
+  Holder* holder;
+  int triggersUsed;
+  triggerBox* triggers;
+  v pos;//tecnicamente es calculable, que sé yo
+  int step; //se actualiza por mov, capt y spawn
 };
+
+//hice las cuentas y se podría meter 1 trigger en Tile para aprovechar la cache line. No sé si vale la pena porque es un trigger solo, pero bueno
+
+
+//la idea es tener la matriz de tiles, cada tile con un primer conjunto de triggers y el resto se tira a una estructura de buckets
+//la memoria tile se mantiene aparte, son una matriz 3d que se accede con x,y,ind
+
+//creo que los triggers van a estar junto a las memorias, porque como en los triggers comunes, cuando se accede a una memoria se van a
+//escribir o leer los triggers.
+
+
+
 void activateTriggers();
 
-struct tabl{
-    tabl();
-    void armar(v);
-    Sprite b,n;
-    v tam;
-    vector<vector<Tile*>> matriz;
-    Tile* tile(v);
-    void drawTiles();
-    void drawPieces();
+struct board{
+  Sprite b,n;
+  v dims;
+  Tile tiles[0];
 };
-
 
 #endif // TABLERO_H

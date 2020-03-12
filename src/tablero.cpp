@@ -1,58 +1,88 @@
 
 
-tabl* tablptr;
 
-tabl::tabl(){
-    tablptr=this;
+void armarTablero(board* brd, v dims){
+  t->dims=dims;
+
+  for(int i=0; i<dims.x; i++)
+    for(int j=0; j<dims.y; j++){
+      Tile* tile=&brd->tiles[i+j*dims.x];
+      memset(tile,0,sizeof(Tile));
+      tile->pos=v(i,j);
+      tile->triggersBox=newTriggerBox();
+    }
+
+  escala=16*(1/(float)(dims.x>dims.y?dims.x:dims.y));
+  brd->b.setTexture(image.get("tiles.png"));
+  brd->n.setTexture(image.get("tiles.png"));
+  brd->b.setScale(escala,escala);
+  brd->n.setScale(escala,escala);
+  brd->b.setTextureRect(IntRect(0,0,32,32));
+  brd->n.setTextureRect(IntRect(32,0,32,32));
 }
 
-void tabl::armar(v a){
-    tam=a;
-    matriz.resize(tam.x);
-    for(int i=0; i<tam.x; i++)
-        matriz[i].resize(tam.y);
-    escala=16*(1/(float)(tam.x>tam.y?tam.x:tam.y));
-    for(int i=0; i<tam.x; i++)
-        for(int j=0; j<tam.y; j++){
-            Tile* tile=new Tile;
-            tile->color=(i+j)%2;
-            tile->pos=v(i,j);
-            tile->step=0;
-            matriz[i][j]=tile;
-        }
-
-    b.setTexture(imagen->get("tiles.png"));
-    n.setTexture(imagen->get("tiles.png"));
-    b.setScale(escala,escala);
-    n.setScale(escala,escala);
-    b.setTextureRect(IntRect(0,0,32,32));
-    n.setTextureRect(IntRect(32,0,32,32));
+Tile* tile(board* brd,v pos){
+  return &brd->tile[pos.x+pos.y*brd->dim.x];
 }
 
-Tile* tabl::tile(v pos){
-    return matriz[pos.x][pos.y];
+void draw(board* brd){
+  for(int i=0; i<tam.x; i++)
+    for(int j=0; j<tam.y; j++){
+      if((i+j)&1){
+        b.setPosition(i*escala*32,j*escala*32);
+        window.draw(b);
+      }else{
+        n.setPosition(i*escala*32,j*escala*32);
+        window.draw(n);
+      }
+      Holder* p;
+      if((p=brd->tiles[i+j*brd->dims.x]->holder))
+        draw(p);
+    }
 }
 
-void tabl::drawTiles(){
-    for(int i=0; i<tam.x; i++)
-        for(int j=0; j<tam.y; j++)
-            if(matriz[i][j]->color){
-                b.setPosition(i*escala*32,j*escala*32);
-                window->draw(b);
-            }else{
-                n.setPosition(i*escala*32,j*escala*32);
-                window->draw(n);
-            }
+
+
+
+void pushTrigger(Tile* tile,normalHolder* n){
+  int ind=tile->triggersUsed;
+  triggerBox tb=tile->triggerBox;
+  while(ind>6){
+    ind-=6;
+    tb=tb->next;
+  }
+  if(ind==6){
+    tb=newTriggerBox();
+    ind=0;
+  }
+  tb->triggers[ind]=Trigger({n,&tile->step,tile->step});
+  tile->triggersUsed++;
 }
 
-void tabl::drawPieces(){
-    for(int i=0; i<tam.x; i++)
-        for(int j=0; j<tam.y; j++){
-            Holder* p;
-            if(p=matriz[i][j]->holder)
-                p->draw();
-        }
+void chargeTriggers(Tile* tile){
+  triggerBox tb=tile->triggerBox;
+  do{
+    int stop=tb->next?6:tile->trigsLeft%6;
+    for(int ind=0;ind<stop;ind++){
+      Trigger trig=tb->triggers[ind];
+      if(trig.step=*trig.stepCheck){
+        trigsActivados.push_back(trig.nh);
+      }
+    }
+    trigsLeft-=6;
+  }while((tb=tb->next));
+
+  //clear
+  tb=tile->triggerBox->next;
+  tile->triggersUsed=0;
+  while(tb){
+    triggerBox* temp=tb->next;
+    freeTriggerBox(tb);
+    tb=temp;
+  }
+  tile->triggerBox->next=nullptr;
 }
+
 
 vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
 void Tile::chargeTriggers(){
@@ -71,9 +101,12 @@ void activateTriggers(){
         switchToGen=false;
         Base* base=trigsActivados[0]->base;
         actualHolder.h=base->h;
-        base->beg->reaccionar(trigsActivados[0]);
+
+        base->beg->table->reaccionar(base->beg,trigsActivados[0]);
     }
     else{
+      //@test no sería suficiente con ordenar segun nh desde el principio?
+
         ///@optim supongo que volcarlo a una matriz es mas rapido que ordenarlo y trocearlo
         sort(trigsActivados.begin(),trigsActivados.end(),[](normalHolder* a,normalHolder* b)->bool
              {return a->base->beg<b->base->beg;});
@@ -86,12 +119,12 @@ void activateTriggers(){
                 j++;
             actualHolder.h=base->base->h;
             if(j==i+1)
-                base->reaccionar(trigsActivados[i]);
+              base->table->reaccionar(base,trigsActivados[i]);
             else{
                 vector<normalHolder*> nhs(&trigsActivados[i],&trigsActivados[j]);
                 sort(nhs.begin(),nhs.end(),[](normalHolder* a,normalHolder* b)->bool{return a<b;});
                 //estaria bueno no hacer una copia, no es muy importante igual
-                base->reaccionar(&nhs);
+                base->table->reaccionarVec(base,&nhs);
             }
             i=j;
         }

@@ -6,7 +6,9 @@ struct colort{
   v pos;
 };
 struct color:public colort{
+  color(RectangleShape*);
     RectangleShape* rs;
+  void draw();
 };
 /*
 struct drawable
@@ -39,24 +41,22 @@ struct numShow:public acm{
 //antes habia una version por combinacion de getters para ahorrarme hacer los getters polimorficos, pero era mucho bloat
 //total no es la version final, no creo que la velocidad lo valga
 //mas que nada lo malo de los templates es que en el constructor de normal habia que discernir cada combinacion posible
-template<bool(*chck)(getter*,getter*),string* n> struct mcond:public condt{
+/*template<bool(*chck)(getter*,getter*),string* n> struct mcond{
     getter* i1;
     getter* i2;
-    mcond(getter* i1_,getter* i2_):condt(n),i1(i1_),i2(i2_){}
+    mcond(getter* i1_,getter* i2_):i1(i1_),i2(i2_){}
     virtual bool check(){
         return chck(i1,i2);
     }
 };
-template<bool(*chck)(getter*,getter*),string* n> struct macc:public acct{
+template<bool(*chck)(getter*,getter*),string* n> struct macc{
     getter* i1;
     getter* i2;
-    macc(getter* i1_,getter* i2_):acct(n),i1(i1_),i2(i2_){}
+    macc(getter* i1_,getter* i2_):i1(i1_),i2(i2_){}
     virtual void func(){
         chck(i1,i2);
     }
-};
-
-struct locala;
+};viendolo ahora podría haber abstraido el void y bool en un typename para hacerlo mas criptico*/
 
 vector<Holder*> justSpawned;
 

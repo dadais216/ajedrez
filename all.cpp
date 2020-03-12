@@ -8,8 +8,6 @@
 
 #if debugMode
 #define debug(...) __VA_ARGS__
-#define DEBUGDRAWTILE 1
-#define DEBUGDRAWMEM 2
 #else
 #define debug(...)
 #endif
@@ -64,7 +62,7 @@ using namespace sf;
 #include "vec.h"
 
 #include "Bucket.h"
-#include "Bucket.cpp"
+#include "bucket.cpp"
 
 #include "Input.h"
 #include "Input.cpp"
@@ -99,6 +97,7 @@ using namespace sf;
 #include "movHolders.cpp"
 #include "memGetters.cpp"
 #include "movs.cpp"
+#include "memMov.cpp"
 #include "operador.cpp"
 
 

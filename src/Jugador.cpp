@@ -1,5 +1,7 @@
 
-
+struct Proper;
+void properDraw();
+void properGameInit();
 
 Humano::Humano(bool bando_,tabl& tablero_)
 :Jugador(bando_,tablero_) {}
@@ -39,16 +41,16 @@ void Humano::turno(){
     */
     while(true){
         sleep(milliseconds(20));
-        input->check();
+        input.check();
         debug(
-              if(window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-                static_cast<Proper*>(j->actual)->init();///@leaks
+              if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+                //static_cast<Proper*>(j->actual)->init();///@leaks
                 while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
                 throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
               }
               )
-        if(input->click()&&input->inGameRange(_tablero.tam)){
-            v posClicked=input->get();
+          if(input.click()&&input.inGameRange(_tablero.tam)){
+            v posClicked=input.get();
             for(Clicker& cli:clickers){
             ///@todo @optim esto se pregunta 60hz
             ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
@@ -56,21 +58,21 @@ void Humano::turno(){
                 if(posClicked==cli.clickPos){
                     cli.update();//accionar
                     turno1=!turno1;
-                    drawScreen();
+                    drawScreen(properDraw);
                     return;
                 }
             }
             if(!clickers.empty()){
                 clickers.clear();
-                drawScreen();
+                //drawScreen();
             }
-            cout<<"("<<input->get()<<")"<<endl;
+            cout<<"("<<input.get()<<")"<<endl;
 
 
-            act=_tablero.tile(input->get())->holder;
+            act=_tablero.tile(input.get())->holder;
             if(act&&act->bando==bando){
                 act->makeCli();
-                drawScreen();
+                //drawScreen();
             }
         }
     }
@@ -90,8 +92,8 @@ int cProm=0;
 double minV=10000;
 double maxV=0;
 void Aleatorio::turno(){
-    if(window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-        static_cast<Proper*>(j->actual)->init();///@leaks
+    if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+        properGameInit();
         while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
         throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
     }
@@ -104,11 +106,11 @@ void Aleatorio::turno(){
                 act->makeCli();
             }
         }
-    drawScreen();
+    //drawScreen();
     if(!alive)
         while(true){
-            if(window->hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-                static_cast<Proper*>(j->actual)->init();///@leaks
+            if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+                properGameInit();///@leaks
                 while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
                 throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
             }

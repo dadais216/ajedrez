@@ -16,7 +16,7 @@ struct {
   Holder* h;
   normalHolder* nh;
 
-  void(*)(void)* buffer;
+  void(**buffer)(void);
   int* bufferPos;
   //no hay un costo en agregar boludeces siempre que no me pase de la cache line
 } actualHolder;//por ahora es global, me gustaria probar a pasarlo por parametro para ver si hay una diferencia de eficiencia. Supuestamente no pero quiero ver que pasa. Si no hay diferencia preferiría que sea no global
@@ -33,7 +33,7 @@ struct virtualTableMov{//probar implementar lo mismo con switches a ver que pasa
   void (*reaccionar)(movHolder*,normalHolder*);
   void (*reaccionarVec)(movHolder*,vector<normalHolder*>*);
   void (*cargar)(movHolder*,vector<normalHolder*>*);
-}
+};
 
 
 struct Base{ ///datos compartidos de un movimiento entero
@@ -73,23 +73,32 @@ struct normalHolder:public movHolder{
     v relPos; //pos actual = relPös + offset. Todas las acciones y condiciones la comparten
     v pos; //pos actual. @check por que se guarda?
 };
+void drawNormalH(normalHolder*);
+void accionarNormalH(normalHolder*);
+void initNormalH(normal*,Base*,char**);
+
 struct deslizHolder:public movHolder{
     desliz* op;
-    barray<void> movs;
+    barrayE movs;
     int cantElems;//cantidad de iteraciones armadas
     int f;
 };
+void initDeslizH(desliz*,Base*,char**);
+
 struct excHolder:public movHolder{
     barray<movHolder*> ops;
     ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
     ///no estoy seguro de si seria mas rapido
-    int size;
+  int size;//no debería estar en el op?
     int actualBranch;
 };
+void initExcH(exc*,Base*,char**);
+
 struct isolHolder:public movHolder{
     int size;
     movHolder* inside;
 };
+void initIsolH(isol*,Base*,char**);
 
 struct desoptHolder:public movHolder{
     desopt* op;
@@ -99,16 +108,18 @@ struct desoptHolder:public movHolder{
     };
     char* dinamClusterHead;
 };
-
+void initDesoptH(desopt*,Base*,char**);
 
 //comparten esto con movHolders
 struct spawnerGen{
   virtualTableMov* table;
   Base* base;
 };
+void initSpawner(spawnerGen*,Base*);
 struct kamikaseCntrl{
   virtualTableMov* table;
   Base* base;
 };
+void initKamikase(kamikaseCntrl*,Base*);
 
 #endif // MOVHOLDERS_H

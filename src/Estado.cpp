@@ -1,6 +1,6 @@
 
 struct properState{
-  player player1,player2;
+  Jugador player1,player2;
   Sprite turnoBlanco,turnoNegro;
   debug(
         v posPieza;
@@ -15,9 +15,9 @@ struct properState{
 
 
 properUpdate();
-properInit(int tableroId_,int player1Id,int player2Id){
+void properInit(int tableroId_,int player1Id,int player2Id){
   resetBucket(&stateBucket);
-  getStruct(ps,properState,stateBucket);
+  getStruct(properState,ps,stateBucket);
 
   int nonHumans=0;
 
@@ -25,9 +25,9 @@ properInit(int tableroId_,int player1Id,int player2Id){
   bool bando=false;
  createPlayer:
   switch(sel){
-  case 0:nonHuman++;nadieInit(bando);break;
+  case 0:nonHumans++;nadieInit(bando);break;
   case 1:humanoInit(bando);break;
-  case 2:nonHuman++;aleatorioInit(bando);break;
+  case 2:nonHumans++;aleatorioInit(bando);break;
     //case 3: return new IA(bando,tablero);
   }
   if(!bando){
@@ -138,47 +138,47 @@ void properGameInit(){
   drawScreen();
 }
 
-void Proper::draw(){
+void properDraw(){
   tablero.drawTiles();
   if(Clicker::drawClickers)
     for(Clicker& cli:clickers)
       cli.draw();
   tablero.drawPieces();
   if(turno1)
-    window->draw(turnoBlanco);
+    window.draw(turnoBlanco);
   else
-    window->draw(turnoNegro);
+    window.draw(turnoNegro);
 
   debug(
         textValMem.setPosition(570,10);
         textValMem.setString(to_string(turno));
-        window->draw(textValMem);
+        window.draw(textValMem);
 
-          window->draw(*tileActDebug);
+          window.draw(*tileActDebug);
           if(drawAsterisco){
-            window->draw(asterisco);
+            window.draw(asterisco);
             drawAsterisco=false;
           }
         
-          window->draw(posPieza);
-          window->draw(textDebug);
+          window.draw(posPieza);
+          window.draw(textDebug);
           int memSize=actualHolder.nh->base->memLocalSize;
           for(int i=0;i<memSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
-            window->draw(backGroundMem);
+            window.draw(backGroundMem);
           }
           for(int i=0;i<memGlobalSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),305+45*(i/4-memGlobalSize/4)));
-            window->draw(backGroundMem);
+            window.draw(backGroundMem);
           }
           int memPiezaSize=actualHolder.h->memPieza.count();
           for(int i=0;i<memPiezaSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),205+45*(i/4-memPiezaSize/4)));
-            window->draw(backGroundMem);
+            window.draw(backGroundMem);
           }
           for(int i=0;i<memTileSize;i++){
             backGroundMem.setPosition(Vector2f(530+25*(i%4),105+45*(i/4-memTileSize/4)));
-            window->draw(backGroundMem);
+            window.draw(backGroundMem);
           }
           if(getterMemDebug1){
             getterMemDebug1->drawDebugMem();
@@ -187,38 +187,39 @@ void Proper::draw(){
           for(int i=0;i<memSize;i++){
             textValMem.setPosition(530+25*(i%4),410+45*(i/4-memSize/4));
             textValMem.setString(to_string(memMov[i]));
-            window->draw(textValMem);
+            window.draw(textValMem);
           }
           for(int i=0;i<memGlobalSize;i++){
             textValMem.setPosition(530+25*(i%4),310+45*(i/4-memGlobalSize/4));
             textValMem.setString(to_string(memGlobal[i]));
-            window->draw(textValMem);
+            window.draw(textValMem);
           }
           for(int i=0;i<memPiezaSize;i++){
             textValMem.setPosition(530+25*(i%4),210+45*(i/4-memPiezaSize/4));
             textValMem.setString(to_string(*actualHolder.h->memPieza[i]));
-            window->draw(textValMem);
+            window.draw(textValMem);
           }
           for(int i=0;i<memTileSize;i++){
             textValMem.setPosition(530+25*(i%4),110+45*(i/4-memTileSize/4));
             textValMem.setString(to_string(tablptr->tile(posDebugTile)->memTile[i]));
-            window->draw(textValMem);
+            window.draw(textValMem);
           }
         )
 }
 
-void Proper::update(){
+void properUpdate(){
   try{
     primero->turno();
     segundo->turno();
   }catch(...){}
 }
 
-bool Proper::inRange(v a)
+/*
+bool properInRange(v a)
 {
   return a.x>=0&&a.x<=tablero.tam.x-1&&a.y>=0&&a.y<=tablero.tam.y-1;
 }
-
+*/
 
 
 

@@ -4,10 +4,10 @@ Pieza::Pieza(int _id,int _sn){
     //recibe la lista de tokens y el tamaño de la memoria de pieza y las memorias locales
     id=_id;
     sn=_sn;
-    spriteb.setTexture(imagen->get("piezas.png"));
+    spriteb.setTexture(image.get("piezas.png"));
     spriteb.setTextureRect(IntRect(sn*64%384,(sn*64/384)*32,32,32));
     spriteb.setScale(escala,escala);
-    spriten.setTexture(imagen->get("piezas.png"));
+    spriten.setTexture(image . get("piezas.png"));
     spriten.setTextureRect(IntRect(sn*64%384+32,(sn*64/384)*32,32,32));
     spriten.setScale(escala,escala);
 
@@ -35,7 +35,9 @@ Pieza::Pieza(int _id,int _sn){
         assert(movSize<bucketSize);
         movsTemp.push_back({op,memLocalSizeAct,movSize});
     }
-    movs.init(movsTemp.size(),movsTemp.data());
+
+    alloc(&movs,(int)movsTemp.size());
+    copy(movs,movsTemp.data());
 
     memPiezaSize=lect.memPiezaSize;
 
@@ -85,33 +87,26 @@ Pieza::Pieza(int _id,int _sn){
     piezas.push_back(this);
 }
 
-void crearMovHolder(operador* op,Base* base,char** place=&actualBucket){
-    switch(op->tipo){
+void crearMovHolder(operador* op,Base* base,char** place=&actualBucket->head){
+  fromCast(placeBack,*place,movHolder*);
+  switch(op->tipo){
     case NORMAL:
-      init(allocNC<normalHolder>(),(normal*)op,base,place); 
-        break;
+      initNormalH((normal*)op,base,place); break;
     case DESLIZ:
-        *place+=sizeof(deslizHolder);
-        new(placeBack)deslizHolder(((desliz*)op),base,place);
-        break;
+      initDeslizH((desliz*)op,base,place); break;
     case EXC:
-        *place+=sizeof(excHolder);
-        new(placeBack)excHolder(static_cast<exc*>(op),base,place);
-        break;
+      initExcH((exc*)op,base,place); break;
     case ISOL:
-        *place+=sizeof(isolHolder);
-        new(placeBack)isolHolder(static_cast<isol*>(op),base,place);
-        break;
+      initIsolH((isol*)op,base,place); break;
     case DESOPT:
-        *place+=sizeof(desoptHolder);
-        new(placeBack)desoptHolder(static_cast<desopt*>(op),base,place);
+      initDesoptH((desopt*)op,base,place); break;
     }
     if(op->sig){
-        ((movHolder*)placeBack)->sig=(movHolder*)*place;
-        crearMovHolder(place,op->sig,base);
+        placeBack->sig=(movHolder*)*place;
+        crearMovHolder(op->sig,base,place);
     }
     else
-        ((movHolder*)placeBack)->sig=nullptr;
+        placeBack->sig=nullptr;
 }
 
 
@@ -131,14 +126,14 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
         p->spawner=true;
     }
 
-    movs.reserve(p->movs.count()+(p->kamikase?1:0)+(p->spawner?1:0));
+    alloc(&movs,count(p->movs)+(p->kamikase?1:0)+(p->spawner?1:0));
     int i=0;
 
-    memPieza.reserve(p->memPiezaSize);
-    memset(memPieza.begptr,0,p->memPiezaSize*sizeof(int));
+    alloc(&memPieza,p->memPiezaSize);
+    memset(memPieza.beg,0,p->memPiezaSize*sizeof(int));
 
-    memPiezaTrigs.reserve(p->memPiezaSize);
-    for(int j=0;j<memPiezaTrigs.count();j++)
+    alloc(&memPiezaTrigs,p->memPiezaSize);
+    for(int j=0;j<count(memPiezaTrigs);j++)
         new(memPiezaTrigs[j])memTriggers();
     //por ahora decidi hacer que los triggers usen memoria dinamica, porque es dificil determinar cuantos van a ser
     //se podria pedir al usuario que marque eso, pero es una idea muy compleja para dejarla al aire,
@@ -151,18 +146,22 @@ Holder::Holder(int _bando,Pieza* p,v pos_){
     //pieza, nomas se usa cuando hay others y son bastante niche
 
     if(pieza->spawner){
-        Base* base=alloc<Base>({this,nullptr,0});
-        *movs[i++]=alloc<spawnerGen>({base});
+      allocInit(Base,base,{this,nullptr,0});
+      spawnerGen* sp=alloc<spawnerGen>();
+      initSpawner(sp,base);
+      *movs[i++]=(movHolder*)sp;
     }
     if(pieza->kamikase){
-      Base* base=alloc<Base>({this,nullptr,0});
-      *movs[i++]=alloc<kamikaseCntrl>({base});
+      allocInit(Base,base,{this,nullptr,0});
+      kamikaseCntrl* ka=alloc<kamikaseCntrl>();
+      initKamikase(ka,base);
+      *movs[i++]=(movHolder*)ka;
     }
 
     for(Pieza::base& b:pieza->movs){
         ensureSpace(b.size+sizeof(Base));//asegurar que un movimiento este contenido en un mismo bucket
 
-        Base* base=allocNC<Base>({this,nullptr,b.memLocalSize});
+        allocInitNC(Base,base,{this,nullptr,b.memLocalSize});
 
         *movs[i++]=(movHolder*)actualBucket->head;
         crearMovHolder(b.raiz,base);
@@ -174,12 +173,12 @@ void Holder::draw()
     if(bando==1)
     {
         pieza->spriten.setPosition(tile->pos.x*escala*32,tile->pos.y*escala*32);
-        window->draw(pieza->spriten);
+        window.draw(pieza->spriten);
     }
     else
     {
         pieza->spriteb.setPosition(tile->pos.x*escala*32,tile->pos.y*escala*32);
-        window->draw(pieza->spriteb);
+        window.draw(pieza->spriteb);
     }
 }
 void Holder::draw(int n)  //pos en capturados
@@ -191,14 +190,14 @@ void Holder::draw(int n)  //pos en capturados
         sp=&pieza->spriteb;
     sp->setScale(1,1);
     sp->setPosition(515+(16*n)%112,20+(n/7)*10);
-    window->draw(*sp);
+    window.draw(*sp);
     sp->setScale(escala,escala);
 }
 vector<normalHolder*> normales;
 void Holder::makeCli(){
     for(movHolder* b:movs){
         if(!(b->bools&valorCadena)) continue;
-        b->table.cargar(b,&normales);
+        b->table->cargar(b,&normales);
         normales.clear();
     }
     Clicker::drawClickers=true;
@@ -209,7 +208,7 @@ void Holder::generar(){
     for(movHolder* m:movs){
         offset=tile->pos;
         memset(memMov.data(),0,m->base->memLocalSize*sizeof(int));
-        m->table.generar(m);
+        m->table->generar(m);
     }
 }
 

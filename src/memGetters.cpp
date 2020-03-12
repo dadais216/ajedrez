@@ -1,373 +1,326 @@
 
 RectangleShape backGroundMemDebug;
 
-struct locala:public getterCond{
-    int ind;
-    locala(int ind_):ind(ind_){}
-    virtual int* val(){
-        return &memMov[ind];
-    }
-    virtual int* valFast(){
-        return &memMov[ind];
-    }
-    virtual void drawDebugMem(){
-        int memSize=actualHolder.nh->base->memLocalSize;
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct localaAcc:public getter{
-    int ind;
-    localaAcc(int ind_):ind(ind_){}
-    virtual int* val(){
-        return actualHolder.nh->memAct[ind];
-    }
-};
-struct localai:public getterCond{
-    getterCond* g;
-    localai(getterCond* g_):g(g_){}
-    int before;
-    virtual int* val(){
-        before=*g->val();//para cosas de debug. Es necesario guardar la informacion porque puede variar antes de llamar a drawDebugMem (ej mset ll0 1), de paso ahorra una llamada
-        return &memMov[before];
-    }
-    virtual void drawDebugMem(){
-        backGroundMemDebug.setFillColor(sf::Color(178,235,221));
-        g->drawDebugMem();
-        backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        int memSize=actualHolder.nh->base->memLocalSize;
-        backGroundMemDebug.setPosition(Vector2f(530+25*(before%4),405+45*(before/4-memSize/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct localaiAcc:public getter{//aparece en cadenas de 3 o mas
-    normalHolder* nh;
-    getter* g;
-    localaiAcc(getter* g_):g(g_){}
-    virtual int* val(){
-        return actualHolder.nh->memAct[*g->val()];
-    }
-};
+
+
+#define localMema(memType,memSourceC,memSourceA,memSizeSource)      \
+  int* memType##a(char* data){                                      \
+  fromCast(ind,data,int*);                                      \
+                                                                \
+  debug(                                                         \
+        int memSize=memSizeSource;                \
+        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4))); \
+        window.draw(backGroundMemDebug);                                \
+                                                                 );     \
+                                                                        \
+  return &memSourceC[ind];                                                  \
+  }                                                                     \
+                                                                        \
+  int* memType##aAcc(char* data){                                           \
+    fromCast(ind,data,int*);                                            \
+    return &memSourceC[ind];                                \
+  }                                                                     \
+                                                                        \
+  int* memType##ai(char* data){                                             \
+    fromCast(g,data,getter*);                                           \
+    int ind=g(data+sizeof(g));                                          \
+                                                                        \
+    debug(                                                              \
+                                                                        ); \
+                                                                        \
+    return &memSourceC[ind];                                                \
+  }                                                                     \
+                                                                        \
+  int* memType##aiAcc(char* data){                                          \
+    fromCast(g,data,getter*);                                           \
+    return &memSourceA[g->val()];                           \
+  }                                                                     \
+localMema(local,memMov,actualHolder.nh->memAct,actualHolder.nh->base->memLocalSize);
+localMema(pieza,actualHolder.h->memPieza,actualHolder.h->memPieza,actualHolder.h->memPieza.size());
+//para pieza en no debug no hay diferencia entre el acceso comun y el acc
+//puede que el codigo en debug sea nomas guardar la informacion necesaria en un buffer, y el dibujado se haga despues
+
+
+//acc indirecto aparece en cadenas de 3 o mas
+
+//debug indirecto
+//ahora no es recursivo, deberia dibujar un bloque en ind y listo
+//backGroundMemDebug.setFillColor(sf::Color(178,235,221));
+//g->drawDebugMem();
+//backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+//int memSize=actualHolder.nh->base->memLocalSize;
+//backGroundMemDebug.setPosition(Vector2f(530+25*(before%4),405+45*(before/4-memSize/4)));
+//window.draw(backGroundMemDebug);
+
+
+
+
+
+
+
+
 
 memTriggers* trigsMaybeActivate;
-///hay 2 tipos de triggers de memoria, estaticos y dinamicos. Los estaticos son los de accesos a la memoria global
-///y de pieza directos, que se conocen cuando se arma el holder y quedan fijos. Los dinamicos son el resto (indirectos,
-///tile y other). Funcionan mas o menos como los trigger posicionales, se crean durante las condiciones (lectura) y
-///se activan durante accion (en escritura) y se eliminan
+//locales y de pieza no ponen triggers porque no se pueden poner condiciones sobre estos en un movimiento (solo existen en la generacion)
+//hay 2 tipos de triggers de memoria, estaticos y dinamicos. Los estaticos son los de accesos a la memoria global directos, que se conocen cuando se arma el holder y quedan fijos. Los dinamicos son el resto (indirectos y tile)
+//Funcionan mas o menos como los trigger posicionales, se crean durante las condiciones (lectura) y se activan durante accion (en escritura) y se eliminan
 
-//se podrían meter templates para evitar copiar y pegar, pero no vale la pena
-struct globalaWrite:public getter{
-    int ind;
-    globalaWrite(int ind_):ind(ind_){}
-    virtual int* val(){
-        trigsMaybeActivate=&memGlobalTriggers[ind];
-        return &memGlobal[ind];
-    }
-};
-///en una escritura que cambie el valor se activan todos los triggers asociados que no sean del mismo holder.
-///tile tiene una condicion mas (que no haya variado el step), y other tambien (que no hayan variado dos steps)
-struct globalaRead:public getterCond{
-    int ind;
-    int* val_;
-    globalaRead(int ind_):ind(ind_),val_(&memGlobal[ind_]){}
-    virtual int* val(){
-        return val_;
-    }
-    virtual void drawDebugMem(){
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),305+45*(ind/4-memGlobalSize/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct globalaReadNT:public getter{
-    int ind;
-    globalaReadNT(int ind_):ind(ind_){}
-    virtual int* val(){
-        return &memGlobal[ind];
-    }
-};
-struct globalaiWrite:public getter{
-    getter* g;
-    globalaiWrite(getter* g_):g(g_){}
-    virtual int* val(){
-        int ind=*g->val();
-        trigsMaybeActivate=&memGlobalTriggers[ind];
-        return &memGlobal[ind];
-    }
-};
-///puede que se activen falsos positivos en indirectos, lo que causa que se recorra un recalculo que no encuentra su
-///normalHolder. Solo pasa una vez porque los indirectos son dinamicos, se eliminan despues de usarse
-struct globalaiRead:public getterCond{
-    getterCond* g;
-    int indDebug;
-    globalaiRead(getterCond* g_):g(g_){}
-    virtual int* val(){
-        int ind=*g->val();
-        memGlobalTriggers[ind].dinam.push_back(actualHolder.nh);
-        int* ret=&memGlobal[ind];
-        indDebug=*ret;
-        return ret;
-    }
-    virtual void drawDebugMem(){
-        backGroundMemDebug.setFillColor(sf::Color(178,235,221));
-        g->drawDebugMem();
+
+//lo unico malo de esta version es que el debug quedo ligado a la ejecucion
+//si por algun motivo quiero separarlos va a ser un asco
+//una solucion sería cambiar las funciones por un switch, porque en ese caso
+//debug seria un segundo switch aparte que no le molesta a nadie.
+//usar switch podría tener una ventaja ademas de eso, podría probar si tengo ganas (podría ser inherentemente mas rapido?, int en vez de punteros en el buffer, puedo reutilizar codigo en el switch)
+void debugDrawMem(int ind,int memSize,int drawOffset){  
+  debug(
+  backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),
+                                          305+drawOffset+45*(ind/4-memSize/4)));
+  window.draw(backGroundMemDebug);
+        );
+}
+void debugSetIndirectColor(){
+  debug(
+  backGroundMemDebug.setFillColor(sf::Color(178,235,221));
+        );
+}
+
+void debugUnsetIndirectColor(){
+  debug(
         backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        backGroundMemDebug.setPosition(Vector2f(530+25*(indDebug%4),305+45*(indDebug/4-memGlobalSize/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct globalaiReadNT:public getter{
-    getter* g;
-    globalaiReadNT(getter* g_):g(g_){}
-    virtual int* val(){
-        return &memGlobal[*g->val()];
-    }
-};
+        );
+}
 
-struct piezaaWrite:public getter{
-    int ind;
-    piezaaWrite(int ind_):ind(ind_){}
-    virtual int* val(){
-        trigsMaybeActivate=actualHolder.h->memPiezaTrigs[ind];
-        return actualHolder.h->memPieza[ind];
-    }
-};
-struct piezaaRead:public getterCond{
-    int ind;
-    piezaaRead(int ind_):ind(ind_){}
-    virtual int* val(){
-        return actualHolder.h->memPieza[ind];
-    }
-    virtual void drawDebugMem(){
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-actualHolder.h->memPieza.size()/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct piezaaReadNT:public getter{
-    int ind;
-    piezaaReadNT(int ind_):ind(ind_){}
-    virtual int* val(){
-        return actualHolder.h->memPieza[ind];
-    }
-};
-struct piezaaiWrite:public getter{
-    getter* g;
-    piezaaiWrite(getter* g_):g(g_){}
-    virtual int* val(){
-        int ind=*g->val();
-        trigsMaybeActivate=actualHolder.h->memPiezaTrigs[ind];
-        return actualHolder.h->memPieza[ind];
-    }
-};
-struct piezaaiRead:public getterCond{
-    getterCond* g;
-    piezaaiRead(getterCond* g_):g(g_){}
-    virtual int* val(){
-        int ind=*g->val();
-        actualHolder.h->memPiezaTrigs[ind]->dinam.push_back(actualHolder.nh);
-        return actualHolder.h->memPieza[ind];
-    }
-    virtual void drawDebugMem(){
-        backGroundMemDebug.setFillColor(sf::Color(178,235,221));
-        g->drawDebugMem();
-        backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        int ind=*g->val();
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),205+45*(ind/4-actualHolder.h->memPieza.size()/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct piezaaiReadNT:public getter{
-    getter* g;
-    piezaaiReadNT(getter* g_):g(g_){}
-    virtual int* val(){
-        return actualHolder.h->memPieza[*g->val()];
-    }
-};
 
-struct tileaWrite:public getter{
-    int ind;
-    tileaWrite(int ind_):ind(ind_){}
-    virtual int* val(){
-        trigsMaybeActivate=reinterpret_cast<memTriggers*>(&actualTile->memTileTrigs[ind]);
-        return &actualTile->memTile[ind];
-    }
-};
+
+
+//seguro que se puede abstraer en un macro pero no me aportaria nada eso
+
+//los accesos indirectos son una optimizacion
+
+int* localg(){
+  int ind=(int)getNextInBuffer();;
+  debugDrawMem(ind,memSize,100);
+  return &memMov[ind];
+}
+
+int* localAccg(){
+  int ind=(int)getNextInBuffer();;
+  return actualHolder.nh->memAct[ind];
+}
+
+int* localgi(){
+  getter g=(getter)getNextInBuffer();
+  debugSetIndirectColor();
+  int ind=*g();
+  debugUnsetIndirectColor();;
+  debugDrawMem(ind,memSize,100);
+  return &memMov[ind];
+}
+
+int* localAccgi(){//aparece en cadenas de 3 o mas
+  getter g=(getter)getNextInBuffer();
+  int ind=*g();
+  return &actualHolder.nh->memAct[ind];
+}
+
+int* piezag(){
+  int ind=(int)getNextInBuffer();
+  debugDrawMem(ind,actualHolder.h->memPieza.size(),400);
+  return &actualHolder.h->memPieza[ind];
+}
+
+int* piezaAccg(){//unico motivo de existir es no tirar codigo debug en accion
+  int ind=(int)getNextInBuffer();
+  return &actualHolder.h->memPieza[ind];
+}
+
+int* piezagi(){
+  getter g=(getter)getNextInBuffer();
+  debugSetIndirectColor();
+  int ind=*g();
+  debugUnsetIndirectColor();
+  debugDrawMem(ind,actualHolder.h->memPieza.size(),400);
+  return &actualHolder.h->memPieza[ind];
+}
+
+int* piezagi(){//unico motivo de existir es no tirar codigo debug en accion
+  getter g=(getter)getNextInBuffer();
+  int ind=*g();
+  return &actualHolder.h->memPieza[ind];
+}
+
+
+//no hay globalWrite porque esta inlineado directamente en msetG, porque
+//solo se usa ahi. Lo mismo para tileWrite con msetT. Esto evita tener que
+//hacer una comunicacion rara tambien.
+
+int* globalRead(){
+  int ind=(int)getNextInBuffer();;
+  debug(drawDebugMem(ind,memGlobalSize,0));
+  return &memGlobal[ind];
+}
+
+//no me acuerdo porque hice que step este en el tile donde esta parada la pieza en lugar de meterlo en la pieza
+//osea en vez de avanzar el step cada vez que una pieza se mueve, podría avanzarlo en cada generacion y captura.
+//es practicamente lo mismo, es mas simple y eso manejaría el caso de movimientos que no se mueven sin hacer
+//el hack de avanzar el step en un if @todo
+
+int* globalReadi(){
+  getter g=(getter)getNextInBuffer();
+  debugSetIndirectColor();
+  int ind=*g();
+  debugUnsetIndirectColor();;
+  debugDrawMem(ind,memSize,0);
+  int* stepCheck=&actualHolder.h->tile->step;
+  int step=*stepCheck;
+  memGlobalIndirectTriggers[ind].push_back({actualHolder.nh,step,stepCheck});
+  return &memGlobal[ind];
+}
+
+int* globalReadiNT(){
+  getter g=(getter)getNextInBuffer();
+  debugSetIndirectColor();
+  int ind=*g();
+  debugUnsetIndirectColor();;
+  debugDrawMem(ind,memSize,0);
+  return &memGlobal[ind];
+}
+
+
 v posDebugTile(0,0);
-struct tileaRead:public getterCond{
-    int ind;
-    tileaRead(int ind_):ind(ind_){}
-    virtual int* val(){
-        int* stepCheck=&actualHolder.h->tile->step;
-        int step=*stepCheck;
-        //en casos como mcmp t0 1 w mover se hacen 2 normales, la primera con mcmp t0 1 sin esp.
-        //este es el unico caso donde hay una cond posicional  sin un esp, se necesita actualizar actualTile
-        //(el esp no es necesario, pero el actualTile se actualiza adentro suyo)
-        actualTile=tablptr->tile(actualHolder.nh->pos);
-        actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
-        return &actualTile->memTile[ind];
-    }
-    virtual void drawDebugMem(){
-        posDebugTile=actualHolder.nh->pos;
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),105+45*(ind/4-memTileSize/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct tileaReadNT:public getter{
-    int ind;
-    tileaReadNT(int ind_):ind(ind_){}
-    virtual int* val(){
-        return &actualTile->memTile[ind];
-    }
-};
-struct tileaiWrite:public getter{
-    getter* g;
-    tileaiWrite(getter* g_):g(g_){}
-    virtual int* val(){
-        int ind=*g->val();
-        trigsMaybeActivate=reinterpret_cast<memTriggers*>(&actualTile->memTileTrigs[ind]);
-        return &actualTile->memTile[ind];
-    }
-};
-struct tileaiRead:public getterCond{
-    getterCond* g;
-    int ind;
-    tileaiRead(getterCond* g_):g(g_){}
-    virtual int* val(){
-        ind=*g->val();
-        int* stepCheck=&actualHolder.h->tile->step;
-        int step=*stepCheck;
-        actualTile=tablptr->tile(actualHolder.nh->pos);
-        actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
-        return &actualTile->memTile[ind];
-    }
-    virtual void drawDebugMem(){
-        backGroundMemDebug.setFillColor(sf::Color(178,235,221));
-        g->drawDebugMem();
-        backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),105+45*(ind/4-memTileSize/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct tileaiReadNT:public getter{
-    getter* g;
-    tileaiReadNT(getter* g_):g(g_){}
-    virtual int* val(){
-        return &actualTile->memTile[*g->val()];
-    }
-};
 
-///todos los other asumen que hay una pieza en la posicion actual con una memoria que contenga su indice
-struct otheraWrite:public getter{
-    int ind;
-    otheraWrite(int ind_):ind(ind_){}
-    virtual int* val(){
-        Holder* h=actualTile->holder;
-        trigsMaybeActivate=h->memPiezaTrigs[ind];//podria asumir que other nunca se usa sobre uno y sacar el if holder==
-        return h->memPieza[ind];
-    }
-};
-int memOtherSize=0;
-struct otheraRead:public getterCond{
-    int ind;
-    otheraRead(int ind_):ind(ind_){}
-    virtual int* val(){
-        Holder* h=actualTile->holder;
-        h->memPiezaTrigs[ind]->dinam.push_back(actualHolder.nh);
-        return h->memPieza[ind];
-    }
-    virtual void drawDebugMem(){
-        posDebugTile=actualHolder.nh->pos;
-        memOtherSize=actualHolder.nh->base->h->memPieza.size();
-        backGroundMemDebug.setPosition(Vector2f(630+25*(ind%4),105+45*(ind/4-memOtherSize/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct otheraReadNT:public getter{
-    int ind;
-    otheraReadNT(int ind_):ind(ind_){}
-    virtual int* val(){
-        return actualTile->holder->memPieza[ind];
-    }
-};
-struct otheraiWrite:public getter{
-    getter* g;
-    otheraiWrite(getter* g_):g(g_){}
-    virtual int* val(){
-        int ind=*g->val();
-        Holder* h=actualTile->holder;
-        trigsMaybeActivate=h->memPiezaTrigs[ind];
-        return h->memPieza[ind];
-    }
-};
-struct otheraiRead:public getterCond{
-    getterCond* g;
-    int ind;
-    otheraiRead(getterCond* g_):g(g_){}
-    virtual int* val(){
-        ind=*g->val();
-        Holder* h=actualTile->holder;
-        h->memPiezaTrigs[ind]->dinam.push_back(actualHolder.nh);
-        return h->memPieza[ind];
-    }
-    virtual void drawDebugMem(){
-        backGroundMemDebug.setFillColor(sf::Color(178,235,221));
-        g->drawDebugMem();
-        backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),105+45*(ind/4-memTileSize/4)));
-        window->draw(backGroundMemDebug);
-    }
-};
-struct otheraiReadNT:public getter{
-    getter* g;
-    otheraiReadNT(getter* g_):g(g_){}
-    virtual int* val(){
-        return actualTile->holder->memPieza[*g->val()];
-    }
-};
+int* tileRead(){
+  int ind=(int)getNextInBuffer();
+  int* stepCheck=&actualHolder.h->tile->step;
+  int step=*stepCheck;
+  //@optim actualTile global por algun motivo?
+  //@optim stepCheck no es necesario porque se puede conseguir a traves de nh,
+  //no sé si seria mas rapido igual.
+  actualTile=tablptr->tile[actualHolder.nh->pos];
+  actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
+  debugDrawMem(ind,memTileSize,200);
+  return &actualTile->memTile[ind];
+}
+int* tileReadNT(){  
+  int ind=(int)getNextInBuffer();
+  actualTile=tablptr->tile[actualHolder.nh->pos];
+  return &actualTile->memTile[ind];
+}
 
-struct ctea:public getterCond{
-    int v;
-    ctea(int v_):v(v_){}
-    virtual int* val(){
-        return &v;
-    }
-    virtual void drawDebugMem(){
-            textValMem.setPosition(610,470);
-            textValMem.setString(to_string(v));
-            window->draw(textValMem);
-    }
-};
+int* tileReadi(){
+  getter g=(getter)getNextInBuffer();
+  debugSetIndirectColor();
+  int ind=*g();
+  debugUnsetIndirectColor();
+  int* stepCheck=&actualHolder.h->tile->step;
+  int step=*stepCheck;
+  actualTile=tablptr->tile[actualHolder.nh->pos];
+  actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
+  debugDrawMem(ind,memTileSize,200);
+  return &actualTile->memTile[ind];
+}
 
-struct turnoaObj:public getterCond{
-    turnoaObj(){}
-    virtual int* val(){
-        return &turno;
-    }
-    virtual void drawDebugMem(){}
-};
-turnoaObj turnoa;
+int* tileReadNTi(){
+  getter g=(getter)getNextInBuffer();
+  int ind=*g();
+  actualTile=tablptr->tile[actualHolder.nh->pos];
+  return &actualTile->memTile[ind];
+}
+
+//cteRead == (int)(*)()getNextInBuffer
+
+int* cteRead(){
+  int* cte=&(int)getNextInBuffer();
+  debug(
+        //debería haber un if para no mostar durante accion supongo
+        textValMem.setPosition(610,470);
+        textValMem.setString(to_string(v));
+        window.draw(textValMem);
+        );
+  return cte;
+}
+
+int* turnRead(){
+  debug(
+        //
+  );
+  return &turno;
+}
 
 //pos se trata como una cte porque no puede variar desde la generacion hasta la accion inclusive
-struct posXObj:public getterCond{
-    int val_;
-    posXObj(){}
-    virtual int* val(){
-        val_=offset.x+actualHolder.nh->relPos.x;
-        return &val_;
-    }
-    virtual void drawDebugMem(){}
-};
-posXObj posX;
-struct posYObj:public getterCond{
-    int val_;
-    posYObj(){}
-    virtual int* val(){
-        if(actualHolder.nh->base->h->bando){
-            val_=offset.y+actualHolder.nh->relPos.y;
-        }else{
-            val_=tablptr->tam.y-1-offset.y-actualHolder.nh->relPos.y;
-        }
-        return &val_;
-    }
-    virtual void drawDebugMem(){}
-};
-posYObj posY;
+int* posXRead(){
+  //para evitar usar una variable global (porque podría ser mas lenta, no creo pero ni idea) se podría dejar un int en el buffer que se escribe aca
+  static int x=offset.x+actualHolder.nh->relPos.x;
+  debug(
+        //
+        );
+  return &x;
+}
+
+int* posYRead(){
+  static int y;
+  y=offset.y+actualHolder.nh->relPos.y;
+  if(actualHolder.nh->base->h->bando){
+    y=tablptr->tam.y-1-y;
+  }
+  return &y;
+}
+
+//por ahi algo para acceder al step de la pieza seria util?
+
+/*
+  sobre tipos de memoria
+
+
+  En un tiempo considere borrar tile:
+  tile guardaba informacion en una memoria global en el casillero, por ejemplo mset t1 3 guardaba 3 en el slot 1 del casillero donde este parada la pieza.
+  El sistema de triggers era más complejo que en global, porque necesitaba tener un chequeo de mas para no hacer reaccionar una pieza por un trigger viejo.
+
+  Por ejemplo w mcmp t1 0 mover debería activarse si se escribe el casillero que esta arriba, pero solo si la pieza que puso ese trigger no se movio.
+  Un trigger viejo activado permitiría a la pieza moverse hacia arriba cuando la condicion, para la posicion en la que esta ahora, es falsa.
+
+  Para evitar esto guardaba un step de la pieza en el trigger. Cuando se activa el trigger, se mira que el step de la pieza no haya variado.
+
+  Esto en principio no se puede hacer desde el lenguaje, no hay forma de guardar informacion en los triggers.
+  Se puede aproximar usando un slot de la tile como memoria del trigger, usando escrituras en tiempo de condicion para mantener
+  un step actualizado (en un movimiento sin condiciones, para que solo se actualice cuando se hace un movimiento y no por triggers)
+  y escribirlo cuando se hace la lectura del slot vecino. Despues de cada lectura debería haber un segundo chequeo que mire que el step no haya variado.
+  Esto mas o menos andaría pero rompe si una pieza hace una segunda lectura, porque estaría pisando el step con su step (lo que ademas de romper
+  la logica crearía un bucle infinito). Tambien esta el tema de que al usar este segundo slot se estan agregando triggers, que estan al pedo.
+  Esto ultimo se podría solucionar agregando un slot de control por cada pieza que lee, y mejor todavia los slots de control podrían estar en la memoria de
+  la pieza que los usa, por lo que no tendrían triggers. 
+
+  Tambien se podría hacer que una pieza guarde una lista de posiciones y en que instancia de movimiento piso en su ultimo turno,
+  y frente a un trigger verifique que venga de una de esas posiciones y se este en la instancia de movimiento correcta. Tambien es compleja y lenta.
+
+  La unica solucion que se me ocurre es tener memoria en el trigger que se pueda escribir desde el lenguaje. Agregar un int a cada trigger no debería tener
+  un costo, aunque puede que sea mas ineficiente de todas formas porque el chequeo con el trigger se hace en el movimiento de la pieza, mientras antes
+  se antes de acceder (puede que esto no importe mucho en la version compilada) (el chequeo se haría solo en respuesta a un trigger, no durante
+  la generacion inicial).
+  Tambien saca la posibilidad de poder hacer limpiezas de triggers falsos generales, porque ahora los triggers son parte del sistema.
+  Por ahi estaría bueno hacer la memoria de trigger algo explicito, pero es bastante niche, y creo que solo haría ciertas cosas raras (como una pieza que
+  pueda reaccionar a triggers que dejo en los ultimos n turnos) un poco más accesibles, aunque se podrían programar de otra forma (que la pieza re-haga
+  los ultimos n movimientos cada turno, que es mas ineficiente pero cumple la misma funcionalidad, y como es algo raro no me preocupa)
+
+  Asi que decidi dejar la memoria de tile. Acceder a una memoria de trigger sacaría la necesidad de tenerla, pero agrega complejidad al lenguaje, y hace
+  las cosas mas ineficientes para el caso mas comun, a cambio de dar la posibilidad de escribir piezas muy raras un poco mas facil.
+  Piezas raras podrían implementarse de ser posible abusando los mecanismos de tile, y sino usando cosas como las 2 soluciones anteriores.
+
+  La primera solucion no me parece totalmente mala, dudo que sea mas rapida pero podría probarse. Si no se usan tiles el codigo de tiles no debería
+  tener un costo relevante (y se puede comentar eso), asi que se podría probar facil.
+
+  borrar other:
+  permite a una pieza acceder a memoria otra pieza, en una posicion. Lo saque porque no era muy usado, agregaba triggers a la memoria de pieza,
+  y usarlo era incomodo.
+  para usarlo primero hay que checkear que en tal casillero hay una pieza y que es del tipo necesario. Sin hacer estos chequeos se accede a un
+  espacio de memoria que puede existir o no y explota todo.
+  La misma funcionalidad, haciendo los mismos chequeos, se puede conseguir haciendo que las piezas escriban la memoria de tile
+
+  pense borrar pieza:
+  Pero no, no podría implementarse en la memoria global porque no habría forma de direccionarlas a lugares distintos, porque para eso necesitarias
+  tener una memoria en la pieza que le diga a donde mirar, y ya que estas ahi podrías meter toda la memoria y listo. Se podría crear harcodeando el
+  direccionamiento, haciendo un tipo de pieza para cada pieza del juego (ej 16 tipos de peon)
+  Ademas la memoria de pieza no tiene triggers, y el lenguaje se los pondrían innecesariamente en la memoria global. 
+
+
+ */

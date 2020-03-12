@@ -6,51 +6,64 @@ struct boton{
   boton* next;
   //string es una indireccion por lo que ahora es leak. Cuando me mueva a sdl pongo un char[20] y listo
   //es una linked list porque me permite tener infinitos botones (habria que agregar scrollin), y no tiene sentido hacer algo mas eficiente aca
-}
+};
 
-boton* buttonAllocInit(string& s,int n,int x,int y){
-  boton* b=alloc<boton>(&stateBucket);
-  b->name=s;
-  b->n=n;
-  b->x=x;
-  b->y=y;
-  b->next=stateBucket->head;//se crean en secuencia, el ultimo se pone en null desde afuera
-  return b;
-}
-
-void drawButton(boton* b){
-  selectorState->sprite.setPosition(b->x,b->y);
-  selectorState->text.setPosition(b->x+5,b->y+10);
-  selectorState->text.setString(b->name);
-  window.draw(selectorState->sprite);
-  window.draw(selectorState->text);
-}
-
-int buttonClicked(boton* b){
-  v ve=input->pixel();
-  if(ve.x>=b->x&&ve.x<=b->x+128&&ve.y>=b->y&&ve.y<=b->y+64) //puede que este mal
-    return b->n;
-  return 0;
-}
-
-struct PlayerSelector{
+struct playerSelector{
   int bando;
   boton* firstButton;//linked porque reuso botones nomas
   int selected;
 };
 
-void genPlayerSelector(PlayerSelector* playerSelector,int bando_){
+struct selectorState{
+  Sprite sprite;
+  Text text;
+
+  RectangleShape bordeSeleccion;
+  playerSelector player1,player2;
+
+  boton* firstButton;
+};
+
+boton* buttonAllocInit(string s,int n,int x,int y){
+  boton* b=alloc<boton>(&stateBucket);
+  b->name=s;
+  b->n=n;
+  b->x=x;
+  b->y=y;
+  b->next=(boton*)stateBucket.head;//se crean en secuencia, el ultimo se pone en null desde afuera
+  return b;
+}
+
+void drawButton(boton* b){
+  getStruct(selectorState,spt,stateBucket);
+  spt->sprite.setPosition(b->x,b->y);
+  spt->text.setPosition(b->x+5,b->y+10);
+  spt->text.setString(b->name);
+  window.draw(spt->sprite);
+  window.draw(spt->text);
+}
+
+int buttonClicked(boton* b){
+  v ve=input.pixel();
+  if(ve.x>=b->x&&ve.x<=b->x+128&&ve.y>=b->y&&ve.y<=b->y+64) //puede que este mal
+    return b->n;
+  return 0;
+}
+
+
+void genPlayerSelector(playerSelector* playerSelector,int bando_){
     playerSelector->bando=bando_;
-    playerSelector->firstButton=stateBucket.head;
+    playerSelector->firstButton=(boton*)stateBucket.head;
     if(bando_==1){
       buttonAllocInit("nadie",0,540,320);
     }
-    buttonAllocInit("humano",1,500+40*bando,360);
-    buttonAllocInit("aleatorio",2,500+40*bando,400);
-    buttonAllocInit("IA",3,500+40*bando,440)->next=nullptr;
+    buttonAllocInit("humano",1,500+40*bando_,360);
+    buttonAllocInit("aleatorio",2,500+40*bando_,400);
+    buttonAllocInit("IA",3,500+40*bando_,440)->next=nullptr;
 
     playerSelector->selected=1;
 }
+void selectorDraw();
 void updatePlayerSelector(playerSelector* ps){
   for(boton* b=ps->firstButton;
       b;
@@ -63,37 +76,28 @@ void updatePlayerSelector(playerSelector* ps){
   }
 }
 
-struct selectorState{
-  Sprite sprite;
-  Text text;
-
-  RectangleShape bordeSeleccion;
-  PlayerSelector player1,player2;
-
-  boton* firstButton;
-}
 
 void selectorUpdate();
 void selectorInit(){
   resetBucket(&stateBucket);
   selectorState* spt=alloc<selectorState>(&stateBucket);
 
-  selectorState->sprite.setTexture(image->get("tiles.png"));
-  selectorState->sprite.setTextureRect(IntRect(0,32,64,32));
-  selectorState->sprite.setScale(2,2);
-  selectorState->text.setFont(font);
-  selectorState->text.setColor(Color::Black);
-  selectorState->text.setScale(1,1);
+  spt->sprite.setTexture(image.get("tiles.png"));
+  spt->sprite.setTextureRect(IntRect(0,32,64,32));
+  spt->sprite.setScale(2,2);
+  spt->text.setFont(font);
+  spt->text.setColor(Color::Black);
+  spt->text.setScale(1,1);
   
-  selectorState->bordeSeleccion->setFillColor(Color(0,0,0,0));
-  selectorState->bordeSeleccion->setSize(sf::Vector2f(64, 32));
-  selectorState->bordeSeleccion->setOutlineColor(Color::White);
-  selectorState->bordeSeleccion->setOutlineThickness(1);
+  spt->bordeSeleccion.setFillColor(Color(0,0,0,0));
+  spt->bordeSeleccion.setSize(sf::Vector2f(64, 32));
+  spt->bordeSeleccion.setOutlineColor(Color::White);
+  spt->bordeSeleccion.setOutlineThickness(1);
 
-  genPlayerSelector(1);
-  genPlayerSelector(-1);
+  genPlayerSelector(&spt->player1,1);
+  genPlayerSelector(&spt->player2,-1);
 
-  firstButton=stateBucket.head;
+  spt->firstButton=(boton*)stateBucket.head;
 
   fstream tableros;
   tableros.open("tableros.txt");
@@ -116,11 +120,12 @@ void selectorInit(){
   lastButton->next=nullptr;
   drawScreen(selectorDraw);
   actualStateUpdate=selectorUpdate;
-} 
+}
+void properInit(int,int,int);
 void selectorUpdate(){
   getStruct(selectorState,bg,stateBucket);
-  if(input->click()){
-    for(boton* b=bg->firstButton();
+  if(input.click()){
+    for(boton* b=bg->firstButton;
         b;
         b=b->next){
       if(buttonClicked(b)){
@@ -128,36 +133,36 @@ void selectorUpdate(){
         return;
       }
     }
-    updatePlayerSelector(bg->player1);
-    updatePlayerSelector(bg->player2);
+    updatePlayerSelector(&bg->player1);
+    updatePlayerSelector(&bg->player2);
   }
 }
 void selectorDraw(){
   getStruct(selectorState,bg,stateBucket);
 
-  selectorState->sprite.setScale(2f,2f);
-  selectorState->text.setScale(2f,2f);
+  bg->sprite.setScale(2.,2.);
+  bg->text.setScale(2.,2.);
 
-  for(boton* b=bg->firstButton();
+  for(boton* b=bg->firstButton;
       b;
       b=b->next){
     drawButton(b);
   }
 
-  selectorState->sprite.setScale(1f,1f);
-  selectorState->text.setScale(1f,1f);
+  bg->sprite.setScale(1.,1.);
+  bg->text.setScale(1.,1.);
 
-  PlayerSelector* ps=bg->player1;
+  playerSelector* ps=&bg->player1;
  drawSelected:
   for(boton* b=ps->firstButton;
       b;
       b=b->next){
     drawButton(b);
   }
-  bordeSeleccion.setPosition(500+40*bando,320+40*selected);
-  window.draw(cuadrado);
-  if(ps==bg->player1){
-    ps=bg->player2;
+  bg->bordeSeleccion.setPosition(500+40*ps->bando,320+40*ps->selected);
+  window.draw(bg->bordeSeleccion);
+  if(ps==&bg->player1){
+    ps=&bg->player2;
     goto drawSelected;
   }
 }

@@ -4,8 +4,10 @@
 RenderWindow window(VideoMode(640,512),"ajedres");
 Manager<Texture> image;
 Font font;
-Input input();
+Input input(&window);
 void (*actualStateUpdate)();
+
+void arranqueInit();
 
 int main()
 {
@@ -14,7 +16,7 @@ int main()
 
   arranqueInit();
 
-  float fpsLock=1f/60f; //maximos fps @todo en test de velocidad que sea 0
+  float fpsLock=1./60.; //maximos fps @todo en test de velocidad que sea 0
   Clock clock;//@check investigar bien esto, por ahi deberia usar el mismo
   //que uso para los test de velocidad?
 
@@ -34,7 +36,7 @@ int main()
       while(window.pollEvent(event)){
         if(event.type == Event::Closed){
           window.close();
-          return;
+          return 0;
         }
       }//@todo mover a otro thread, manejar demas eventos
     }

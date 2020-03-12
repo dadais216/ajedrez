@@ -1,452 +1,404 @@
 
-string str_cmp="cmp";
-string str_set="set";
-string str_add="add";
-string str_less="less";
-string str_more="more";
-string str_dist="dist";
-
 int memLocalSizeAct;
 
-normal::normal(bool make){
-    vector<acct*> accsTemp;
-    vector<condt*> condsTemp;
-    vector<colort*> colorsTemp;
-    vector<normal::setupTrigInfo> setUpMemTriggersPerNormalHolderTemp;
-    auto setupBarrays=[&](){
-        //cargo listas de punteros despues del resto de memoria de la normal.
-        //Lo pongo al final en vez de al principio para evitar tener que hacer un analisis
-        //previo a la carga para saber hasta donde llega la normal y que cosas tiene.
-        //supongo que que este antes o despues tiene el mismo efecto en la cache
-        accs.init(accsTemp.size(),accsTemp.data());
-        conds.init(condsTemp.size(),condsTemp.data());
-        colors.init(colorsTemp.size(),colorsTemp.data());
-        setUpMemTriggersPerNormalHolder.init(setUpMemTriggersPerNormalHolderTemp.size(),setUpMemTriggersPerNormalHolderTemp.data());
-    };
+template<typename T>
+bool gatherMemCte(vector<T>& vec,int tok){
+                   switch(tok){
+                   case lector::posX: vec.push_back((T)posXRead);break;
+                   case lector::posY: vec.push_back((T)posYRead);break;
+                   case lector::turno:vec.push_back((T)turnoRead);break;
+                   default:           vec.push_back((T)(tok-1000));break;
+                   }
+}
 
-    movSize+=sizeof(normalHolder)+memLocalSizeAct*sizeof(int);
-    tipo=NORMAL;
-    bools&=~(hasClick|makeClick|doEsp);
-    sig=nullptr;
-    relPos=v(0,0);
-    if(make){
-        bool changeInLocalMem=false;
-        while(true){
-            if(tokens.empty()) return;///@optim creo que no se activa nunca, no deberia
-            int tok=tokens.front();
-            tokens.pop_front();
-            switch(tok){
-            case lector::W:
-            case lector::S:
-            case lector::D:
-            case lector::A:
+//creo que lo de make se usaba solo para lo de *
+normal* initNormal(bool make){
+  normal* n=alloc<normal>();
 
-                //antes nomas cortaba en cuando hubo una cond posicional antes. Ahora lo hago por cualquiera
-                //porque sino cosas como mcmp p0 1 w mover ponen un trigger en w aun cuando mcmp es falso
-                //por ahi no vale la pena cortar por eso igual.
-                if(!condsTemp.empty()||!accsTemp.empty()){
-                    tokens.push_front(tok);
-                    setupBarrays();
-                    sig=bucketAdd<normal>(true);//nueva normal
-                    return;
-                }else{
-                    switch(tok){
-                    case lector::W: relPos.y--;break;
-                    case lector::S: relPos.y++;break;
-                    case lector::D: relPos.x++;break;
-                    case lector::A: relPos.x--;break;
-                    }
-                }
-                break;
-                //cout<<#TOKEN<<endl;
-#define cond(TOKEN) case lector::TOKEN: \
-              condsTemp.push_back({TOKEN##func debug(,#TOKEN)}) ;break
-                cond(vacio);break;
-                cond(pieza);break;
-                cond(enemigo);break;
-                cond(pass);break;
-            case lector::esp:
-                bools|=doEsp;
-            break;
-#define acc(TOKEN) case lector::TOKEN: accsTemp.push_back(TOKEN##func);break
-                acc(mov);
-                acc(capt);
-                acc(pausa);
-            case lector::spwn:
-                accsTemp.push_back(bucketAdd<spwn>((tokens.front()-1000)));tokens.pop_front();break;
-                //spwn n con n positivo quiere decir mismo bando, negativo bando enemigo
-            case lector::color:
-                colorsTemp.push_back(crearColor());
-                break;
-    //       colorr(sprt);
-    //       colorr(numShow);
-            case lector::mcmp:
-            case lector::mset:
-            case lector::madd:
-            case lector::mless:
-            case lector::mmore:
-            case lector::mdist:
-                {
-                    ///hay 2 tipos de operaciones en memoria no local
-                    ///condiciones que leen
-                    ///acciones que escriben la variable izquierda y leen la derecha
-                    getter* g[2];
-                    bool write=tok==lector::mset||tok==lector::madd;
-                    bool action;
-                    bool writeOnTile=false;
-                    bool isLocalAcc=false;
-                    for(int i=0;i<2;i++){
-                        bool left=i==0;
-                        int tg[5],j;
-                        for(j=0;;j++){
-                            assert(j<5);
-                            tg[j]=tokens.front();tokens.pop_front();
-                            if(tg[j]>=900||tg[j]==lector::turno||tg[j]==lector::posX||tg[j]==lector::posY)///@sospechoso no 1000 para tomar algunos numeros negativos
-                                break;
-                        }
-                        if(left)
-                            action=write&&tg[0]!=lector::mlocal;
-                        if(j==0){
-                            assert(!(write&&left)&&"escritura en constante");
-                            switch(tg[0]){
-                            case lector::turno:
-                                g[i]=&turnoa;
-                                setUpMemTriggersPerNormalHolderTemp.push_back({2,0});
-                                break;
-                            case lector::posX:
-                                g[i]=&posX;break;
-                            case lector::posY:
-                                g[i]=&posY;break;
-                            default:
-                                g[i]=bucketAdd<ctea>(tg[0]-1000);
-                            }
-                        }else{
-                            tg[j]-=1000;
-                            bool hasIndirection=j>1;
-                            if(tg[j-1]==lector::mlocal)
-                                if(left){
-                                    g[i]=bucketAdd<locala>(tg[j]);
-                                    changeInLocalMem=changeInLocalMem||write;
-                                }else
-                                    if(action){
-                                        g[i]=bucketAdd<localaAcc>(tg[j]);
-                                        isLocalAcc=true;
-                                    }else
-                                        g[i]=bucketAdd<locala>(tg[j]);
-                            else
-                                if(action)
-                                    if(hasIndirection)
-                                        switch(tg[j-1]){
-                                        case lector::mglobal: g[i]=bucketAdd<globalaReadNT>(tg[j]); break;
-                                        case lector::mpieza: g[i]=bucketAdd<piezaaReadNT>(tg[j]);break;
-                                        case lector::mtile: g[i]=bucketAdd<tileaReadNT>(tg[j]);break;
-                                        case lector::mother: g[i]=bucketAdd<otheraReadNT>(tg[j]);break;
-                                        }
-                                    else
-                                        if(left)
-                                            switch(tg[j-1]){
-                                            case lector::mglobal: g[i]=bucketAdd<globalaWrite>(tg[j]); break;
-                                            case lector::mpieza: g[i]=bucketAdd<piezaaWrite>(tg[j]);break;
-                                            case lector::mtile: g[i]=bucketAdd<tileaWrite>(tg[j]);writeOnTile=true;break;
-                                            case lector::mother: g[i]=bucketAdd<otheraWrite>(tg[j]);break;
-                                            }
-                                        else
-                                            switch(tg[j-1]){
-                                            case lector::mglobal: g[i]=bucketAdd<globalaReadNT>(tg[j]); break;
-                                            case lector::mpieza: g[i]=bucketAdd<piezaaReadNT>(tg[j]);break;
-                                            case lector::mtile: g[i]=bucketAdd<tileaReadNT>(tg[j]);break;
-                                            case lector::mother: g[i]=bucketAdd<otheraReadNT>(tg[j]);break;
-                                            }
-                                else
-                                    switch(tg[j-1]){
-                                    case lector::mglobal:
-                                        g[i]=bucketAdd<globalaRead>(tg[j]);
-                                        setUpMemTriggersPerNormalHolderTemp.push_back({0,tg[j]});
-                                    break;case lector::mpieza:
-                                        g[i]=bucketAdd<piezaaRead>(tg[j]);
-                                        setUpMemTriggersPerNormalHolderTemp.push_back({1,tg[j]});
-                                    break;
-                                    case lector::mtile: g[i]=bucketAdd<tileaRead>(tg[j]);bools|=doEsp;break;//esp para el caso de que sea antes de un movimiento
-                                    case lector::mother: g[i]=bucketAdd<otheraRead>(tg[j]);break;
-                                    }
+  vector<void(*)(void)> accsTemp;
+  vector<bool(*)(void)> condsTemp;
+  vector<colort*> colorsTemp;
+  vector<normal::setupTrigInfo> setUpMemTriggersPerNormalHolderTemp;
+  auto setupBarrays=[&](){
+                      //cargo listas de punteros despues del resto de memoria de la normal.
+                      //Lo pongo al final en vez de al principio para evitar tener que hacer un analisis
+                      //previo a la carga para saber hasta donde llega la normal y que cosas tiene.
+                      //supongo que que este antes o despues tiene el mismo efecto en la cache
+                      init(n->accs,accsTemp.size(),accsTemp.data());
+                      init(n->conds,condsTemp.size(),condsTemp.data());
+                      init(n->colors,colorsTemp.size(),colorsTemp.data());
+                      init(n->setUpMemTriggersPerNormalHolder,setUpMemTriggersPerNormalHolderTemp.size(),setUpMemTriggersPerNormalHolderTemp.data());
+                    };
 
-                            for(int k=j-2;k>=0;k--){//getters indirectos
-                                hasIndirection=k>0;
-                                if(tg[k]==lector::mlocal)
-                                    if(left){
-                                        g[i]=bucketAdd<localai>(static_cast<getterCond*>(g[i]));
-                                        changeInLocalMem=changeInLocalMem||write;
-                                    }else
-                                        if(action){
-                                            g[i]=bucketAdd<localaiAcc>(g[i]);
-                                            isLocalAcc=true;
-                                        }else
-                                            g[i]=bucketAdd<localai>(static_cast<getterCond*>(g[i]));
-                                else
-                                    if(action)
-                                        if(hasIndirection)
-                                            switch(tg[k]){
-                                            case lector::mglobal: g[i]=bucketAdd<globalaiReadNT>(g[i]); break;
-                                            case lector::mpieza: g[i]=bucketAdd<piezaaiReadNT>(g[i]);break;
-                                            case lector::mtile: g[i]=bucketAdd<tileaiReadNT>(g[i]);break;
-                                            case lector::mother: g[i]=bucketAdd<otheraiReadNT>(g[i]);break;
-                                            }
-                                        else
-                                            if(left)
-                                                switch(tg[k]){
-                                                case lector::mglobal: g[i]=bucketAdd<globalaiWrite>(g[i]); break;
-                                                case lector::mpieza: g[i]=bucketAdd<piezaaiWrite>(g[i]);break;
-                                                case lector::mtile: g[i]=bucketAdd<tileaiWrite>(g[i]);break;
-                                                case lector::mother: g[i]=bucketAdd<otheraiWrite>(g[i]);break;
-                                                }
-                                            else
-                                                switch(tg[k]){
-                                                case lector::mglobal: g[i]=bucketAdd<globalaiReadNT>(g[i]); break;
-                                                case lector::mpieza: g[i]=bucketAdd<piezaaiReadNT>(g[i]);break;
-                                                case lector::mtile: g[i]=bucketAdd<tileaiReadNT>(g[i]);break;
-                                                case lector::mother: g[i]=bucketAdd<otheraiReadNT>(g[i]);break;
-                                                }
-                                    else
-                                        switch(tg[k]){
-                                        case lector::mglobal:
-                                            g[i]=bucketAdd<globalaiRead>(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolderTemp.push_back({true,tg[j]});
-                                        break;case lector::mpieza:
-                                            g[i]=bucketAdd<piezaaiRead>(static_cast<getterCond*>(g[i]));
-                                            setUpMemTriggersPerNormalHolderTemp.push_back({false,tg[j]});
-                                        break;
-                                        case lector::mtile: g[i]=bucketAdd<tileaiRead>(static_cast<getterCond*>(g[i]));bools|=doEsp;break;
-                                        case lector::mother: g[i]=bucketAdd<otheraiRead>(static_cast<getterCond*>(g[i]));break;
-                                        }
-                            }
-                        }
-                    }
-                    if(action){
-                        #define memCase(F) case lector::m##F: if(writeOnTile) \
-                                                                    accsTemp.push_back(new macc<m##F##AccTile,&str_##F>(g[0],g[1]));\
-                                                                else \
-                                                                    accsTemp.push_back(new macc<m##F##Acc,&str_##F>(g[0],g[1]));break;
-                            switch(tok){
-                            memCase(set);
-                            memCase(add);
-                        }
-                        #undef memCase
-                        ///manejo de locales en acciones que usen memoria local que haya cambiado
-                        if(isLocalAcc&&changeInLocalMem){
-                            auto* localAccTemp=accsTemp.back();accsTemp.pop_back();
-                            setupBarrays();
-                            accsTemp.push_back(localAccTemp);
-                            sig=bucketAdd<normal>(true);
-                            return;
-                        }
-                    }
-                    else{
-                        #define memCase(F) case lector::m##F: if(debugMode) \
-                        condsTemp.push_back(new debugMem(new mcond<m##F##Cond,&str_##F>(g[0],g[1]))); \
-                        else condsTemp.push_back(new mcond<m##F##Cond,&str_##F>(g[0],g[1])); break;
-                        switch(tok){
-                            memCase(cmp);
-                            memCase(dist);
-                            memCase(set);
-                            memCase(add);
-                            memCase(less);
-                            memCase(more);
-                        }
-                        #undef memCase
-                    }
-                }
-                break;
+  movSize+=sizeof(normalHolder)+memLocalSizeAct*sizeof(int);
+  n->tipo=NORMAL;
+  n->bools&=~(hasClick|makeClick|doEsp);
+  n->sig=nullptr;
+  n->relPos=v(0,0);
+  if(make){
+    bool changeInLocalMem=false;
+    while(true){
+      if(tokens.empty()) return nullptr;///@optim creo que no se activa nunca, no deberia
+      int tok=tokens.front();
+      tokens.pop_front();
+      switch(tok){
+      case lector::W:
+      case lector::S:
+      case lector::D:
+      case lector::A:
 
-    #undef acc //(TOKEN)
-    #undef cond //(TOKEN)
-    #undef colorr //(TOKEN)
-    #undef caseT //(TIPO,TOKEN)
-
-            case lector::sep:
-                //cout<<"sep"<<endl;
-                separator=true;
-                setupBarrays();
-                return;
-            case lector::eol:
-                bools|=hasClick|makeClick;
-                setupBarrays();
-                return;
-            case lector::end:
-                //cout<<"lim"<<endl;
-                setupBarrays();
-                return;
-            case lector::click:
-                bools|=hasClick|makeClick;
-                clickExplicit=true;
-                setupBarrays();
-                sig=tomar();
-                ///@todo mirar casos raros como dos clicks seguidos
-                return;
-            default:
-                tokens.push_front(tok);
-                sig=tomar();
-                setupBarrays();
-                return;
-            }
+        //antes nomas cortaba en cuando hubo una cond posicional antes. Ahora lo hago por cualquiera
+        //porque sino cosas como mcmp p0 1 w mover ponen un trigger en w aun cuando mcmp es falso
+        //por ahi no vale la pena cortar por eso igual.
+        if(!condsTemp.empty()||!accsTemp.empty()){
+          tokens.push_front(tok);
+          setupBarrays();
+          n->sig=initNormal(true);//nueva normal
+          return n;
+        }else{
+          switch(tok){
+          case lector::W: n->relPos.y--;break;
+          case lector::S: n->relPos.y++;break;
+          case lector::D: n->relPos.x++;break;
+          case lector::A: n->relPos.x--;break;
+          }
         }
-    }
-}
+        break;
+        //cout<<#TOKEN<<endl;
+#define cond(TOKEN) case lector::TOKEN:                           \
+        condsTemp.push_back(TOKEN) ;break
+        cond(vacio);
+        cond(pieza);
+        cond(enemigo);
+        cond(pass);
+      case lector::esp:
+        bools|=doEsp;
+        break;
+#define acc(TOKEN) case lector::TOKEN: accsTemp.push_back(TOKEN);break
+        acc(mov);
+        acc(capt);
+        acc(pausa);
+      case lector::spwn:
+        accsTemp.push_back(spwn);
+        accsTemp.push_back(void(*)(void)(tokens.front()-1000));
+        tokens.pop_front();break;
+        //spwn n con n positivo quiere decir mismo bando, negativo bando enemigo
+      case lector::color:
+        colorsTemp.push_back(crearColor());
+        break;
+        //       colorr(sprt);
+        //       colorr(numShow);
+      case lector::mcmp:
+      case lector::mset:
+      case lector::madd:
+      case lector::mless:
+      case lector::mmore:
+      case lector::mdist:
+        {
+          //mset l0 4 mset g0 l0 <-en este caso necesito cortar en 2 normales, para que el segundo set tenga registrado el primero
+          //esto no se maneja ahora porque prefiero delegar eso al parser cuando lo haga bien. Igual se puede manejar aca tambien, antes lo hacia
 
-desliz::desliz(){
-    tipo=DESLIZ;
-    bools&=~makeClick;
+          auto isCte=[](int tok)->bool{
+                       return isNum(tok)||
+                         tok==lector::posX||
+                         tok==lector::posY||
+                         tok==lector::turno;
+                     };
 
-    int movSizeTemp=movSize;
-    movSize=0;
-    inside=tomar();
-    v& tam=tablptr->tam;
-    //iteraciones necesarias para recorrer el tablero en linea recta.
-    iterSize=movSize;
-    insideSize=movSize*((tam.x>tam.y?tam.x:tam.y))*2;///@todo agregar posibilidad de elegir cuando se reserva
-    movSize=movSizeTemp+sizeof(deslizHolder)+insideSize;
 
-    sig=keepOn(&bools);
+          int op=tok;
+          bool write=op==lector::mset||op==lector::madd;
+          tok=tokens.front();tokens.pop_front();
 
-    if(bools&makeClick)
-        bools|=hasClick;
-    else
-        for(operador* op=inside;op!=nullptr;op=op->sig)
-            if(op->bools&hasClick){
-                bools|=hasClick;
-                break;
+          assert(!(write&&isCte(tok)));
+
+          bool action=write&&(tok==lector::global||lector::tile);
+          if(action){
+            int i=0;
+            int nextTok=tokens.front();
+            if(isCte(nextTok)){
+              switch(tok){//manejo sets nomas
+              case lector::global: accsTemp.push_back(msetG);break;
+              case lector::tile:   accsTemp.push_back(msetT);break;
+              }
+              tok=tokens.front();tokens.pop_front();
+              gatherCte(accsTemp,tok);
+              i++;
+            }else{
+              switch(tok){
+              case lector::global: accsTemp.push_back(msetGi);break;
+              case lector::tile:   accsTemp.push_back(msetTi);break;
+              }
             }
-}
-exc::exc(){
-    tipo=EXC;
-    int movSizeTemp=movSize;
-    movSize=0;
-
-    vector<operador*> opsTemp;
-    do{
-        separator=false;
-        operador* op=tomar();
-        opsTemp.push_back(op);
-    }while(separator);
-    ops.init(opsTemp.size(),opsTemp.data());
-    movSize+=ops.size();
-
-    insideSize=movSize;
-    movSize=movSizeTemp+sizeof(excHolder)+insideSize;
-
-    bools&=~makeClick;
-    sig=keepOn(&bools);
-    if(bools&makeClick)
-        bools|=hasClick;
-    else{
-        bools&=~hasClick;
-        for(operador* op:ops)
-            if(op->bools&hasClick){
-                bools|=hasClick;
+            for(;i<2;i++){
+              tok=tokens.front();tokens.pop_front();
+              if(i==1&&isCte(tok)){
+                gatherCte(accsTemp,tok);
                 break;
+              }
+              while(true){
+                nextTok=tokens.front();
+                if(isCte(nextTok)){
+                  switch(tok){
+                  case lector::global: accsTemp.push_back(globalRead);break;
+                  case lector::tile:   accsTemp.push_back(tileReadNT);break;
+                  case lector::local:  accsTemp.push_back(localAccg);break;
+                  case lector::pieza:  accsTemp.push_back(piezaAccg);break;
+                  }
+                  tok=tokens.front();tokens.pop_front();
+                  gatherCte(accsTemp,tok);
+                  return;
+                }else{
+                  switch(tok){
+                  case lector::global: accsTemp.push_back(globalReadNTi);break;
+                  case lector::tile:   accsTemp.push_back(tileReadNTi);break;
+                  case lector::local:  accsTemp.push_back(localAccgi);break;
+                  case lector::pieza:  accsTemp.push_back(piezaAccgi);break;
+                  }
+                }
+                tok=tokens.front();tokens.pop_front();
+              }
             }
-    }
+          }else{
+            condsTemp.push_back(op);
+            for(int i=0;i<2;i++){
+              if(isCte(tok)){
+                gatherCte(condsTemp,tok);
+                continue;
+              }
+              while(true){
+                int nextTok=tokens.front();
+                if(isCte(nextTok)){
+                  switch(tok){
+                  case lector::global: condsTemp.push_back(globalRead);setUpMemTriggersPerNormalHolderTemp.push_back({0,tg[j]});break;
+                  case lector::tile:   condsTemp.push_back(tileRead);break;
+                  case lector::local:  condsTemp.push_back(localg);break;
+                  case lector::pieza:  condsTemp.push_back(piezag);break;
+                  }
+                  tok=tokens.front();tokens.pop_front();
+                  gatherCte(condsTemp,tok);
+                  break;
+                }else{
+                  switch(tok){
+                  case lector::global: condsTemp.push_back(globalReadi);break;
+                  case lector::tile:   condsTemp.push_back(tileReadi);break;
+                  case lector::local:  condsTemp.push_back(localgi);break;
+                  case lector::pieza:  condsTemp.push_back(piezagi);break;
+                  }
+                }
+                tok=tokens.front();tokens.pop_front();
+              }
+            }
+          }
 
+
+
+
+
+
+
+
+
+
+
+      case lector::sep:
+        //cout<<"sepn->"<<endl;
+        separator=true;
+        setupBarrays();
+        return n;
+      case lector::eol:
+        bools|=hasClick|makeClick;
+        setupBarrays();
+        return n;
+      case lector::end:
+        //cout<<"lim"<<endl;
+        setupBarrays();
+        return n;
+      case lector::click:
+        bools|=hasClick|makeClick;
+        clickExplicit=true;
+        setupBarrays();
+        n->sig=tomar();
+        ///@todo mirar casos raros como dos clicks seguidos
+        return n;
+      default:
+        tokens.push_front(tok);
+        sig=tomar();
+        setupBarrays();
+        n->sig=(operador*)actualBucket->head;
+        initNormal(true);
+        return n;
+      }
+    }
+  }
 }
-isol::isol(){
-    tipo=ISOL;
+desliz* initDesliz(){
+  desliz* d=alloc<desliz>();
+
+  d->tipo=DESLIZ;
+  d->bools&=~makeClick;
+
+  int movSizeTemp=movSize;
+  movSize=0;
+  d->inside=tomar();
+  v& tam=tablptr->tam;
+  //iteraciones necesarias para recorrer el tablero en linea recta.
+  d->iterSize=movSize;
+  d->insideSize=movSize*((tam.x>tam.y?tam.x:tam.y))*2;///@todo agregar posibilidad de elegir cuando se reserva
+  movSize=movSizeTemp+sizeof(deslizHolder)+d->insideSize;
+
+  sig=keepOn(&bools);
+
+  if(bools&makeClick)
     bools|=hasClick;
-    bools&=~makeClick;
-    bool clickExplicitBack=clickExplicit;
-
-    int movSizeTemp=movSize;
-    movSize=sizeof(isolHolder);
-    inside=tomar();
-    size=movSize;
-    movSize+=movSizeTemp;
-
-    if(!clickExplicit)
-        bools|=makeClick;
-    clickExplicit=clickExplicitBack;
-    sig=keepOn(&bools);
-}
-desopt::desopt(){
-    tipo=DESOPT;
-    int movSizeTemp=movSize;
-    movSize=0;
-    vector<operador*> opsTemp;
-    vector<int> sizesTemp;
-    int branches=0;
-    do{
-        int movSizeTemp=movSize;
-        separator=false;
-        operador* op=tomar();
-        opsTemp.push_back(op);
-        sizesTemp.push_back(movSize-movSizeTemp);
-        branches++;
-    }while(separator);
-    ops.init(opsTemp.size(),opsTemp.data());
-    for(int& i:sizesTemp) i+=sizeof(desoptHolder::node*);//sumar espacio puntero a cluster
-    movSize+=branches*sizeof(desoptHolder::node*);
-
-    movSizes.init(branches,sizesTemp.data());
-
-    clusterSize=movSize;
-    dinamClusterBaseOffset=clusterSize+clusterSize*branches;
-    desoptInsideSize=clusterSize+clusterSize*branches+clusterSize*1024;//12 es la cantidad de slots del espacio dinamico
-    //@todo hacerse pueda determinar otros valores como con desliz
-    movSize=movSizeTemp+sizeof(desoptHolder)+desoptInsideSize;
-
-    bools&=~makeClick;
-    sig=keepOn(&bools);
-    if(bools&makeClick)
+  else
+    for(operador* op=d->inside;op!=nullptr;op=op->sig)
+      if(op->bools&hasClick){
         bools|=hasClick;
-    else{
-        bools&=~hasClick;
-        for(operador* op:ops)
-            if(op->bools&hasClick){
-                bools|=hasClick;
-                break;
-            }
-    }
+        break;
+      }
+  return d;
+}
+exc* initExc(){
+  exc* e=alloc<exc>();
+
+  e->tipo=EXC;
+  int movSizeTemp=movSize;
+  movSize=0;
+
+  vector<operador*> opsTemp;
+  do{
+    separator=false;
+    operador* op=tomar();
+    opsTemp.push_back(op);
+  }while(separator);
+  e->ops.init(opsTemp.size(),opsTemp.data());
+  movSize+=e->ops.size();
+
+  e->insideSize=movSize;
+  movSize=movSizeTemp+sizeof(excHolder)+e->insideSize;
+
+  e->bools&=~makeClick;
+  e->sig=keepOn(&e->bools);
+  if(e->bools&makeClick)
+    e->bools|=hasClick;
+  else{
+    e->bools&=~hasClick;
+    for(operador* op:e->ops)
+      if(op->bools&hasClick){
+        e->bools|=hasClick;
+        break;
+      }
+  }
+  return e;
+}
+isol* initIsol(){
+  isol* i=alloc<isol>();
+
+  i->tipo=ISOL;
+  i->bools|=hasClick;
+  i->bools&=~makeClick;
+  bool clickExplicitBack=clickExplicit;
+
+  int movSizeTemp=movSize;
+  movSize=sizeof(isolHolder);
+  i->inside=tomar();
+  i->size=movSize;
+  movSize+=movSizeTemp;
+
+  if(!clickExplicit)
+    i->bools|=makeClick;
+  clickExplicit=clickExplicitBack;
+  sig=keepOn(&i->bools);
+
+  return i;
+}
+desopt* initDesopt(){
+  desopt* d=alloc<desopt>();
+
+  d->tipo=DESOPT;
+  int movSizeTemp=movSize;
+  movSize=0;
+  vector<operador*> opsTemp;
+  vector<int> sizesTemp;
+  int branches=0;
+  do{
+    int movSizeTemp=movSize;
+    separator=false;
+    operador* op=tomar();
+    opsTemp.push_back(op);
+    sizesTemp.push_back(movSize-movSizeTemp);
+    branches++;
+  }while(separator);
+  ops.init(opsTemp.size(),opsTemp.data());
+  for(int& i:sizesTemp) i+=sizeof(desoptHolder::node*);//sumar espacio puntero a cluster
+  movSize+=branches*sizeof(desoptHolder::node*);
+
+  d->movSizes.init(branches,sizesTemp.data());
+
+  d->clusterSize=movSize;
+  d->dinamClusterBaseOffset=d->clusterSize+d->clusterSize*branches;
+  d->desoptInsideSize=d->clusterSize+d->clusterSize*branches+d->clusterSize*1024;//12 es la cantidad de slots del espacio dinamico
+  //@todo hacerse pueda determinar otros valores como con desliz
+  movSize=movSizeTemp+sizeof(desoptHolder)+d->desoptInsideSize;
+
+  d->bools&=~makeClick;
+  d->sig=keepOn(&d->bools);
+  if(d->bools&makeClick)
+    d->bools|=hasClick;
+  else{
+    d->bools&=~hasClick;
+    for(operador* op:d->ops)
+      if(op->bools&hasClick){
+        d->bools|=hasClick;
+        break;
+      }
+  }
+  return d;
 }
 
 //mira si hay algun token adelante que genere un operador
 operador* keepOn(int32_t* bools){
-    if(tokens.empty())
-        return nullptr;
-    switch(tokens.front())
+  if(tokens.empty())
+    return nullptr;
+  switch(tokens.front())
     {
     case lector::click:
-        *bools|=makeClick;
-        tokens.pop_front();
-        return keepOn(bools);
+      *bools|=makeClick;
+      tokens.pop_front();
+      return keepOn(bools);
     case lector::sep:
-        separator=true;
-        tokens.pop_front();
-        return nullptr;
+      separator=true;
+      tokens.pop_front();
+      return nullptr;
     case lector::eol:
-        if(!clickExplicit)
-            *bools|=makeClick;
+      if(!clickExplicit)
+        *bools|=makeClick;
     case lector::end:
-        tokens.pop_front();
-        return nullptr;
+      tokens.pop_front();
+      return nullptr;
     }
-    return tomar();
+  return tomar();
 }
 
 operador* tomar(){
-    if(tokens.empty()) return nullptr;
-    int tok=tokens.front();
-    tokens.pop_front();
-#define caseTomar(TOKEN) case lector::TOKEN: return bucketAdd<TOKEN>()
-    switch(tok)
+  if(tokens.empty()) return nullptr;
+  int tok=tokens.front();
+  tokens.pop_front();
+#define caseTomar(TOKEN) case lector::TOKEN: return init##TOKEN ()
+  switch(tok)
     {
-    caseTomar(desliz);
-    caseTomar(exc);
-    caseTomar(isol);
-    caseTomar(desopt);
+      caseTomar(desliz);
+      caseTomar(exc);
+      caseTomar(isol);
+      caseTomar(desopt);
     case lector::sep:
-        separator=true;
+      separator=true;
     case lector::eol:
     case lector::end:
-        return nullptr;
+      return nullptr;
     default:
-        tokens.push_front(tok);
-        return bucketAdd<normal>(true);
+      tokens.push_front(tok);
+      return initNormal(true);
     }
 }

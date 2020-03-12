@@ -43,7 +43,7 @@ Clicker::Clicker(vector<normalHolder*>* normales_,Holder* h_){
 
 void Clicker::draw(){
   for(normalHolder* n:normales){
-      n->draw();
+      drawNormalH(n);
     }
     /*
     if(!activo) return;
@@ -131,7 +131,7 @@ void Clicker::update(){
 void Clicker::accionar(){
     Clicker::drawClickers=false;
     for(normalHolder* n:normales){
-        n->accionar();
+        accionarNormalH(n);
     }
 }
 
