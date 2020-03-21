@@ -277,7 +277,21 @@ void generateTokens(vector<int>* tokens,char* s){
     s++;
   }
 }
-void generateTokensForMacros(vector<int>* tokens,char** sp){
+
+/*
+  definir un macro adentro de un macro (ej. >x = >y,>z) esta prohibido.
+  Es una funcionalidad rara, e implementarla sería un poco complicado,
+  porque necesitaria volver a la etapa de creacion de macros durante la etapa
+  de expansion.
+  No veo que valga la pena. Ahora esto se prohibe a traves de que el procesado
+  de tokens normal no conoce la idea de macros, y no reconoce > y falla.
+  Más adelante, cuando implemente operadores de memoria infijos va a fallar porque
+  interpreta > como mayor, y falla ahi. Es una ventaja de usar el mismo simbolo
+  para las 2 cosas
+*/
+
+
+void generateTokensForMacros(macro* m,char** sp){
   char* s=*sp;
   //copy paste de generateTokens
   char* b=nullptr;
@@ -285,15 +299,17 @@ void generateTokensForMacros(vector<int>* tokens,char** sp){
     if(*s==':'){
       fail("macro missing ;");
     }
-    if(whiteSpace(*s)||centinel(*s)){
+    if(whiteSpace(*s)||centinel(*s)||*s='|'){
       if(b!=nullptr){
-        tokenWord(&tokens,b,s);
+        tokenWord(&m->expansion,b,s);
         b=nullptr;
       }
       if(*s==';'){
         break;
+      }else if(*s=='|'){
+        m->moreThanOneExpansion=true;
       }else if(centinel(*s)){
-        tokenCentinel(&tokens,*s);
+        tokenCentinel(&m->expansion,*s);
       }
     }else{
       if(b==nullptr){
@@ -306,6 +322,12 @@ void generateTokensForMacros(vector<int>* tokens,char** sp){
   *sp=s;
 }
 
+void init(macro* m){
+  //el vector se inicializa solo porque tiene un constructor quedo medio raro eso
+  m->next=0;
+  m->moreThanOneExpansion=false;
+}
+
 void loadGlobalMacros(parseData* ps,char* s){
   while(true){
     if(*s==':') return;
@@ -315,6 +337,7 @@ void loadGlobalMacros(parseData* ps,char* s){
       continue;
     }
     if(*s=='>'){
+      s++;
       while(*s==' ') s++;
       char* b=s;
       while(*s!=' ') s++;
@@ -328,9 +351,10 @@ void loadGlobalMacros(parseData* ps,char* s){
         *s=0;
         fail("invalid macro name %s",b);
       }
-      vector<int> tokens;
-      generateTokensForMacros(&tokens,&s);
-      push(&ps->gMacro,tokens);
+      macro m;
+      init(&m);
+      generateTokensForMacros(&m,&s);
+      push(&ps->gMacro,m);
 
       ps->wordsToToken[newWord]=ps->defIndex++;//lo agrego ahora para que no se lo reconozca durante la carga de tokens
       //porque no hay macros recursivos
@@ -425,20 +449,112 @@ void tokenCentinel(vector<int>* tokens,char* c){
   case '{': tok=llaveizq;break;
   case '}': tok=llaveder;break;
   case '#': return;
+  case '|': tok=macroSeparator;break;
   }
   push(tokens,tok);
 }
 
-//los defs se podrían aplanar de antes y hacer esto menos recursivo
-void expandDef(parseData* ps,vector<int>* into,vector<int>* from){
+/*podría probar expandir los macros que contienen macros antes, pero como algunos tienen varias expansiones
+tendría que ir subiendo la multiplicidad hasta el primer macro y es medio raro. Al final sería mas rapido igual,
+podría probar. TODO?
+Creo que sería incorrecto expandir antes si hay ligamiento
+Por ejemplo, tengo
+> a&b = 1&2 | 3&4
+> c = abbababb
+mov c a a b
+
+terminaria con
+> a&b = 1&2 | 3&4
+> c = 12212122 | 34434344
+mov c a a b
+que no es lo mismo
+Asi que la aplanacion, si se hace, se haria con macros no ligados
+
+
+
+se pueden ligar variables despues? tipo
+> a = 1 | 3
+> b = 2 | 4
+> c = a&b | b&a
+teoricamente se podría pero creo que limitaria el orden en el que expando los macros
+
+*/
+
+macro getMacro(parseData* ps,int token){
+  int ind=token-lastToken;
+  if(ind>ps->lastGlobalMacro){
+    return ps->localMacro[ind-ps->lastGlobalMacro];
+  }
+  return ps->globalMacro[ind];
+}
+
+bool isMacro(int tok){
+  return tok>=last&&tok<1024;
+}
+
+//se hace una pasada donde se expanden los macros simples
+//los que sean multiples se separa el movimiento y despues se agrega al final cada version
+void expandMacros(parseData* ps,vector<int>* into,vector<int>* from,int* movStart,bool* multiExpandMov){
   for(int i=0;i<from->size;i++){
     int tok=from->data[i];
-    if(tok>=last&&tok<1024){ //no 2048 porque puede ser un numero negativo
-      expandDef(ps,into,&ps->defs[tok-last]);
+    if(isMacro(tok)){
+      macro m=getMacro(ps,tok);
+      if(m->moreThanOneExpansion){
+        multiExpandMov=true;
+        push(into, tok);
+      }else{
+        expandDef(ps,into,&m->expansion,movStart);
+      }
     }else{
+      if(tok==movEnd){ //solo relevante en movimiento, no en macro
+        if(*multiExpandMov){
+          expandVersions(ps,from,into,*movStart,into->size);
+          continue;
+        }
+
+        *movStart=into->size;
+      }
+      assert(tok!=macroSeparator);
       push(into,tok);
     }
   }
+}
+
+/*se expanden las versiones del ultimo movimiento y se ponen en el final del from, cosa que
+se agarren devuelta y se pasen al into, expandiendo mas si se necesita
+la version original del movimiento que queda en into se pisa
+Tecnicamente no se necesitaria regurgitar si lo que queda no tiene macros o tiene macros simples,
+pero no puedo copiar de into a into porque estaria pisando el mismo espacio, por lo que tendría que
+usar un buffer intermedio, y from cumple esa funcion
+*/
+void expandVersions(parseData* ps,vector<int>* from,vector<int>* into,int movStart,int movEnd){
+  int lockOnFirstMacro=-1;
+  int j=0;
+  bool lastLap=false;
+  do{
+  for(int i=movStart;i<movEnd;i++){
+    int tok=into->data[i];
+    if(isMacro(tok)&& (lockOnFirstMacro==-1||lockOnFirstMacro==i)){
+      lockOnFirstMacro=i;
+
+      macro m=getMacro(ps,tok);
+      assert(m->moreThanOneExpansion);
+      for(;;j++){
+        if(j==m->expansion.size){
+          lastLap=true;
+        }
+        tok=m->expansion[j];
+        if(tok==macroSeparator){
+          break;
+        }
+        push(from,tok);
+      }
+    }else
+      push(from,tok);
+  }
+  push(from,movEnd);
+  }while(!lastLap);
+  into->size=movStart+1;
 }
 
 
@@ -453,8 +569,13 @@ bool growMemory(parseData* ps,int gType,int val){
 }
 
 void processTokens(parseData* ps,vector<int>* tokens){
-  vector<int> tokensWDefs(tokens->size);
-  expandDef(ps,&tokensWDefs,tokens);
+  vector<int> tokensExpanded(tokens->size);
+
+  int movStart=0;
+  bool multiExpandMov=false;
+  expandMacros(ps,&tokensWDefs,tokens,&movStart,&multiExpandMov);
+
+
 
   //manejar turn, llaves
 
@@ -619,103 +740,6 @@ void processTokens(parseData* ps,vector<int>* tokens){
     }
     cout<<endl;
 */
-
-void lector::procesarTokens(list<int>& tokens){
-    //aplicar def
-    for(auto it=tokens.begin(); it!=tokens.end(); it++)///@optim tendria mas sentido cargarlo directamente en vez de en 2 pasos
-        for(auto ent:defs)
-            if(ent.first==*it){
-                it=tokens.erase(it);
-                auto aux=it;
-                aux--;
-                tokens.insert(it,ent.second.begin(),ent.second.end());
-                it=aux;
-                break;
-            }
-
-    //aplicar llaves
-    bool loop=true;
-    int numeroLinea;//para manejar incersion de memLocalSize en movimientos con llaves
-    while(loop){
-        loop=false;
-        numeroLinea=0;
-        list<int>::iterator inicioLinea=tokens.begin();
-        for(auto izq=tokens.begin();izq!=tokens.end();++izq){
-            if(*izq==eol){
-                inicioLinea=izq;
-                ++inicioLinea;
-                numeroLinea++;
-            }
-            else if(*izq==llaveizq){
-                loop=true;
-                int anid=0;
-                ++izq;
-                for(auto der=izq; der!=tokens.end();++der){
-                    if(*der==llaveizq)
-                        ++anid;
-                    else if(*der==llaveder){
-                        if(anid)
-                            --anid;
-                        else{
-                            auto pos=inicioLinea;
-                            --pos;
-                            ++der;
-                            auto finLinea=der;
-                            for(;*finLinea!=eol&&finLinea!=tokens.end();++finLinea);
-                            if(*finLinea==eol) ++finLinea;
-                            list<int> act,pre,post;
-                            act.splice(act.begin(),tokens,inicioLinea,finLinea);
-                            --izq;
-                            pre.splice(pre.begin(),act,act.begin(),izq);
-                            post.splice(post.begin(),act,der,act.end());
-                            act.pop_back();
-                            act.pop_front();
-                            auto jt=act.begin(),it=act.begin();
-                            ++pos;
-                            --it;
-                            do{
-                                ++it;
-                                if(*it==llaveizq)
-                                    ++anid;
-                                else if(*it==llaveder)
-                                    --anid;
-                                else if(*it==coma&&anid==0||it==act.end()){
-                                    list<int> exp;
-                                    exp.assign(pre.begin(),pre.end());
-                                    exp.insert(exp.end(),jt,it);
-                                    exp.insert(exp.end(),post.begin(),post.end());
-                                    jt=it;
-                                    ++jt;
-                                    tokens.splice(pos,exp,exp.begin(),exp.end());
-
-                                    memLocalSizes.insert(memLocalSizes.begin()+numeroLinea,memLocalSizes[numeroLinea]);
-                                }
-                            }
-                            while(it!=act.end());
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-    }
-    //aplicar reglas especiales, como limpiar los eol con lineJoins
-    for(list<int>::iterator it=tokens.begin();it!=tokens.end();++it){
-        //list<int>::iterator jt=it++;
-        list<int>::iterator jt=it;
-        ++jt;
-        if(*it==N&&*jt==esp){
-            tokens.erase(jt);
-            it=tokens.erase(it);
-            ----it;
-            continue;
-        }
-        if(*it==sep&&*jt==end)
-            it=tokens.erase(it);
-    }
-}
-
 
 void makePiece(parseData* ps,int id,int sn,vector<int>* tokens){
   Pieza piece;
