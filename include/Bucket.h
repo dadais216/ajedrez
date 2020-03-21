@@ -222,4 +222,75 @@ void clear(bbucket<size,T>* b){
 }
 
 
+template<typename T>
+struct vector{
+  int size;
+  int cap;
+  T* data;
+  operator[](int i){
+    assert(i>=0&&i<size);
+    return data[i];
+  }
+  vector(int cap_=16){
+    size=0;
+    cap=cap_;
+    data=(T*)malloc(cap_);
+  }
+};
+
+template<typename T>
+inline void privateGrow(vector<T>* vec,int cap){
+  vec->cap=cap;
+  T* oldData=vec->data;
+  vec->data=(T*)malloc(cap);
+  memcpy(vec->data,oldData,vec->size*sizeof(T));
+  free(oldData);
+}
+
+template<typename T>
+void push(vector<T>* vec,T obj){
+  if(vec->size==vec->cap){
+    privateGrow(vec,vec->cap*2);
+  }
+  vec->data[size]=obj;
+  vec->size++;
+}
+
+template<typename T>
+T pop(vector<T>* vec){
+  vec->size--;
+  return vec->data[size+1];
+}
+
+template<typename T>
+void reserve(vector<T>* vec,int res){
+  if(res>cap){
+    privateGrow(vec,res);
+  }
+}
+
+void free(vector<T> vec){
+  free(vec->data);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #endif // BUCKET_H

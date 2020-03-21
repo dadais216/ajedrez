@@ -6,42 +6,42 @@
 ///el arbol de operadores. No tiene sentido tenerla copiada.
 
 struct operador{
-  int tipo;//esto se usa?
-    operador* sig;
-    int32_t bools;//makeClick, hasClick, doEsp en normal
+  int tipo;
+  operador* sig;
+  int32_t bools;//makeClick, hasClick, doEsp en normal
 };
 struct normal:public operador{
-    ///@optim esto podria estar adentro del bucket, antes de la informacion especifica. Lector puede pasar
-    ///la longitud de cada uno de estos vectores.
+  ///@optim esto podria estar adentro del bucket, antes de la informacion especifica. Lector puede pasar
+  ///la longitud de cada uno de estos vectores.
   barray<void(*)(void)> accs;
   barray<bool(*)(void)> conds;
   barray<void(*)(void)> colors;
-    struct setupTrigInfo{
-        char type; //0 global 1 pieza 2 turno
-        int ind;
-    };
-    barray<setupTrigInfo> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
-    v relPos;
+  //struct setupTrigInfo{
+  //    char type; //0 global 1 pieza 2 turno
+  //    int ind;
+  //};
+  //barray<setupTrigInfo> setUpMemTriggersPerNormalHolder;//para que se pongan triggers permanentes de memoria que apunten a cada normalholder correspondiente
+  v relPos;
 };
 struct desliz:public operador{
-    operador* inside;
-    size_t insideSize;
-    size_t iterSize;
+  operador* inside;
+  size_t insideSize;
+  size_t iterSize;
 };
 struct exc:public operador{
-    barray<operador*> ops;
-    int insideSize;//tamaño de movHolders + lo que ocupe ops
+  barray<operador*> ops;
+  int insideSize;//tamaño de movHolders + lo que ocupe ops
 };
 struct isol:public operador{
-    int size;
-    operador* inside;
+  int size;
+  operador* inside;
 };
 struct desopt:public operador{
-    barray<operador*> ops;
-    barray<int> movSizes;//tamaño de cada movimiento, incluyendo puntero al proximo cluster
-    int desoptInsideSize;
-    int clusterSize;
-    int dinamClusterBaseOffset;
+  barray<operador*> ops;
+  barray<int> movSizes;//tamaño de cada movimiento, incluyendo puntero al proximo cluster
+  int desoptInsideSize;
+  int clusterSize;
+  int dinamClusterBaseOffset;
 };
 
 

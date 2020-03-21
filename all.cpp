@@ -27,7 +27,13 @@ type* name(){\
 #define fromCast(new,old,type) type new=(type) old;
 
 
-
+template<typename T>
+struct deferObj{
+  T lambda;
+  deferObj(T l){lambda=l}
+  ~deferObj(){lambda()}
+};
+#define defer(op) deferObj([&](){op});
 
 
 

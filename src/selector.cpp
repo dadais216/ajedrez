@@ -24,16 +24,6 @@ struct selectorState{
   boton* firstButton;
 };
 
-boton* buttonAllocInit(string s,int n,int x,int y){
-  boton* b=alloc<boton>(&stateBucket);
-  b->name=s;
-  b->n=n;
-  b->x=x;
-  b->y=y;
-  b->next=(boton*)stateBucket.head;//se crean en secuencia, el ultimo se pone en null desde afuera
-  return b;
-}
-
 void drawButton(boton* b){
   getStruct(selectorState,spt,stateBucket);
   spt->sprite.setPosition(b->x,b->y);
@@ -76,7 +66,6 @@ void updatePlayerSelector(playerSelector* ps){
   }
 }
 
-
 void selectorUpdate();
 void selectorInit(){
   resetBucket(&stateBucket);
@@ -99,25 +88,30 @@ void selectorInit(){
 
   spt->firstButton=(boton*)stateBucket.head;
 
+
   fstream tableros;
   tableros.open("tableros.txt");
-  string linea; 
-  int j=0;
-  boton* lastButton;
-  while(getline(tableros,linea)){
-    if(!linea.empty()&&linea[0]=='"'){
-      int i=1;
-      for(; linea[i]!='"'; i++);
+  cString line;
+  int i=0;
 
-      lastButton=buttonAllocInit(linea.substr(1,i-1),
-                 j,//j+1?
-                 32+(70*j/420)*140,
-                 40+(j*70)%420);
+  boton* button;
+  while(readFileUntil(tableros,line,'\n')){
+    if(line.len!=0&&linea[0]=='"'){
+      int j=1;
+      for(; linea[j]!='"'; j++);
 
-      j++;
+      button=alloc<boton>(&stateBucket);
+      string str=string(line.c[1],line.c[j-1]);
+      button->name = str;
+      button->n=i++;
+      button->x=32+(70*i/420)*140;
+      button->y=40+(i*70)%420;
+      button->next=(boton*)stateBucket.head;
     }
   }
-  lastButton->next=nullptr;
+  button->next=nullptr;
+
+
   drawScreen(selectorDraw);
   actualStateUpdate=selectorUpdate;
 }

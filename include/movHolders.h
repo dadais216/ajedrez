@@ -114,6 +114,7 @@ void initDesoptH(desopt*,Base*,char**);
 struct spawnerGen{
   virtualTableMov* table;
   Base* base;
+  bool kamikaseNext;
 };
 void initSpawner(spawnerGen*,Base*);
 struct kamikaseCntrl{

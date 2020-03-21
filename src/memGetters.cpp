@@ -3,67 +3,8 @@ RectangleShape backGroundMemDebug;
 
 
 
-#define localMema(memType,memSourceC,memSourceA,memSizeSource)      \
-  int* memType##a(char* data){                                      \
-  fromCast(ind,data,int*);                                      \
-                                                                \
-  debug(                                                         \
-        int memSize=memSizeSource;                \
-        backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),405+45*(ind/4-memSize/4))); \
-        window.draw(backGroundMemDebug);                                \
-                                                                 );     \
-                                                                        \
-  return &memSourceC[ind];                                                  \
-  }                                                                     \
-                                                                        \
-  int* memType##aAcc(char* data){                                           \
-    fromCast(ind,data,int*);                                            \
-    return &memSourceC[ind];                                \
-  }                                                                     \
-                                                                        \
-  int* memType##ai(char* data){                                             \
-    fromCast(g,data,getter*);                                           \
-    int ind=g(data+sizeof(g));                                          \
-                                                                        \
-    debug(                                                              \
-                                                                        ); \
-                                                                        \
-    return &memSourceC[ind];                                                \
-  }                                                                     \
-                                                                        \
-  int* memType##aiAcc(char* data){                                          \
-    fromCast(g,data,getter*);                                           \
-    return &memSourceA[g->val()];                           \
-  }                                                                     \
-localMema(local,memMov,actualHolder.nh->memAct,actualHolder.nh->base->memLocalSize);
-localMema(pieza,actualHolder.h->memPieza,actualHolder.h->memPieza,actualHolder.h->memPieza.size());
-//para pieza en no debug no hay diferencia entre el acceso comun y el acc
-//puede que el codigo en debug sea nomas guardar la informacion necesaria en un buffer, y el dibujado se haga despues
-
-
-//acc indirecto aparece en cadenas de 3 o mas
-
-//debug indirecto
-//ahora no es recursivo, deberia dibujar un bloque en ind y listo
-//backGroundMemDebug.setFillColor(sf::Color(178,235,221));
-//g->drawDebugMem();
-//backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-//int memSize=actualHolder.nh->base->memLocalSize;
-//backGroundMemDebug.setPosition(Vector2f(530+25*(before%4),405+45*(before/4-memSize/4)));
-//window.draw(backGroundMemDebug);
-
-
-
-
-
-
-
-
-
-memTriggers* trigsMaybeActivate;
-//locales y de pieza no ponen triggers porque no se pueden poner condiciones sobre estos en un movimiento (solo existen en la generacion)
-//hay 2 tipos de triggers de memoria, estaticos y dinamicos. Los estaticos son los de accesos a la memoria global directos, que se conocen cuando se arma el holder y quedan fijos. Los dinamicos son el resto (indirectos y tile)
-//Funcionan mas o menos como los trigger posicionales, se crean durante las condiciones (lectura) y se activan durante accion (en escritura) y se eliminan
+//triggers globales se crean en la creacion de la pieza y son fijos
+//triggers de memoria tile e indirectos funcionan los posicionales, se crean dinamicamente y solo son validos los generados en un mismo turno
 
 
 //lo unico malo de esta version es que el debug quedo ligado a la ejecucion
@@ -157,7 +98,10 @@ int* piezagi(){//unico motivo de existir es no tirar codigo debug en accion
 int* globalRead(){
   int ind=(int)getNextInBuffer();;
   debug(drawDebugMem(ind,memGlobalSize,0));
-  return &memGlobal[ind];
+
+  memData md=board->memGlobal[ind];
+  pushTrigger(board->ts,&md->used,&md->firstTriggerBox,actualTile);//probar triggers fijos despues
+  return &md->val;
 }
 
 //no me acuerdo porque hice que step este en el tile donde esta parada la pieza en lugar de meterlo en la pieza
@@ -169,12 +113,11 @@ int* globalReadi(){
   getter g=(getter)getNextInBuffer();
   debugSetIndirectColor();
   int ind=*g();
-  debugUnsetIndirectColor();;
+  debugUnsetIndirectColor();
   debugDrawMem(ind,memSize,0);
-  int* stepCheck=&actualHolder.h->tile->step;
-  int step=*stepCheck;
-  memGlobalIndirectTriggers[ind].push_back({actualHolder.nh,step,stepCheck});
-  return &memGlobal[ind];
+  memData md=board->memGlobal[ind];
+  pushTrigger(board->ts,&md->used,&md->firstTriggerBox,actualTile);
+  return &md->val;
 }
 
 int* globalReadiNT(){
@@ -183,28 +126,28 @@ int* globalReadiNT(){
   int ind=*g();
   debugUnsetIndirectColor();;
   debugDrawMem(ind,memSize,0);
-  return &memGlobal[ind];
+  return &board->memGlobal[ind].val;
 }
 
 
 v posDebugTile(0,0);
 
+memData getTileMd(int ind,board* b){
+  return board->memTile[ind+nh->pos.x*board->dim.y+nh->pos.y*board->dim.x*board->memTileSlots];
+}
+
 int* tileRead(){
   int ind=(int)getNextInBuffer();
-  int* stepCheck=&actualHolder.h->tile->step;
-  int step=*stepCheck;
-  //@optim actualTile global por algun motivo?
-  //@optim stepCheck no es necesario porque se puede conseguir a traves de nh,
-  //no sé si seria mas rapido igual.
-  actualTile=tablptr->tile[actualHolder.nh->pos];
-  actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
   debugDrawMem(ind,memTileSize,200);
-  return &actualTile->memTile[ind];
+
+  memData md=getTileMd(ind,board);
+  pushTrigger(board->ts,&md.used,&md.firstTriggerBox,actualTile);
+  return &md.val;
 }
 int* tileReadNT(){  
   int ind=(int)getNextInBuffer();
-  actualTile=tablptr->tile[actualHolder.nh->pos];
-  return &actualTile->memTile[ind];
+  return &getTileMd(ind,board).val;
+;
 }
 
 int* tileReadi(){
@@ -212,19 +155,18 @@ int* tileReadi(){
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();
-  int* stepCheck=&actualHolder.h->tile->step;
-  int step=*stepCheck;
-  actualTile=tablptr->tile[actualHolder.nh->pos];
-  actualTile->memTileTrigs[ind].push_back({actualHolder.nh,step,stepCheck});
   debugDrawMem(ind,memTileSize,200);
-  return &actualTile->memTile[ind];
+
+  memData md=getTileMd(ind,board);
+  pushTrigger(board->ts,&md.used,&md.firstTriggerBox,actualTile);
+
+  return &md.val;
 }
 
 int* tileReadNTi(){
   getter g=(getter)getNextInBuffer();
   int ind=*g();
-  actualTile=tablptr->tile[actualHolder.nh->pos];
-  return &actualTile->memTile[ind];
+  return &getTileMd(ind,board).val;
 }
 
 //cteRead == (int)(*)()getNextInBuffer

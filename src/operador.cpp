@@ -110,7 +110,9 @@ normal* initNormal(bool make){
           bool write=op==lector::mset||op==lector::madd;
           tok=tokens.front();tokens.pop_front();
 
-          assert(!(write&&isCte(tok)));
+          if(write&&isCte(tok)){
+            fail("write on constant");
+          }
 
           bool action=write&&(tok==lector::global||lector::tile);
           if(action){
@@ -170,7 +172,7 @@ normal* initNormal(bool make){
                 int nextTok=tokens.front();
                 if(isCte(nextTok)){
                   switch(tok){
-                  case lector::global: condsTemp.push_back(globalRead);setUpMemTriggersPerNormalHolderTemp.push_back({0,tg[j]});break;
+                  case lector::global: condsTemp.push_back(globalRead);/*setUpMemTriggersPerNormalHolderTemp.push_back({0,tg[j]});*/break;
                   case lector::tile:   condsTemp.push_back(tileRead);break;
                   case lector::local:  condsTemp.push_back(localg);break;
                   case lector::pieza:  condsTemp.push_back(piezag);break;

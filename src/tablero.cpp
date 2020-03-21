@@ -9,7 +9,9 @@ void armarTablero(board* brd, v dims){
       Tile* tile=&brd->tiles[i+j*dims.x];
       memset(tile,0,sizeof(Tile));
       tile->pos=v(i,j);
-      tile->triggersBox=newTriggerBox();
+      tile->holder=nullptr;//poner puntero a holder aca
+      tile->triggersUsed=0;
+      tile->step=0;
     }
 
   escala=16*(1/(float)(dims.x>dims.y?dims.x:dims.y));
@@ -19,6 +21,11 @@ void armarTablero(board* brd, v dims){
   brd->n.setScale(escala,escala);
   brd->b.setTextureRect(IntRect(0,0,32,32));
   brd->n.setTextureRect(IntRect(32,0,32,32));
+
+  init(&brd->ts);
+
+  brd->memGlobal=(memData*)(brd->tiles+brd.dims.x*brd.dims.y);
+  brd->memTile=brd->memGlobal+parser->globalQuantity;
 }
 
 Tile* tile(board* brd,v pos){
@@ -41,56 +48,139 @@ void draw(board* brd){
     }
 }
 
+//uso un vector porque necesito espacio ilimitado
+//en un principio pensaba intentar meter todo en un bloque
+//limitando la cantidad de triggers posibles o usando buckets por si hay mas.
+//pero probablemente no haya una ventaja en tenerlo todo junto ahi, porque
+//los datos del tablero estan lejos de todas formas y probablemente el acceso cueste lo mismo
+/*
+struct triggerSpace{
+  int firstFree=-1;
+  int lastFree=-1;
+  vector<triggerBox> mem;
+};
 
-
-
-void pushTrigger(Tile* tile,normalHolder* n){
-  int ind=tile->triggersUsed;
-  triggerBox tb=tile->triggerBox;
-  while(ind>6){
-    ind-=6;
-    tb=tb->next;
+int newTriggerBox(triggerSpace* ts){
+  if(ts->firstFree==-1){
+    ts->mem.emplace_back();
+    return ts->mem.size()-1;
   }
-  if(ind==6){
-    tb=newTriggerBox();
-    ind=0;
+  int ret=ts->firstFree;
+  if(ts->firstFree==ts->lastFree){
+    ts->firstFree=ts->lastFree=-1;
+  }else{
+    ts->firstFree=(int)ts->mem[ts->firstFree];
   }
-  tb->triggers[ind]=Trigger({n,&tile->step,tile->step});
-  tile->triggersUsed++;
+  return ret;
 }
 
-void chargeTriggers(Tile* tile){
-  triggerBox tb=tile->triggerBox;
-  do{
-    int stop=tb->next?6:tile->trigsLeft%6;
-    for(int ind=0;ind<stop;ind++){
-      Trigger trig=tb->triggers[ind];
-      if(trig.step=*trig.stepCheck){
-        trigsActivados.push_back(trig.nh);
-      }
+void freeTriggerBox(triggerSpace* ts,int ind){
+  if(ts->firstFree==-1){
+    ts->firstFree=ind;
+    ts->lastFree=ind;
+  }else{
+    ts->mem[ts->lastFree]=(triggerBox)ind;
+    ts->lastFree=ind;
+  }
+}
+*/
+
+void init(triggerSpace* ts){
+  ts->size=16;
+  ts->mem=new triggerBox[16];
+  for(int i=0;i<16;i++){
+    ts->mem[i]=(triggerBox)(i+1);
+  }
+  firstFree=0;
+  lastFree=15;
+}
+int newTriggerBox(triggerSpace* ts){
+  int ret=ts->firstFree;
+  if(ts->firstFree==ts->lastFree){
+    int sizeBefore=ts->size;
+    ts->size*=2;//por ahi convendría crecer una cantidad fija para que no haya mucha dispersion, no sé
+    triggerBox* newMem=new triggerBox[ts->size];
+    memcpy(newMem,ts->mem,sizeBefore);
+    delete ts->mem;
+    ts->mem=newMem;
+    for(int i=sizeBefore;i<ts->size;i++){
+      ts->mem[i]=(triggerBox)(i+1);
     }
-    trigsLeft-=6;
-  }while((tb=tb->next));
+    ts->firstFree=sizeBefore;
+    ts->lastFree=ts->size-1;
+  }else{
+    ts->firstFree=(int)ts->mem[ts->firstFree];
+  }
+  return ret;
+}
+void freeTriggerBox(triggerSpace* ts,int ind){
+  ts->mem[ts->lastFree]=(triggerBox)ind;
+  ts->lastFree=ind;
+}
+
+
+//@optim cuando pueda visualizar y medir bien probar hacer que arranquen todos con una caja
+
+//@optim se da la casualidad de que used y pushTo siempre son contiguos, podría probar pasarlos como un struct
+void pushTrigger(triggerSpace* ts,int* used,int* pushTo,Tile* tile,normalHolder* n){
+  int ind=*used;
+  if(ind==0){//caso inicial. Si decido hacer que todos los tiles arranquen con 1 triggerBox no es necesario
+    *pushTo=newTriggerBox(ts);
+    ts->mem[*pushTo]->triggers[0]=Trigger({n,&tile->step,tile->step});
+    *used=1;
+    return;
+  }
+
+  int tb=*pushTo;
+  while(ind>triggersPerBox){
+    ind-=triggersPerBox;
+    tb=ts->mem[tb]->next;
+  }
+  if(ind==triggersBox){
+    int newTb=newTriggerBox(ts);
+    ts->mem[tb]->next=newTb;
+    tb=newTb;
+    ind=0;
+  }
+  ts->mem[tb]->triggers[ind]=Trigger({n,&tile->step,tile->step});
+  *used++;
+}
+
+vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
+void chargeTriggers(triggerSpace* ts,int* used,int* source){
+  int tb=*source;
+  int tu=*used;
+
+  auto evalTrig=[&](int ind)->void{
+                  Trigger trig=ts->mem[tb]->triggers[ind];
+                  if(trig.step==*trig.stepCheck){
+                    trigsActivados.push_back(trig.nh);
+                  }
+                };
+
+
+  while(tu>triggersPerBox){
+    for(int i=0;i<triggersPerBox;i++){
+      evalTrig(i);
+    }
+    tb=ts->mem[tb]->next;
+    tu-=triggersPerBox;
+  }
+  for(int i=0;i<tu;i++){
+    evalTrig(i);
+  }
 
   //clear
-  tb=tile->triggerBox->next;
-  tile->triggersUsed=0;
-  while(tb){
+  tb=*source;
+  *used=0;
+  do{
     triggerBox* temp=tb->next;
     freeTriggerBox(tb);
     tb=temp;
-  }
-  tile->triggerBox->next=nullptr;
+  }while(tb);
+  //tile->triggerBox->next=nullptr;
 }
 
-
-vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
-void Tile::chargeTriggers(){
-    for(Trigger trig:triggers)
-        if(trig.step==trig.tile->step)//la pieza que puso el trigger no se movio desde que lo puso
-            trigsActivados.push_back(trig.nh);
-    triggers.clear();
-}
 int contador=0;
 void activateTriggers(){
     //los triggers duplicados (por dos condiciones poniendo dos triggers a un mismo normalHolder, o por

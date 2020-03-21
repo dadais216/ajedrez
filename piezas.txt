@@ -1,6 +1,32 @@
 def mover vacio mov color 20 200 115
 def captura enemigo capt mov color 200 10 10
 
+
+:2 1 #torre
+>x=w,a,s,d
+desliz x mover c end x captura
+
+las variables son validas solo dentro de una pieza
+son validas para todos los movimientos que esten abajo suyo 
+pueden pisarse
+
+>x&y = w&a, a&s, s&d, d&w
+desliz x mover c end y captura
+
+si se definen en grupo se expanden en grupo
+
+>x1=ww,ss
+>x2=aa,dd
+>y1=a,d
+>y2=w,s
+>z=x1y1,x2y2
+z exc mover or captura end 
+
+(lo mismo que {{ww,ss}{a,d},{aa,dd}{w,s}} exc mover or captura end)
+
+se pueden anidar
+
+
 :1 0 #peon
 #w mover mset p0 1 exc mcmp y 7 capt spwn 5 or isol mcmp p0 0 w mover mset p0 1 end end
 w mover mset p0 1 exc mcmp y 7 capt spwn 5 or pass end

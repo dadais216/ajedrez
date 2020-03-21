@@ -79,7 +79,7 @@ void generarNormalH(movHolder* m){
     //se esta poniendo un trigger en las dos ramas de exc en vez de antes de este, lo que no aprovecha la normal
     //de w que va a estar ahi de todas formas y hace que se tengan multiples triggers, lo que es mas caro.
     //Puede que se pueda hacer un sistema mejor en la version compilada, aunque no sé si lo vale.
-    pushTrigger(actualTile,n);
+    pushTrigger(board->ts,actualTile->triggersUsed,actualTile->firstTriggerBox,actualTile,n);
   }
   generarProperNormalH(n);
 }
@@ -715,6 +715,8 @@ void generarNewlySpawned(movHolder* m){
   for(Holder* h:justSpawnedL)
     if(s->base->h!=h)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
       h->generar();
+  if(s->kamikaseNext)
+    kamikaseCheckAlive(m);
 }
 
 void cargarNothing(movHolder*m,vector<normalHolder*>* nh){
@@ -726,6 +728,7 @@ void initSpawner(spawnerGen* s,Base* base_){
   s->base=base_;
 }
 
+//kamikase son las piezas que hagan capt en posRel 0,0 o capt en una posicion no relativa (TODO), por las dudas
 void kamikaseCheckAlive(movHolder* m){
   fromCast(k,m,kamikaseCntrl*);
   if(!k->base->h->inPlay)
