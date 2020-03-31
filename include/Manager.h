@@ -5,25 +5,25 @@ template<class T>
 class Manager
 {
 private:
-    map<string,T> archivos;
-    list<string> dir;
+  std::map<std::string,T> archivos;
+  std::list<std::string> dir;
 public:
     Manager() {};
-    void adddir(string dire)
+  void adddir(std::string dire)
     {
-        for(list<string>::iterator it=dir.begin(); it!=dir.end(); it++)
+      for(std::list<std::string>::iterator it=dir.begin(); it!=dir.end(); it++)
         {
             if(*it==dire)
             {
-                cout<<"la direccion "<<dire<<" ya esta agregada"<<endl;
+              std::cout<<"la direccion "<<dire<<" ya esta agregada"<<std::endl;
                 return;
             }
         }
         dir.push_back(dire);
     }
-    void removedir(string dire)
+  void removedir(std::string dire)
     {
-        for(list<string>::iterator it=dir.begin(); it!=dir.end(); it++)
+      for(std::list<std::string>::iterator it=dir.begin(); it!=dir.end(); it++)
         {
             if(*it==dire)
             {
@@ -31,25 +31,25 @@ public:
                 return;
             }
         }
-        cout<<"la direccion "<<dire<<" ya estaba borrada o nunca estuvo"<<endl;
+      std::cout<<"la direccion "<<dire<<" ya estaba borrada o nunca estuvo"<<std::endl;
     }
-    T& get(string filename)
+  T& get(std::string filename)
     {
-        for(typename map<string,T>::iterator it=archivos.begin(); it!=archivos.end(); it++)
+      for(typename std::map<std::string,T>::iterator it=archivos.begin(); it!=archivos.end(); it++)
         {
             if(filename==it->first)
             {
                 return it->second;
             }
         }
-        cout<<"agregando "<<filename<<endl;
+      std::cout<<"agregando "<<filename<<std::endl;
         T t;
         if(t.loadFromFile(filename))
         {
             archivos[filename]=t;
             return archivos[filename]; //no entiendo por que return t no anda pero esto si
         }
-        for(list<string>::iterator it=dir.begin(); it!=dir.end(); it++)
+        for(std::list<std::string>::iterator it=dir.begin(); it!=dir.end(); it++)
         {
             if(t.loadFromFile(*it+filename))
             {
@@ -57,19 +57,19 @@ public:
                 return archivos[filename];
             }
         }
-        cout<<"ERROR el archivo "<<filename<<" no existe"<<endl;
+        std::cout<<"ERROR el archivo "<<filename<<" no existe"<<std::endl;
         archivos[filename]=t;
         return archivos[filename];
     }
-    void remove(string filename)
+  void remove(std::string filename)
     {
-        typename map<string,T>::iterator it=archivos.find(filename);
+      typename std::map<std::string,T>::iterator it=archivos.find(filename);
         if(it!=archivos.end())
         {
             archivos.erase(it);
             return;
         }
-        cout<<"ERROR el archivo "<<filename<<" ya fue borrado o nunca estuvo"<<endl;
+        std::cout<<"ERROR el archivo "<<filename<<" ya fue borrado o nunca estuvo"<<std::endl;
     }
 };
 #endif // MANAGER_H

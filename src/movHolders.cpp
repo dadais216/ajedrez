@@ -1,8 +1,18 @@
 
+inline v getActualPos(v relPos,v offset){
+  bool negate=actualHolder.h->bando;
+  relPos.y=(relPos.y^-negate)+negate;
+  return relPos+offset;
+}
+inline v getOffset(v relPos,v pos){
+  bool negate=actualHolder.h->bando;
+  relPos.y=(relPos.y^-negate)+negate;
+  return pos-relPos;
+}
 
 void initMovH(movHolder* m,operador* op,Base* base_){
-  if(!base_->beg)
-    base_->beg=m;
+  if(!base_->root)
+    base_->root=m;
   m->base=base_;
   m->bools|=op->bools;//setea makeClick, hasClick y doEsp en normalh
 }
@@ -42,7 +52,6 @@ void reaccionarSig(movHolder*m,auto nhs){
 }
 
 inline void generarProperNormalH(normalHolder* n){
-  actualHolder.nh=n;//lo usan algunas cosas de memoria y debug
 
   actualHolder.buffer=(void(**)(void))n->op->conds.beg;
   int i=0;
@@ -61,15 +70,16 @@ inline void generarProperNormalH(normalHolder* n){
 }
 void generarNormalH(movHolder* m){
   normalHolder* n=(normalHolder*) m;
-
-  memcpy(n->memAct.beg,memMov.data(),n->base->memLocalSize*sizeof(int));
+  actualHolder.nh=n;
+  memcpy(n->memAct.beg,memMov.data,n->base->memLocalSize*sizeof(int));
   n->pos=getActualPos(n->relPos,offset);//pos se calcula siempre porque se usa para actualizar offset
   if(n->bools&doEsp){
-    if(n->pos.x<0||n->pos.x>=tablptr->tam.x||n->pos.y<0||n->pos.y>=tablptr->tam.y){
+    if(n->pos.x<0||n->pos.x>=actualHolder.brd->dims.x||n->pos.y<0||n->pos.y>=actualHolder.brd->dims.y){
       n->bools&=~(valorFinal|valorCadena|valor);
       return;
     }
-    actualTile=tablptr->tile(n->pos);
+    actualHolder.tile=tile(actualHolder.brd,n->pos); //se me hace raro que tile solo se actualice si es esp, hay que mirar todo el tema de esp TODO
+
     //los triggers se ponen aca y se reponen en la reaccion. Las normales esp ahora son
     //las normales que se originan despues de un movimiento. (o hacen miran memoria de tile)
     //antes eran las normales que contenian un chequeo posicional, como vacio o memoria de tile,
@@ -79,7 +89,7 @@ void generarNormalH(movHolder* m){
     //se esta poniendo un trigger en las dos ramas de exc en vez de antes de este, lo que no aprovecha la normal
     //de w que va a estar ahi de todas formas y hace que se tengan multiples triggers, lo que es mas caro.
     //Puede que se pueda hacer un sistema mejor en la version compilada, aunque no sé si lo vale.
-    pushTrigger(board->ts,actualTile->triggersUsed,actualTile->firstTriggerBox,actualTile,n);
+    pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
   }
   generarProperNormalH(n);
 }
@@ -87,14 +97,15 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
   normalHolder* self=(normalHolder*) m;
 
   if(nh==self){
-    memcpy(memMov.data(),self->memAct.beg,self->base->memLocalSize*sizeof(int));
+    memcpy(memMov.data,self->memAct.beg,self->base->memLocalSize*sizeof(int));
     switchToGen=true;
-    actualTile=tablptr->tile(self->pos);
-    actualTile->triggers.push_back(Trigger{self->base->h->tile,self,self->base->h->tile->step});
+
+    actualHolder.tile=tile(actualHolder.brd,self->pos);
+    pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
     generarProperNormalH(self);
     if(!(self->bools&valorFinal)){
       offset=getOffset(self->relPos,self->pos);
-      memcpy(memMov.data(),self->memAct.beg,self->base->memLocalSize*sizeof(int));
+      memcpy(memMov.data,self->memAct.beg,self->base->memLocalSize*sizeof(int));
       //esta restauracion esta para que el operador que contenga reciba el offset y mem local correcta
       //la alternativa a hacer esto es que todos los operadores contenedores guarden offset y memoria local
       //para cada iteración/rama, lo que tambien tiene sus desventajas.
@@ -103,26 +114,26 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
     reaccionarSig(self,nh);
     if(!(self->bools&valorFinal)){
       offset=getOffset(self->relPos,self->pos);
-      memcpy(memMov.data(),self->memAct.beg,self->base->memLocalSize*sizeof(int));
+      memcpy(memMov.data,self->memAct.beg,self->base->memLocalSize*sizeof(int));
     }
   }
 }
 void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
   normalHolder* s=(normalHolder*) m;
 
-  for(int i=0;i<nhs->size();++i){
+  for(int i=0;i<nhs->size;++i){
     normalHolder* nh=(*nhs)[i];
     if(nh==s){
-      memcpy(memMov.data(),s->memAct.beg,s->base->memLocalSize*sizeof(int));
+      memcpy(memMov.data,s->memAct.beg,s->base->memLocalSize*sizeof(int));
       switchToGen=true;
-      actualTile=tablptr->tile(s->pos);
-      actualTile->triggers.push_back(Trigger{s->base->h->tile,s,s->base->h->tile->step});
+      actualHolder.tile=tile(actualHolder.brd,s->pos);
+      pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
       generarProperNormalH(s);
       if(!(s->bools&valorFinal)){
         offset=getOffset(s->relPos,s->pos);
-        memcpy(memMov.data(),s->memAct.beg,s->base->memLocalSize*sizeof(int));
+        memcpy(memMov.data,s->memAct.beg,s->base->memLocalSize*sizeof(int));
       }
-      nhs->erase(nhs->begin()+i);//puede que no lo valga
+      unorderedErase(nhs,i);
       return;
     }
   }
@@ -130,7 +141,7 @@ void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
     reaccionarSig(s,nhs);
     if(!(s->bools&valorFinal)){
       offset=getOffset(s->relPos,s->pos);
-      memcpy(memMov.data(),s->memAct.beg,s->base->memLocalSize*sizeof(int));
+      memcpy(memMov.data,s->memAct.beg,s->base->memLocalSize*sizeof(int));
     }
   }
 }
@@ -138,7 +149,7 @@ void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
 void accionarNormalH(normalHolder* n){
   actualHolder.h=n->base->h;
   actualHolder.nh=n;
-  actualTile=tablptr->tile(n->pos);
+  actualHolder.tile=tile(actualHolder.brd,n->pos);
 
   int i=0;
   actualHolder.buffer=n->op->accs.beg;
@@ -152,9 +163,9 @@ void accionarNormalH(normalHolder* n){
 void cargarNormalH(movHolder* m,vector<normalHolder*>* norms){
   fromCast(n,m,normalHolder*);
   if(!(n->bools&valorCadena)) return;
-  norms->push_back(n);
+  push(norms,n);
   if(n->bools&makeClick)
-    clickers.emplace_back(norms,n->base->h);
+    push(&clickers,makeClicker(norms,n->base->h));
   if(n->sig)
     n->sig->table->cargar(n->sig,norms);
 }
@@ -177,7 +188,7 @@ void initNormalH(normal* org,Base* base_,char** head)
   n->table=&normalTable;
 
   n->op=org;
-  for(auto trigInfo:n->op->setUpMemTriggersPerNormalHolder)
+  /*for(auto trigInfo:n->op->setUpMemTriggersPerNormalHolder)
     switch(trigInfo.type){
     case 0:
       memGlobalTriggers[trigInfo.ind].perma.push_back(n);
@@ -185,7 +196,7 @@ void initNormalH(normal* org,Base* base_,char** head)
       base_->h->memPiezaTrigs[trigInfo.ind]->perma.push_back(n);
       break;case 2:
       turnoTrigs[base_->h->bando].push_back({base_->h,n}); ///@check
-    }
+      }*/
   n->memAct.beg=(int*)*head;
   n->memAct.after=((int*)*head)+base_->memLocalSize;
   *head=(char*)n->memAct.after;
@@ -271,8 +282,8 @@ void cargarDeslizH(movHolder* m,vector<normalHolder*>* norms){
     fromCast(mov,d->movs[i],movHolder*);
     mov->table->cargar(mov,norms);
   }
-  if(d->bools&makeClick&&!norms->empty()) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
-    clickers.emplace_back(norms,d->base->h);
+  if(d->bools&makeClick&&!norms->size==0) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
+    push(&clickers,makeClicker(norms,d->base->h));
   if(d->sig)
     d->sig->table->cargar(d->sig,norms);
 }
@@ -284,7 +295,7 @@ void cargarDeslizH(movHolder* m,vector<normalHolder*>* norms){
 //que genera multiples triggers. No vale la pena agregar otra version ahora para no hacer bloat,
 //pero en la version compilada podria estar. Tambien se podria agregar instrucciones bizarras
 //solo de desliz sin mucho problema, como cambiar la pos de retorno o breaks.
-void initdeslizH(desliz* org,Base* base_,char** head){
+void initDeslizH(desliz* org,Base* base_,char** head){
   fromCast(d,*head,deslizHolder*);
   initMovH(d,org,base_);
   d->table=&deslizTable;
@@ -391,7 +402,7 @@ void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
   movHolder* branch=*e->ops[e->actualBranch];
   branch->table->cargar(branch,norms);
   if(e->bools&makeClick)
-    clickers.emplace_back(norms,e->base->h);
+    push(&clickers,makeClicker(norms,e->base->h));
   if(e->sig)
     e->sig->table->cargar(e->sig,norms);
 }
@@ -421,10 +432,10 @@ void generarIsolH(movHolder* m){
 
   v tempPos=offset;
   void* memTemp=alloca(s->base->memLocalSize*sizeof(int));
-  memcpy(memTemp,memMov.data(),s->base->memLocalSize*sizeof(int));
+  memcpy(memTemp,memMov.data,s->base->memLocalSize*sizeof(int));
   s->inside->table->generar(s->inside);
   offset=tempPos;
-  memcpy(memMov.data(),memTemp,s->base->memLocalSize*sizeof(int));
+  memcpy(memMov.data,memTemp,s->base->memLocalSize*sizeof(int));
   if(s->sig){
     s->sig->table->generar(s->sig);
     s->bools&=~valorFinal;
@@ -459,8 +470,8 @@ void cargarIsolH(movHolder*m,vector<normalHolder*>* norms){
   fromCast(s,m,isolHolder*);
   vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
   s->inside->table->cargar(s->inside,&normExt);
-  if(s->bools&makeClick&&!normExt.empty())//evitar generar clickers sin normales
-    clickers.emplace_back(norms,s->base->h);
+  if(s->bools&makeClick&&!normExt.size==0)//evitar generar clickers sin normales
+    push(&clickers,makeClicker(norms,s->base->h));
   if(s->sig)
     s->sig->table->cargar(s->sig,norms);
 }
@@ -505,7 +516,7 @@ void generarDesoptH(movHolder* m){
 
   int localMemSize=d->base->memLocalSize*sizeof(int);
   void* memTemp=alloca(localMemSize);
-  memcpy(memTemp,memMov.data(),localMemSize);
+  memcpy(memTemp,memMov.data,localMemSize);
 
   void* memTemp2=alloca(localMemSize);
 
@@ -519,7 +530,7 @@ void generarDesoptH(movHolder* m){
       firstIter->iter=(desoptHolder::node*)correspondingCluster;
       int clusterOffset2=0;
       v offsetOrg2=offset;
-      memcpy(memTemp2,memMov.data(),localMemSize);
+      memcpy(memTemp2,memMov.data,localMemSize);
 
       for(int tam:d->op->movSizes){
         desoptHolder::node* secondIter=(desoptHolder::node*)((char*)firstIter->iter+clusterOffset2);
@@ -533,14 +544,14 @@ void generarDesoptH(movHolder* m){
           secondIter->iter=nullptr;
         clusterOffset2+=tam;
         offset=offsetOrg2;
-        memcpy(memMov.data(),memTemp2,localMemSize);
+        memcpy(memMov.data,memTemp2,localMemSize);
       }
     }else
       firstIter->iter=nullptr;
     clusterOffset+=tam;
     correspondingCluster+=d->op->clusterSize;
     offset=offsetOrg;
-    memcpy(memMov.data(),memTemp,localMemSize);
+    memcpy(memMov.data,memTemp,localMemSize);
   }
 }
 void construirYGenerarNodo(desoptHolder* d,int localMemSize){
@@ -554,7 +565,7 @@ void construirYGenerarNodo(desoptHolder* d,int localMemSize){
   int clusterOffset=0;
   v offsetOrg=offset;
   void* memTemp=alloca(localMemSize);
-  memcpy(memTemp,memMov.data(),localMemSize);
+  memcpy(memTemp,memMov.data,localMemSize);
 
   for(int tam:d->op->movSizes){
     desoptHolder::node* nextIter=(desoptHolder::node*)(clusterBeg+clusterOffset);
@@ -567,7 +578,7 @@ void construirYGenerarNodo(desoptHolder* d,int localMemSize){
     }
     clusterOffset+=tam;
     offset=offsetOrg;
-    memcpy(memMov.data(),memTemp,localMemSize);
+    memcpy(memMov.data,memTemp,localMemSize);
   }
 }
 void generarNodo(desoptHolder* d,desoptHolder::node* iter,int localMemSize){//iter valido
@@ -575,7 +586,7 @@ void generarNodo(desoptHolder* d,desoptHolder::node* iter,int localMemSize){//it
   v offsetOrg=offset;
 
   void* memTemp=alloca(localMemSize);
-  memcpy(memTemp,memMov.data(),localMemSize);
+  memcpy(memTemp,memMov.data,localMemSize);
   for(int tam:d->op->movSizes){
     desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+clusterOffset);
     movHolder* actualMov=(movHolder*)(nextIter+1);
@@ -590,7 +601,7 @@ void generarNodo(desoptHolder* d,desoptHolder::node* iter,int localMemSize){//it
     }
     clusterOffset+=tam;
     offset=offsetOrg;
-    memcpy(memMov.data(),memTemp,localMemSize);
+    memcpy(memMov.data,memTemp,localMemSize);
   }
 }
 void reactIfNh(normalHolder* nh,movHolder* actualMov,int tam){
@@ -629,15 +640,15 @@ void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
 }
 void reaccionarDesoptH(movHolder* m,normalHolder* n){
   fromCast(d,m,desoptHolder*);
-  reaccionarProperDesoptH(d,n,desoptMov);
+  reaccionarProperDesoptH(d,n,d->movs);
 }
 void reaccionarDesoptH(movHolder* m,vector<normalHolder*>* n){
   fromCast(d,m,desoptHolder*);
-  reaccionarProperDesoptH(d,n,desoptMov);
+  reaccionarProperDesoptH(d,n,d->movs);
 }
 void cargarNodos(movHolder* m,desoptHolder::node* iter,vector<normalHolder*>* norms){
   fromCast(d,m,desoptHolder*);
-  int res=norms->size();
+  int res=norms->size;
   int offset=0;
   for(int tam:d->op->movSizes){
     desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+offset);
@@ -646,11 +657,11 @@ void cargarNodos(movHolder* m,desoptHolder::node* iter,vector<normalHolder*>* no
       actualMov->table->cargar(actualMov,norms);
       assert(nextIter->iter);
       cargarNodos(d,nextIter->iter,norms);
-    }else if(makeClick&&!norms->empty()){
-      clickers.emplace_back(norms,d->base->h);
+    }else if(makeClick&&norms->size!=0){
+      push(&clickers,makeClicker(norms,d->base->h));
     }
     offset+=tam;
-    norms->resize(res);
+    norms->size=res;
   }
 }
 void cargarDesoptH(movHolder*m,vector<normalHolder*>* norms){
@@ -693,7 +704,7 @@ void initDesoptH(desopt* org,Base* base_,char** head){
     for(operador* opos:org->ops){
       **(movHolder***)head=nullptr;//cuando se use apunta a un espacio dinamico
       *head+=sizeof(desoptHolder::node*);
-      crearMovHolder(head,opos,base_);
+      crearMovHolder(opos,base_,head);
     }
   }
   *head=headFirst+org->desoptInsideSize;
@@ -706,15 +717,17 @@ void initDesoptH(desopt* org,Base* base_,char** head){
 void generarNewlySpawned(movHolder* m){
   fromCast(s,m,spawnerGen*);
 
-  if(justSpawned.empty())
+  if(justSpawned.size==0)
     return;
 
-  vector<Holder*> justSpawnedL(justSpawned);//@optim estaria bueno usar el stack para estas cosas, o un move
-  justSpawned.clear();//evitar bucles infinitos
+  vector<Holder*> justSpawnedC;//evitar bucles infinitos
+  justSpawnedC.data=justSpawned.data;
+  justSpawnedC.size=justSpawned.size;
+  justSpawned.size=0;
 
-  for(Holder* h:justSpawnedL)
-    if(s->base->h!=h)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
-      h->generar();
+  for(Holder* h:justSpawnedC)
+    if(s->h!=h)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
+      generar(h);
   if(s->kamikaseNext)
     kamikaseCheckAlive(m);
 }
@@ -723,22 +736,23 @@ void cargarNothing(movHolder*m,vector<normalHolder*>* nh){
 }
 
  virtualTableMov spawnerTable={generarNewlySpawned,nullptr,nullptr,cargarNothing};
-void initSpawner(spawnerGen* s,Base* base_){
+void initSpawner(spawnerGen* s,Holder* h,bool kamikaseNext){
   s->table=&spawnerTable;
-  s->base=base_;
+  s->h=h;
+  s->kamikaseNext=kamikaseNext;
 }
 
 //kamikase son las piezas que hagan capt en posRel 0,0 o capt en una posicion no relativa (TODO), por las dudas
 void kamikaseCheckAlive(movHolder* m){
   fromCast(k,m,kamikaseCntrl*);
-  if(!k->base->h->inPlay)
+  if(!k->h->inPlay)
     throw nullptr;
 }
 //si spawnea y muere en el mismo turno no pasa nada porque spawn corre antes de kamikase
  virtualTableMov kamikaseTable={kamikaseCheckAlive,nullptr,nullptr,cargarNothing};
-void initKamikase(kamikaseCntrl* k,Base* base_){
+void initKamikase(kamikaseCntrl* k,Holder* h){
   k->table=&kamikaseTable;
-  k->base=base_;
+  k->h=h;
 }
 
 

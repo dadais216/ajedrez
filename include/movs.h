@@ -58,8 +58,28 @@ template<bool(*chck)(getter*,getter*),string* n> struct macc{
     }
 };viendolo ahora podría haber abstraido el void y bool en un typename para hacerlo mas criptico*/
 
+struct Holder;
 vector<Holder*> justSpawned;
 
 v actualPosColor;
+
+void* getNextInBuffer();
+
+void mov();
+void capt();
+void spwn();
+void pausa();
+void msetG();
+void msetT();
+void msetGi();
+void msetTi();
+
+bool vacio();
+bool enemigo();
+bool aliado();
+bool pass();
+bool piece();
+
+colort* crearColor(int,int,int);
 
 #endif // MOVS_H

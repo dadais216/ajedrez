@@ -26,23 +26,69 @@ type* name(){\
 
 #define fromCast(new,old,type) type new=(type) old;
 
+//TODO guardar una lambda, asi puedo hacer cualquier cosa
+/*template<typename T,void(*func)(T)>
+struct deferObj{
+  T obj;
+  deferObj(T obj_){obj=obj_;}
+  ~deferObj(){func(obj);}
+};
+#define defer(func,obj) deferObj<decltype(obj),func>(obj);*/
 
+void free(char* c){
+  delete c;
+}
 template<typename T>
 struct deferObj{
-  T lambda;
-  deferObj(T l){lambda=l}
-  ~deferObj(){lambda()}
+  T obj;
+  deferObj(T obj_){obj=obj_;}
+  ~deferObj(){free(obj);}
 };
-#define defer(op) deferObj([&](){op});
+#define defer(obj) deferObj<decltype(obj)>  defer(obj);//Medio choto, solo borra cosas. Cuando tenga internet voy a mirar lo de la lambda
+#define defer2(obj) deferObj<decltype(obj)> defer2(obj);
+
+#include <utility>
+#include <stdlib.h>
+#include <stdio.h>
+
+template<typename... Ts>
+void fail(char const* err,Ts... args){
+  printf(err,args...);//me parece un poco mas lindo que va_list
+  exit(0);
+}
+
+template<typename... Ts>
+void failIf(bool cond,char const* err,Ts... args){
+  if(cond){
+    fail(err,args...);
+  }
+}
+
+//creo que es mas inteligente cargar todo el archivo y listo
+//al principio quería manejarme con funciones de archivo porque tenia la idea de
+//que iban a ser mas rapidas, pero supongo que cargar todo el archivo de una y
+//hacer el procesado yo va a ser mejor, y mas comodo
+char* loadFile(char const* fileName){
+  FILE* file=fopen(fileName,"r");
+  printf("hola como va %s",fileName);
+  failIf(!file,"%s bad file",fileName);
+  fseek(file,0,2);
+  int size=ftell(file);
+  char* content=new char[size];
+  rewind(file);
+  content=fgets(content,size,file);
+  failIf(!content,"%s file empty",fileName);
+  //TODO mirar ferror y limpiarlo
+  fclose(file);
+  return content;
+  //TODO creo que le tengo que agregar un null manualmente al final
+}
 
 
 
 
-#include <fstream>
-#include <vector>
 #include <list>
 #include <map>
-#include <utility>
 #include <iostream>
 #include <assert.h>
 #include <string>
@@ -55,24 +101,36 @@ struct deferObj{
 #include <stdint.h>
 #include "alloca.h"
 #include <cstring>
-#include <stdlib.h>
 #include <time.h>
 #include <ctime>
 
-using namespace std;
 #include <SFML/Graphics.hpp>
 using namespace sf;
 
-#include "Manager.h"
+struct normalHolder;
+struct Holder;
+struct movHolder;
+struct Tile;
+struct board;
+struct properState;
+
+typedef intptr_t intptr;
+
+
+#include "Manager.h" //TODO mirar
 
 #include "vec.h"
 
 #include "Bucket.h"
-#include "bucket.cpp"
 
 #include "Input.h"
 #include "Input.cpp"
 
+#include "movHolders.h"
+#include "Pieza.h"
+#include "movs.h"
+#include "memGetters.h"
+#include "lector.h"
 
 #include "main.cpp"
 
@@ -80,12 +138,7 @@ using namespace sf;
 #include "selector.cpp"
 
 #include "tablero.h"
-#include "memGetters.h"
-#include "movs.h"
 #include "operador.h"
-#include "Pieza.h"
-#include "movHolders.h"
-#include "Jugador.h"
 #include "Estado.h"
 
 #include "tablero.cpp"
@@ -93,10 +146,8 @@ using namespace sf;
 #include "Clicker.h"
 #include "Clicker.cpp"
 
-#include "lector.h"
 #include "lector.cpp"
 
-#include "Jugador.cpp"
 #include "Pieza.cpp"
 
 

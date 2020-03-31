@@ -1,45 +1,147 @@
 
-struct properState{
-  Jugador player1,player2;
-  Sprite turnoBlanco,turnoNegro;
-  debug(
-        v posPieza;
-        v posActGood;
-        v posActBad;
-        Text textDebug;
-        RectangleShape backgroundMem;
-        RectangleShape backgroundMemDebug;
-        Text textValMem;
-        )
+
+
+int dt=0;
+int clickI=0;
+bool confirm;
+void humanTurn(bool bando,board* brd){
+    /*
+    dt++;//se podría mover adentro del if?
+    if(!clickers.empty()){
+        if(dt>20){
+            dt=0;
+            clickI++;
+            for(Clicker* cli:clickers)
+                cli->activacion(clickI);
+        }
+        drawScreen();
+        confirm=false;
+        if(input->click()){
+            bool any=false;
+            for(Clicker* cli:clickers)
+                if(cli->update()){
+                    any=true;
+                    break;
+                }
+            if(confirm){
+                drawScreen();
+                return false;
+            }
+            clickers.clear();
+            if(!any)
+                drawScreen();
+            return any;
+        }
+    }
+    */
+    while(true){
+      sleep(milliseconds(20));
+      input.check();
+      debug(
+            if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+              //static_cast<Proper*>(j->actual)->init();///@leaks
+              while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
+              throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
+            }
+            );
+      if(input.click()&&input.inGameRange(brd->dims)){
+        v posClicked=input.get();
+        for(Clicker& cli:clickers){
+          ///@todo @optim esto se pregunta 60hz
+          ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
+          ///vuelva a meter solapamiento
+          if(posClicked==cli.clickPos){
+            executeClicker(&cli,brd);//accionar
+            drawScreen(properDraw);
+            return;
+          }
+        }
+        clickers.size=0;
+        std::cout<<"("<<input.get()<<")\n";
+
+        Holder* act=tile(brd,input.get())->holder;
+        if(act&&act->bando==bando){
+          makeCli(act);
+          //drawScreen();
+        }
+      }
+    }
+}
+
+void skipTurn(){
+  actualHolder.ps->turno++;
 }
 
 
-properUpdate();
-void properInit(int tableroId_,int player1Id,int player2Id){
-  resetBucket(&stateBucket);
-  getStruct(properState,ps,stateBucket);
 
-  int nonHumans=0;
+double sProm=0;
+int cProm=0;
+double minV=10000;
+double maxV=0;
+void randomTurn(bool bando,properState* ps){
+  board* brd=(board*)ps->gameState;
+  if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+    properGameInit(ps);
+    while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
+    throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
+  }
+  bool alive=false;
+  for(int i=0; i<brd->dims.x; i++)
+    for(int j=0; j<brd->dims.y; j++){
+      Holder* act=tile(brd,v(i,j))->holder;
+      if(act&&act->bando==bando){
+        alive=true;
+        makeCli(act);
+      }
+    }
+  //drawScreen();
+  if(!alive)
+    while(true){
+      if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+        properGameInit(ps);///@leaks
+        while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
+        throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
+      }
+    }
+  if(clickers.size>0){
+    //sleep(milliseconds(120));
+    
+    
+    clock_t t=clock();
+    executeClicker(&clickers[rand()%clickers.size],brd);
+    double val=clock()-t;
+    sProm+=val;
+    if(val>maxV)
+      maxV=val;
+    if(val<minV)
+      minV=val;
+    cProm++;
+    if(cProm==100){
+      std::cout<<"normalSize  "<<sizeof(normalHolder)
+               <<"\nbucketMovSize  "<<ps->gameState->head - ps->gameState->data - (intptr)(((board*)ps->gameState)->tiles)
+               <<"\nbucketOpSize  "<<ps->pieceOps->head-ps->pieceOps->data
+               <<"\npromedio: "<<std::fixed<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos"
+               <<"\nmin: "<<minV/CLOCKS_PER_SEC
+               <<"\nmax: "<<maxV/CLOCKS_PER_SEC<<std::endl;
+      exit(0);
+    }
+    
+    clickers.size=0;
+  }
+}
 
-  int sel=player1Id;
-  bool bando=false;
- createPlayer:
-  switch(sel){
-  case 0:nonHumans++;nadieInit(bando);break;
-  case 1:humanoInit(bando);break;
-  case 2:nonHumans++;aleatorioInit(bando);break;
-    //case 3: return new IA(bando,tablero);
-  }
-  if(!bando){
-    bando=true;
-    sel=player2Id;
-    goto createPlayer;
-  }
-  if(nonHumans==2)
+RectangleShape posPieza;//TODO ver donde poner esto
+
+void properUpdate();
+void properInit(char* mem,int boardId,int player1Id,int player2Id){
+  properState* ps=(properState*)mem;
+  ps->boardId=boardId;
+
+  if(player1Id!=0&&player2Id!=0)
     fpsLock=0.;
 
-  ps->turnoBlanco.setTexture(imagen->get("tiles.png"));
-  ps->turnoNegro.setTexture(imagen->get("tiles.png"));
+  ps->turnoBlanco.setTexture(image.get("tiles.png"));
+  ps->turnoNegro.setTexture(image.get("tiles.png"));
   ps->turnoBlanco.setTextureRect(IntRect(0,0,32,32));
   ps->turnoNegro.setTextureRect(IntRect(32,0,32,32));
   ps->turnoBlanco.setScale(12,16);
@@ -51,7 +153,7 @@ void properInit(int tableroId_,int player1Id,int player2Id){
         posPieza.setFillColor(sf::Color(250,240,190,150));
         posActGood.setFillColor(sf::Color(180,230,100,100));
         posActBad.setFillColor(sf::Color(240,70,40,100));
-        textDebug.setFont(j->font);
+        textDebug.setFont(font);
         textDebug.setPosition(520,465);
 
         backGroundMem.setFillColor(sf::Color(240,235,200));
@@ -63,133 +165,111 @@ void properInit(int tableroId_,int player1Id,int player2Id){
         backGroundMemDebug.setOutlineThickness(4);
         backGroundMemDebug.setSize(Vector2f(20,40));
         textValMem.setColor(Color::Black);
-        textValMem.setFont(j->font);
-        )
-  lastBucket=&bucketPiezas;new Bucket();
-  lastBucket=&bucketHolders;new Bucket();
+        textValMem.setFont(font);
+        );
+  initParser(&ps->pd);
 
-  properGameInit();
+  init(&colores);
+
+  actualHolder.ps=ps;
+  initBucket(ps->pieceOps);
+  properGameInit(ps);
 }
 
-void properGameInit(){
-  clickers.clear();
-  memMov.clear();
-  maxMemMovSize=0;
-  memGlobal.clear();
-  memGlobalTriggers.clear();
-  memGlobalSize=0;
-  memTileSize=0;
-  turnoTrigs[0].clear();
-  turnoTrigs[1].clear();
-  turnoAct=2;
-  turno=1;
 
-  if(lect.archPiezas.is_open())
-    lect.archPiezas.close();
-  lect.archPiezas.open("piezas.txt");
+void properGameInit(properState* ps){
+  ps->clickers.size=0;
+  //ps->turnoAct=2;
+  ps->turno=1;
 
-  lect.generarIdsTablero(id);
+  getBoardIds(&ps->pd,ps->boardId);
+  ps->pieces.size=0;
+  makePieces(&ps->pd,&ps->pieces,ps->pieceOps);
 
-  tablero.armar(v(lect.matriz[0].size(),lect.matriz.size()));
+  ps->hsSize=0;
 
-  lect.cargarDefs();
+  for(int& id:ps->pd.boardInit){
+    if(id){
+      ps->hsSize+=ps->pieces[getIndexById(&ps->pd.ids,id)].hsSize;
+    }
+  }
+
+  ps->hsSize+=ps->pd.dims.x*ps->pd.dims.y*sizeof(Tile)
+           + ps->pd.memGlobalSize*sizeof(memData)
+           + ps->pd.memTileSize*sizeof(memData);
+
+  initBucket(ps->gameState,ps->hsSize);
+  makeBoard(ps);
+
 
   //esto esta aca porque escala se setea en armar
   posPieza.setSize(Vector2f(32*escala,32*escala));
   debug(
         posActGood.setSize(Vector2f(32*escala,32*escala));
         posActBad.setSize(Vector2f(32*escala,32*escala));
-        )
+        );
 
 
-  piezas.clear();
-  cout<<"-----"<<endl;
-  for(uint i=0; i<lect.matriz.size(); i++){
-    for(uint j=0; j<lect.matriz[0].size(); j++){
-      int n=lect.matriz[i][j];
-      v pos(j,i);
-      //cout<<pos<<"  "<<tablero.tam<<endl;
-      if(n)
-        tablero.tile(pos)->holder=lect.crearPieza(n,pos);
-      else
-        tablero.tile(pos)->holder=nullptr;
-    }
-  }
-
-  memset(memGlobal.data(),0,memGlobalSize*sizeof(int));
-
-  for(uint i=0; i<lect.matriz.size(); i++){
-    for(uint j=0; j<lect.matriz[0].size(); j++){
-      Holder* hAct=tablero.tile(v(j,i))->holder;
-      if(hAct){
-        turno1=hAct->bando;
-        hAct->generar();
-      }
-    }
-  }
-  cout<<endl;
+  /*
   for(int i=0; i<tablptr->tam.y; i++){
     for(int j=0; j<tablptr->tam.x; j++){
       cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
     }
     cout<<endl;
-  }
-  turno1=true;
+    }*/
   drawScreen();
 }
 
-void properDraw(){
-  tablero.drawTiles();
+void properDraw(char* mem){
+  properState* ps=(properState*)mem;
+  board* brd=(board*)ps->gameState;
+  drawTiles(brd);
   if(Clicker::drawClickers)
     for(Clicker& cli:clickers)
-      cli.draw();
-  tablero.drawPieces();
-  if(turno1)
-    window.draw(turnoBlanco);
+      drawClicker(&cli);
+  drawPieces(brd);
+  if(ps->turno&1)
+    window.draw(ps->turnoBlanco);
   else
-    window.draw(turnoNegro);
+    window.draw(ps->turnoNegro);
 
   debug(
         textValMem.setPosition(570,10);
-        textValMem.setString(to_string(turno));
+        textValMem.setString(std::to_string(ps->turno));
         window.draw(textValMem);
 
-          window.draw(*tileActDebug);
-          if(drawAsterisco){
-            window.draw(asterisco);
-            drawAsterisco=false;
-          }
+        window.draw(*tileActDebug);
         
-          window.draw(posPieza);
-          window.draw(textDebug);
-          int memSize=actualHolder.nh->base->memLocalSize;
-          for(int i=0;i<memSize;i++){
-            backGroundMem.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
-            window.draw(backGroundMem);
-          }
-          for(int i=0;i<memGlobalSize;i++){
-            backGroundMem.setPosition(Vector2f(530+25*(i%4),305+45*(i/4-memGlobalSize/4)));
-            window.draw(backGroundMem);
-          }
-          int memPiezaSize=actualHolder.h->memPieza.count();
-          for(int i=0;i<memPiezaSize;i++){
-            backGroundMem.setPosition(Vector2f(530+25*(i%4),205+45*(i/4-memPiezaSize/4)));
-            window.draw(backGroundMem);
-          }
-          for(int i=0;i<memTileSize;i++){
-            backGroundMem.setPosition(Vector2f(530+25*(i%4),105+45*(i/4-memTileSize/4)));
-            window.draw(backGroundMem);
-          }
-          if(getterMemDebug1){
-            getterMemDebug1->drawDebugMem();
-            getterMemDebug2->drawDebugMem();
-          }
-          for(int i=0;i<memSize;i++){
-            textValMem.setPosition(530+25*(i%4),410+45*(i/4-memSize/4));
-            textValMem.setString(to_string(memMov[i]));
-            window.draw(textValMem);
-          }
-          for(int i=0;i<memGlobalSize;i++){
+        window.draw(posPieza);
+        window.draw(textDebug);
+        /*int memSize=actualHolder.nh->base->memLocalSize;
+        for(int i=0;i<memSize;i++){
+          backGroundMem.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
+          window.draw(backGroundMem);
+        }
+        for(int i=0;i<memGlobalSize;i++){
+          backGroundMem.setPosition(Vector2f(530+25*(i%4),305+45*(i/4-memGlobalSize/4)));
+          window.draw(backGroundMem);
+        }
+        int memPiezaSize=actualHolder.h->memPieza.count();
+        for(int i=0;i<memPiezaSize;i++){
+          backGroundMem.setPosition(Vector2f(530+25*(i%4),205+45*(i/4-memPiezaSize/4)));
+          window.draw(backGroundMem);
+        }
+        for(int i=0;i<memTileSize;i++){
+          backGroundMem.setPosition(Vector2f(530+25*(i%4),105+45*(i/4-memTileSize/4)));
+          window.draw(backGroundMem);
+        }
+        if(getterMemDebug1){
+          getterMemDebug1->drawDebugMem();
+          getterMemDebug2->drawDebugMem();
+        }
+        for(int i=0;i<memSize;i++){
+          textValMem.setPosition(530+25*(i%4),410+45*(i/4-memSize/4));
+          textValMem.setString(to_string(memMov[i]));
+          window.draw(textValMem);
+        }
+        for(int i=0;i<memGlobalSize;i++){
             textValMem.setPosition(530+25*(i%4),310+45*(i/4-memGlobalSize/4));
             textValMem.setString(to_string(memGlobal[i]));
             window.draw(textValMem);
@@ -203,14 +283,22 @@ void properDraw(){
             textValMem.setPosition(530+25*(i%4),110+45*(i/4-memTileSize/4));
             textValMem.setString(to_string(tablptr->tile(posDebugTile)->memTile[i]));
             window.draw(textValMem);
-          }
+            }*/
         )
 }
 
-void properUpdate(){
+void doTurn(properState* ps,int player,bool bando){
+  switch(player){
+  case 0: humanTurn(bando,(board*)ps->gameState);break;
+  case 1: randomTurn(bando,ps);srand(time(NULL));break;
+  case 2: skipTurn();
+  }
+}
+
+void properUpdate(properState* ps){
   try{
-    primero->turno();
-    segundo->turno();
+    doTurn(ps,ps->player1,true);
+    doTurn(ps,ps->player2,false);
   }catch(...){}
 }
 

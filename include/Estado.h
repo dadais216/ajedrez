@@ -12,9 +12,54 @@ struct Proper{
 };
 */
 
-//turnoAct se aumenta en cada accionar, es el contador de turnos
-//turno es turnoAct/2, el contador de turnos interpretando un turno como una jugada de los dos jugadores
-int turno,turnoAct;
-bool turno1;
+struct Clicker;
+struct properState{
+  int player1,player2;
+  Sprite turnoBlanco,turnoNegro;
+  bucket* pieceOps;
+  vector<Piece> pieces;
+  vector<Clicker> clickers;
+  vector<int> memMov;//se podría mover a gameState, consiguendo su max TODO
+  bucket*   gameState;//por ahora
+  //char* board; //tablero+memorias globales
+  //char* holderSpace; //vector que voy a implementar a mano, porque necesito correr codigo para determinar si crecer o no, y cuanto
+
+  int boardId;
+  parseData pd;
+
+  int hsSize;
+
+  int turno;
+  debug(
+        v posPieza;
+        v posActGood;
+        v posActBad;
+        Text textDebug;
+        RectangleShape backgroundMem;
+        RectangleShape backgroundMemDebug;
+        Text textValMem;
+        )
+};
+
+
+/*
+la idea que tenia al principio es tener todo en memoria contigua, porque hay mas chances de estar en cache y copiar la memoria es rapido y simple, lo que va a ser importante cuando genere turnos futuros.
+Los triggers no se pueden poner ahi porque crecen de forma aleatoria, asi que los meti en un vector aparte. Dentro de todo no debería ser mucho problema,es otro acceso nomas.
+Creo que voy a hacer lo mismo con los holders y su estructura de movimientos, porque puede crecer aleatoriamente con spawns. Igual me gustaria medir para ver si hay una diferencia relevante antes.
+Mantener la memoria contigua y usar buckets para holders que aparezcan despues es la otra opcion, pero no me cierra porque cuando deje de usar punteros y pase a relativos estos van a tener que tener 2 partes, un indicador de bucket y la posicion en ese bucket. Ahi voy a meter branching y va a ser medio feo. Igual me gustaría probarlo y medirlo
+
+Al final igual creo que me quedo con el vector. Estaría bueno ver que piezas son las de spawn y crear espacios para ellas preventivamente, para evitar la copia en caso de que se necesite una que no este.
+El mecanismo de reutilizar espacio de piezas capturadas por piezas del mismo tipo ya esta.
+Se podría agregar un mecanismo para manejar el espacio de piezas capturadas que no pueden volver a aparecer, que sea ocupado por piezas nuevas que tengan menos tamaño, o comprimir el vector.
+
+en cada turno futuro se copia el vector. Si durante el procesado del vector hay un spawn y no hay espacio se copia de vuelta. 
+
+El tablero, la memoria global y tile quedaría en un malloc aparte
+*/
+
+void properDraw(char*);
+void properGameInit(properState*);
+
+
 
 #endif // ESTADO_H

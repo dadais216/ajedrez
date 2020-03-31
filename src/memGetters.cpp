@@ -39,13 +39,13 @@ void debugUnsetIndirectColor(){
 //los accesos indirectos son una optimizacion
 
 int* localg(){
-  int ind=(int)getNextInBuffer();;
-  debugDrawMem(ind,memSize,100);
+  intptr ind=(intptr)getNextInBuffer();;
+  debugDrawMem(ind,actualHolder.nh->base->memLocalSize,100);
   return &memMov[ind];
 }
 
 int* localAccg(){
-  int ind=(int)getNextInBuffer();;
+  intptr ind=(intptr)getNextInBuffer();;
   return actualHolder.nh->memAct[ind];
 }
 
@@ -54,40 +54,40 @@ int* localgi(){
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();;
-  debugDrawMem(ind,memSize,100);
+  debugDrawMem(ind,actualHolder.nh->base->memLocalSize,100);
   return &memMov[ind];
 }
 
 int* localAccgi(){//aparece en cadenas de 3 o mas
   getter g=(getter)getNextInBuffer();
   int ind=*g();
-  return &actualHolder.nh->memAct[ind];
+  return actualHolder.nh->memAct[ind];
 }
 
-int* piezag(){
-  int ind=(int)getNextInBuffer();
-  debugDrawMem(ind,actualHolder.h->memPieza.size(),400);
-  return &actualHolder.h->memPieza[ind];
+int* pieceg(){
+  intptr ind=(intptr)getNextInBuffer();
+  debugDrawMem(ind,size(actualHolder.h->memPiece),400);
+  return actualHolder.h->memPiece[ind];
 }
 
-int* piezaAccg(){//unico motivo de existir es no tirar codigo debug en accion
-  int ind=(int)getNextInBuffer();
-  return &actualHolder.h->memPieza[ind];
+int* pieceAccg(){//unico motivo de existir es no tirar codigo debug en accion
+  intptr ind=(intptr)getNextInBuffer();
+  return actualHolder.h->memPiece[ind];
 }
 
-int* piezagi(){
+int* piecegi(){
   getter g=(getter)getNextInBuffer();
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();
-  debugDrawMem(ind,actualHolder.h->memPieza.size(),400);
-  return &actualHolder.h->memPieza[ind];
+  debugDrawMem(ind,size(actualHolder.h->memPiece),400);
+  return actualHolder.h->memPiece[ind];
 }
 
-int* piezagi(){//unico motivo de existir es no tirar codigo debug en accion
+int* pieceAccgi(){//unico motivo de existir es no tirar codigo debug en accion
   getter g=(getter)getNextInBuffer();
   int ind=*g();
-  return &actualHolder.h->memPieza[ind];
+  return actualHolder.h->memPiece[ind];
 }
 
 
@@ -96,11 +96,11 @@ int* piezagi(){//unico motivo de existir es no tirar codigo debug en accion
 //hacer una comunicacion rara tambien.
 
 int* globalRead(){
-  int ind=(int)getNextInBuffer();;
-  debug(drawDebugMem(ind,memGlobalSize,0));
+  intptr ind=(intptr)getNextInBuffer();;
+  debug(debugDrawMem(ind,actualHolder.brd->memGlobalSize,0));
 
-  memData md=board->memGlobal[ind];
-  pushTrigger(board->ts,&md->used,&md->firstTriggerBox,actualTile);//probar triggers fijos despues
+  memData* md=&actualHolder.brd->memGlobals[ind];
+  pushTrigger(&md->triggersUsed,&md->firstTriggerBox);//probar triggers fijos despues
   return &md->val;
 }
 
@@ -114,39 +114,39 @@ int* globalReadi(){
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();
-  debugDrawMem(ind,memSize,0);
-  memData md=board->memGlobal[ind];
-  pushTrigger(board->ts,&md->used,&md->firstTriggerBox,actualTile);
+  debugDrawMem(ind,actualHolder.brd->memGlobalSize,0);
+  memData* md=&actualHolder.brd->memGlobals[ind];
+  pushTrigger(&md->triggersUsed,&md->firstTriggerBox);
   return &md->val;
 }
 
-int* globalReadiNT(){
+int* globalReadNTi(){
   getter g=(getter)getNextInBuffer();
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();;
-  debugDrawMem(ind,memSize,0);
-  return &board->memGlobal[ind].val;
+  debugDrawMem(ind,actualHolder.brd->memGlobalSize,0);
+  return &actualHolder.brd->memGlobals[ind].val;
 }
 
 
 v posDebugTile(0,0);
 
-memData getTileMd(int ind,board* b){
-  return board->memTile[ind+nh->pos.x*board->dim.y+nh->pos.y*board->dim.x*board->memTileSlots];
+memData* getTileMd(int ind,board* b){
+  return &b->memTiles[ind+actualHolder.nh->pos.x*b->dims.y+actualHolder.nh->pos.y*b->dims.x*b->memTileSlots];
 }
 
 int* tileRead(){
-  int ind=(int)getNextInBuffer();
-  debugDrawMem(ind,memTileSize,200);
+  intptr ind=(intptr)getNextInBuffer();
+  debugDrawMem(ind,actualHolder.brd->memTileSize,200);
 
-  memData md=getTileMd(ind,board);
-  pushTrigger(board->ts,&md.used,&md.firstTriggerBox,actualTile);
-  return &md.val;
+  memData* md=getTileMd(ind,actualHolder.brd);
+  pushTrigger(&md->triggersUsed,&md->firstTriggerBox);
+  return &md->val;
 }
 int* tileReadNT(){  
-  int ind=(int)getNextInBuffer();
-  return &getTileMd(ind,board).val;
+  intptr ind=(intptr)getNextInBuffer();
+  return &getTileMd(ind,actualHolder.brd)->val;
 ;
 }
 
@@ -155,38 +155,32 @@ int* tileReadi(){
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();
-  debugDrawMem(ind,memTileSize,200);
+  debugDrawMem(ind,actualHolder.brd->memTileSlots,200);
 
-  memData md=getTileMd(ind,board);
-  pushTrigger(board->ts,&md.used,&md.firstTriggerBox,actualTile);
-
-  return &md.val;
+  memData* md=getTileMd(ind,actualHolder.brd);
+  pushTrigger(&md->triggersUsed,&md->firstTriggerBox);
+  return &md->val;
 }
 
 int* tileReadNTi(){
   getter g=(getter)getNextInBuffer();
   int ind=*g();
-  return &getTileMd(ind,board).val;
+  return &getTileMd(ind,actualHolder.brd)->val;
 }
 
 //cteRead == (int)(*)()getNextInBuffer
 
 int* cteRead(){
-  int* cte=&(int)getNextInBuffer();
+  int* cte=(int*)&actualHolder.buffer[*actualHolder.bufferPos];//cast void** to int* 
+  *actualHolder.bufferPos++;
   debug(
         //debería haber un if para no mostar durante accion supongo
+        //TODO si hago esto evito duplicar algunas cosas de pieza y local
         textValMem.setPosition(610,470);
-        textValMem.setString(to_string(v));
+        textValMem.setString(std::to_string(*cte));
         window.draw(textValMem);
         );
   return cte;
-}
-
-int* turnRead(){
-  debug(
-        //
-  );
-  return &turno;
 }
 
 //pos se trata como una cte porque no puede variar desde la generacion hasta la accion inclusive
@@ -203,8 +197,8 @@ int* posYRead(){
   static int y;
   y=offset.y+actualHolder.nh->relPos.y;
   if(actualHolder.nh->base->h->bando){
-    y=tablptr->tam.y-1-y;
-  }
+    y=actualHolder.brd->dims.y-1-y;
+      }
   return &y;
 }
 

@@ -15,12 +15,17 @@ struct Trigger{
 
 const int triggersPerBox=3;//3=1 cache suponiendo que no haya padding xd
 struct triggerBox{
-  Trigger triggers[triggersPerBox];
-  int next;
+  union{
+    struct{
+      Trigger triggers[triggersPerBox];
+      int next;
+    };
+    int nextFree;
+  };
 };
 
 struct triggerSpace{
-  int firstFree:
+  int firstFree;
   int lastFree;
   int size;
   triggerBox* mem;
@@ -28,13 +33,12 @@ struct triggerSpace{
 
 struct Tile{
   Holder* holder;
-  int triggersUsed;
   int firstTriggerBox;
+  int triggersUsed;
   v pos;//tecnicamente es calculable, que sé yo
   int step; //se actualiza por mov, capt y spawn
 };
 
-//hice las cuentas y se podría meter 1 trigger en Tile para aprovechar la cache line. No sé si vale la pena porque es un trigger solo, pero bueno
 
 struct memData{
   int val;
@@ -71,6 +75,9 @@ struct board{
   triggerSpace ts;
   memData* memGlobals;//alocado despues de tiles
   memData* memTiles;
+  int memGlobalSize;
+  int memTileSlots;
+  int memTileSize;
   Tile tiles[0];
 };
 
@@ -86,6 +93,7 @@ struct board{
 
 
 
+void init(triggerSpace* ts);
 
 
 

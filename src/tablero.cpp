@@ -1,20 +1,26 @@
 
 
 
-void armarTablero(board* brd, v dims){
-  t->dims=dims;
+void makeBoard(properState* p){
+  parseData* pd=&p->pd;
+  board* brd=(board*)p->gameState;
+  initBucket(p->gameState,pd->dims.x*pd->dims.y*sizeof(Tile)
+          + pd->memGlobalSize*sizeof(memData)
+          + pd->memTileSize*sizeof(memData));//despues de esto se meten los holders por ahora
+  brd->dims=pd->dims;
 
-  for(int i=0; i<dims.x; i++)
-    for(int j=0; j<dims.y; j++){
-      Tile* tile=&brd->tiles[i+j*dims.x];
-      memset(tile,0,sizeof(Tile));
-      tile->pos=v(i,j);
-      tile->holder=nullptr;//poner puntero a holder aca
-      tile->triggersUsed=0;
-      tile->step=0;
+  memset(brd->tiles,0,sizeof(Tile)*pd->dims.x*pd->dims.y);
+  for(int i=0; i<brd->dims.x*brd->dims.y; i++){
+    Tile* tile=&brd->tiles[i];
+    tile->pos=v(i%brd->dims.x,i/brd->dims.x);
+    int id=pd->boardInit[i];
+    if(id!=0){
+      int sind=getCodedPieceIndexById(&pd->ids,id);
+      tile->holder=initHolder(&p->pieces[std::abs(sind)-1],sign(sind),tile,p->gameState);
     }
+  }
 
-  escala=16*(1/(float)(dims.x>dims.y?dims.x:dims.y));
+  escala=16*(1/(float)(brd->dims.x>brd->dims.y?brd->dims.x:brd->dims.y));
   brd->b.setTexture(image.get("tiles.png"));
   brd->n.setTexture(image.get("tiles.png"));
   brd->b.setScale(escala,escala);
@@ -24,27 +30,44 @@ void armarTablero(board* brd, v dims){
 
   init(&brd->ts);
 
-  brd->memGlobal=(memData*)(brd->tiles+brd.dims.x*brd.dims.y);
-  brd->memTile=brd->memGlobal+parser->globalQuantity;
+  brd->memTileSlots=pd->memTileSize;;
+
+  brd->memGlobals=(memData*)(brd->tiles+brd->dims.x*brd->dims.y);
+  memset(brd->memGlobals,0,pd->memGlobalSize*sizeof(memData));
+  brd->memTiles=brd->memGlobals+pd->memGlobalSize*sizeof(memData);
+  memset(brd->memTiles,0,brd->memTileSlots*brd->dims.x*brd->dims.y*sizeof(memData));
+
+  //TODO cuando haga el codigo general tendría que generar primero un bando, correr el codigo, despues el otro
+  for(int i=0;i<brd->dims.x*brd->dims.y;i++){
+    Holder* hAct=brd->tiles[i].holder;
+    generar(hAct);
+  }
 }
 
 Tile* tile(board* brd,v pos){
-  return &brd->tile[pos.x+pos.y*brd->dim.x];
+  return &brd->tiles[pos.x+pos.y*brd->dims.x];
 }
 
-void draw(board* brd){
-  for(int i=0; i<tam.x; i++)
-    for(int j=0; j<tam.y; j++){
+void drawTiles(board* brd){
+  for(int i=0; i<brd->dims.x; i++)
+    for(int j=0; j<brd->dims.y; j++){
       if((i+j)&1){
-        b.setPosition(i*escala*32,j*escala*32);
-        window.draw(b);
+        brd->b.setPosition(i*escala*32,j*escala*32);
+        window.draw(brd->b);
       }else{
-        n.setPosition(i*escala*32,j*escala*32);
-        window.draw(n);
+        brd->n.setPosition(i*escala*32,j*escala*32);
+        window.draw(brd->n);
       }
+    }
+}
+
+void drawHolder(Holder*);
+void drawPieces(board* brd){
+  for(int i=0; i<brd->dims.x; i++)
+    for(int j=0; j<brd->dims.y; j++){
       Holder* p;
-      if((p=brd->tiles[i+j*brd->dims.x]->holder))
-        draw(p);
+      if((p=brd->tiles[i+j*brd->dims.x].holder))
+        drawHolder(p);
     }
 }
 
@@ -89,10 +112,10 @@ void init(triggerSpace* ts){
   ts->size=16;
   ts->mem=new triggerBox[16];
   for(int i=0;i<16;i++){
-    ts->mem[i]=(triggerBox)(i+1);
+    ts->mem[i].nextFree=i+1;
   }
-  firstFree=0;
-  lastFree=15;
+  ts->firstFree=0;
+  ts->lastFree=15;
 }
 int newTriggerBox(triggerSpace* ts){
   int ret=ts->firstFree;
@@ -104,29 +127,32 @@ int newTriggerBox(triggerSpace* ts){
     delete ts->mem;
     ts->mem=newMem;
     for(int i=sizeBefore;i<ts->size;i++){
-      ts->mem[i]=(triggerBox)(i+1);
+      ts->mem[i].nextFree=i+1;
     }
     ts->firstFree=sizeBefore;
     ts->lastFree=ts->size-1;
   }else{
-    ts->firstFree=(int)ts->mem[ts->firstFree];
+    ts->firstFree==ts->mem[ts->firstFree].nextFree;
   }
   return ret;
 }
 void freeTriggerBox(triggerSpace* ts,int ind){
-  ts->mem[ts->lastFree]=(triggerBox)ind;
+  ts->mem[ts->lastFree].nextFree=ind;
   ts->lastFree=ind;
 }
 
 
 //@optim cuando pueda visualizar y medir bien probar hacer que arranquen todos con una caja
 
-//@optim se da la casualidad de que used y pushTo siempre son contiguos, podría probar pasarlos como un struct
-void pushTrigger(triggerSpace* ts,int* used,int* pushTo,Tile* tile,normalHolder* n){
+void pushTrigger(int* used,int* pushTo){
+  triggerSpace* ts=&actualHolder.brd->ts;
+  Tile* tile=actualHolder.tile;
+  normalHolder* n=actualHolder.nh;
+
   int ind=*used;
   if(ind==0){//caso inicial. Si decido hacer que todos los tiles arranquen con 1 triggerBox no es necesario
     *pushTo=newTriggerBox(ts);
-    ts->mem[*pushTo]->triggers[0]=Trigger({n,&tile->step,tile->step});
+    ts->mem[*pushTo].triggers[0]=Trigger({n,&tile->step,tile->step});
     *used=1;
     return;
   }
@@ -134,27 +160,29 @@ void pushTrigger(triggerSpace* ts,int* used,int* pushTo,Tile* tile,normalHolder*
   int tb=*pushTo;
   while(ind>triggersPerBox){
     ind-=triggersPerBox;
-    tb=ts->mem[tb]->next;
+    tb=ts->mem[tb].next;
   }
-  if(ind==triggersBox){
+  if(ind==triggersPerBox){
     int newTb=newTriggerBox(ts);
-    ts->mem[tb]->next=newTb;
+    ts->mem[tb].next=newTb;
     tb=newTb;
     ind=0;
   }
-  ts->mem[tb]->triggers[ind]=Trigger({n,&tile->step,tile->step});
-  *used++;
+  ts->mem[tb].triggers[ind]=Trigger({n,&tile->step,tile->step});
+  (*used)++;
 }
 
 vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
-void chargeTriggers(triggerSpace* ts,int* used,int* source){
+void chargeTriggers(int* used,int* source){
+  triggerSpace* ts=&actualHolder.brd->ts;
+
   int tb=*source;
   int tu=*used;
 
   auto evalTrig=[&](int ind)->void{
-                  Trigger trig=ts->mem[tb]->triggers[ind];
+                  Trigger trig=ts->mem[tb].triggers[ind];
                   if(trig.step==*trig.stepCheck){
-                    trigsActivados.push_back(trig.nh);
+                    push(&trigsActivados,trig.nh);
                   }
                 };
 
@@ -163,7 +191,7 @@ void chargeTriggers(triggerSpace* ts,int* used,int* source){
     for(int i=0;i<triggersPerBox;i++){
       evalTrig(i);
     }
-    tb=ts->mem[tb]->next;
+    tb=ts->mem[tb].next;
     tu-=triggersPerBox;
   }
   for(int i=0;i<tu;i++){
@@ -174,8 +202,8 @@ void chargeTriggers(triggerSpace* ts,int* used,int* source){
   tb=*source;
   *used=0;
   do{
-    triggerBox* temp=tb->next;
-    freeTriggerBox(tb);
+    int temp=ts->mem[tb].next;
+    freeTriggerBox(ts,tb);
     tb=temp;
   }while(tb);
   //tile->triggerBox->next=nullptr;
@@ -186,40 +214,43 @@ void activateTriggers(){
     //los triggers duplicados (por dos condiciones poniendo dos triggers a un mismo normalHolder, o por
     //dos lecturas a una memoria dinamica en distintos turnos) no son un problema, no causan calculos extra.
     //Van a mandarse juntos en la misma activacion, el primero va a causar la generacion y el segundo va a quedar colgado
-    if(trigsActivados.size()==0) return;
-    if(trigsActivados.size()==1){
+    if(trigsActivados.size==0) return;
+    if(trigsActivados.size==1){
         switchToGen=false;
         Base* base=trigsActivados[0]->base;
         actualHolder.h=base->h;
 
-        base->beg->table->reaccionar(base->beg,trigsActivados[0]);
+        base->root->table->reaccionar(base->root,trigsActivados[0]);
     }
     else{
       //@test no sería suficiente con ordenar segun nh desde el principio?
 
         ///@optim supongo que volcarlo a una matriz es mas rapido que ordenarlo y trocearlo
-        sort(trigsActivados.begin(),trigsActivados.end(),[](normalHolder* a,normalHolder* b)->bool
-             {return a->base->beg<b->base->beg;});
+      std::sort(&trigsActivados[0],&trigsActivados.data[trigsActivados.size],[](normalHolder* a,normalHolder* b)->bool
+             {return a->base->root<b->base->root;});
         int i=0;
-        while(i<trigsActivados.size()){
+        while(i<trigsActivados.size){
             switchToGen=false;
-            movHolder* base=trigsActivados[i]->base->beg;
+            movHolder* base=trigsActivados[i]->base->root;
             int j=i+1;
-            while(j<trigsActivados.size()&&trigsActivados[j]->base->beg==base)
+            while(j<trigsActivados.size&&trigsActivados[j]->base->root==base)
                 j++;
             actualHolder.h=base->base->h;
             if(j==i+1)
               base->table->reaccionar(base,trigsActivados[i]);
             else{
-                vector<normalHolder*> nhs(&trigsActivados[i],&trigsActivados[j]);
-                sort(nhs.begin(),nhs.end(),[](normalHolder* a,normalHolder* b)->bool{return a<b;});
+                vector<normalHolder*> nhs;
+                initCopy(&nhs,&trigsActivados[i],j-i);
+                
+
+                std::sort(&nhs[0],&nhs.data[nhs.size],[](normalHolder* a,normalHolder* b)->bool{return a<b;});
                 //estaria bueno no hacer una copia, no es muy importante igual
                 base->table->reaccionarVec(base,&nhs);
             }
             i=j;
         }
     }
-    trigsActivados.clear();
+    trigsActivados.size=0;
 }
 
 /*

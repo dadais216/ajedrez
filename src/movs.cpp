@@ -1,5 +1,5 @@
 
-
+//TODO mirar esto
 color::color(RectangleShape* rs_){
     rs=rs_;///@optim es necesario tener un rectangleShape para cada uno? por ahi es mas rapido reutilizar. No usaria memoria dinamica ahi
 }
@@ -7,25 +7,19 @@ void color::draw(){
     rs->setPosition(actualPosColor.x*32*escala,actualPosColor.y*32*escala);
     window.draw(*rs);
 }
-list<RectangleShape*> colores;
-colort* crearColor(){
+vector<RectangleShape*> colores;
+colort* crearColor(int r,int g,int b){
     ///se crea una instancia del sprite y cada colort la guarda en un puntero, se diferencia por tipo
     ///en un parametro de esta funcion, por ahora solo manejo colores
 
     //el motivo de manejarme con rectangleshapes es que es lo que comparten todos, total la pos se va a tener
     //que setear en cada dibujo sea compartida o no
-    int r=tokens.front()-1000;
-    tokens.pop_front();
-    int g=tokens.front()-1000;
-    tokens.pop_front();
-    int b=tokens.front()-1000;
-    tokens.pop_front();
     for(RectangleShape* c:colores)
         if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b)
             return new color(c);
     RectangleShape* rs=new RectangleShape(Vector2f(32*escala,32*escala));
     rs->setFillColor(sf::Color(r,g,b,40));
-    colores.push_back(rs);
+    push(&colores,rs);
     return new color(rs);
 }
 
@@ -67,12 +61,12 @@ void numShow::debug(){
 
 /*
 ///version condt, la version acct necesita un clone() que le guarde el holder.
-template<void(*t2)(int*)> struct piezaac{
+template<void(*t2)(int*)> struct pieceac{
     int ind;
-    piezaa(int ind_):ind(ind_){}
+    piecea(int ind_):ind(ind_){}
     int* val(){
         t2(&ind);//version con y sin triggers
-        return &hAct->memPieza[ind];
+        return &hAct->memPiece[ind];
     }
 };
 */
@@ -86,7 +80,7 @@ struct spwn:public acm{
         //cuando anden los negativos se pueden invocar píezas del bando opuesto
     }
     virtual void func(){
-        (*tabl)(pos.show(),lect.crearPieza(n*act->bando));
+        (*tabl)(pos.show(),lect.crearPiece(n*act->bando));
         cout<<"spwn "<<n<<" ";
     }
     virtual void debug(){
@@ -99,7 +93,7 @@ struct spwn:public acm{
 void mov(){
     actualHolder.h->tile->step++;
     actualHolder.h->tile->holder=nullptr;
-    actualHolder.h->tile=actualTile;
+    actualHolder.h->tile=actualHolder.tile;
     actualHolder.h->tile->holder=actualHolder.h;
 }
 
@@ -109,7 +103,7 @@ void pausa(){
 }
 vector<Holder*> reciclaje;
 void capt(){
-    actualTile->holder->inPlay=false;
+    actualHolder.tile->holder->inPlay=false;
     //@optim se podria eliminar triggers estaticos en global aca para que no se iteren ni activen en falso
     //for(memTriggers& mt:memGlobalTriggers[ind])
     //    remove_if(mt.perma.begin(),mt.perma.end(),[&captT](normalHolder* nh)->bool{
@@ -117,10 +111,10 @@ void capt(){
     //          });
     //el problema esta en recrearlos en spawn. Se tendria que agregar otra rama de polimorfismo para acceder a cada
     //normalHolder y setear las memorias devuelta y no creo que lo valga
-    reciclaje.push_back(actualTile->holder);
-    actualTile->holder=nullptr;
-    actualTile->step++;
-    pisados.push_back(actualTile);
+    push(&reciclaje,actualHolder.tile->holder);
+    actualHolder.tile->holder=nullptr;
+    actualHolder.tile->step++;
+    push(&pisados,actualHolder.tile);
 }
 
 //retorna void(*)(void) normalmente, pero puede tener otras cosas metidas
@@ -131,29 +125,30 @@ void* getNextInBuffer(){
 }
 
 
-void spawn(){
+void spwn(){
   //antes cada acct era un objeto polimorfico en vez de una funcion, por lo que algunos podrian tener datos propios. Como ahora tengo un nivel de indireccion menos no puedo hacer eso, osea lo podría hacer pero tendría algo igual que lo anterior y podría probar otra cosa.
   //lo que voy a hacer es poner la informacion que necesiten los acc/cond en el mismo buffer en el que estan, despues de si, indicando al que recorre el buffer que los ignore. Lo malo de esto es que por ahi entorpece la iteracion, aunque seguro es mejor que tener un nivel de indireccion mal. Lo otro malo es que cada dato tiene que caber en el tamaño de un puntero de funcion
 
-  int id=*(int*)getNextInBuffer();
+  int codedId=*(int*)getNextInBuffer();
+  int ind=abs(codedId)-1;
+  bool bando=codedId>0?actualHolder.h->bando:!actualHolder.h->bando;
 
-  for(int i=0;i<reciclaje.size();i++){
+  for(int i=0;i<reciclaje.size;i++){
     Holder* h=reciclaje[i];
-    if(h->id==abso(id)){//reciclo piezas enemigas tambien
+    if(h->piece->ind==ind){//reciclo piezas enemigas tambien
       h->inPlay=true;
-      memset(h->memPieza.beg,0,sizeof(int)*size(h->memPieza));
-      actualTile->holder=h;
-      h->tile=actualTile;
-      reciclaje.erase(reciclaje.begin()+i);
-      goto gen;
+      h->bando=bando;
+      memset(h->memPiece.beg,0,sizeof(int)*size(h->memPiece));
+      actualHolder.tile->holder=h;
+      h->tile=actualHolder.tile;
+      unorderedErase(&reciclaje,i);
+      goto end;
     }
   }
-  actualTile->holder=lect.crearPieza(id,actualTile->pos);
- gen:
-  actualTile->holder->bando=id>0?actualHolder.h->bando:!actualHolder.h->bando;//el signo de id indica si se quiere el mismo bando u opuesto
-  justSpawned.push_back(actualTile->holder);
-  pisados.push_back(actualTile);
-
+  initHolder(&actualHolder.ps->pieces[ind],bando,actualHolder.tile,actualHolder.ps->gameState);
+ end:
+  push(&justSpawned,actualHolder.tile->holder);
+  push(&pisados,actualHolder.tile);
 }
 
 
@@ -167,13 +162,13 @@ void debugShowAndWait(const char*,bool);
 
 
 bool vacio(){
-  CONDRET(actualTile->holder==nullptr);
+  CONDRET(actualHolder.tile->holder==nullptr);
 }
-bool pieza(){
-  CONDRET(actualTile->holder);
+bool piece(){
+  CONDRET(actualHolder.tile->holder);
 }
 bool enemigo(){
-    Holder* other=actualTile->holder;
+    Holder* other=actualHolder.tile->holder;
     if(other)
       CONDRET(other->bando!=actualHolder.h->bando);
     CONDRET(false);
@@ -186,7 +181,7 @@ bool pass(){
 debug(
       RectangleShape backGroundMem;
 
-      RectangleShape posPieza;
+      RectangleShape posPiece;
       RectangleShape posActGood;
       RectangleShape posActBad;
       RectangleShape* tileActDebug;
@@ -197,8 +192,6 @@ debug(
       int mil=25;
 
       bool drawMemDebug;
-      getterCond* getterMemDebug1;
-      getterCond* getterMemDebug2;
 
       void stall(){
         ///@cleanup como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
@@ -223,7 +216,7 @@ debug(
           }
         }
       }
-      void debugShowAndWait(char* name,bool val){
+      void debugShowAndWait(char const* name,bool val){
         textDebug.setString(name);
 
         v posAct=actualHolder.nh->pos;
@@ -236,14 +229,14 @@ debug(
           tileActDebug=&posActBad;
           textDebug.setColor(sf::Color(240,70,40,240));
         }
-        posPieza.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
+        posPiece.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
         drawDebugTiles=true;
         drawScreen(properDraw);
         drawDebugTiles=false;
 
         stall();
       }
-      void debugShowAndWaitMem(char* name,bool val){
+      void debugShowAndWaitMem(char const* name,bool val){
         textDebug.setString(name);
 
         if(val)
@@ -254,7 +247,6 @@ debug(
         drawMemDebug=true;
         drawScreen(properDraw);
         drawMemDebug=false;
-        getterMemDebug1=nullptr;
 
         stall();
       }

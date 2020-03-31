@@ -1,57 +1,43 @@
 #ifndef PIEZA_H
 #define PIEZA_H
+struct operador;
+struct Piece;
+struct pBase{
+  operador* raiz;
+  int memLocalSize;
+  int size;
+};
+struct Piece{
+  Sprite spriteb,spriten;
+  int ind;//se usa en el reciclaje en spawn
+  int sn;
 
-struct Pieza{
-    Sprite spriteb,spriten;
-    int id; //para hacer copias. signo indica bando. Hay dos versiones por el tema del espejado en el eje y, la otra opcion era poner ifs cada vez que se pedir la pos relativa
-    int sn;
+  barray<pBase> movs;
 
-    struct base{
-        operador* raiz;
-        int memLocalSize;
-        int size;
-    };
-    barray<base> movs;
-
-    int memPiezaSize;
-
-    bool kamikase,spawner;
-
-
-    Pieza(int,int);
+  int memPieceSize;
+  int hsSize;
+  bool kamikase,spawner;
 };
 
-vector<Pieza*> piezas;
-extern int memLocalSizeAct;
 extern vector<Tile*> pisados;
 
-struct movHolder;
 
 struct Holder{
-    Holder(int,Pieza*,v);
-    ~Holder();
-    void draw();///dibuja la pieza
-    void draw(int);///dibuja la pieza en la lista de capturados
-
-    void makeCli();
-    void generar();
-    void reaccionar(normalHolder*);
-
-    Pieza* pieza;
-    Tile* tile;
-
-    barray<int> memPieza;
-    barray<memTriggers> memPiezaTrigs;
-
-    barray<movHolder*> movs;
-    int id;
-    bool bando;
-    bool inPlay;//false cuando la pieza esta generada y capturada. Solo se usa para evitar activar triggers dinamicos a capturados
+  Piece* piece;
+  Tile* tile;
+  
+  barray<int> memPiece;
+  
+  barray<movHolder*> movs;
+  bool bando;
+  bool inPlay;//false cuando la pieza esta generada y capturada. Solo se usa para evitar activar triggers dinamicos a capturados
 };
-struct Base;
-void crearMovHolder(char**,operador*,Base*);
 
 
+void crearMovHolder(operador*,Base*,char**);
+Holder* initHolder(Piece*,int,Tile*,bucket*);
+void generar(Holder*);
+void makeCli(Holder*);
 
 
 

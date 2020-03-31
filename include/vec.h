@@ -1,7 +1,6 @@
 #ifndef VEC_H_INCLUDED
 #define VEC_H_INCLUDED
 
-using namespace std;
 struct v{
     int x;
     int y;
@@ -11,7 +10,7 @@ struct v{
     };
     v(int x,int y):x(x),y(y){}
     v show(){
-        cout<<"("<<x<<","<<y<<")"<<endl;
+      std::cout<<"("<<x<<","<<y<<")"<<std::endl;
         return *this;
     }
     inline friend v operator+(v a,v b){
@@ -31,15 +30,15 @@ struct v{
         y=vec.y;
         return vec;
     }
-    friend ostream& operator<<(ostream&,v);
+  friend std::ostream& operator<<(std::ostream&,v);
 };
 
-inline int abso(int val){
-    return val>0?val:-val;
+inline int sign(int val){
+  return val>0?1:-1;
 }
 
-inline ostream& operator<<(ostream& out,v a){
-    cout<<" ("<<a.x<<","<<a.y<<") ";
+inline std::ostream& operator<<(std::ostream& out,v a){
+  std::cout<<" ("<<a.x<<","<<a.y<<") ";
     return out;
 }
 

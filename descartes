@@ -1,0 +1,31 @@
+
+Ideas descartadas
+
+Despues de bastante tiempo se me ocurrió que el parser podría hacerse usando objetos, tipo
+ww vacio mov exc a vacio mov c or d vacio mov or w vacio mov end
+tiene una manipulacion de strings simple que lo lleva a
+w+w+vacio+mov+exc(a+vacio+mov+c,exc(d+vacio+mov,w+vacio+mov))
+y esto se linkea directamente a c++, donde tengo objetos para cada simbolo que se relacionan por el 
+operador + y toda la cosa. La ventaja estaría en que me salto tener que hacer el parser, al precio de
+tener que manejar estos objetos y sus relaciones. Para optimizar debería traducir estos objetos a versiones
+finales, aunque si no me interesa podría trabajarse con esos
+
+w vacio mcmp l0 gp4 mov
+w+vacio+mcmp(l(0),g(p(4)))+mov
+
+>mover= vacio mov
+w mover
+#define mover vacio+mov
+w+mover
+
+>asd = mover | captura
+w asd
+link<mover,captura> asd();
+w+asd
+
+y despues asd en procesaria su propia linea de alguna forma
+
+Que sé yo, es una idea y se podría probar en algun otro proyecto. Igual no estoy seguro de que sea mejor que parsear directamente
+
+------------------
+

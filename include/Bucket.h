@@ -9,11 +9,11 @@ struct bucket{
   char* head;
   int size;
   char* firstBlock;
-} *actualBucket,*bucketPiezas,*bucketHolders,**lastBucket;
+};
 int bucketSize=100000000;
 
 
-void allocNewBucket(bucket* b=actualBucket){
+void allocNewBucket(bucket* b){
   b->data=new char[b->size];
 
   char** insertNull=(char**)b->data;
@@ -22,13 +22,13 @@ void allocNewBucket(bucket* b=actualBucket){
   b->head=b->data+=sizeof(char*);
 }
 
-void bucketInit(bucket* b=actualBucket,int size=bucketSize){
+void initBucket(bucket* b,int size=bucketSize){
   b->size=size;
   allocNewBucket(b);
   b->firstBlock=b->data;
 }
 
-void ensureSpace(size_t size,bucket*b=actualBucket){
+void ensureSpace(bucket* b,size_t size){
   if(b->head+size>b->data+b->size){
     char* nextBlock=(char*)*b->data;
     if(nextBlock==nullptr){
@@ -41,14 +41,14 @@ void ensureSpace(size_t size,bucket*b=actualBucket){
   }
 }
 
-template<typename T> T* allocNC(bucket* b=actualBucket){
+template<typename T> T* allocNC(bucket* b){
   T* ret=new(b->head) T; //uso new para constructores de sfml y std
   b->head+=sizeof(T);
   return ret;
 }
 
 //intente usar esto
-//template<typename T,typename... Args> T* allocInitNC(initializer_list<Args...> list,bucket* b=actualBucket){
+//template<typename T,typename... Args> T* allocInitNC(initializer_list<Args...> list,bucket* b){
 //pero no termina de funcionar porque intializer_list no se banca tipos distintos
 //tampoco puedo usar Args... solo porque necesito inicializar el struct
 
@@ -56,23 +56,23 @@ template<typename T> T* allocNC(bucket* b=actualBucket){
 //explicitamente, igual si lo hago con eso y anda estaria haciendome dependiente de gcc
 
 
-#define allocInitNC(TIPO,VAR,...)                            \
-  TIPO* VAR=new(actualBucket->head)TIPO __VA_ARGS__ ;        \
-  actualBucket->head+=sizeof(TIPO);  
+#define allocInitNC(BUCKET,TIPO,VAR,...)          \
+  TIPO* VAR=new(BUCKET->head)TIPO __VA_ARGS__ ;        \
+  BUCKET->head+=sizeof(TIPO);  
 
-#define allocInit(TIPO,VAR,...)                 \
-  ensureSpace(sizeof(TIPO));                    \
-  allocInitNC(TIPO,VAR,__VA_ARGS__);
+#define allocInit(BUCKET,TIPO,VAR,...)            \
+  ensureSpace(BUCKET,sizeof(TIPO));                    \
+  allocInitNC(BUCKET,TIPO,VAR,__VA_ARGS__);
 
-template<typename T> T* alloc(bucket* b=actualBucket){
-  ensureSpace(sizeof(T));
+template<typename T> T* alloc(bucket* b){
+  ensureSpace(b,sizeof(T));
   return allocNC<T>(b);
 }
 
 /* si no anda se puede hacer un macro tipo
-   new(actualBucket->head)TIPO(LISTA);
-   TIPO* base=(TIPO*)actualBucket->head;
-   actualBucket->head+=sizeof(TIPO);
+   new(b->head)TIPO(LISTA);
+   TIPO* base=(TIPO*)b->head;
+   b->head+=sizeof(TIPO);
 */
 
 
@@ -109,25 +109,25 @@ template<typename T> struct barray{
 };
 
 
-inline template<typename T> int count(barray<T> b){
-  return b.after-b.beg;
+template<typename T> int count(barray<T> ba){
+  return ba.after-ba.beg;
 }
-inline template<typename T> int size(barray<T> b){
-  return (char*)b.after-(char*)b.beg;
+template<typename T> int size(barray<T> ba){
+  return (char*)ba.after-(char*)ba.beg;
 }
-template<typename T> void alloc(barray<T>* b,int elems){
-  ensureSpace(elems*sizeof(T));
-  b->beg=(T*)actualBucket->head;
-  actualBucket->head+=sizeof(T)*elems;
-  b->after=(T*)actualBucket->head;
+template<typename T> void alloc(bucket* b,barray<T>* ba,int elems){
+  ensureSpace(b,elems*sizeof(T));
+  ba->beg=(T*)b->head;
+  b->head+=sizeof(T)*elems;
+  ba->after=(T*)b->head;
 }
-inline template<typename T> void copy(barray<T> b,void* data){
-  memcpy(b.beg,data,size(b));
+template<typename T,typename Y> void copy(barray<T> ba,Y* data){
+  memcpy(ba.beg,data,size(ba));
 }
 
-template<typename T> void init(barray<T>* b,int size,void* data){
-  alloc(b,elems);
-  copy(*b,data);
+template<typename T> void allocCopy(bucket* b,barray<T>* ba,int size,void* data){
+  alloc(b,ba,size);
+  copy(*ba,data);
 }
 
 
@@ -144,39 +144,39 @@ struct barrayE{
 
 };
 
-int count(barrayE b){
-  return (b.after-b.beg)/b.elemSize;
+int count(barrayE ba){
+  return (ba.after-ba.beg)/ba.elemSize;
 }
-int size(barrayE b){
-  return b.after-b.beg;
+int size(barrayE ba){
+  return ba.after-ba.beg;
 }
-void alloc(barrayE* b,int elemSize,int elems){
-  b->elemSize=elemSize;
-  ensureSpace(elems*elemSize);
-  b->beg=actualBucket->head;
-  actualBucket->head+=elems;
-  b->after=actualBucket->head;
+void alloc(bucket* b,barrayE* ba,int elemSize,int elems){
+  ba->elemSize=elemSize;
+  ensureSpace(b,elems*elemSize);
+  ba->beg=b->head;
+  b->head+=elems;
+  ba->after=b->head;
 }
-void copy(barrayE b,void* data){
-  memcpy(b.beg,data,size(b));
+void copy(barrayE ba,void* data){
+  memcpy(ba.beg,data,size(ba));
 }
 
   /*
     void beginConstruct(){
-        begptr=(T*)actualBucket->head;
-        endptr=(T*)actualBucket;
+        begptr=(T*)b->head;
+        endptr=(T*)b;
     }
     void endConstruct(){
-        if(actualBucket==(Bucket*)endptr){
-            endptr=(T*)actualBucket->head;
+        if(b==(Bucket*)endptr){
+            endptr=(T*)b->head;
         }else{
             std::cout<<"!memory shenanigans";
             size_t sizeOfMemToMove=((Bucket*)endptr)->data+bucketSize-(char*)begptr;
-            memcpy(actualBucket->data+sizeOfMemToMove,actualBucket->data,sizeOfMemToMove);
-            memcpy(actualBucket->data,begptr,sizeOfMemToMove);
-            begptr=(T*)actualBucket->data;
-            actualBucket->head+=sizeOfMemToMove;
-            endptr=(T*)actualBucket->head;
+            memcpy(b->data+sizeOfMemToMove,b->data,sizeOfMemToMove);
+            memcpy(b->data,begptr,sizeOfMemToMove);
+            begptr=(T*)b->data;
+            b->head+=sizeOfMemToMove;
+            endptr=(T*)b->head;
         }
     }
   */
@@ -187,37 +187,37 @@ void copy(barrayE b,void* data){
 template<int size,typename T>
 struct bbucket{
   int used;
-  T[size] elems;
-  bbucket<nextSize,T>* next;
+  T elems[size];
+  bbucket<size,T>* next;
 };
 
 template<int size,typename T>
-return bbucket<size,T>* allocInitBbucket(){
-  ensureSpace(sizeof(*b));
-  bbucket<size,T>* ret=(bbucket<size,T>*)actualBucket->head;
-  actualBucket->head+=sizeof(*b);
+bbucket<size,T>* allocInitBbucket(bucket* b){
+  ensureSpace(b,sizeof(bbucket<size,T>));
+  bbucket<size,T>* ret=(bbucket<size,T>*)b->head;
+  b->head+=sizeof(bbucket<size,T>);
   ret->used=0;
   ret->next=nullptr;
   return ret;
 }
 
 template<int size,typename T>
-void add(bbucket<size,T>* b,T elem){
-  if(b->used==b->size){
-    if(b->next==nullptr){
-      b->next=allocInitBbucket<size,T>();
+void add(bucket* b,bbucket<size,T>* ba,T elem){
+  if(ba->used==ba->size){
+    if(ba->next==nullptr){
+      ba->next=allocInitBbucket<size,T>(b);
     }
-    add(b->next,elem);
+    add(b,ba->next,elem);
   }
-  b->elems[b->used]=elem;
-  b->used++;
+  ba->elems[ba->used]=elem;
+  ba->used++;
 }
 
 template<int size,typename T>
-void clear(bbucket<size,T>* b){
-  b->used=0;
-  if(b->next!=nullptr){
-    clear(b->next);
+void clear(bbucket<size,T>* ba){
+  ba->used=0;
+  if(ba->next!=nullptr){
+    clear(ba->next);
   }
 }
 
@@ -227,19 +227,30 @@ struct vector{
   int size;
   int cap;
   T* data;
-  operator[](int i){
+  T& operator[](int i){//retorno ref para que no haga la copia, lo que es importante si tomo la direccion
     assert(i>=0&&i<size);
     return data[i];
   }
-  vector(int cap_=16){
-    size=0;
-    cap=cap_;
-    data=(T*)malloc(cap_);
-  }
+  T* begin(){return data;}
+  T* end(){return &data[size];}
 };
 
 template<typename T>
-inline void privateGrow(vector<T>* vec,int cap){
+void init(vector<T>* v,int size=16){
+  v->size=0;
+  v->cap=size;
+  v->data=new T[v->cap];
+}
+
+template<typename T>
+void initCopy(vector<T>* v,T* from,int size){
+  v->cap=v->size=size;
+  v->data=new T[size];
+  memcpy(v->data,from,size*sizeof(T));
+}
+
+template<typename T>
+void privateGrow(vector<T>* vec,int cap){
   vec->cap=cap;
   T* oldData=vec->data;
   vec->data=(T*)malloc(cap);
@@ -252,29 +263,55 @@ void push(vector<T>* vec,T obj){
   if(vec->size==vec->cap){
     privateGrow(vec,vec->cap*2);
   }
-  vec->data[size]=obj;
+  vec->data[vec->size]=obj;
   vec->size++;
 }
 
 template<typename T>
 T pop(vector<T>* vec){
   vec->size--;
-  return vec->data[size+1];
+  return vec->data[vec->size+1];
 }
 
 template<typename T>
 void reserve(vector<T>* vec,int res){
-  if(res>cap){
+  if(res>vec->cap){
     privateGrow(vec,res);
   }
 }
 
-void free(vector<T> vec){
+template<typename T>
+void free(vector<T>* vec){
   free(vec->data);
 }
 
+template<typename T>
+void copy(void* copyTo,vector<T>* copyFrom){
+  memcpy(copyTo,copyFrom->data,copyFrom->size*sizeof(T));
+}
+
+template<typename T>
+void unorderedErase(vector<T>* vec,int ind){
+  vec->data[ind]=vec->data[vec->size-1];
+  vec->size--;
+}
 
 
+/*
+pense en tener un forEach pero la indentacion queda media fea y como usa macros no puedo usar comas, medio choto
+
+void forEachFunc(vector<auto>* vec,auto lambda){
+  for(int i=0;i<vec.size;i++){
+    lambda(vec->data[i]);
+  }
+}
+
+void forEachFunc(vector<auto> vec,auto lambda){
+  forEachFunc(&vec,lambda);
+}
+
+#define forEach(v,f) forEachFunc(v,[&](){f;})
+*/
 
 
 

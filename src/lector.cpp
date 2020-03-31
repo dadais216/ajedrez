@@ -6,28 +6,27 @@
 
   Una idea tambien es que en la primera pasada en lugar de terminar con la lista de tokens termine con un arbol de operadores sobre tokens, con algunos datos como cantidad de acciones y condiciones. Pero hacer algo asi sería bastante complejo, porque los cortes entre normales no son obvios (se cortan despues de cada movimiento, y en una accion que use una memoria local que se escribio previamente), y detectar que son acciones y que condiciones en operaciones de memoria requiere hacer el analisis, lo que basicamente lleva a hacer todo lo de la segunda pasada a la primera y sería una version distinta de lo mismo.
  */
-enum token {def,llaveizq,llaveder,coma,lineJoin,
-            W,A,S,D,N,
-            mov,capt,spwn,pausa,
-            vacio,pieza,enemigo,pass,esp,
-            mcmp,mset,madd,mless,mmore,mdist,msize,
-            mlocal,mglobal,mpieza,mtile,mother,turno,posX,posY,
-            desliz,exc,isol,desopt,
-            click,
-            color,sprt,numShow,
-            eol,sep,end,last
+enum {
+      tW,tA,tS,tD,tN,
+      tmov,tcapt,tspwn,tpausa,
+      tvacio,tpiece,tenemigo,tpass,tesp,
+      tmcmp,tmset,tmadd,tmless,tmmore,tmdist,tmsize,
+      tmlocal,tmglobal,tmpiece,tmtile,tposX,tposY,
+      tdesliz,texc,tisol,tdesopt,
+      tclick,
+      tcolor,tsprt,tnumShow,
+      tmovEnd,tseparator,tend,
+      tmacroSeparator,
+      tlast
 };
-//el token de un def se guarda de last en adelante
+//el token de un macro se guarda de last en adelante
 //los numeros se guardan en el mismo espacio, se les suma 2048 para diferenciarlos. Como hay numeros negativos, para verificar si un token en un numero se mira que sea mas grande que 1024. Suponiendo que el codigo sea correcto no sería necesario hacer esto, pero en caso de codigo incorrecto si no se hace un numero podría interpretarse como una instruccion valida.
 
 
-int memGlobalSize;
-int memTileSize;
-list<int> tokens;
-void initParser(){
-    extra=0;
-    #define rel(T) tabla[#T]=T
-    rel(def);
+void initParser(parseData* pd){
+#define rel(T) \
+  pd->wordToToken[stringForHash(#T)]=t##T;      \
+  pd->tokenToWord[t##T]=stringForHash(#T);
     rel(sprt);
     rel(numShow);
     rel(end);
@@ -42,7 +41,7 @@ void initParser(){
     rel(esp);
     rel(vacio);
     rel(enemigo);
-    rel(pieza);
+    rel(piece);
     rel(pass);
 
     rel(desliz);
@@ -50,11 +49,9 @@ void initParser(){
     rel(isol);
     rel(desopt);
 
-    tabla["c"]=click;
-    tabla["or"]=sep;
+    pd->wordToToken["c"]=tclick;
+    pd->wordToToken["or"]=tseparator;
 
-    #undef rel
-    #define rel(T) tablaMem[#T]=T
     rel(mcmp);
     rel(mset);
     rel(madd);
@@ -62,23 +59,31 @@ void initParser(){
     rel(mmore);
     rel(mdist);
     #undef rel
-    tablaMem["=="]=mcmp;
-    tablaMem["="]=mset;
-    tablaMem["+="]=madd;
-    tablaMem["<"]=mless;
-    tablaMem[">"]=mmore;
-    tablaMem["!="]=mdist;
-    lista=nullptr;
+    pd->wordToToken["=="]=tmcmp;
+    pd->wordToToken["="]=tmset;
+    pd->wordToToken["+="]=tmadd;
+    pd->wordToToken["<"]=tmless;
+    pd->wordToToken[">"]=tmmore;
+    pd->wordToToken["!="]=tmdist;
+
+    pd->lastGlobalMacro=tlast;
+    pd->lastTangledGroup=0;
+    init(&pd->memLocalSize,4);
+    pd->memPieceSize=0;
+    pd->memGlobalSize=0;
+    pd->memTileSize=0;
 }
 
-char* tokenToWord(int tok){
-  
+char const* tokenToWord(parseData* pd,int tok){
+  if(tok>1024)
+    return "number";
+  return pd->tokenToWord[tok].word;
 }
 
 int stringToInt(char** s){
-  int a=0;sign=1;
+  int a=0,sgn=1;
   if(**s=='-'){
-    sign=-1;
+    sgn=-1;
     (*s)++;
   }
   char* check=*s;
@@ -87,65 +92,47 @@ int stringToInt(char** s){
   }
   if(check==*s)
     fail("bad number");
-  return a*sign;
+  return a*sgn;
 }
 
-void fail(char* err){
-  printf(err);
+
+int getIndexById(vector<int>* pieces,int id){
+  for(int i=0;i<pieces->size;i++){
+    if(pieces->data[i]==std::abs(id)){
+      return i;
+    }
+  }
   exit(0);
 }
 
-template<typename T>
-void failIfNull(T* s,char* err="null error"){
-  if(s==nullptr){
-    fail(err);
+//lo el index signado, pero con
+//menos cero se hacen medias raras las cosas. Puede que andase igual
+//pero por ahora hice una codificacion mas compleja, que sigue siendo
+//mucho mejor que guardar el id y buscar en el vector durante spawn
+int getCodedPieceIndexById(vector<int>* pieces,int id){
+  return (getIndexById(pieces,id)+1)*sign(id);
+}
+
+
+
+void addIdIfMissing(parseData* pd,int id){
+  for(int j=0;j<pd->ids.size;j++){
+    if(pd->ids[j]==id)
+      return;
   }
+  push(&pd->ids,id);
 }
-
-
-//creo que es mas inteligente cargar todo el archivo y listo
-//al principio quería manejarme con funciones de archivo porque tenia la idea de
-//que iban a ser mas rapidas, pero supongo que cargar todo el archivo de una y
-//hacer el procesado yo va a ser mejor, y mas comodo
-char* loadFile(char* fileName){
-  FILE* file=fopen(fileName,"r");
-  failIfNull(file,"bad file");
-  fseek(file,0,2);
-  int size=ftell(file);
-  char* content=(char*)malloc(size);
-  rewind(file);
-  content=fgets(content,size,file);
-  failIfNull(content,"file empty");
-  //TODO mirar ferror y limpiarlo
-  fclose(file);
-  return content;
-  //TODO creo que le tengo que agregar un null manualmente al final
-}
-
-
-
 
 //en un momento pense en guardar punteros al archivo durante la carga de nombres para evitar tener que volver a recorrer el archivo
 //decidi no hacerlo porque no se bancaria hotloading. De todas formas cuando use el editor voy a tener todo en varios archivos supongo.
-
-
-
-void addIdIfMissing(parseData* ps,int id){
-  for(int j=0;j<ps->ids.length();j++){
-    if(ps->ids[j]==id)
-      return;
-  }
-  push(ps->ids,id);
-}
-
-
 void getBoardIds(parseData* pd,int n){
   char* filePtr=loadFile("tableros.txt");
-  defer(free(filePtr));
+  defer(filePtr);
   char* s=filePtr;
 
   char c;
-  while(c=*(s++)){
+  int i=0;
+  while((c=*(s++))){
     if(c=='"'){
       i++;
       if(i==n){
@@ -174,29 +161,33 @@ void getBoardIds(parseData* pd,int n){
         return;
     }
     int pieceId=stringToInt(&s);
-    if(pieceId!=0)
-      addIdIfMissing(ps,abs(pieceId));
-    pd->boardInit.push_back(pieceId);
+    if(pieceId!=0){
+      addIdIfMissing(pd,abs(pieceId));
+      push(&pd->boardInit,pieceId);
+    }else
+      push(&pd->boardInit,0);
+
     x++;
   }
 }
+//consigo todas las pieces juntas para saber los tamaños de las memorias. Esto incluye piezas que no esten en el tablero, aparezcan por spawn
+void makePieces(parseData* pd,vector<Piece>* pieces,bucket* b){
+  char* filePtr=loadFile("pieces.txt");
+  defer(filePtr);
 
-//consigo todas las piezas juntas para saber los tamaños de las memorias. Esto incluye piezas que no esten en el tablero, aparezcan por spawn
-void makePieces(parseData* ps, int id){
-  char* filePtr=loadFile("piezas.txt");
-  defer(free(filePtr));
+  loadGlobalMacros(pd,filePtr);
 
-  loadDefs(filePtr);
-
-  for(int i=0;i<ps->ids;i++){
+  vector<int> tokens;init(&tokens);
+  for(int i=0;i<pd->ids.size;i++){
     char* s=filePtr;
     char c;
+    int id,sn;
     while((c=*(s++))){
       if(c==':'){
-        int id_=stringToInt(&s);
-        if(id==id_){
+        id=stringToInt(&s);
+        if(pd->ids[i]==id){
           while((*s++)==' ');
-          int sn=stringToInt(&s);
+          sn=stringToInt(&s);
           while((*s++)!='\n');
           goto pieceFound;
         }
@@ -204,11 +195,15 @@ void makePieces(parseData* ps, int id){
     }
     fail("piece not found");
   pieceFound:
-    vector<int> tokens;
-    generateTokensWhile<inPiece>(&scannerTokens,s);//tokenizar pieza
-    processTokens(&scannerTokens,&finalTokens);//verificar errores, contar memoria, aplicar macros y expandir llaves
-    makePiece(ps,id,sn,&tokens);
-    //guardar pieza en algun lado
+    generateTokens(pd,&tokens,s);//tokenizar piece
+    processTokens(pd,&tokens);//verificar errores, contar memoria, aplicar macros y expandir llaves
+    makePiece(pd,id,sn,&tokens,pieces,b);
+    //guardar piece en algun lado
+    for(int i=pd->lastGlobalMacro;i<pd->lastLocalMacro;i++){
+      pd->wordToToken.erase(pd->tokenToWord[i]);//supongo que se borra asi ni idea
+    }
+    pd->lastLocalMacro=pd->lastGlobalMacro;
+    tokens.size=0;
   }
 }
 
@@ -217,12 +212,9 @@ bool whiteSpace(char c){
 }
 
 bool centinel(char c){
-  return c==';'||c=='{'||c=='}'||c==',';
+  return c==';'||c=='#';
 }
 
-bool inDef(char c){
-  return c!=';';
-}
 
 /*antes tenia esto, y lo especializaba para macros y codigo normal. Pero me parece medio al pedo ahora, porque es poco codigo y la especializacion mete
   redundacia en macros, ademas de que estaría bueno poder avanzar s
@@ -251,118 +243,6 @@ void generateTokensWhile(vector<int>* tokens,char* s){
   }
   }*/
 
-
-void generateTokens(vector<int>* tokens,char* s){
-  char* b=nullptr;
-  while(true){
-    if(c==0||c==':'){
-      if(b!=nullptr)
-        fail("missing ;");
-      break;
-    }
-    if(whiteSpace(*s)||centinel(*s)){
-      if(b!=nullptr){
-        tokenWord(tokens,b,s);
-        b=nullptr;
-      }
-      if(centinel(*s)){
-        tokenCentinel(tokens,*s);
-      }
-    }else{
-      if(b==nullptr){
-        b=s;
-      }
-    }
-    if(*s=='#') do{s++;}while(*s!='\n');
-    s++;
-  }
-}
-
-/*
-  definir un macro adentro de un macro (ej. >x = >y,>z) esta prohibido.
-  Es una funcionalidad rara, e implementarla sería un poco complicado,
-  porque necesitaria volver a la etapa de creacion de macros durante la etapa
-  de expansion.
-  No veo que valga la pena. Ahora esto se prohibe a traves de que el procesado
-  de tokens normal no conoce la idea de macros, y no reconoce > y falla.
-  Más adelante, cuando implemente operadores de memoria infijos va a fallar porque
-  interpreta > como mayor, y falla ahi. Es una ventaja de usar el mismo simbolo
-  para las 2 cosas
-*/
-
-
-void generateTokensForMacros(macro* m,char** sp){
-  char* s=*sp;
-  //copy paste de generateTokens
-  char* b=nullptr;
-  while(true){
-    if(*s==':'){
-      fail("macro missing ;");
-    }
-    if(whiteSpace(*s)||centinel(*s)||*s='|'){
-      if(b!=nullptr){
-        tokenWord(&m->expansion,b,s);
-        b=nullptr;
-      }
-      if(*s==';'){
-        break;
-      }else if(*s=='|'){
-        m->moreThanOneExpansion=true;
-      }else if(centinel(*s)){
-        tokenCentinel(&m->expansion,*s);
-      }
-    }else{
-      if(b==nullptr){
-        b=s;
-      }
-    }
-    if(*s=='#') do{s++;}while(*s!='\n');
-    s++;
-  }
-  *sp=s;
-}
-
-void init(macro* m){
-  //el vector se inicializa solo porque tiene un constructor quedo medio raro eso
-  m->next=0;
-  m->moreThanOneExpansion=false;
-}
-
-void loadGlobalMacros(parseData* ps,char* s){
-  while(true){
-    if(*s==':') return;
-    if(*s=='#'){
-      do{s++;}while(*s!='\n');
-      s++;
-      continue;
-    }
-    if(*s=='>'){
-      s++;
-      while(*s==' ') s++;
-      char* b=s;
-      while(*s!=' ') s++;
-      string newWord(b,s);
-
-      if(ps->wordsToToken.hasKey(newWord)){
-        *s=0;
-        fail("global macro %s shadows reserved word or previous global macro",b);
-      }
-      if(isMov(b,s)||isNum(b,s)||isGetter(b,s)){
-        *s=0;
-        fail("invalid macro name %s",b);
-      }
-      macro m;
-      init(&m);
-      generateTokensForMacros(&m,&s);
-      push(&ps->gMacro,m);
-
-      ps->wordsToToken[newWord]=ps->defIndex++;//lo agrego ahora para que no se lo reconozca durante la carga de tokens
-      //porque no hay macros recursivos
-    }
-    s++;
-  }
-}
-
 bool wordIsMov(char* b,char* e){
   for(char* s=b;s!=e;s++){
     if(*s!='w'&&*s!='a'&&*s!='s'&&*s!='d'){
@@ -383,21 +263,21 @@ bool wordIsNum(char* b,char* e){
 
 bool wordIsGetter(char* b,char* e){
   for(char* s=b;s!=e;s++){
-    if(*s!='g'&&s!='t'&&s!='p'&&s!='l'){
+    if(*s!='g'&&*s!='t'&&*s!='p'&&*s!='l'){
       if(s+1==e){
         if(*s=='x'||*s=='y') return true;
       }
-      return isNum(s,e);
+      return wordIsNum(s,e);
     }
   }
   return false;
 }
 
 
-void tokenWord(parseData* ps,vector<int>* tokens,char* b,char* e){
-  string word(b,e);//despues podría hacer mi propio hash para probar
-  if(ps->wordsToToken.hasKey(word)){
-    push(tokens,ps->wordsToToken[word]);
+void tokenWord(parseData* pd,vector<int>* tokens,char* b,char* e){
+  stringForHash sh(b,e);
+  if(pd->wordToToken.find(sh)!=pd->wordToToken.end()){
+    push(tokens,pd->wordToToken[sh]);
     return;
   }
 
@@ -405,10 +285,10 @@ void tokenWord(parseData* ps,vector<int>* tokens,char* b,char* e){
     for(char* s=b;s!=e;s++){
       int tok;
       switch(*s){
-      case 'w': tok=W;break;
-      case 'a': tok=A;break;
-      case 's': tok=S;break;
-      case 'd': tok=D;break;
+      case 'w': tok=tW;break;
+      case 'a': tok=tA;break;
+      case 's': tok=tS;break;
+      case 'd': tok=tD;break;
       }
       push(tokens,tok);
     }
@@ -422,12 +302,12 @@ void tokenWord(parseData* ps,vector<int>* tokens,char* b,char* e){
     for(char* s=b;s!=e;s++){
       int tok;
       switch(*s){
-      case 'g': tok=G;break;
-      case 't': tok=T;break;
-      case 'p': tok=P;break;
-      case 'l': tok=L;break;
-      case 'x': tok=X;break;
-      case 'y': tok=Y;break;
+      case 'g': tok=tmglobal;break;
+      case 't': tok=tmtile;break;
+      case 'p': tok=tmpiece;break;
+      case 'l': tok=tmlocal;break;
+      case 'x': tok=tposX;break;
+      case 'y': tok=tposY;break;
       default:
         push(tokens,stringToInt(&s)+2048);
         return;
@@ -441,80 +321,278 @@ void tokenWord(parseData* ps,vector<int>* tokens,char* b,char* e){
   fail("palabra no reconocida: %s",b);
 }
 
-void tokenCentinel(vector<int>* tokens,char* c){
+void tokenCentinel(vector<int>* tokens,char** sp){
   int tok;
-  switch(c){
-  case ',': tok=sep;break;
-  case ';': tok=movEnd;break;
-  case '{': tok=llaveizq;break;
-  case '}': tok=llaveder;break;
-  case '#': return;
-  case '|': tok=macroSeparator;break;
+  switch(**sp){
+  case ';': tok=tmovEnd;break;
+  case '#': do{*sp++;}while(**sp!='\n');return;
   }
   push(tokens,tok);
+}
+
+void generateTokens(parseData* pd,vector<int>* tokens,char* s){
+  char* b=nullptr;
+  while(true){
+    if(*s==0||*s==':'){
+      if(b!=nullptr)
+        fail("missing ;");
+      break;
+    }
+    if(whiteSpace(*s)||centinel(*s)||*s=='>'){
+      if(b!=nullptr){
+        tokenWord(pd,tokens,b,s);
+        b=nullptr;
+      }
+      if(centinel(*s)){
+        tokenCentinel(tokens,&s);
+      }
+      if(*s=='>'&& (tokens->size==0||tokens->data[tokens->size-1]==tmovEnd)){
+        s++;
+        loadMacro<false>(pd,&s);
+        continue;
+      }
+    }else{
+      if(b==nullptr){
+        b=s;
+      }
+    }
+    s++;
+  }
+}
+
+/*
+  definir un macro adentro de un macro (ej. >x = >y,>z) esta prohibido.
+  Es una funcionalidad rara, e implementarla sería un poco complicado,
+  porque necesitaria volver a la etapa de creacion de macros durante la etapa
+  de expansion.
+  No veo que valga la pena. Ahora esto se prohibe a traves de que el procesado
+  de tokens normal no conoce la idea de macros, y no reconoce > y falla.
+  Más adelante, cuando implemente operadores de memoria infijos va a fallar porque
+  interpreta > como mayor, y falla ahi. Es una ventaja de usar el mismo simbolo
+  para las 2 cosas
+*/
+
+
+void generateTokensForMacros(parseData* pd,vector<macro>* macros,char** sp){
+  char* s=*sp;
+  //copy paste de generateTokens
+  char* b=nullptr;
+  int i=0;
+  bool moreThanOneExpansion=false;
+  while(true){
+    failIf(*s==':',"macro missing ;");
+    if(whiteSpace(*s)||centinel(*s)||*s=='|'||*s=='&'){
+      if(b!=nullptr){
+        tokenWord(pd,&macros->data[i].expansion,b,s);
+        b=nullptr;
+      }
+      if(*s==';'){
+        failIf(i!=macros->size,"mismatching quantity of tangled expansions and tangled macros");
+        break;
+      }else if(*s=='|'){
+        moreThanOneExpansion=true;
+        failIf(i!=macros->size,"mismatching quantity of tangled expansions and tangled macros");
+      }else if(*s=='&'){
+        i++;
+      }else if(centinel(*s)){
+        tokenCentinel(&macros->data[i].expansion,&s);
+      }
+    }else{
+      if(b==nullptr){
+        b=s;
+      }
+    }
+    s++;
+  }
+  if(moreThanOneExpansion){
+    for(macro& m:*macros){
+      m.moreThanOneExpansion=true;
+    }
+  }
+  *sp=s;
+}
+
+void init(macro* m){
+  init(&m->expansion);
+  m->tangledGroup=0;
+  m->moreThanOneExpansion=false;
+}
+
+template<bool global>
+void loadMacro(parseData* pd,char** sp){
+  char* s=*sp;
+  bool tangled=false;
+  vector<stringForHash> names;init(&names);
+  vector<macro> macros;init(&macros);defer(&macros);
+
+  s++;
+  do{
+    while(*s==' ') s++;
+    char* b=s;
+    while(*s!=' '&&*s!='&'&&*s!='=') s++;
+
+    char newWord[255]={};
+    memcpy(newWord,b,s-b);
+    push(&names,stringForHash(newWord));
+
+    while(*s==' ') s++;
+    if(*s=='&'){
+      tangled=true;
+      s++;
+    }
+  }while(*s!='=');
+  s++;
+
+  for(int i=0;i<names.size;i++){
+    if(pd->wordToToken.find(names[i])!=pd->wordToToken.end()){
+      if(global){
+        fail("global macro %s shadows reserved word or previous global macro",names[i].word);
+      }else{
+        int tok=pd->wordToToken[names[i]];
+        failIf(tok<pd->lastGlobalMacro,"local macro %s shadows reserved word or previous global macro",names[i].word);
+        //por ahi estaria bueno shadowear globales TODO
+      }
+    }
+    char* b=names[i].word;
+    char* e;
+    for(e=names[i].word;*e!=0;e++);//medio garca pero bueno
+    if(wordIsMov(b,e)||wordIsNum(b,e)||wordIsGetter(b,e)){
+      fail("invalid macro name %s",b);
+    }
+    
+    macro m;
+    init(&m);
+    push(&macros,m);
+  }
+  generateTokensForMacros(pd,&macros,&s);
+
+
+  int group=tangled?pd->lastTangledGroup++:0;
+  for(int i=0;i<macros.size;i++){
+    macros[i].tangledGroup=group;
+    if(global){
+      push(&pd->macros,macros[i]);
+      pd->wordToToken[names[i]]=pd->lastGlobalMacro;//lo agrego ahora para que no se lo reconozca durante la carga de tokens
+    //porque no hay macros recursivos
+      pd->tokenToWord[pd->lastGlobalMacro]=names[i];//puede que tenga que hacer un memcpy no se
+      pd->lastGlobalMacro++;
+    }else{
+      push(&pd->macros,macros[i]);
+      pd->wordToToken[names[i]]=pd->lastLocalMacro;
+      pd->tokenToWord[pd->lastLocalMacro]=names[i];
+      pd->lastLocalMacro++;
+    }
+  }
+
+  *sp=s;
+}
+
+void loadGlobalMacros(parseData* pd,char* s){
+  while(true){
+    if(*s==':') return;
+    if(*s=='#'){
+      do{s++;}while(*s!='\n');
+      s++;
+    }else if(*s=='>'){
+      loadMacro<true>(pd,&s);
+    }else if(whiteSpace(*s))
+      s++;
+    else
+      fail("piece code outside piece"); //por ahi permitir msize g y t,aunque estos podrían estar en el codigo every turn tambien
+  }
 }
 
 /*podría probar expandir los macros que contienen macros antes, pero como algunos tienen varias expansiones
 tendría que ir subiendo la multiplicidad hasta el primer macro y es medio raro. Al final sería mas rapido igual,
 podría probar. TODO?
-Creo que sería incorrecto expandir antes si hay ligamiento
+
+Ligamiento:
 Por ejemplo, tengo
 > a&b = 1&2 | 3&4
 > c = abbababb
 mov c a a b
 
-terminaria con
+si expando por macro terminaria con
 > a&b = 1&2 | 3&4
 > c = 12212122 | 34434344
 mov c a a b
 que no es lo mismo
-Asi que la aplanacion, si se hace, se haria con macros no ligados
+Igual creo que andaría si se propaga el ligamiento, quedando c ligado con a y b. 
 
+
+
+> a&b = 1&2 | 3&4
+> c = hjkf | abba
+ a b c b a
+Si hay macros no ligados se tienen que expandir primero
 
 
 se pueden ligar variables despues? tipo
 > a = 1 | 3
 > b = 2 | 4
 > c = a&b | b&a
-teoricamente se podría pero creo que limitaria el orden en el que expando los macros
+> d = a b b #no ligados
+teoricamente se podría pero es re raro, necesitaria tener que mirar por el simbolo & cuando parseo y solo
+tiene sentido si la multiplicidad de las 2 variables es igual.
+Ademas necesitaria algun mecanismo para ligar variables temporalmente, porque esas variables solo estarían ligadas
+durante esa expresion supongo, y otras b y a's incluso en el mismo movimiento se manejarian normal? Es raro
+
+Supongo que si agrego algo asi va a ser con una funcion especial, algo como
+> a = 1 | 3
+> b = 2 | 4
+> x&y = zip(a,b)
+> c = x y | y x
+> d = a b b
+igual no creo que lo valga, es algo bastante raro. Y no es que no se puede hacer, si se puede copiando y pegando a y b
+
 
 */
 
-macro getMacro(parseData* ps,int token){
-  int ind=token-lastToken;
-  if(ind>ps->lastGlobalMacro){
-    return ps->localMacro[ind-ps->lastGlobalMacro];
+macro getMacro(parseData* pd,int token){
+  int ind=token-tlast;
+  if(ind>pd->lastGlobalMacro){
+    ind-=pd->lastGlobalMacro;
   }
-  return ps->globalMacro[ind];
+  return pd->macros[ind];
 }
 
 bool isMacro(int tok){
-  return tok>=last&&tok<1024;
+  return tok>=tlast&&tok<1024;
 }
 
 //se hace una pasada donde se expanden los macros simples
-//los que sean multiples se separa el movimiento y despues se agrega al final cada version
-void expandMacros(parseData* ps,vector<int>* into,vector<int>* from,int* movStart,bool* multiExpandMov){
+//los que sean multiples o ligados se separa el movimiento y despues se agrega al final cada version
+void expandMacros(parseData* pd,vector<int>* into,vector<int>* from,int* movStart,char* movType,int* expansionTypeData){
   for(int i=0;i<from->size;i++){
     int tok=from->data[i];
     if(isMacro(tok)){
-      macro m=getMacro(ps,tok);
-      if(m->moreThanOneExpansion){
-        multiExpandMov=true;
+      macro m=getMacro(pd,tok);
+      if(m.moreThanOneExpansion){
+        char macroType=m.tangledGroup==0?1:2;
+        if(*movType==0){
+          *movType=macroType;
+          *expansionTypeData=into->size;
+        }else if(*movType==2&&macroType==1){//expandir no ligados toma prioridad
+          *movType=1;
+          *expansionTypeData=m.tangledGroup;
+        }
         push(into, tok);
       }else{
-        expandDef(ps,into,&m->expansion,movStart);
+        expandMacros(pd,into,&m.expansion,movStart,movType,expansionTypeData);
       }
     }else{
-      if(tok==movEnd){ //solo relevante en movimiento, no en macro
-        if(*multiExpandMov){
-          expandVersions(ps,from,into,*movStart,into->size);
+      if(tok==tmovEnd){ //solo relevante en movimiento, no en macro
+        if(*movType==1){
+          expandVersions(pd,from,into,*movStart,into->size,*expansionTypeData);
+          continue;
+        }else if(*movType==2){
+          expandTangledVersions(pd,from,into,*movStart,into->size,*expansionTypeData);
           continue;
         }
-
         *movStart=into->size;
+        *movType=0;
       }
-      assert(tok!=macroSeparator);
+      assert(tok!=tmacroSeparator);
       push(into,tok);
     }
   }
@@ -526,58 +604,124 @@ la version original del movimiento que queda en into se pisa
 Tecnicamente no se necesitaria regurgitar si lo que queda no tiene macros o tiene macros simples,
 pero no puedo copiar de into a into porque estaria pisando el mismo espacio, por lo que tendría que
 usar un buffer intermedio, y from cumple esa funcion
+Para macros ligados, que solo pueden aparecer aca porque son multiples tambien,
+se expande el primero y si se encuentra otro que este ligado tambien. Se necesita mantener un array de punteros
+de a donde se freno en los otros
 */
-void expandVersions(parseData* ps,vector<int>* from,vector<int>* into,int movStart,int movEnd){
+void expandVersions(parseData* pd,vector<int>* from,vector<int>* into,int movStart,int movEnd,int firstMultiMacro){
   int lockOnFirstMacro=-1;
   int j=0;
   bool lastLap=false;
   do{
-  for(int i=movStart;i<movEnd;i++){
-    int tok=into->data[i];
-    if(isMacro(tok)&& (lockOnFirstMacro==-1||lockOnFirstMacro==i)){
-      lockOnFirstMacro=i;
+    for(int i=movStart;i<movEnd;i++){
+      int tok=into->data[i];
 
-      macro m=getMacro(ps,tok);
-      assert(m->moreThanOneExpansion);
-      for(;;j++){
-        if(j==m->expansion.size){
-          lastLap=true;
+      if(i==firstMultiMacro){
+        assert(isMacro(tok));
+        macro m=getMacro(pd,tok);
+        assert(m.moreThanOneExpansion);
+        assert(m.tangledGroup==0);
+        for(;;j++){
+          if(j==m.expansion.size){
+            lastLap=true;
+            break;
+          }
+          tok=m.expansion[j];
+          if(tok==tmacroSeparator){
+            break;
+          }
+          push(from,tok);
         }
-        tok=m->expansion[j];
-        if(tok==macroSeparator){
-          break;
-        }
+      }else
         push(from,tok);
-      }
-    }else
-      push(from,tok);
-  }
-  push(from,movEnd);
+    }
+    push(from,movEnd);
   }while(!lastLap);
   into->size=movStart+1;
 }
+/*
+  macros ligados son distintos que los multiples comunes, incluso si es una sola variable ligada
+  > x = a | b
+  x x x
+  genera 8 versiones, mientras que
+  > x& = a | b
+  x x x
+  genera 2
+*/
+struct tangledMacroIteration{
+  int tok;
+  int beg;
+  int end;
+};
+void expandTangledVersions(parseData* pd,vector<int>* from,vector<int>* into,int movStart,int movEnd,int tangledGroup){
+  int j=0;
+  bool lastLap=false;
+  vector<tangledMacroIteration> iterations;init(&iterations);defer(&iterations);
+  do{
+    for(int i=movStart;i<movEnd;i++){
+      int tok=into->data[i];
 
+      if(isMacro(tok)){
+        macro m=getMacro(pd,tok);
+        assert(m.moreThanOneExpansion);
+        assert(m.tangledGroup!=0);
+        if(m.tangledGroup==tangledGroup){
+          tangledMacroIteration* it;
+          for(int k=0;k<iterations.size;k++){
+            if(iterations[k].tok==tok){
+              it=&iterations[k];
+              goto found;
+            }
+          }
+          push(&iterations,tangledMacroIteration{tok,0,0});
+          it=&iterations[iterations.size-1];
+        found:
+          for(int j=it->beg;;j++){
+            if(j==m.expansion.size){
+              lastLap=true;
+              break;
+            }
+            tok=m.expansion[j];
+            if(tok==tmacroSeparator){
+              it->end=j;
+              break;
+            }
+            push(from,tok);
+          }
+        }else
+          push(from,tok);
+      }else
+        push(from,tok);
+    }
+    push(from,(int)tmovEnd);
+    if(lastLap)
+      break;
+    for(int k=0;k<iterations.size;k++)
+      iterations[k].beg=iterations[k].end;
+  }while(true);
+  into->size=movStart+1;
+}
+/*from puede crecer considerablemente si hay muchos macros multiples. Como no es necesario volver a mirar los tokens que ya
+ se leyeron, se podrían ir borrando para ahorrar memoria. El ind se debería mantener, tendría que hacer una estructura parecida
+al vector que haga estas cosas al momento de expandir*/
 
-bool growMemory(parseData* ps,int gType,int val){
+bool growMemory(parseData* pd,int gType,int val){
   switch(gType){
-  case L: ps->localSize[ps->movQ-1] = max(ps->localSize[ps->movQ-1],val);break;
-  case P: ps->pieceSize = max(ps->pieceSize,val);break;
-  case T: ps->tileSize = max(ps->tileSize,val);break;
-  case G: ps->globalSize = max(ps->globalSize,val);break;
+  case tmlocal: pd->memLocalSize[pd->movQ-1] = std::max(pd->memLocalSize[pd->movQ-1],val);break;
+  case tmpiece: pd->memPieceSize = std::max(pd->memPieceSize,val);break;
+  case tmtile:  pd->memTileSize = std::max(pd->memTileSize,val);break;
+  case tmglobal:pd->memGlobalSize = std::max(pd->memGlobalSize,val);break;
   default: fail("bad getter");
   }
 }
 
-void processTokens(parseData* ps,vector<int>* tokens){
-  vector<int> tokensExpanded(tokens->size);
+void processTokens(parseData* pd,vector<int>* tokens){
+  vector<int> tokensExpanded;init(&tokensExpanded,tokens->size*2);
 
   int movStart=0;
-  bool multiExpandMov=false;
-  expandMacros(ps,&tokensWDefs,tokens,&movStart,&multiExpandMov);
-
-
-
-  //manejar turn, llaves
+  char movType=0;
+  int expansionTypeData=0;
+  expandMacros(pd,&tokensExpanded,tokens,&movStart,&movType,&expansionTypeData);
 
   tokens->size=0;
   vector<int>* finalTokens=tokens;
@@ -588,14 +732,14 @@ void processTokens(parseData* ps,vector<int>* tokens){
                   if(doPush)
                     push(finalTokens,tok);
                 };
-  auto matchGetter[&](int tok,int* gettersSeen,int* lastG){
+  auto matchGetter=[&](int tok,int* gettersSeen,int* lastG){
                     switch(tok){
-                    case L:*lastG=L;break;
-                    case P:*lastG=P;break;
-                    case T:*lastG=T;break;
-                    case G:*lastG=G;break;
-                    case X:
-                    case Y:
+                    case tmlocal:*lastG=tmlocal;break;
+                    case tmpiece:*lastG=tmpiece;break;
+                    case tmtile:*lastG=tmtile;break;
+                    case tmglobal:*lastG=tmglobal;break;
+                    case tposX:
+                    case tposY:
                       *lastG=0;
                       gettersSeen++;break;
                     default:
@@ -604,18 +748,17 @@ void processTokens(parseData* ps,vector<int>* tokens){
                       *lastG=0;
                       gettersSeen++;
                       if(*lastG!=0)
-                        growMemory(ps,*lastG,tok-2048);
+                        growMemory(pd,*lastG,tok-2048);
                     }
                     push(finalTokens,tok);
                   };
-  auto boundCheck=[&](int ind,char* op){
-                    if(ind>=tokensWDefs.size)
+  auto boundCheck=[&](int ind,char const* op){
+                    if(ind>=tokensExpanded.size)
                       fail("% with no parameters at end of input",op);
                   };
 
-  push(ps->localSize,0);
-  ps->movQ=1;
-  auto& tv=tokensWDefs;
+  push(&pd->memLocalSize,0);
+  pd->movQ=1;
   //esto se podría hacer en el scanner, pero hacerlo aca es casi gratis y es mas comodo
   //si se hace en el scanner no se podrían mezclar ciertas cosas con macros, turn y llaves, por ejemplo
   //color ROJO o mcmp MEMORIA 4
@@ -623,21 +766,21 @@ void processTokens(parseData* ps,vector<int>* tokens){
   //tambien se podría hacer desde la formacion del operador, pero complicaria
   //el codigo y de todas formas tengo que recorrer una vez para contar la
   //cantidad de movimientos y tamaños de memoria local.
-  for(int i=0;i<tv.size;i++){
-    int tok=tv[i];
-    switch(tok){//TODO limpiar tambien comas y click repetidos
-    case movEnd:
-      if(finalTokens.size==0||
-         finalTokens[size-1]==movEnd)
+  for(int i=0;i<tokensExpanded.size;i++){
+    int tok=tokensExpanded[i];
+    switch(tok){//TODO limpiar tambien separadores y click repetidos
+    case tmovEnd:
+      if(finalTokens->size==0||
+         finalTokens->data[finalTokens->size-1]==tmovEnd)
         continue;
       else{
-        push(ps->localSize,0);
-        movQ++;
+        push(&pd->memLocalSize,0);
+        pd->movQ++;
       }break;
-    case mSize:
+    case tmsize:
       boundCheck(i+2,"mSize");
-      matchNum(tv[i+2],"mSize",false);
-      growMemory(ps,tv[i+1],tv[i+2]-2048);
+      matchNum(tokensExpanded[i+2],"mSize",false);
+      growMemory(pd,tokensExpanded[i+1],tokensExpanded[i+2]-2048);
       i+=2;continue;
       /*case spawn:
       boundCheck(i+1,"spawn");
@@ -673,142 +816,19 @@ void processTokens(parseData* ps,vector<int>* tokens){
     default:
       if(tok>1024)
       fail("random number in input");*/
-    case L:
-    case P:
-    case T:
-    case G:
+    case tmlocal:
+    case tmpiece:
+    case tmtile:
+    case tmglobal:
       boundCheck(i+1,"memOp");
-      if(tv[i+1]>=2048){
-        growMemory(ps,tv[i],tv[i+1]-2048);
+      if(tokensExpanded[i+1]>=2048){
+        growMemory(pd,tokensExpanded[i],tokensExpanded[i+1]-2048);
       }
     }
     push(finalTokens,tok);
   }
 
-  movQ--;
-}
-
-
-
-/*
-    for(int s:tokens){
-        switch(s){
-            #define CASE(A) case A: cout<<#A" "; break;
-            CASE(W);
-            CASE(A);
-            CASE(S);
-            CASE(D);
-            CASE(N);
-            CASE(mov);
-            CASE(capt);
-            CASE(spwn);
-            CASE(pausa);
-            CASE(vacio);
-            CASE(pieza);
-            CASE(enemigo);
-            CASE(pass);
-            CASE(esp);
-            CASE(msize);
-            CASE(mcmp);
-            CASE(mset);
-            CASE(madd);
-            CASE(mless);
-            CASE(mmore);
-            CASE(mdist);
-            CASE(mlocal);
-            CASE(mglobal);
-            CASE(mpieza);
-            CASE(mtile);
-            CASE(mother);
-            CASE(turno);
-            CASE(posX);
-            CASE(posY);
-            CASE(desliz);
-            CASE(exc);
-            CASE(isol);
-            CASE(desopt);
-            CASE(click);
-            CASE(color);
-            CASE(sprt);
-            CASE(numShow);
-            case eol: cout<<"eol"<<endl;break;
-            CASE(sep);
-            CASE(end);
-            default:
-                cout<<s-1000<<" ";
-        }
-    }
-    cout<<endl;
-*/
-
-void makePiece(parseData* ps,int id,int sn,vector<int>* tokens){
-  Pieza piece;
-  piece.id=id;
-  piece.sn=sn;
-
-  piece.spriteb.setTexture(image.get("piezas.png"));
-  piece.spriteb.setTextureRect(IntRect(sn*64%384,(sn*64/384)*32,32,32));
-  piece.spriteb.setScale(escala,escala);
-  piece.spriten.setTexture(image . get("piezas.png"));
-  piece.spriten.setTextureRect(IntRect(sn*64%384+32,(sn*64/384)*32,32,32));
-  piece.spriten.setScale(escala,escala);
-
-  actualBucket=bucketPiezas;
-  lastBucket=&bucketPiezas;
-
-  piece.memPieceSize=ps->memPieceSize;
-  alloc(&piece.movs,ps->movsQ+1);
-
-  parseMovData p(ps,*tokens,tokensConsumed,0,ps->memLocalSize[i],false,false,false);
-  //se deja un hueco al principio para spawner y kamikase. Como no tengo forma de saber de antes si es o no es hago esto, dentro de todo no debería tener un costo dejar ese espacio sin usar y parece mejor que alocar las bases despues de los movimientos, que es lo que hacia antes
-  for(int i=1;i<ps->movsQ+1;i++){
-    p.movSize=0;
-    p.memLocalSize=ps->memLocalSize[i];
-    p.clickExplicit=false;
-
-    piece.movs[i].memLocalSize=ps->memLocalSize[i];
-    piece.movs[i].raiz=parseOp(&p);
-    piece.movs[i].size=p.movSize;
-    failIf(pop(p)!=movEnd,"missing ;");
-  }
-  assert(tokensConsumed==tokens->size);
-
-  if(p.spawner||p.kamikase){
-    base* b=&piece.movs[0];
-    if(p.spawner){
-      b->raiz=alloc<spawnerGen>();
-      b->raiz->kamikaseNext=p.kamikase;
-      b->size=sizeof(spawnerGen);
-    }else{
-      b->raiz=alloc<kamikaseCntrl>();
-      b->size=sizeof(kamikaseCntrl);
-    }
-  }else{
-    piece.movs.beg++;
-  }
-
-
-  push(&piezas,pieza);
-}
-
-operador* parseOp(parseMovData* p,bool fromNormal=false){
-  operador* op;
-  switch(p->tokens[p->ind]){
-  case DESLIZ: p->ind++;op=parseDesliz(p);break;
-  case EXC:    p->ind++;op=parseExc(p);break;
-  case ISOL:   p->ind++;op=parseISol(p);break;
-  case DESOPT: p->ind++;op=parseDesopt(p);break;
-  case END:
-  case ENDMOV:
-  case SEPARATOR:       op=nullptr;break;
-  default:
-    if(fromNormal){
-      fail("%s out of place",tokenToWord(p->tokens[p->ind]));
-    }else{
-      op=parseNormal(p);
-    }
-  }
-  return op;
+  pd->movQ--;
 }
 
 int pop(parseMovData* p){
@@ -819,8 +839,74 @@ int peek(parseMovData* p){
   return p->tokens[p->ind];
 }
 
-operador* parseNormal(parseMovData* p){
-  normal* n=alloc<normal>();
+void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
+               vector<Piece>* pieces,bucket* operatorBucket){
+  Piece piece;
+  piece.sn=sn;
+
+  piece.spriteb.setTexture(image.get("pieces.png"));
+  piece.spriteb.setTextureRect(IntRect(sn*64%384,(sn*64/384)*32,32,32));
+  piece.spriteb.setScale(escala,escala);
+  piece.spriten.setTexture(image . get("pieces.png"));
+  piece.spriten.setTextureRect(IntRect(sn*64%384+32,(sn*64/384)*32,32,32));
+  piece.spriten.setScale(escala,escala);
+
+  piece.memPieceSize=pd->memPieceSize;
+  piece.hsSize=0;
+  parseMovData p{operatorBucket,pd,*tokens,0,0,0,false,false,false};
+  for(int i=0;i<pd->movQ;i++){
+    p.movSize=0;
+    p.memLocalSize=pd->memLocalSize[i];
+    p.clickExplicit=false;
+
+    piece.movs[i]->memLocalSize=pd->memLocalSize[i];
+    piece.movs[i]->raiz=parseOp(&p);
+    piece.movs[i]->size=p.movSize;
+    piece.hsSize+=p.movSize;
+    failIf(pop(&p)!=tmovEnd,"missing ;");
+  }
+  assert(p.ind==tokens->size);
+  piece.memPieceSize=pd->memPieceSize;
+  piece.hsSize+=sizeof(Holder)+pd->memPieceSize*sizeof(int)+pd->movQ*sizeof(movHolder*);
+
+  piece.spawner=p.spawner;
+  piece.kamikase=p.kamikase;
+  piece.ind=pieces->size;
+  push(pieces,piece);
+}
+
+operador* parseOp(parseMovData* p,bool fromNormal){//=false
+  operador* op;
+  switch(p->tokens[p->ind]){
+  case tdesliz: p->ind++;op=parseDesliz(p);break;
+  case texc:    p->ind++;op=parseExc(p);break;
+  case tisol:   p->ind++;op=parseIsol(p);break;
+  case tdesopt: p->ind++;op=parseDesopt(p);break;
+  case tend:
+  case tmovEnd:
+  case tseparator:       op=nullptr;break;
+  default:
+    if(fromNormal){
+      fail("%s out of place",tokenToWord(p->pd,p->tokens[p->ind]));
+    }else{
+      op=parseNormal(p);
+    }
+  }
+  return op;
+}
+
+//esto esta aca porque no hay lambdas con templates
+template<typename T>
+bool gatherCte(vector<T>* vec,int tok){
+  switch(tok){
+  case tposX: push(vec,(T)posXRead);break;
+  case tposY: push(vec,(T)posYRead);break;
+  default:   push(vec,(T)(tok-2048));break;
+  }
+}
+
+normal* parseNormal(parseMovData* p){
+  normal* n=alloc<normal>(p->b);
 
   vector<void(*)(void)> accsTemp;
   vector<bool(*)(void)> condsTemp;
@@ -836,12 +922,12 @@ operador* parseNormal(parseMovData* p){
 /*cargo listas de punteros despues del resto de memoria de la normal.
 Lo pongo al final en vez de al principio para evitar tener que hacer un analisis previo a la carga para saber hasta donde llega la normal y que cosas tiene. Supongo que que este antes o despues tiene el mismo efecto en la cache
 TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deberia replantearme el parseo, en la etapa anterior debería anotar cuantas operaciones de que tipo tiene cada normal, lo que implica hacer el procesado de memoria antes, y de paso se podría ya tener el arbol de ops armado. Igual seria un re quilombo, ver. Si resulta que no importa podría probar mover las bases al final tambien, para no tener el hueco de spawner y kamikase.*/
-                      init(n->accs,accsTemp.size(),accsTemp.data());
-                      init(n->conds,condsTemp.size(),condsTemp.data());
-                      init(n->colors,colorsTemp.size(),colorsTemp.data());
+                      allocCopy(p->b,&n->accs,accsTemp.size,accsTemp.data);
+                      allocCopy(p->b,&n->conds,condsTemp.size,condsTemp.data);
+                      allocCopy(p->b,&n->colors,colorsTemp.size,colorsTemp.data);
                     };
 
-  p->movSize+=sizeof(normalHolder)+p->memLocalSizeAct*sizeof(int);
+  p->movSize+=sizeof(normalHolder)+p->memLocalSize*sizeof(int);
   n->tipo=NORMAL;
   n->bools&=~(hasClick|makeClick|doEsp);
   n->relPos=v(0,0);
@@ -849,161 +935,159 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
   while(true){
     int tok=pop(p);
     switch(tok){
-    case lector::W:
-    case lector::S:
-    case lector::D:
-    case lector::A:
+    case tW:
+    case tS:
+    case tD:
+    case tA:
 
       //antes nomas cortaba en cuando hubo una cond posicional antes. Ahora lo hago por cualquiera
       //porque sino cosas como mcmp p0 1 w mover ponen un trigger en w aun cuando mcmp es falso
       //por ahi no vale la pena cortar por eso igual.
-      if(!condsTemp.empty()||!accsTemp.empty()){
+      if(!condsTemp.size==0||!accsTemp.size==0){
         p->ind--;
         setupBarrays();
         n->sig=parseNormal(p);
         return n;
       }else{
         switch(tok){
-        case lector::W: n->relPos.y--;break;
-        case lector::S: n->relPos.y++;break;
-        case lector::D: n->relPos.x++;break;
-        case lector::A: n->relPos.x--;break;
+        case tW: n->relPos.y--;break;
+        case tS: n->relPos.y++;break;
+        case tD: n->relPos.x++;break;
+        case tA: n->relPos.x--;break;
         }
       }
       break;
-#define cond(TOKEN) case lector::TOKEN:         \
-      push(condsTemp,TOKEN) ;break
+#define cond(TOKEN) case t##TOKEN:  push(&condsTemp,TOKEN) ;break
       cond(vacio);
-      cond(pieza);
+      cond(piece);
       cond(enemigo);
       cond(pass);
-    case lector::esp:
-      bools|=doEsp;
+    case tesp:
+      n->bools|=doEsp;
       break;
-#define acc(TOKEN) case lector::TOKEN: push(accsTemp,TOKEN);break
+#define acc(TOKEN) case t##TOKEN: push(&accsTemp,TOKEN);break
       acc(mov);
       acc(pausa);
-    case lector::capt:
-      push(accsTemp,capt);
+    case tcapt:
+      push(&accsTemp,capt);
       if(n->relPos==v(0,0))
         p->kamikase=true;
       break;
-    case lector::spwn:
+    case tspwn:
       {
         int id=getNum();
-        push(accsTemp,spwn);
-        push(accsTemp,void(*)(void)(id));
+        push(&accsTemp,spwn);
+        push(&accsTemp,(void(*)(void))(id));
         p->spawner=true;
-        addIdIfMissing(p->ps,id);
+        addIdIfMissing(p->pd,id);
       }
       break;
       //spwn n con n positivo quiere decir mismo bando, negativo bando enemigo
-    case lector::color:
-      push(colorsTemp,crearColor(getNum(),getNum(),getNum()));
+    case tcolor:
+      push(&colorsTemp,crearColor(getNum(),getNum(),getNum()));
       break;
       //       colorr(sprt);
       //       colorr(numShow);
-    case lector::mcmp:
-    case lector::mset:
-    case lector::madd:
-    case lector::mless:
-    case lector::mmore:
-    case lector::mdist:
+    case tmcmp:
+    case tmset:
+    case tmadd:
+    case tmless:
+    case tmmore:
+    case tmdist:
       {
         //mset l0 4 mset g0 l0 <-en este caso necesito cortar en 2 normales, para que el segundo set tenga registrado el primero
         //esto no se maneja ahora porque prefiero delegar eso al parser cuando lo haga bien. Igual se puede manejar aca tambien, antes lo hacia
 
         auto isCte=[](int tok)->bool{
-                     return isNum(tok)||
-                       tok==lector::posX||
-                       tok==lector::posY||
-                       tok==lector::turno;
+                     return tok>1024||
+                       tok==tposX||
+                       tok==tposY;
                    };
 
 
         int op=tok;
-        bool write=op==lector::mset||op==lector::madd;
+        bool write=op==tmset||op==tmadd;
         tok=pop(p);
 
         if(write&&isCte(tok)){
           fail("write on constant");
         }
         bool actionOnLocal=false;
-        bool action=write&&(tok==lector::global||lector::tile);
+        bool action=write&&(tok==tmglobal||tmtile);
         if(action){
           int i=0;
           int nextTok=peek(p);
           if(isCte(nextTok)){
             switch(tok){//manejo sets nomas
-            case lector::global: push(accsTemp,msetG);break;
-            case lector::tile:   push(accsTemp,msetT);break;
+            case tmglobal: push(&accsTemp,msetG);break;
+            case tmtile:   push(&accsTemp,msetT);break;
             }
             tok=pop(p);
-            gatherCte(accsTemp,tok);
+            gatherCte(&accsTemp,tok);
             i++;
           }else{
             switch(tok){
-            case lector::global: push(accsTemp,msetGi);break;
-            case lector::tile:   push(accsTemp,msetTi);break;
+            case tmglobal: push(&accsTemp,msetGi);break;
+            case tmtile:   push(&accsTemp,msetTi);break;
             }
           }
           for(;i<2;i++){
             tok=pop(p);
             if(i==1&&isCte(tok)){
-              gatherCte(accsTemp,tok);
+              gatherCte(&accsTemp,tok);
               break;
             }
             while(true){
               nextTok=peek(p);
               if(isCte(nextTok)){
                 switch(tok){
-                case lector::global: push(accsTemp,globalRead);break;
-                case lector::tile:   push(accsTemp,tileReadNT);break;
-                case lector::local:  push(accsTemp,localAccg);
+                case tmglobal: push(&accsTemp,(actionBuffer)globalRead);break;
+                case tmtile:   push(&accsTemp,(actionBuffer)tileReadNT);break;
+                case tmlocal:  push(&accsTemp,(actionBuffer)localAccg);
                   if(writeInLocalMem) goto splitNormal;break;
-                case lector::pieza:  push(accsTemp,piezaAccg);break;
+                case tmpiece:  push(&accsTemp,(actionBuffer)pieceAccg);break;
                 }
                 tok=pop(p);
-                gatherCte(accsTemp,tok);
-                return;
+                gatherCte(&accsTemp,tok);
+                break;
               }else{
                 switch(tok){
-                case lector::global: push(accsTemp,globalReadNTi);break;
-                case lector::tile:   push(accsTemp,tileReadNTi);break;
-                case lector::local:  push(accsTemp,localAccgi);
+                case tmglobal: push(&accsTemp,(actionBuffer)globalReadNTi);break;
+                case tmtile:   push(&accsTemp,(actionBuffer)tileReadNTi);break;
+                case tmlocal:  push(&accsTemp,(actionBuffer)localAccgi);
                   if(writeInLocalMem) goto splitNormal;break;
-                case lector::pieza:  push(accsTemp,piezaAccgi);break;
+                case tmpiece:  push(&accsTemp,(actionBuffer)pieceAccgi);break;
                 }
               }
               tok=pop(p);
             }
           }
         }else{
-          push(condsTemp,op);
+          push(&condsTemp,(conditionBuffer)op);
           for(int i=0;i<2;i++){
             if(isCte(tok)){
-              gatherCte(condsTemp,tok);
+              gatherCte(&condsTemp,tok);
               continue;
             }
             while(true){
-              int nextTok=tokens.front();
+              int nextTok=peek(p);
               if(isCte(nextTok)){
                 switch(tok){
-                case lector::global: push(condsTemp,globalRead);/*setUpMemTriggersPerNormalHolderTemp.push_back({0,tg[j]});*/break;
-                case lector::tile:   push(condsTemp,tileRead);break;
-                case lector::local:  push(condsTemp,localg);
+                case tmglobal: push(&condsTemp,(conditionBuffer)globalRead);/*setUpMemTriggersPerNormalHolderTemp.push_back({0,tg[j]});*/break;
+                case tmtile:   push(&condsTemp,(conditionBuffer)tileRead);break;
+                case tmlocal:  push(&condsTemp,(conditionBuffer)localg);
                   if(i==0&&write){writeInLocalMem=true;}break;
-                case lector::pieza:  push(condsTemp,piezag);break;
+                case tmpiece:  push(&condsTemp,(conditionBuffer)pieceg);break;
                 }
                 tok=pop(p);
-                gatherCte(condsTemp,tok);
+                gatherCte(&condsTemp,tok);
                 break;
               }else{
                 switch(tok){
-                case lector::global: push(condsTemp,globalReadi);break;
-                case lector::tile:   push(condsTemp,tileReadi);break;
-                case lector::local:  push(condsTemp,localgi);break;
-                case lector::pieza:  push(condsTemp,piezagi);break;
+                case tmglobal: push(&condsTemp,(conditionBuffer)globalReadi);break;
+                case tmtile:   push(&condsTemp,(conditionBuffer)tileReadi);break;
+                case tmlocal:  push(&condsTemp,(conditionBuffer)localgi);break;
+                case tmpiece:  push(&condsTemp,(conditionBuffer)piecegi);break;
                 }
               }
               tok=pop(p);
@@ -1017,11 +1101,11 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
           do{
             p->ind--;
             tok=p->tokens[p->ind];
-          }while(tok!=lector::mset&&tok!=lector::madd);
+          }while(tok!=tmset&&tok!=tmadd);
           void(*cmd)(void);
           do{
             accsTemp.size--;
-            cmd=accsTemp[size-1];
+            cmd=accsTemp[accsTemp.size-1];
           }while(cmd!=msetG  && cmd!=msetT  &&
                  cmd!=msetGi && cmd!=msetTi);
           setupBarrays();
@@ -1035,14 +1119,14 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
         }
         break;
       }
-    case lector::click:
+    case tclick:
       p->clickExplicit=true;
       n->bools|=hasClick|makeClick;
       setupBarrays();
       n->sig=parseOp(p);
       ///TODO prohibir dos clicks seguidos en el preprocesado
       return n;
-    case lector::endMov:
+    case tmovEnd:
       if(!p->clickExplicit)
         n->bools|=hasClick|makeClick;
     default:
@@ -1055,17 +1139,17 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
 }
 
 void peekClick(operador* op,parseMovData* p){
-  if(peek(p)==lector::click){
+  if(peek(p)==tclick){
     pop(p);
     op->bools|=makeClick;
   }
-  if(!p->clickExplicit&&peek(p)==lector::endMov){
+  if(!p->clickExplicit&&peek(p)==tmovEnd){
     op->bools|=makeClick;
   }
 }
 
 desliz* parseDesliz(parseMovData* p){
-  desliz* d=alloc<desliz>();
+  desliz* d=alloc<desliz>(p->b);
 
   d->tipo=DESLIZ;
   d->bools&=~makeClick;
@@ -1079,12 +1163,12 @@ desliz* parseDesliz(parseMovData* p){
 
   d->inside=parseOp(p);
 
-  failIf(pop(p)!=lector::end,"desliz with no end");
+  failIf(pop(p)!=tend,"desliz with no end");
 
   d->iterSize=p->movSize-movSizeBefore;
   if(iters==0){
-    v& tam=tablptr->tam;
-    d->insideSize=d->iterSize*((tam.x>tam.y?tam.x:tam.y))*2;
+    v dims=p->pd->dims;
+    d->insideSize=d->iterSize*((dims.x>dims.y?dims.x:dims.y));
   //por default iteraciones necesarias para recorrer el tablero en linea recta
   }else{
     d->insideSize=d->iterSize*iters;
@@ -1092,14 +1176,14 @@ desliz* parseDesliz(parseMovData* p){
   p->movSize+=sizeof(deslizHolder)-d->iterSize+d->insideSize;
   
   peekClick((operador*)d,p);
-  sig=parseOp(p);
+  d->sig=parseOp(p);
 
-  if(bools&makeClick)
-    bools|=hasClick;
+  if(d->bools&makeClick)
+    d->bools|=hasClick;
   else
     for(operador* op=d->inside;op!=nullptr;op=op->sig)
       if(op->bools&hasClick){
-        bools|=hasClick;
+        d->bools|=hasClick;
         break;
       }
   return d;
@@ -1107,22 +1191,22 @@ desliz* parseDesliz(parseMovData* p){
 
 
 exc* parseExc(parseMovData* p){
-  exc* e=alloc<exc>();
+  exc* e=alloc<exc>(p->b);
 
   e->tipo=EXC;
   int movSizeBefore=p->movSize;
 
   int finalTok;
-  vector<operador*> opsTemp;
+  vector<operador*> opsTemp;init(&opsTemp);defer(&opsTemp);
   do{
     operador* op=parseOp(p);
-    push(opsTemp,op);
+    push(&opsTemp,op);
     finalTok=pop(p);
-  }while(finalTok!=lector::separator);
-  failIf(finalTok!=lector::end,"exc with no end");
+  }while(finalTok!=tseparator);
+  failIf(finalTok!=tend,"exc with no end");
 
-  e->ops.init(opsTemp.size,opsTemp.data);
-  p->movSize+=e->ops.size();
+  allocCopy(p->b,&e->ops,opsTemp.size,opsTemp.data);
+  p->movSize+=size(e->ops);
 
   e->insideSize=p->movSize-movSizeBefore;
   p->movSize+=sizeof(excHolder);
@@ -1143,7 +1227,7 @@ exc* parseExc(parseMovData* p){
 }
 
 isol* parseIsol(parseMovData* p){
-  isol* i=alloc<isol>();
+  isol* i=alloc<isol>(p->b);
 
   bool clickExplicitBefore=p->clickExplicit;
   p->clickExplicit=false;
@@ -1160,13 +1244,14 @@ isol* parseIsol(parseMovData* p){
   if(!p->clickExplicit)
     i->bools|=makeClick;
   p->clickExplicit=clickExplicitBefore;
-  sig=keepOn(&i->bools);
+
+  i->sig=parseOp(p);
 
   return i;
 }
 
 desopt* parseDesopt(parseMovData* p){
-  desopt* d=alloc<desopt>();
+  desopt* d=alloc<desopt>(p->b);
   d->tipo=DESOPT;
 
   int slots=0;
@@ -1175,26 +1260,26 @@ desopt* parseDesopt(parseMovData* p){
   }
 
   int movSizeBefore=p->movSize;
-  vector<operador*> opsTemp;defer(free(opsTemp));
-  vector<int> sizesTemp;defer(free(sizesTemp));
+  vector<operador*> opsTemp;defer(&opsTemp);
+  vector<int> sizesTemp;defer2(&sizesTemp);
   int branches=0;
   do{
     int movSizeBefore=p->movSize;
     operador* op=parseOp(p);
-    push(opsTemp,op);
-    push(sizesTemp,p->movSize-movSizeBefore);
+    push(&opsTemp,op);
+    push(&sizesTemp,p->movSize-movSizeBefore);
     branches++;
-  }while(pop(p)==lector::separator);
-  failIf(p->tokens[p->ind-1]!=lector::end,"desopt with no end");
+  }while(pop(p)==tseparator);
+  failIf(p->tokens[p->ind-1]!=tend,"desopt with no end");
 
-  ops.init(opsTemp.size(),opsTemp.data());
+  allocCopy(p->b,&d->ops,opsTemp.size,opsTemp.data);
 
-  for(int i=0;i<sizeTemp.size;i++)
-    sizeTemp[i]+=sizeof(desoptHolder::node*);
+  for(int i=0;i<sizesTemp.size;i++)
+    sizesTemp[i]+=sizeof(desoptHolder::node*);
 
   p->movSize+=branches*sizeof(desoptHolder::node*);
 
-  d->movSizes.init(branches,sizesTemp.data());
+  allocCopy(p->b,&d->movSizes,branches,sizesTemp.data);
 
   d->clusterSize=p->movSize-movSizeBefore;
   d->dinamClusterBaseOffset=d->clusterSize+d->clusterSize*branches;
@@ -1258,7 +1343,7 @@ desopt* parseDesopt(parseMovData* p){
             showOp(op->sig);
     };
     cout<<endl;
-    for(Pieza::base& b:movs){
+    for(Piece::base& b:movs){
         showOp(b.raiz);
         cout<<endl;
         }*/

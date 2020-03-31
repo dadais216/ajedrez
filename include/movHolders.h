@@ -11,19 +11,21 @@ const int32_t makeClick=1<<3;
 const int32_t hasClick=1<<4;
 const int32_t doEsp=1<<5;//se usa en normalh
 
-struct normalHolder;
 struct {
   Holder* h;
   normalHolder* nh;
+  board* brd;
+  Tile* tile;
 
   void(**buffer)(void);
   int* bufferPos;
-  //no hay un costo en agregar boludeces siempre que no me pase de la cache line
+  properState* ps;//lo usa spawn nomas para acceder a las piezas y el bucket de holders
+  //tengo espacio para 1 puntero mas en esta cache line
+  //igual si me paso supongo que no pasa nada siempre y cuando no use todo
 } actualHolder;//por ahora es global, me gustaria probar a pasarlo por parametro para ver si hay una diferencia de eficiencia. Supuestamente no pero quiero ver que pasa. Si no hay diferencia preferiría que sea no global
 
 
 v offset;
-Tile* actualTile;
 
 
 bool switchToGen;
@@ -38,7 +40,7 @@ struct virtualTableMov{//probar implementar lo mismo con switches a ver que pasa
 
 struct Base{ ///datos compartidos de un movimiento entero
     Holder* h;
-    movHolder* beg;
+    movHolder* root;
     int memLocalSize;//este es cte entre todos los holders por lo que podria estar en algun lugar del lado de operador
 };
 //@optim? se podria hacer que esta base sea global durante la generacion para no tenerla apuntada desde cada
@@ -47,16 +49,6 @@ struct Base{ ///datos compartidos de un movimiento entero
 //@optim lo que se podria hacer para solucionar esto es guardar en operador el offset de la base, y usar eso
 //en lugar de informacion en trigger para recuperar el estado en reaccion (osea, cambiaria un puntero en cada
 //movHolder por un offset en normal y el uso de una global)
-inline v getActualPos(v relPos,v offset){
-    bool negate=actualHolder.h->bando;
-    relPos.y=(relPos.y^-negate)+negate;
-    return relPos+offset;
-}
-inline v getOffset(v relPos,v pos){
-    bool negate=actualHolder.h->bando;
-    relPos.y=(relPos.y^-negate)+negate;
-    return pos-relPos;
-}
 
 struct movHolder{
   virtualTableMov* table;
@@ -64,7 +56,7 @@ struct movHolder{
     movHolder* sig;
     int32_t bools;
 };
-
+struct normal;
 struct normalHolder:public movHolder{
     normal* op;
     barray<int> memAct;
@@ -77,6 +69,7 @@ void drawNormalH(normalHolder*);
 void accionarNormalH(normalHolder*);
 void initNormalH(normal*,Base*,char**);
 
+struct desliz;
 struct deslizHolder:public movHolder{
     desliz* op;
     barrayE movs;
@@ -85,6 +78,7 @@ struct deslizHolder:public movHolder{
 };
 void initDeslizH(desliz*,Base*,char**);
 
+struct exc;
 struct excHolder:public movHolder{
     barray<movHolder*> ops;
     ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
@@ -94,33 +88,36 @@ struct excHolder:public movHolder{
 };
 void initExcH(exc*,Base*,char**);
 
+struct isol;
 struct isolHolder:public movHolder{
     int size;
     movHolder* inside;
 };
 void initIsolH(isol*,Base*,char**);
 
+struct desopt;
 struct desoptHolder:public movHolder{
-    desopt* op;
-    struct node{
-        node* iter;
-        //movimiento
-    };
-    char* dinamClusterHead;
+  desopt* op;
+  struct node{
+    node* iter;
+    //movimiento
+  };
+  char* dinamClusterHead;
+  node movs[0];
 };
 void initDesoptH(desopt*,Base*,char**);
 
-//comparten esto con movHolders
+//comparten la tabla con los movHolders
 struct spawnerGen{
   virtualTableMov* table;
-  Base* base;
+  Holder* h;
   bool kamikaseNext;
 };
-void initSpawner(spawnerGen*,Base*);
+void initSpawner(spawnerGen*,Holder*,bool);
 struct kamikaseCntrl{
   virtualTableMov* table;
-  Base* base;
+  Holder* h;
 };
-void initKamikase(kamikaseCntrl*,Base*);
-
+void initKamikase(kamikaseCntrl*,Holder*);
+void kamikaseCheckAlive(movHolder*);
 #endif // MOVHOLDERS_H

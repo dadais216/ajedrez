@@ -1,23 +1,19 @@
 
 
-bucket stateBucket;
-//podria no hacerla global y pasarla por parametro, pero no veo que me aporte algo y tendria que meter el parametro en todas las funciones de estados, el puntero de funcion de update y draw
-
-void arranqueDraw(){
-  Sprite* portada=(Sprite*)stateBucket.data;
+void arranqueDraw(char* mem){
+  Sprite* portada=(Sprite*)mem;
   window.draw(*portada);
 }
-void arranqueUpdate();
-void arranqueInit(){
-  allocNewBucket(&stateBucket);
-  Sprite* portada=alloc<Sprite>(&stateBucket);
+void arranqueUpdate(char*);
+void arranqueInit(char* mem){
+  Sprite* portada=new(mem)Sprite();
   portada->setTexture(image.get("portada.png"));
   drawScreen(arranqueDraw);
   actualStateUpdate=arranqueUpdate;
 }
-void selectorInit();
-void arranqueUpdate(){
+void selectorInit(char*);
+void arranqueUpdate(char* mem){
   if(input.click()&&input.inRange()){
-    selectorInit();
+    selectorInit(mem);
   }
 }
