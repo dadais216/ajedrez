@@ -325,7 +325,7 @@ void tokenCentinel(vector<int>* tokens,char** sp){
   int tok;
   switch(**sp){
   case ';': tok=tmovEnd;break;
-  case '#': do{*sp++;}while(**sp!='\n');return;
+  case '#': do{(*sp)++;}while(**sp!='\n');return;
   }
   push(tokens,tok);
 }
@@ -609,7 +609,6 @@ se expande el primero y si se encuentra otro que este ligado tambien. Se necesit
 de a donde se freno en los otros
 */
 void expandVersions(parseData* pd,vector<int>* from,vector<int>* into,int movStart,int movEnd,int firstMultiMacro){
-  int lockOnFirstMacro=-1;
   int j=0;
   bool lastLap=false;
   do{
@@ -654,7 +653,6 @@ struct tangledMacroIteration{
   int end;
 };
 void expandTangledVersions(parseData* pd,vector<int>* from,vector<int>* into,int movStart,int movEnd,int tangledGroup){
-  int j=0;
   bool lastLap=false;
   vector<tangledMacroIteration> iterations;init(&iterations);defer(&iterations);
   do{
@@ -705,7 +703,7 @@ void expandTangledVersions(parseData* pd,vector<int>* from,vector<int>* into,int
  se leyeron, se podrían ir borrando para ahorrar memoria. El ind se debería mantener, tendría que hacer una estructura parecida
 al vector que haga estas cosas al momento de expandir*/
 
-bool growMemory(parseData* pd,int gType,int val){
+void growMemory(parseData* pd,int gType,int val){
   switch(gType){
   case tmlocal: pd->memLocalSize[pd->movQ-1] = std::max(pd->memLocalSize[pd->movQ-1],val);break;
   case tmpiece: pd->memPieceSize = std::max(pd->memPieceSize,val);break;
@@ -726,13 +724,13 @@ void processTokens(parseData* pd,vector<int>* tokens){
   tokens->size=0;
   vector<int>* finalTokens=tokens;
 
-  auto matchNum=[&](int tok,char* op,bool doPush=true){
+  auto matchNum=[&](int tok,char const* op,bool doPush=true){
                   if(tok<1024)
                     fail("% requires number",op);
                   if(doPush)
                     push(finalTokens,tok);
                 };
-  auto matchGetter=[&](int tok,int* gettersSeen,int* lastG){
+  /*auto matchGetter=[&](int tok,int* gettersSeen,int* lastG){
                     switch(tok){
                     case tmlocal:*lastG=tmlocal;break;
                     case tmpiece:*lastG=tmpiece;break;
@@ -751,7 +749,7 @@ void processTokens(parseData* pd,vector<int>* tokens){
                         growMemory(pd,*lastG,tok-2048);
                     }
                     push(finalTokens,tok);
-                  };
+                  };*/
   auto boundCheck=[&](int ind,char const* op){
                     if(ind>=tokensExpanded.size)
                       fail("% with no parameters at end of input",op);
@@ -897,7 +895,7 @@ operador* parseOp(parseMovData* p,bool fromNormal){//=false
 
 //esto esta aca porque no hay lambdas con templates
 template<typename T>
-bool gatherCte(vector<T>* vec,int tok){
+void gatherCte(vector<T>* vec,int tok){
   switch(tok){
   case tposX: push(vec,(T)posXRead);break;
   case tposY: push(vec,(T)posYRead);break;
@@ -1012,7 +1010,6 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
         if(write&&isCte(tok)){
           fail("write on constant");
         }
-        bool actionOnLocal=false;
         bool action=write&&(tok==tmglobal||tmtile);
         if(action){
           int i=0;

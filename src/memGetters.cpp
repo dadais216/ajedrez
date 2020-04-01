@@ -172,7 +172,7 @@ int* tileReadNTi(){
 
 int* cteRead(){
   int* cte=(int*)&actualHolder.buffer[*actualHolder.bufferPos];//cast void** to int* 
-  *actualHolder.bufferPos++;
+  (*actualHolder.bufferPos)++;
   debug(
         //debería haber un if para no mostar durante accion supongo
         //TODO si hago esto evito duplicar algunas cosas de pieza y local

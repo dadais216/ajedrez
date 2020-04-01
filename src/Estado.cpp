@@ -137,7 +137,7 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   properState* ps=(properState*)mem;
   ps->boardId=boardId;
 
-  if(player1Id!=0&&player2Id!=0)
+  if(player1Id!=1&&player2Id!=1)
     fpsLock=0.;
 
   ps->turnoBlanco.setTexture(image.get("tiles.png"));
@@ -179,7 +179,6 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
 
 void properGameInit(properState* ps){
   ps->clickers.size=0;
-  //ps->turnoAct=2;
   ps->turno=1;
 
   getBoardIds(&ps->pd,ps->boardId);
@@ -217,7 +216,7 @@ void properGameInit(properState* ps){
     }
     cout<<endl;
     }*/
-  drawScreen();
+  drawScreen(properDraw);
 }
 
 void properDraw(char* mem){
@@ -289,9 +288,9 @@ void properDraw(char* mem){
 
 void doTurn(properState* ps,int player,bool bando){
   switch(player){
-  case 0: humanTurn(bando,(board*)ps->gameState);break;
-  case 1: randomTurn(bando,ps);srand(time(NULL));break;
-  case 2: skipTurn();
+  case 1: humanTurn(bando,(board*)ps->gameState);break;
+  case 2: randomTurn(bando,ps);srand(time(NULL));break;
+  case 4: skipTurn();
   }
 }
 

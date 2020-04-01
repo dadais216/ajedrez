@@ -89,7 +89,7 @@ void clearBucket(bucket* b){
   for(char* data=b->firstBlock;
       data;
      ){
-    char* before;
+    char* before=data;
     data=(char*)*data;
     delete[] before;
   }
@@ -253,15 +253,15 @@ template<typename T>
 void privateGrow(vector<T>* vec,int cap){
   vec->cap=cap;
   T* oldData=vec->data;
-  vec->data=(T*)malloc(cap);
+  vec->data=new T[cap];
   memcpy(vec->data,oldData,vec->size*sizeof(T));
-  free(oldData);
+  delete[] oldData;
 }
 
 template<typename T>
 void push(vector<T>* vec,T obj){
   if(vec->size==vec->cap){
-    privateGrow(vec,vec->cap*2);
+    privateGrow(vec,vec->cap*2);//TODO probar 1,5
   }
   vec->data[vec->size]=obj;
   vec->size++;

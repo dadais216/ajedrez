@@ -70,18 +70,17 @@ void failIf(bool cond,char const* err,Ts... args){
 //hacer el procesado yo va a ser mejor, y mas comodo
 char* loadFile(char const* fileName){
   FILE* file=fopen(fileName,"r");
-  printf("hola como va %s",fileName);
   failIf(!file,"%s bad file",fileName);
   fseek(file,0,2);
   int size=ftell(file);
-  char* content=new char[size];
+  char* content=new char[size+1];
   rewind(file);
-  content=fgets(content,size,file);
-  failIf(!content,"%s file empty",fileName);
+  int read=fread(content,1,size,file);
+  failIf(read!=size,"bad read of file %s",fileName);
   //TODO mirar ferror y limpiarlo
   fclose(file);
+  content[size]=0;
   return content;
-  //TODO creo que le tengo que agregar un null manualmente al final
 }
 
 

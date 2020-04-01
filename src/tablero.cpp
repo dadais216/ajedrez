@@ -132,7 +132,7 @@ int newTriggerBox(triggerSpace* ts){
     ts->firstFree=sizeBefore;
     ts->lastFree=ts->size-1;
   }else{
-    ts->firstFree==ts->mem[ts->firstFree].nextFree;
+    ts->firstFree=ts->mem[ts->firstFree].nextFree;
   }
   return ret;
 }
