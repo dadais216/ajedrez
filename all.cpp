@@ -6,15 +6,26 @@
 
 #define debugMode 1
 
-#if debugMode
-#define debug(...) __VA_ARGS__
-#else
-#define debug(...)
-#endif
 //decidi tener una version debug y una version no debug, esto me permite hacer mas cosas. Antes para no afectar la velocidad necesitaba meter las cosas debug de forma opcional en lugares donde no molestacen, especificamente en listas de polimorfismo de movs y movholders, lo que me limitaba lo que podia hacer y era incomodo.
 //la cagada de tener una version normal y una version debug es que en este proyecto quiero que el usuario tenga acceso a las cosas debug, por lo que tendria que tener 2 exes del juego. Por lo menos por esta version. Cuando haga la version compilada, como se compila en el momento, puedo tener la opcion de compilar en distintas formas y listo.
 //Otra opcion es dejar la version compilada como la version rapida sin nada, y dejar la interpretada con todas las cosas debug
 
+/*
+  #if debugMode
+  #define debug(...) __VA_ARGS__
+  #else
+  #define debug(...)
+  #endif
+  antes tenia esto sin darme cuenta de que no andaría porque se come las comas xd
+*/
+/*
+void debugFunc(auto lambda){
+#if debugMode
+  lambda();
+#endif
+}
+esto es una idea tambien, pero la notacion de lambda es media fea
+*/
 
 #define noSizeAttribute(name,type)\
 type* name(){\
@@ -46,6 +57,7 @@ struct deferObj{
 };
 #define defer(obj) deferObj<decltype(obj)>  defer(obj);//Medio choto, solo borra cosas. Cuando tenga internet voy a mirar lo de la lambda
 #define defer2(obj) deferObj<decltype(obj)> defer2(obj);
+#define defer3(obj) deferObj<decltype(obj)> defer3(obj);
 
 #include <utility>
 #include <stdlib.h>
@@ -54,6 +66,7 @@ struct deferObj{
 template<typename... Ts>
 void fail(char const* err,Ts... args){
   printf(err,args...);//me parece un poco mas lindo que va_list
+  printf("\n\n");
   exit(0);
 }
 
@@ -131,15 +144,18 @@ typedef intptr_t intptr;
 #include "memGetters.h"
 #include "lector.h"
 
-#include "main.cpp"
+#include "proper.h"
+#include "selector.h"
 
+
+#include "main.cpp"
 #include "arranque.cpp"
 #include "selector.cpp"
 
 #include "tablero.h"
 #include "operador.h"
-#include "Estado.h"
 
+#include "movs.cpp"
 #include "tablero.cpp"
 
 #include "Clicker.h"
@@ -152,12 +168,11 @@ typedef intptr_t intptr;
 
 #include "movHolders.cpp"
 #include "memGetters.cpp"
-#include "movs.cpp"
 #include "memMov.cpp"
 #include "operador.cpp"
 
 
-#include "Estado.cpp"
+#include "proper.cpp"
 
 //en el momento me parecio buena idea delegar toda la construccion a este archivo,
 //se podría haber dejado los headers en cada cpp, como es todo una unica unidad de compilacion

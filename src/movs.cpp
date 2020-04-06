@@ -1,11 +1,13 @@
 
+
+
 //TODO mirar esto
 color::color(RectangleShape* rs_){
     rs=rs_;///@optim es necesario tener un rectangleShape para cada uno? por ahi es mas rapido reutilizar. No usaria memoria dinamica ahi
 }
 void color::draw(){
-    rs->setPosition(actualPosColor.x*32*escala,actualPosColor.y*32*escala);
-    window.draw(*rs);
+  rs->setPosition(actualHolder.nh->pos.x*32*escala,actualHolder.nh->pos.y*32*escala);
+  window.draw(*rs);
 }
 vector<RectangleShape*> colores;
 colort* crearColor(int r,int g,int b){
@@ -17,7 +19,7 @@ colort* crearColor(int r,int g,int b){
     for(RectangleShape* c:colores)
         if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b)
             return new color(c);
-    RectangleShape* rs=new RectangleShape(Vector2f(32*escala,32*escala));
+    RectangleShape* rs=new RectangleShape();
     rs->setFillColor(sf::Color(r,g,b,40));
     push(&colores,rs);
     return new color(rs);
@@ -145,7 +147,7 @@ void spwn(){
       goto end;
     }
   }
-  initHolder(&actualHolder.ps->pieces[ind],bando,actualHolder.tile,actualHolder.ps->gameState);
+  initHolder(actualHolder.ps->pieces[ind],bando,actualHolder.tile,&actualHolder.ps->gameState);
  end:
   push(&justSpawned,actualHolder.tile->holder);
   push(&pisados,actualHolder.tile);
@@ -178,77 +180,79 @@ bool pass(){
   CONDRET(true);
 }//se usa al final de exc para retornar verdadero aunque las otras ramas hayan fallado
 
-debug(
-      RectangleShape backGroundMem;
+#if debugMode
+RectangleShape backgroundMem;
+RectangleShape backgroundMemDebug;
+Text textValMem;
 
-      RectangleShape posPiece;
-      RectangleShape posActGood;
-      RectangleShape posActBad;
-      RectangleShape* tileActDebug;
+RectangleShape posPiece;
+RectangleShape posActGood;
+RectangleShape posActBad;
+RectangleShape* tileActDebug;
 
-      Text textDebug;
-      bool drawDebugTiles;
-      bool ZPressed=false;
-      int mil=25;
+Text textDebug;
+bool drawDebugTiles;
+bool ZPressed=false;
+int mil=25;
 
-      bool drawMemDebug;
+bool drawMemDebug;
 
-      void stall(){
-        ///@cleanup como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
-        while(true){
-          sleep(milliseconds(mil));
-          if(!window.hasFocus()) continue;
-          if(sf::Keyboard::isKeyPressed(sf::Keyboard::Z)){
-            if(!ZPressed){
-              ZPressed=true;
-              break;
+void stall(){
+  ///@cleanup como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
+  while(true){
+    sleep(milliseconds(mil));
+    if(!window.hasFocus()) continue;
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Z)){
+      if(!ZPressed){
+        ZPressed=true;
+        break;
             }
-          }else
-            ZPressed=false;
-          if(sf::Keyboard::isKeyPressed(sf::Keyboard::X)){
-            if(mil>10) mil-=1;
-            break;
-          }else
-            mil=25;
+    }else
+      ZPressed=false;
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::X)){
+      if(mil>10) mil-=1;
+      break;
+    }else
+      mil=25;
           if(sf::Keyboard::isKeyPressed(sf::Keyboard::C)){
             mil=0;
             break;
           }
-        }
-      }
-      void debugShowAndWait(char const* name,bool val){
-        textDebug.setString(name);
-
-        v posAct=actualHolder.nh->pos;
-        if(val){
-          posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
-          tileActDebug=&posActGood;
-          textDebug.setColor(sf::Color(78,84,68,100));
-        }else{
-          posActBad.setPosition(posAct.x*32*escala,posAct.y*32*escala);
-          tileActDebug=&posActBad;
-          textDebug.setColor(sf::Color(240,70,40,240));
-        }
-        posPiece.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
-        drawDebugTiles=true;
-        drawScreen(properDraw);
-        drawDebugTiles=false;
-
-        stall();
-      }
-      void debugShowAndWaitMem(char const* name,bool val){
-        textDebug.setString(name);
-
-        if(val)
-          textDebug.setColor(sf::Color(78,84,68,100));
-        else
-          textDebug.setColor(sf::Color(240,70,40,240));
-
-        drawMemDebug=true;
-        drawScreen(properDraw);
-        drawMemDebug=false;
-
-        stall();
-      }
-      );
+  }
+}
+void debugShowAndWait(char const* name,bool val){
+  textDebug.setString(name);
+  
+  v posAct=actualHolder.nh->pos;
+  if(val){
+    posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
+    tileActDebug=&posActGood;
+    textDebug.setColor(sf::Color(78,84,68,100));
+  }else{
+    posActBad.setPosition(posAct.x*32*escala,posAct.y*32*escala);
+    tileActDebug=&posActBad;
+    textDebug.setColor(sf::Color(240,70,40,240));
+  }
+  posPiece.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
+  drawDebugTiles=true;
+  drawScreen(properDraw);
+  drawDebugTiles=false;
+        
+  stall();
+}
+void debugShowAndWaitMem(char const* name,bool val){
+  textDebug.setString(name);
+  
+  if(val)
+    textDebug.setColor(sf::Color(78,84,68,100));
+  else
+    textDebug.setColor(sf::Color(240,70,40,240));
+  
+  drawMemDebug=true;
+  drawScreen(properDraw);
+  drawMemDebug=false;
+  
+  stall();
+}
+#endif
 

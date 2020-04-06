@@ -1,6 +1,4 @@
 
-RectangleShape backGroundMemDebug;
-
 
 
 //triggers globales se crean en la creacion de la pieza y son fijos
@@ -13,22 +11,22 @@ RectangleShape backGroundMemDebug;
 //debug seria un segundo switch aparte que no le molesta a nadie.
 //usar switch podría tener una ventaja ademas de eso, podría probar si tengo ganas (podría ser inherentemente mas rapido?, int en vez de punteros en el buffer, puedo reutilizar codigo en el switch)
 void debugDrawMem(int ind,int memSize,int drawOffset){  
-  debug(
-  backGroundMemDebug.setPosition(Vector2f(530+25*(ind%4),
+#if debugMode
+  backgroundMemDebug.setPosition(Vector2f(530+25*(ind%4),
                                           305+drawOffset+45*(ind/4-memSize/4)));
-  window.draw(backGroundMemDebug);
-        );
+  window.draw(backgroundMemDebug);
+#endif
 }
 void debugSetIndirectColor(){
-  debug(
-  backGroundMemDebug.setFillColor(sf::Color(178,235,221));
-        );
+#if debugMode
+  backgroundMemDebug.setFillColor(sf::Color(178,235,221));
+#endif
 }
 
 void debugUnsetIndirectColor(){
-  debug(
-        backGroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        );
+#if debugMode
+  backgroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+#endif
 }
 
 
@@ -97,7 +95,7 @@ int* pieceAccgi(){//unico motivo de existir es no tirar codigo debug en accion
 
 int* globalRead(){
   intptr ind=(intptr)getNextInBuffer();;
-  debug(debugDrawMem(ind,actualHolder.brd->memGlobalSize,0));
+  debugDrawMem(ind,actualHolder.brd->memGlobalSize,0);
 
   memData* md=&actualHolder.brd->memGlobals[ind];
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);//probar triggers fijos despues
@@ -173,13 +171,13 @@ int* tileReadNTi(){
 int* cteRead(){
   int* cte=(int*)&actualHolder.buffer[*actualHolder.bufferPos];//cast void** to int* 
   (*actualHolder.bufferPos)++;
-  debug(
-        //debería haber un if para no mostar durante accion supongo
-        //TODO si hago esto evito duplicar algunas cosas de pieza y local
-        textValMem.setPosition(610,470);
-        textValMem.setString(std::to_string(*cte));
-        window.draw(textValMem);
-        );
+#if debugMode
+  //debería haber un if para no mostar durante accion supongo
+  //TODO si hago esto evito duplicar algunas cosas de pieza y local
+  textValMem.setPosition(610,470);
+  textValMem.setString(std::to_string(*cte));
+  window.draw(textValMem);
+#endif
   return cte;
 }
 
@@ -187,9 +185,9 @@ int* cteRead(){
 int* posXRead(){
   //para evitar usar una variable global (porque podría ser mas lenta, no creo pero ni idea) se podría dejar un int en el buffer que se escribe aca
   static int x=offset.x+actualHolder.nh->relPos.x;
-  debug(
-        //
-        );
+#if debugMode
+  //
+#endif
   return &x;
 }
 

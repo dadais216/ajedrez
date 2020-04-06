@@ -1,9 +1,5 @@
 
 
-struct button{
-  char name[256];
-  int n,x,y;
-};
 
 button initButton(char const* name,int n,int x,int y){
   button b;
@@ -19,22 +15,7 @@ button initButton(char const* name,int n,int x,int y){
   return b;
 }
 
-struct playerSelector{
-  int bando;
-  int buttonQ;
-  button buttons[4];//hay un poco de desperdicio pero eh
-  int selected;
-};
 
-struct selectorState{
-  Sprite sprite;
-  Text text;
-
-  RectangleShape bordeSeleccion;
-  playerSelector player1,player2;
-
-  vector<button> buttons;
-};
 
 void drawButton(selectorState* st,button* b){
   st->sprite.setPosition(b->x,b->y);
@@ -44,15 +25,15 @@ void drawButton(selectorState* st,button* b){
   window.draw(st->text);
 }
 
-int buttonClicked(button* b,int scale){
+bool buttonClicked(button* b,int scale){
   v ve=input.pixel();
   if(ve.x>=b->x&&ve.x<=b->x+64*scale&&ve.y>=b->y&&ve.y<=b->y+32*scale) //puede que este mal
-    return b->n;
-  return 0;
+    return true;
+  return false;
 }
 
 
-void genPlayerSelector(playerSelector* ps,int bando_){
+void genPlayerSelector(playerSelector* ps,int bando_,int defaultSelected){
     ps->bando=bando_;
     ps->buttons[0]=initButton("humano",1,500+40*bando_,360);
     ps->buttons[1]=initButton("aleatorio",2,500+40*bando_,400);
@@ -62,21 +43,19 @@ void genPlayerSelector(playerSelector* ps,int bando_){
       ps->buttonQ=4;
     }else
       ps->buttonQ=3;
-    ps->selected=1;
+    ps->selected=defaultSelected;
 }
-void selectorDraw(char*);
 void updatePlayerSelector(playerSelector* ps){
   for(int i=0;i<ps->buttonQ;i++){
     button b=ps->buttons[i];
     if(buttonClicked(&b,1)){
-      ps->selected=b.n;//n-1?
+      ps->selected=b.n;
       drawScreen(selectorDraw);
       break;
     }
   }
 }
 
-void selectorUpdate(char*);
 void selectorInit(char* mem){
   selectorState* st=new(mem)selectorState();//llamar a constructores de smfl
   init(&st->buttons);
@@ -92,8 +71,8 @@ void selectorInit(char* mem){
   st->bordeSeleccion.setOutlineColor(Color::White);
   st->bordeSeleccion.setOutlineThickness(1);
 
-  genPlayerSelector(&st->player1,1);
-  genPlayerSelector(&st->player2,-1);
+  genPlayerSelector(&st->player1,-1,1);
+  genPlayerSelector(&st->player2,1,4);
 
   char* boardFile=loadFile("tableros.txt");//podría guardarla en algun lado para no volver a cargarla en el parser
   char* s=boardFile;
@@ -109,7 +88,6 @@ void selectorInit(char* mem){
       button b;
       memcpy(b.name,s,j);
       b.name[j]=0;
-      puts(b.name);
       b.n=i;
       b.x=32+(70*i/420)*140;
       b.y=40+(i*70)%420;
@@ -123,7 +101,6 @@ void selectorInit(char* mem){
   drawScreen(selectorDraw);
   actualStateUpdate=selectorUpdate;
 }
-void properInit(char*,int,int,int);
 void selectorUpdate(char* mem){
   selectorState* st=(selectorState*)mem;
   if(input.click()){

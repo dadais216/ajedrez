@@ -52,14 +52,13 @@ void reaccionarSig(movHolder*m,auto nhs){
 }
 
 inline void generarProperNormalH(normalHolder* n){
-
-  actualHolder.buffer=(void(**)(void))n->op->conds.beg;
   int i=0;
+  actualHolder.buffer=(void(**)(void))n->op->conds.beg;
   actualHolder.bufferPos=&i;
-  for(bool(**c)(void);
-      (c = n->op->conds.beg+i) != n->op->conds.after;
+  for(bool(**c)(void)=n->op->conds.beg;
+      c+i != n->op->conds.after;
       i++)
-    if(!(*c)()){
+    if(!(*(c+i))()){
       n->bools&=~(valorFinal|valorCadena|valor);
       return;
     }
@@ -155,10 +154,10 @@ void accionarNormalH(normalHolder* n){
   actualHolder.buffer=n->op->accs.beg;
   actualHolder.bufferPos=&i;
 
-  for(void(**func)(void);
-      (func = n->op->accs.beg+i) != n->op->accs.after;
+  for(void(**func)(void)=n->op->accs.beg;
+      func+i != n->op->accs.after;
       i++)
-    (*func)();
+    (*(func+i))();
 }
 void cargarNormalH(movHolder* m,vector<normalHolder*>* norms){
   fromCast(n,m,normalHolder*);
@@ -170,12 +169,9 @@ void cargarNormalH(movHolder* m,vector<normalHolder*>* norms){
     n->sig->table->cargar(n->sig,norms);
 }
 void drawNormalH(normalHolder* n){
-  actualPosColor=n->pos;
-  int i=0;
-  for(void(**draw)(void);
-      (draw=n->op->colors.beg+i)!=n->op->colors.after;
-      i++){
-    (*draw)();
+  actualHolder.nh=n;
+  for(colort* d:n->op->colors){
+    d->draw();
   }
 }
 
@@ -184,6 +180,8 @@ void drawNormalH(normalHolder* n){
 void initNormalH(normal* org,Base* base_,char** head)
 {
   fromCast(n,*head,normalHolder*);
+  *head+=sizeof(normalHolder);
+
   initMovH(n,org,base_);
   n->table=&normalTable;
 
@@ -205,7 +203,7 @@ void initNormalH(normal* org,Base* base_,char** head)
 }
 
 
-
+//TODO se me hace raro que se creen en el momento, no sería costoso armarlos todos al principio
 void maybeAddIteration(deslizHolder*d,int i){
   if(d->cantElems==i){
     char* place=(char*)d->movs.beg+d->movs.elemSize*i;//crearMovHolder necesita **
@@ -297,6 +295,8 @@ void cargarDeslizH(movHolder* m,vector<normalHolder*>* norms){
 //solo de desliz sin mucho problema, como cambiar la pos de retorno o breaks.
 void initDeslizH(desliz* org,Base* base_,char** head){
   fromCast(d,*head,deslizHolder*);
+  *head+=sizeof(deslizHolder);
+
   initMovH(d,org,base_);
   d->table=&deslizTable;
 
@@ -410,6 +410,8 @@ void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
 virtualTableMov excTable={generarExcH,reaccionarExcH,reaccionarExcH,cargarExcH};
 void initExcH(exc* org,Base* base_,char** head){
   fromCast(e,*head,excHolder*);
+  *head+=sizeof(excHolder);
+
   initMovH(e,org,base_);
   e->table=&excTable;
 
@@ -479,6 +481,8 @@ void cargarIsolH(movHolder*m,vector<normalHolder*>* norms){
  virtualTableMov isolTable={generarIsolH,reaccionarIsolH,reaccionarIsolH,cargarIsolH};
 void initIsolH(isol* org,Base* base_,char** head){
   fromCast(s,*head,isolHolder*);
+  *head+=sizeof(isolHolder);
+
   initMovH(s,org,base_);
   s->table=&isolTable;
 
@@ -686,6 +690,8 @@ void cargarDesoptH(movHolder*m,vector<normalHolder*>* norms){
                               reaccionarDesoptH,cargarDesoptH};
 void initDesoptH(desopt* org,Base* base_,char** head){
   fromCast(d,*head,desoptHolder*);
+  *head+=sizeof(desoptHolder);
+
   initMovH(d,org,base_);
   d->table=&desoptTable;
 

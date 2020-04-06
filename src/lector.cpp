@@ -24,54 +24,62 @@ enum {
 
 
 void initParser(parseData* pd){
-#define rel(T) \
-  pd->wordToToken[stringForHash(#T)]=t##T;      \
-  pd->tokenToWord[t##T]=stringForHash(#T);
-    rel(sprt);
-    rel(numShow);
-    rel(end);
+  init(&pd->tokenToWord,tlast);
+  pd->tokenToWord.size=tlast;
 
-    rel(mov);
-    rel(capt);
-    rel(pausa);
-    rel(spwn);
-    rel(capt);
-    rel(pass);
+#define rel(T)                                  \
+    pd->wordToToken[stringForHash(#T)]=t##T;    \
+    pd->tokenToWord[t##T]=stringForHash(#T);    
 
-    rel(esp);
-    rel(vacio);
-    rel(enemigo);
-    rel(piece);
-    rel(pass);
+  rel(sprt);
+  rel(numShow);
+  rel(color);
 
-    rel(desliz);
-    rel(exc);
-    rel(isol);
-    rel(desopt);
+  rel(mov);
+  rel(pausa);
+  rel(spwn);
+  rel(capt);
+  rel(pass);
 
-    pd->wordToToken["c"]=tclick;
-    pd->wordToToken["or"]=tseparator;
+  rel(esp);
+  rel(vacio);
+  rel(enemigo);
+  rel(piece);
+  rel(pass);
 
-    rel(mcmp);
-    rel(mset);
-    rel(madd);
-    rel(mless);
-    rel(mmore);
-    rel(mdist);
-    #undef rel
-    pd->wordToToken["=="]=tmcmp;
-    pd->wordToToken["="]=tmset;
-    pd->wordToToken["+="]=tmadd;
-    pd->wordToToken["<"]=tmless;
-    pd->wordToToken[">"]=tmmore;
-    pd->wordToToken["!="]=tmdist;
+  rel(desliz);
+  rel(exc);
+  rel(isol);
+  rel(desopt);
+  rel(end);
 
-    pd->lastGlobalMacro=tlast;
-    pd->lastTangledGroup=0;
-    init(&pd->memLocalSize,4);
-    pd->memPieceSize=0;
-    pd->memGlobalSize=0;
-    pd->memTileSize=0;
+  pd->wordToToken["c"]=tclick;
+  pd->wordToToken["or"]=tseparator;
+  
+  rel(mcmp);
+  rel(mset);
+  rel(madd);
+  rel(mless);
+  rel(mmore);
+  rel(mdist);
+#undef rel
+  pd->wordToToken["=="]=tmcmp;
+  pd->wordToToken["="]=tmset;
+  pd->wordToToken["+="]=tmadd;
+  pd->wordToToken["<"]=tmless;
+  pd->wordToToken[">"]=tmmore;
+  pd->wordToToken["!="]=tmdist;
+
+  pd->lastGlobalMacro=tlast;
+  pd->lastTangledGroup=0;
+  init(&pd->memLocalSize,4);
+  pd->memPieceSize=0;
+  pd->memGlobalSize=0;
+  pd->memTileSize=0;
+
+  init(&pd->boardInit);
+  init(&pd->ids);
+  init(&pd->macros);
 }
 
 char const* tokenToWord(parseData* pd,int tok){
@@ -134,8 +142,7 @@ void getBoardIds(parseData* pd,int n){
   int i=0;
   while((c=*(s++))){
     if(c=='"'){
-      i++;
-      if(i==n){
+      if(i++==n){
         while((*s++)!='\n');
         goto foundBoard;
       }
@@ -143,7 +150,7 @@ void getBoardIds(parseData* pd,int n){
   }
   fail("board not found");//no deberia pasar nunca igual
  foundBoard:
-  bool firstLine;
+  bool firstLine=true;
   int x=0;
   pd->dims=v(0,0);
   while(true){//en esta parte asumo que no hay un eof de golpe porque es algo que mas adelante va a escribir el programa
@@ -157,8 +164,9 @@ void getBoardIds(parseData* pd,int n){
       }
       x=0;
       pd->dims.y++;
-      if(*(s+1)=='n'||*(s+1)=='"')
-        return;
+
+      s++;
+      if(*s==' '||*s=='\n'||*s=='"'||*s=='\0') return;
     }
     int pieceId=stringToInt(&s);
     if(pieceId!=0){
@@ -171,8 +179,8 @@ void getBoardIds(parseData* pd,int n){
   }
 }
 //consigo todas las pieces juntas para saber los tamaños de las memorias. Esto incluye piezas que no esten en el tablero, aparezcan por spawn
-void makePieces(parseData* pd,vector<Piece>* pieces,bucket* b){
-  char* filePtr=loadFile("pieces.txt");
+void makePieces(parseData* pd,vector<Piece*>* pieces,bucket* b){
+  char* filePtr=loadFile("piezas.txt");
   defer(filePtr);
 
   loadGlobalMacros(pd,filePtr);
@@ -186,7 +194,7 @@ void makePieces(parseData* pd,vector<Piece>* pieces,bucket* b){
       if(c==':'){
         id=stringToInt(&s);
         if(pd->ids[i]==id){
-          while((*s++)==' ');
+          while(*s==' ') s++;
           sn=stringToInt(&s);
           while((*s++)!='\n');
           goto pieceFound;
@@ -276,6 +284,7 @@ bool wordIsGetter(char* b,char* e){
 
 void tokenWord(parseData* pd,vector<int>* tokens,char* b,char* e){
   stringForHash sh(b,e);
+  printf("%s ",sh.word);
   if(pd->wordToToken.find(sh)!=pd->wordToToken.end()){
     push(tokens,pd->wordToToken[sh]);
     return;
@@ -334,8 +343,7 @@ void generateTokens(parseData* pd,vector<int>* tokens,char* s){
   char* b=nullptr;
   while(true){
     if(*s==0||*s==':'){
-      if(b!=nullptr)
-        fail("missing ;");
+      failIf(b!=nullptr||tokens->data[tokens->size-1]!=tmovEnd,"missing ;");
       break;
     }
     if(whiteSpace(*s)||centinel(*s)||*s=='>'){
@@ -346,7 +354,7 @@ void generateTokens(parseData* pd,vector<int>* tokens,char* s){
       if(centinel(*s)){
         tokenCentinel(tokens,&s);
       }
-      if(*s=='>'&& (tokens->size==0||tokens->data[tokens->size-1]==tmovEnd)){
+      else if(*s=='>'&& (tokens->size==0||tokens->data[tokens->size-1]==tmovEnd)){
         s++;
         loadMacro<false>(pd,&s);
         continue;
@@ -838,38 +846,45 @@ int peek(parseMovData* p){
 }
 
 void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
-               vector<Piece>* pieces,bucket* operatorBucket){
-  Piece piece;
-  piece.sn=sn;
+               vector<Piece*>* pieces,bucket* operatorBucket){
+  Piece* piece=alloc<Piece>(operatorBucket);
+  piece->sn=sn;
 
-  piece.spriteb.setTexture(image.get("pieces.png"));
-  piece.spriteb.setTextureRect(IntRect(sn*64%384,(sn*64/384)*32,32,32));
-  piece.spriteb.setScale(escala,escala);
-  piece.spriten.setTexture(image . get("pieces.png"));
-  piece.spriten.setTextureRect(IntRect(sn*64%384+32,(sn*64/384)*32,32,32));
-  piece.spriten.setScale(escala,escala);
+  piece->spriteb.setTexture(image.get("piezas.png"));
+  piece->spriteb.setTextureRect(IntRect(sn*64%384,(sn*64/384)*32,32,32));
+  //piece->spriteb.setScale(escala,escala);
+  piece->spriten.setTexture(image . get("piezas.png"));
+  piece->spriten.setTextureRect(IntRect(sn*64%384+32,(sn*64/384)*32,32,32));
+  //piece->spriten.setScale(escala,escala);
 
-  piece.memPieceSize=pd->memPieceSize;
-  piece.hsSize=0;
+  piece->memPieceSize=pd->memPieceSize;
+
+  alloc(operatorBucket,&piece->movs,pd->movQ);
+
+  piece->hsSize=0;
   parseMovData p{operatorBucket,pd,*tokens,0,0,0,false,false,false};
   for(int i=0;i<pd->movQ;i++){
     p.movSize=0;
     p.memLocalSize=pd->memLocalSize[i];
     p.clickExplicit=false;
 
-    piece.movs[i]->memLocalSize=pd->memLocalSize[i];
-    piece.movs[i]->raiz=parseOp(&p);
-    piece.movs[i]->size=p.movSize;
-    piece.hsSize+=p.movSize;
+    reserve(&memMov,pd->memLocalSize[i]);
+    piece->movs[i]->memLocalSize=pd->memLocalSize[i];
+    piece->movs[i]->raiz=parseOp(&p);
+    piece->movs[i]->size=p.movSize;
+    piece->hsSize+=p.movSize;
     failIf(pop(&p)!=tmovEnd,"missing ;");
   }
   assert(p.ind==tokens->size);
-  piece.memPieceSize=pd->memPieceSize;
-  piece.hsSize+=sizeof(Holder)+pd->memPieceSize*sizeof(int)+pd->movQ*sizeof(movHolder*);
+  piece->memPieceSize=pd->memPieceSize;
+  piece->hsSize+=sizeof(Holder)
+    +pd->memPieceSize*sizeof(int)
+    +(pd->movQ+(piece->spawner||piece->kamikase?1:0))*sizeof(movHolder*)
+    +pd->movQ*sizeof(Base);
 
-  piece.spawner=p.spawner;
-  piece.kamikase=p.kamikase;
-  piece.ind=pieces->size;
+  piece->spawner=p.spawner;
+  piece->kamikase=p.kamikase;
+  piece->ind=pieces->size;
   push(pieces,piece);
 }
 
@@ -906,9 +921,9 @@ void gatherCte(vector<T>* vec,int tok){
 normal* parseNormal(parseMovData* p){
   normal* n=alloc<normal>(p->b);
 
-  vector<void(*)(void)> accsTemp;
-  vector<bool(*)(void)> condsTemp;
-  vector<colort*> colorsTemp;
+  vector<void(*)(void)> accsTemp;init(&accsTemp);defer(&accsTemp);
+  vector<bool(*)(void)> condsTemp;init(&condsTemp);defer2(&condsTemp);
+  vector<colort*> colorsTemp;init(&colorsTemp);defer3(&colorsTemp);
 
   auto getNum=[&]()->int{
                 int tok=pop(p);
@@ -953,6 +968,11 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
         case tD: n->relPos.x++;break;
         case tA: n->relPos.x--;break;
         }
+        n->bools|=doEsp;
+        //TODO mirar el tema de esp. Por ahi hacer que se explicite cuando se usa y
+        //tener una normal aparte, sacar el if? probar.
+        //esa normal prohibiria todos los movimientos posicionales. La construccion podría hacerse
+        //como un filtro sobre esta normal para no reescribir
       }
       break;
 #define cond(TOKEN) case t##TOKEN:  push(&condsTemp,TOKEN) ;break

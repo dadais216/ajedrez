@@ -21,7 +21,7 @@ struct stringForHash{//resulta que map usa un arbol en vez de un hash asi que es
     int i=0;
     for(;i<256;i++){
       word[i]=*(b++);
-      if(b==e)
+      if(b==e+1)
         break;
     }
     for(;i<256;i++){
@@ -32,7 +32,9 @@ struct stringForHash{//resulta que map usa un arbol en vez de un hash asi que es
   }
   stringForHash(){}
   friend bool operator<(const stringForHash& a,const stringForHash& b){//lo necesita map
-    return strcmp(a.word,b.word);
+    int i;
+    for(i=0;a.word[i]==b.word[i]&&a.word[i]!=0;i++);
+    return a.word[i]<b.word[i];
   }
 };
 /*
@@ -92,7 +94,7 @@ struct operador{
 struct normal:public operador{
   barray<void(*)(void)> accs;
   barray<bool(*)(void)> conds;
-  barray<void(*)(void)> colors;
+  barray<colort*> colors;
   //struct setupTrigInfo{
   //    char type; //0 global 1 pieza 2 turno
   //    int ind;
@@ -144,7 +146,7 @@ int getCodedPieceIndexById(vector<int>*,int);
 void generateTokens(parseData*,vector<int>*,char*);
 void loadGlobalMacros(parseData*,char*);
 void processTokens(parseData*,vector<int>*);
-void makePiece(parseData*,int,int,vector<int>*,vector<Piece>*,bucket*);
+void makePiece(parseData*,int,int,vector<int>*,vector<Piece*>*,bucket*);
 template<bool global> void loadMacro(parseData*,char**);
 void expandVersions(parseData*,vector<int>*,vector<int>*,int,int,int);
 void expandTangledVersions(parseData*,vector<int>*,vector<int>*,int,int,int);

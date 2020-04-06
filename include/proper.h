@@ -1,3 +1,4 @@
+
 #ifndef ESTADO_H
 #define ESTADO_H
 
@@ -16,11 +17,11 @@ struct Clicker;
 struct properState{
   int player1,player2;
   Sprite turnoBlanco,turnoNegro;
-  bucket* pieceOps;
-  vector<Piece> pieces;
+  bucket pieceOps;
+  vector<Piece*> pieces;
   vector<Clicker> clickers;
   vector<int> memMov;//se podría mover a gameState, consiguendo su max TODO
-  bucket*   gameState;//por ahora
+  bucket   gameState;//por ahora
   //char* board; //tablero+memorias globales
   //char* holderSpace; //vector que voy a implementar a mano, porque necesito correr codigo para determinar si crecer o no, y cuanto
 
@@ -30,15 +31,6 @@ struct properState{
   int hsSize;
 
   int turno;
-  debug(
-        v posPieza;
-        v posActGood;
-        v posActBad;
-        Text textDebug;
-        RectangleShape backgroundMem;
-        RectangleShape backgroundMemDebug;
-        Text textValMem;
-        )
 };
 
 
@@ -58,8 +50,9 @@ El tablero, la memoria global y tile quedaría en un malloc aparte
 */
 
 void properDraw(char*);
+void properInit(char*,int,int,int);
 void properGameInit(properState*);
-
+void properUpdate(char*);
 
 
 #endif // ESTADO_H

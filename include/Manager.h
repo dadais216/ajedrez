@@ -15,7 +15,7 @@ public:
         {
             if(*it==dire)
             {
-              std::cout<<"la direccion "<<dire<<" ya esta agregada"<<std::endl;
+              //std::cout<<"la direccion "<<dire<<" ya esta agregada"<<std::endl;
                 return;
             }
         }
@@ -31,7 +31,7 @@ public:
                 return;
             }
         }
-      std::cout<<"la direccion "<<dire<<" ya estaba borrada o nunca estuvo"<<std::endl;
+      //std::cout<<"la direccion "<<dire<<" ya estaba borrada o nunca estuvo"<<std::endl;
     }
   T& get(std::string filename)
     {
@@ -42,7 +42,7 @@ public:
                 return it->second;
             }
         }
-      std::cout<<"agregando "<<filename<<std::endl;
+      //std::cout<<"agregando "<<filename<<std::endl;
         T t;
         if(t.loadFromFile(filename))
         {
@@ -57,7 +57,7 @@ public:
                 return archivos[filename];
             }
         }
-        std::cout<<"ERROR el archivo "<<filename<<" no existe"<<std::endl;
+        //std::cout<<"ERROR el archivo "<<filename<<" no existe"<<std::endl;
         archivos[filename]=t;
         return archivos[filename];
     }
@@ -69,7 +69,7 @@ public:
             archivos.erase(it);
             return;
         }
-        std::cout<<"ERROR el archivo "<<filename<<" ya fue borrado o nunca estuvo"<<std::endl;
+        //std::cout<<"ERROR el archivo "<<filename<<" ya fue borrado o nunca estuvo"<<std::endl;
     }
 };
 #endif // MANAGER_H

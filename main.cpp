@@ -7,12 +7,10 @@ Font font;
 Input input(&window);
 void (*actualStateUpdate)(char*);
 
-struct arranqueState;
-struct selectorState;
-struct properState;
-
-//char stateMem[std::max(std::max(sizeof(arranqueState),sizeof(selectorState),sizeof(properState)))];
-char stateMem[1000];//TODO arreglar
+constexpr int max(int a,int b){
+  return a>b?a:b;
+}
+char stateMem[max(max(sizeof(sf::Sprite),sizeof(selectorState)),sizeof(properState))];
 
 void arranqueInit(char*);
 
@@ -25,6 +23,7 @@ int main()
   image.adddir("sprites/");
   font.loadFromFile("sprites/VL-PGothic-Regular.ttf");
 
+  //properInit(stateMem,0,1,1);
   arranqueInit(stateMem);
 
   float fpsLock=1./60.; //maximos fps TODO en test de velocidad que sea 0

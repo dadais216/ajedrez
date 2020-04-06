@@ -45,12 +45,12 @@
 Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
   Holder* h=alloc<Holder>(hb);
 
-  h->bando=bando;
+  h->bando=bando==1;
   h->piece=p;
   h->tile=pos;
   h->inPlay=true;
   
-  alloc(hb,&h->movs,size(p->movs)+(p->spawner||p->kamikase?1:0));
+  alloc(hb,&h->movs,count(p->movs)+(p->spawner||p->kamikase?1:0));
 
   alloc(hb,&h->memPiece,p->memPieceSize);
   memset(h->memPiece.beg,0,p->memPieceSize*sizeof(int));
@@ -79,6 +79,8 @@ Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
     crearMovHolder(pb.raiz,base,&hb->head);
   }
 
+  //printf("real %d == declared %d\n",hb->head-(char*)h,p->hsSize);
+  assert(hb->head-(char*)h==p->hsSize);
   return h;
 }
 

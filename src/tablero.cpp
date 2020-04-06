@@ -3,22 +3,9 @@
 
 void makeBoard(properState* p){
   parseData* pd=&p->pd;
-  board* brd=(board*)p->gameState;
-  initBucket(p->gameState,pd->dims.x*pd->dims.y*sizeof(Tile)
-          + pd->memGlobalSize*sizeof(memData)
-          + pd->memTileSize*sizeof(memData));//despues de esto se meten los holders por ahora
+  board* brd=new(p->gameState.data)board;
   brd->dims=pd->dims;
-
-  memset(brd->tiles,0,sizeof(Tile)*pd->dims.x*pd->dims.y);
-  for(int i=0; i<brd->dims.x*brd->dims.y; i++){
-    Tile* tile=&brd->tiles[i];
-    tile->pos=v(i%brd->dims.x,i/brd->dims.x);
-    int id=pd->boardInit[i];
-    if(id!=0){
-      int sind=getCodedPieceIndexById(&pd->ids,id);
-      tile->holder=initHolder(&p->pieces[std::abs(sind)-1],sign(sind),tile,p->gameState);
-    }
-  }
+  actualHolder.brd=brd;
 
   escala=16*(1/(float)(brd->dims.x>brd->dims.y?brd->dims.x:brd->dims.y));
   brd->b.setTexture(image.get("tiles.png"));
@@ -28,19 +15,47 @@ void makeBoard(properState* p){
   brd->b.setTextureRect(IntRect(0,0,32,32));
   brd->n.setTextureRect(IntRect(32,0,32,32));
 
+#if debugMode
+  posPiece.setSize(Vector2f(32*escala,32*escala));
+  posActGood.setSize(Vector2f(32*escala,32*escala));
+  posActBad.setSize(Vector2f(32*escala,32*escala));
+#endif
+  for(Piece* piece:p->pieces){
+    piece->spriteb.setScale(escala,escala);
+    piece->spriten.setScale(escala,escala);
+  }
+  for(RectangleShape* rs:colores){
+    rs->setSize(sf::Vector2f(32*escala,32*escala));
+  }
+
   init(&brd->ts);
-
   brd->memTileSlots=pd->memTileSize;;
-
   brd->memGlobals=(memData*)(brd->tiles+brd->dims.x*brd->dims.y);
   memset(brd->memGlobals,0,pd->memGlobalSize*sizeof(memData));
   brd->memTiles=brd->memGlobals+pd->memGlobalSize*sizeof(memData);
   memset(brd->memTiles,0,brd->memTileSlots*brd->dims.x*brd->dims.y*sizeof(memData));
 
+  p->gameState.head+=sizeof(board)
+    + pd->dims.x*pd->dims.y*sizeof(Tile)
+    + pd->memGlobalSize*sizeof(memData)
+    + pd->memTileSize*sizeof(memData);
+
+  memset(brd->tiles,0,sizeof(Tile)*pd->dims.x*pd->dims.y);
+  for(int i=0; i<brd->dims.x*brd->dims.y; i++){
+    Tile* tile=&brd->tiles[i];
+    tile->pos=v(i%brd->dims.x,i/brd->dims.x);
+    int id=pd->boardInit[i];
+    if(id!=0){
+      int sind=getCodedPieceIndexById(&pd->ids,id);
+      tile->holder=initHolder(p->pieces[std::abs(sind)-1],sign(sind),tile,&p->gameState);
+    }
+  }
+
   //TODO cuando haga el codigo general tendría que generar primero un bando, correr el codigo, despues el otro
   for(int i=0;i<brd->dims.x*brd->dims.y;i++){
     Holder* hAct=brd->tiles[i].holder;
-    generar(hAct);
+    if(hAct)
+      generar(hAct);
   }
 }
 
@@ -146,7 +161,7 @@ void freeTriggerBox(triggerSpace* ts,int ind){
 
 void pushTrigger(int* used,int* pushTo){
   triggerSpace* ts=&actualHolder.brd->ts;
-  Tile* tile=actualHolder.tile;
+  Tile* tile=actualHolder.h->tile;//la tile donde esta parada la pieza, no donde pasa el movimiento
   normalHolder* n=actualHolder.nh;
 
   int ind=*used;
@@ -200,13 +215,13 @@ void chargeTriggers(int* used,int* source){
 
   //clear
   tb=*source;
+  int triggerBoxToClear=(*used+triggersPerBox-1)/triggersPerBox;
+  for(;triggerBoxToClear;triggerBoxToClear--){
+    int ctb=tb;
+    tb=ts->mem[tb].next;
+    freeTriggerBox(ts,ctb);
+  }
   *used=0;
-  do{
-    int temp=ts->mem[tb].next;
-    freeTriggerBox(ts,tb);
-    tb=temp;
-  }while(tb);
-  //tile->triggerBox->next=nullptr;
 }
 
 int contador=0;

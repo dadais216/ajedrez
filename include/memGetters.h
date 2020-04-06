@@ -3,7 +3,6 @@
 
 typedef int*(*getter)(void);
 
-struct normalHolder;
 
 vector<int> memMov;
 vector<int> memGlobal;
@@ -29,6 +28,5 @@ int* posXRead();
 int* posYRead();
 
 
-Text textValMem;
 
 #endif // MEMGETTERS_H

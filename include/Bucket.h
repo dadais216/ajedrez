@@ -260,6 +260,8 @@ void privateGrow(vector<T>* vec,int cap){
 
 template<typename T>
 void push(vector<T>* vec,T obj){
+  assert(vec->size<=vec->cap);
+  assert(vec->cap>0);
   if(vec->size==vec->cap){
     privateGrow(vec,vec->cap*2);//TODO probar 1,5
   }
