@@ -1,10 +1,7 @@
 
-
 :1 0 #peon
-w vacio mov color 255 0 0;
-s vacio mov color 0 255 0;
-a vacio mov color 0 0 255;
-d vacio mov color 200 150 60;
+>Y=s|d|a|ww;
+Y Y Y Y Y Y Y color 255 0 0;
 
 :2 1 #torre
 desliz w mover c end w captura

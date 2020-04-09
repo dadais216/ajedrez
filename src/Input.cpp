@@ -1,11 +1,11 @@
 
-Input::Input(RenderWindow* window)
-    :window(window),clickCont(true) {}
+Input::Input()
+    :clickCont(true) {}
 
 void Input::check()
 {
-    if(!window->hasFocus()) return;
-    Vector2i vec=Mouse::getPosition(*window);
+    if(!window.hasFocus()) return;
+    Vector2i vec=Mouse::getPosition(window);
     ve.x= vec.x;
     ve.y= vec.y;
     clicked=Mouse::isButtonPressed(Mouse::Left);

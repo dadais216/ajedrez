@@ -2,8 +2,7 @@
 #define INPUT_H
 struct Input
 {
-    RenderWindow* window;
-    Input(RenderWindow*);
+    Input();
     void check();
     v get();
     v pixel();

@@ -135,8 +135,6 @@ typedef intptr_t intptr;
 
 #include "Bucket.h"
 
-#include "Input.h"
-#include "Input.cpp"
 
 #include "movHolders.h"
 #include "Pieza.h"
@@ -144,11 +142,13 @@ typedef intptr_t intptr;
 #include "memGetters.h"
 #include "lector.h"
 
+#include "Input.h"
 #include "proper.h"
 #include "selector.h"
 
 
 #include "main.cpp"
+#include "Input.cpp"
 #include "arranque.cpp"
 #include "selector.cpp"
 

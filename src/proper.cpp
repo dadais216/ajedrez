@@ -167,7 +167,9 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   backgroundMemDebug.setSize(Vector2f(20,40));
   textValMem.setColor(Color::Black);
   textValMem.setFont(font);
+  textValMem.setPosition(570,10);
 #endif
+
 
   init(&ps->pieces);
   initParser(&ps->pd);
@@ -204,9 +206,8 @@ void properGameInit(properState* ps){
   }
 
   ps->hsSize+=sizeof(board)
-           + ps->pd.dims.x*ps->pd.dims.y*sizeof(Tile)
-           + ps->pd.memGlobalSize*sizeof(memData)
-           + ps->pd.memTileSize*sizeof(memData);
+            + ps->pd.dims.x*ps->pd.dims.y*(sizeof(Tile)+ps->pd.memTileSlots*sizeof(memData))
+            + ps->pd.memGlobalSize*sizeof(memData);
   initBucket(&ps->gameState,ps->hsSize);
   makeBoard(ps);
 
@@ -233,7 +234,6 @@ void properDraw(char* mem){
   else
     window.draw(ps->turnoNegro);
 
-  textValMem.setPosition(570,10);
   textValMem.setString(std::to_string(ps->turno));
   window.draw(textValMem);
 #if debugMode

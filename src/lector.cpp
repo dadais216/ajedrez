@@ -70,12 +70,20 @@ void initParser(parseData* pd){
   pd->wordToToken[">"]=tmmore;
   pd->wordToToken["!="]=tmdist;
 
+#if debugMode
+  pd->tokenToWord[tmovEnd]=stringForHash(";");
+  pd->tokenToWord[tmacroSeparator]=stringForHash("|");
+  pd->tokenToWord[tW]=stringForHash("w");
+  pd->tokenToWord[tA]=stringForHash("a");
+  pd->tokenToWord[tS]=stringForHash("s");
+  pd->tokenToWord[tD]=stringForHash("d");
+#endif
   pd->lastGlobalMacro=tlast;
   pd->lastTangledGroup=0;
   init(&pd->memLocalSize,4);
   pd->memPieceSize=0;
   pd->memGlobalSize=0;
-  pd->memTileSize=0;
+  pd->memTileSlots=0;
 
   init(&pd->boardInit);
   init(&pd->ids);
@@ -84,7 +92,7 @@ void initParser(parseData* pd){
 
 char const* tokenToWord(parseData* pd,int tok){
   if(tok>1024)
-    return "number";
+    return std::to_string(tok-2048).c_str();
   return pd->tokenToWord[tok].word;
 }
 
@@ -142,7 +150,7 @@ void getBoardIds(parseData* pd,int n){
   int i=0;
   while((c=*(s++))){
     if(c=='"'){
-      if(i++==n){
+      if(i++/2==n){// /2 por las 2 comillas
         while((*s++)!='\n');
         goto foundBoard;
       }
@@ -208,9 +216,10 @@ void makePieces(parseData* pd,vector<Piece*>* pieces,bucket* b){
     makePiece(pd,id,sn,&tokens,pieces,b);
     //guardar piece en algun lado
     for(int i=pd->lastGlobalMacro;i<pd->lastLocalMacro;i++){
-      pd->wordToToken.erase(pd->tokenToWord[i]);//supongo que se borra asi ni idea
+      pd->wordToToken.erase(pd->tokenToWord[i]);
     }
     pd->lastLocalMacro=pd->lastGlobalMacro;
+    pd->macros.size=pd->lastGlobalMacro-tlast;
     tokens.size=0;
   }
 }
@@ -284,7 +293,7 @@ bool wordIsGetter(char* b,char* e){
 
 void tokenWord(parseData* pd,vector<int>* tokens,char* b,char* e){
   stringForHash sh(b,e);
-  printf("%s ",sh.word);
+  //printf("%s ",sh.word);
   if(pd->wordToToken.find(sh)!=pd->wordToToken.end()){
     push(tokens,pd->wordToToken[sh]);
     return;
@@ -338,6 +347,15 @@ void tokenCentinel(vector<int>* tokens,char** sp){
   }
   push(tokens,tok);
 }
+void debugPrintTokens(parseData* pd,vector<int>* tokens){
+#if debugMode
+  printf("\n\n");
+  for(int i=0;i<tokens->size;i++){
+    printf("%s ",tokenToWord(pd,at(tokens,i)));
+  }
+  printf("\n\n");
+#endif
+}
 
 void generateTokens(parseData* pd,vector<int>* tokens,char* s){
   char* b=nullptr;
@@ -355,7 +373,6 @@ void generateTokens(parseData* pd,vector<int>* tokens,char* s){
         tokenCentinel(tokens,&s);
       }
       else if(*s=='>'&& (tokens->size==0||tokens->data[tokens->size-1]==tmovEnd)){
-        s++;
         loadMacro<false>(pd,&s);
         continue;
       }
@@ -366,6 +383,7 @@ void generateTokens(parseData* pd,vector<int>* tokens,char* s){
     }
     s++;
   }
+  debugPrintTokens(pd,tokens);
 }
 
 /*
@@ -391,19 +409,21 @@ void generateTokensForMacros(parseData* pd,vector<macro>* macros,char** sp){
     failIf(*s==':',"macro missing ;");
     if(whiteSpace(*s)||centinel(*s)||*s=='|'||*s=='&'){
       if(b!=nullptr){
-        tokenWord(pd,&macros->data[i].expansion,b,s);
+        tokenWord(pd,&at(macros,i).expansion,b,s);
         b=nullptr;
       }
       if(*s==';'){
-        failIf(i!=macros->size,"mismatching quantity of tangled expansions and tangled macros");
+        failIf(i+1!=macros->size,"mismatching quantity of tangled expansions and tangled macros");
+        s++;
         break;
       }else if(*s=='|'){
         moreThanOneExpansion=true;
-        failIf(i!=macros->size,"mismatching quantity of tangled expansions and tangled macros");
+        failIf(i+1!=macros->size,"mismatching quantity of tangled expansions and tangled macros");
+        push(&at(macros,i).expansion,(int)tmacroSeparator);
       }else if(*s=='&'){
         i++;
       }else if(centinel(*s)){
-        tokenCentinel(&macros->data[i].expansion,&s);
+        tokenCentinel(&at(macros,i).expansion,&s);
       }
     }else{
       if(b==nullptr){
@@ -417,6 +437,7 @@ void generateTokensForMacros(parseData* pd,vector<macro>* macros,char** sp){
       m.moreThanOneExpansion=true;
     }
   }
+  debugPrintTokens(pd,&macros->data[0].expansion);
   *sp=s;
 }
 
@@ -467,7 +488,7 @@ void loadMacro(parseData* pd,char** sp){
     if(wordIsMov(b,e)||wordIsNum(b,e)||wordIsGetter(b,e)){
       fail("invalid macro name %s",b);
     }
-    
+
     macro m;
     init(&m);
     push(&macros,m);
@@ -477,19 +498,17 @@ void loadMacro(parseData* pd,char** sp){
 
   int group=tangled?pd->lastTangledGroup++:0;
   for(int i=0;i<macros.size;i++){
+    int tok=global?pd->lastGlobalMacro++:pd->lastLocalMacro++;
     macros[i].tangledGroup=group;
-    if(global){
-      push(&pd->macros,macros[i]);
-      pd->wordToToken[names[i]]=pd->lastGlobalMacro;//lo agrego ahora para que no se lo reconozca durante la carga de tokens
+    push(&pd->macros,macros[i]);
+    pd->wordToToken[names[i]]=tok;//lo agrego ahora para que no se lo reconozca durante la carga de tokens
     //porque no hay macros recursivos
-      pd->tokenToWord[pd->lastGlobalMacro]=names[i];//puede que tenga que hacer un memcpy no se
-      pd->lastGlobalMacro++;
-    }else{
-      push(&pd->macros,macros[i]);
-      pd->wordToToken[names[i]]=pd->lastLocalMacro;
-      pd->tokenToWord[pd->lastLocalMacro]=names[i];
-      pd->lastLocalMacro++;
+
+    if(pd->tokenToWord.cap<=tok){//por ahi debería hacer un vector no push para estos casos
+      reserve(&pd->tokenToWord,tok*2);
     }
+    pd->tokenToWord.size=tok+1;
+    pd->tokenToWord[tok]=names[i];//puede que tenga que hacer un memcpy no se
   }
 
   *sp=s;
@@ -497,7 +516,7 @@ void loadMacro(parseData* pd,char** sp){
 
 void loadGlobalMacros(parseData* pd,char* s){
   while(true){
-    if(*s==':') return;
+    if(*s==':') break;
     if(*s=='#'){
       do{s++;}while(*s!='\n');
       s++;
@@ -508,6 +527,7 @@ void loadGlobalMacros(parseData* pd,char* s){
     else
       fail("piece code outside piece"); //por ahi permitir msize g y t,aunque estos podrían estar en el codigo every turn tambien
   }
+  pd->lastLocalMacro=pd->lastGlobalMacro;
 }
 
 /*podría probar expandir los macros que contienen macros antes, pero como algunos tienen varias expansiones
@@ -558,9 +578,6 @@ igual no creo que lo valga, es algo bastante raro. Y no es que no se puede hacer
 
 macro getMacro(parseData* pd,int token){
   int ind=token-tlast;
-  if(ind>pd->lastGlobalMacro){
-    ind-=pd->lastGlobalMacro;
-  }
   return pd->macros[ind];
 }
 
@@ -590,15 +607,20 @@ void expandMacros(parseData* pd,vector<int>* into,vector<int>* from,int* movStar
       }
     }else{
       if(tok==tmovEnd){ //solo relevante en movimiento, no en macro
+        //printf("expand  f: ");
+        //debugPrintTokens(pd,from);
+        //printf("expand  i: ");
+        //debugPrintTokens(pd,into);
         if(*movType==1){
           expandVersions(pd,from,into,*movStart,into->size,*expansionTypeData);
+          *movType=0;
           continue;
         }else if(*movType==2){
           expandTangledVersions(pd,from,into,*movStart,into->size,*expansionTypeData);
+          *movType=0;
           continue;
         }
         *movStart=into->size;
-        *movType=0;
       }
       assert(tok!=tmacroSeparator);
       push(into,tok);
@@ -623,11 +645,13 @@ void expandVersions(parseData* pd,vector<int>* from,vector<int>* into,int movSta
     for(int i=movStart;i<movEnd;i++){
       int tok=into->data[i];
 
-      if(i==firstMultiMacro){
+      if(i==firstMultiMacro){//TODO deberia haber un for antes y despues en vez de un for cortado por un if
         assert(isMacro(tok));
         macro m=getMacro(pd,tok);
         assert(m.moreThanOneExpansion);
         assert(m.tangledGroup==0);
+        //printf("macro ");
+        //debugPrintTokens(pd,&m.expansion);
         for(;;j++){
           if(j==m.expansion.size){
             lastLap=true;
@@ -635,6 +659,7 @@ void expandVersions(parseData* pd,vector<int>* from,vector<int>* into,int movSta
           }
           tok=m.expansion[j];
           if(tok==tmacroSeparator){
+            j++;
             break;
           }
           push(from,tok);
@@ -642,9 +667,13 @@ void expandVersions(parseData* pd,vector<int>* from,vector<int>* into,int movSta
       }else
         push(from,tok);
     }
-    push(from,movEnd);
+    push(from,(int)tmovEnd);
+    //printf("expandVersions  f: ");
+    //debugPrintTokens(pd,from);
+    //printf("expandVersions  i: ");
+    //debugPrintTokens(pd,into);
   }while(!lastLap);
-  into->size=movStart+1;
+  into->size=movStart;
 }
 /*
   macros ligados son distintos que los multiples comunes, incluso si es una sola variable ligada
@@ -705,7 +734,7 @@ void expandTangledVersions(parseData* pd,vector<int>* from,vector<int>* into,int
     for(int k=0;k<iterations.size;k++)
       iterations[k].beg=iterations[k].end;
   }while(true);
-  into->size=movStart+1;
+  into->size=movStart;
 }
 /*from puede crecer considerablemente si hay muchos macros multiples. Como no es necesario volver a mirar los tokens que ya
  se leyeron, se podrían ir borrando para ahorrar memoria. El ind se debería mantener, tendría que hacer una estructura parecida
@@ -715,7 +744,7 @@ void growMemory(parseData* pd,int gType,int val){
   switch(gType){
   case tmlocal: pd->memLocalSize[pd->movQ-1] = std::max(pd->memLocalSize[pd->movQ-1],val);break;
   case tmpiece: pd->memPieceSize = std::max(pd->memPieceSize,val);break;
-  case tmtile:  pd->memTileSize = std::max(pd->memTileSize,val);break;
+  case tmtile:  pd->memTileSlots = std::max(pd->memTileSlots,val);break;
   case tmglobal:pd->memGlobalSize = std::max(pd->memGlobalSize,val);break;
   default: fail("bad getter");
   }
@@ -876,14 +905,12 @@ void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
     failIf(pop(&p)!=tmovEnd,"missing ;");
   }
   assert(p.ind==tokens->size);
-  piece->memPieceSize=pd->memPieceSize;
+  piece->spawner=p.spawner;
+  piece->kamikase=p.kamikase;
   piece->hsSize+=sizeof(Holder)
     +pd->memPieceSize*sizeof(int)
     +(pd->movQ+(piece->spawner||piece->kamikase?1:0))*sizeof(movHolder*)
     +pd->movQ*sizeof(Base);
-
-  piece->spawner=p.spawner;
-  piece->kamikase=p.kamikase;
   piece->ind=pieces->size;
   push(pieces,piece);
 }

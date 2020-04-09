@@ -4,7 +4,7 @@
 RenderWindow window(VideoMode(640,512),"ajedres");
 Manager<Texture> image;
 Font font;
-Input input(&window);
+Input input;
 void (*actualStateUpdate)(char*);
 
 constexpr int max(int a,int b){
@@ -23,8 +23,8 @@ int main()
   image.adddir("sprites/");
   font.loadFromFile("sprites/VL-PGothic-Regular.ttf");
 
-  //properInit(stateMem,0,1,1);
-  arranqueInit(stateMem);
+  properInit(stateMem,6,1,4);
+  //arranqueInit(stateMem);
 
   float fpsLock=1./60.; //maximos fps TODO en test de velocidad que sea 0
   Clock clock;//@check investigar bien esto, por ahi deberia usar el mismo

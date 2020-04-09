@@ -2,6 +2,7 @@
 
 
 void makeBoard(properState* p){
+
   parseData* pd=&p->pd;
   board* brd=new(p->gameState.data)board;
   brd->dims=pd->dims;
@@ -29,16 +30,16 @@ void makeBoard(properState* p){
   }
 
   init(&brd->ts);
-  brd->memTileSlots=pd->memTileSize;;
+  brd->memGlobalSize=pd->memGlobalSize;
+  brd->memTileSlots=pd->memTileSlots;
   brd->memGlobals=(memData*)(brd->tiles+brd->dims.x*brd->dims.y);
   memset(brd->memGlobals,0,pd->memGlobalSize*sizeof(memData));
   brd->memTiles=brd->memGlobals+pd->memGlobalSize*sizeof(memData);
-  memset(brd->memTiles,0,brd->memTileSlots*brd->dims.x*brd->dims.y*sizeof(memData));
+  memset(brd->memTiles,0,pd->memTileSlots*brd->dims.x*brd->dims.y*sizeof(memData));
 
   p->gameState.head+=sizeof(board)
-    + pd->dims.x*pd->dims.y*sizeof(Tile)
-    + pd->memGlobalSize*sizeof(memData)
-    + pd->memTileSize*sizeof(memData);
+    + pd->dims.x*pd->dims.y*(sizeof(Tile)+pd->memTileSlots*sizeof(memData))
+    + pd->memGlobalSize*sizeof(memData);
 
   memset(brd->tiles,0,sizeof(Tile)*pd->dims.x*pd->dims.y);
   for(int i=0; i<brd->dims.x*brd->dims.y; i++){
@@ -51,12 +52,14 @@ void makeBoard(properState* p){
     }
   }
 
+  assert(p->gameState.head==p->gameState.data+p->hsSize);
   //TODO cuando haga el codigo general tendría que generar primero un bando, correr el codigo, despues el otro
   for(int i=0;i<brd->dims.x*brd->dims.y;i++){
     Holder* hAct=brd->tiles[i].holder;
     if(hAct)
       generar(hAct);
   }
+  assert(p->gameState.head==p->gameState.data+p->hsSize);
 }
 
 Tile* tile(board* brd,v pos){
@@ -138,7 +141,7 @@ int newTriggerBox(triggerSpace* ts){
     int sizeBefore=ts->size;
     ts->size*=2;//por ahi convendría crecer una cantidad fija para que no haya mucha dispersion, no sé
     triggerBox* newMem=new triggerBox[ts->size];
-    memcpy(newMem,ts->mem,sizeBefore);
+    memcpy(newMem,ts->mem,sizeBefore*sizeof(triggerBox));
     delete ts->mem;
     ts->mem=newMem;
     for(int i=sizeBefore;i<ts->size;i++){

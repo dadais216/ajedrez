@@ -73,11 +73,15 @@ Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
   }
 
   for(pBase& pb:p->movs){
+    char* headB=hb->head;
     //TODO lo de que root arranque en null y lo setee el primer movimiento se me hace raro, por que no lo marco desde aca?
     allocInitNC(hb,Base,base,{h,nullptr,pb.memLocalSize});
     *h->movs[i++]=(movHolder*)hb->head;
     crearMovHolder(pb.raiz,base,&hb->head);
   }
+
+  //para cantidades grandes de movimientos el real mide 72 menos que el declarado, el tamaño de una normalHolder
+  //este bucle itera la cantidad de veces correcta, si fuera que faltara una vez la diferencia seria normalHolder+base
 
   //printf("real %d == declared %d\n",hb->head-(char*)h,p->hsSize);
   assert(hb->head-(char*)h==p->hsSize);
@@ -97,6 +101,8 @@ void crearMovHolder(operador* op,Base* base,char** place){
     initIsolH((isol*)op,base,place); break;
   case DESOPT:
     initDesoptH((desopt*)op,base,place); break;
+  default:
+    assert(false);
   }
   if(op->sig){
     thisMov->sig=(movHolder*)*place;

@@ -65,7 +65,7 @@ struct parseData{
 
   vector<int> memLocalSize;
   int memPieceSize;
-  int memTileSize;
+  int memTileSlots;
   int memGlobalSize;
 };
 

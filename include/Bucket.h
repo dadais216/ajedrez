@@ -10,34 +10,35 @@ struct bucket{
   int size;
   char* firstBlock;
 };
-int bucketSize=100000000;
+int bucketSize=1<<20;
 
+void allocNewBucketBlock(bucket* b){
+  b->data=new char[b->size+sizeof(char*)];
 
-void allocNewBucket(bucket* b){
-  b->data=new char[b->size];
+  char** next=(char**)b->data;//TODO puede que ponerlo al principio cause problemas de alineamiento?
+  *next=nullptr;
 
-  char** insertNull=(char**)b->data;
-  *insertNull=nullptr;//se podria hacer un nuevo struct con next y despues espacio pero terminaba siendo mas feo el codigo
+  b->head=b->data=b->data+sizeof(char*);
 
-  b->head=b->data+=sizeof(char*);
+#if debugMode
+  memset(b->data,-1,b->size);
+#endif
 }
 
 void initBucket(bucket* b,int size=bucketSize){
   b->size=size;
-  allocNewBucket(b);
+  allocNewBucketBlock(b);
   b->firstBlock=b->data;
 }
 
 void ensureSpace(bucket* b,size_t size){
+  assert(size<b->size);
   if(b->head+size>b->data+b->size){
-    char* nextBlock=(char*)*b->data;
-    if(nextBlock==nullptr){
-      char** before=(char**)b->data;
-      allocNewBucket(b);
-      *before=b->data;
-    }else{
-      b->head=b->data=nextBlock;
-    }
+    printf("ajoi\n");
+    char** nextBlock=(char**)(b->data-sizeof(char*));
+    assert(*nextBlock==nullptr);
+    allocNewBucketBlock(b);
+    *nextBlock=b->data;
   }
 }
 
@@ -280,6 +281,12 @@ void reserve(vector<T>* vec,int res){
   if(res>vec->cap){
     privateGrow(vec,res);
   }
+}
+
+template<typename T>
+T& at(vector<T>* vec,int ind){//retorna referencia para que se pueda tomar direccion
+  assert(ind>=0&&ind<vec->size);
+  return vec->data[ind];
 }
 
 template<typename T>

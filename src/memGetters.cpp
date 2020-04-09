@@ -136,7 +136,7 @@ memData* getTileMd(int ind,board* b){
 
 int* tileRead(){
   intptr ind=(intptr)getNextInBuffer();
-  debugDrawMem(ind,actualHolder.brd->memTileSize,200);
+  debugDrawMem(ind,actualHolder.brd->memTileSlots,200);
 
   memData* md=getTileMd(ind,actualHolder.brd);
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);

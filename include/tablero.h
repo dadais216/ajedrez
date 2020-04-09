@@ -73,11 +73,10 @@ struct board{
   Sprite b,n;
   v dims;
   triggerSpace ts;
-  memData* memGlobals;//alocado despues de tiles
-  memData* memTiles;
   int memGlobalSize;
   int memTileSlots;
-  int memTileSize;
+  memData* memGlobals;//alocado despues de tiles
+  memData* memTiles;
   Tile tiles[0];
 };
 
