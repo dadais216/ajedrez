@@ -1,7 +1,10 @@
 
 :1 0 #peon
->Y=s|d|a|ww;
-Y Y Y Y Y Y Y color 255 0 0;
+#>Y&C&C2=w&0&255|a&100&200|s&200&100|d&255&0;
+#Y color C 0 C2;
+>A=w|a|s|d;
+>B&C=w&a|s&d;
+B A C vacio mov color 255 0 0;
 
 :2 1 #torre
 desliz w mover c end w captura

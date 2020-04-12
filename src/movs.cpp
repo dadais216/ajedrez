@@ -20,7 +20,7 @@ colort* crearColor(int r,int g,int b){
         if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b)
             return new color(c);
     RectangleShape* rs=new RectangleShape();
-    rs->setFillColor(sf::Color(r,g,b,2));
+    rs->setFillColor(sf::Color(r,g,b,40));
     push(&colores,rs);
     return new color(rs);
 }

@@ -62,8 +62,8 @@ void humanTurn(bool bando,board* brd){
         Holder* act=tile(brd,input.get())->holder;
         if(act&&act->bando==bando){
           makeCli(act);
-          drawScreen(properDraw);
         }
+        drawScreen(properDraw);
       }
     }
 }

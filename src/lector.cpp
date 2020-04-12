@@ -419,7 +419,10 @@ void generateTokensForMacros(parseData* pd,vector<macro>* macros,char** sp){
       }else if(*s=='|'){
         moreThanOneExpansion=true;
         failIf(i+1!=macros->size,"mismatching quantity of tangled expansions and tangled macros");
-        push(&at(macros,i).expansion,(int)tmacroSeparator);
+        for(int j=0;j<=i;j++){
+          push(&at(macros,j).expansion,(int)tmacroSeparator);
+        }
+        i=0;
       }else if(*s=='&'){
         i++;
       }else if(centinel(*s)){
@@ -454,22 +457,31 @@ void loadMacro(parseData* pd,char** sp){
   vector<stringForHash> names;init(&names);
   vector<macro> macros;init(&macros);defer(&macros);
 
+ loop:
   s++;
-  do{
-    while(*s==' ') s++;
-    char* b=s;
-    while(*s!=' '&&*s!='&'&&*s!='=') s++;
+  while(*s==' ') s++;
+  char* b=s;
+  while(*s!=' '&&*s!='&'&&*s!='=') s++;
 
-    char newWord[255]={};
-    memcpy(newWord,b,s-b);
-    push(&names,stringForHash(newWord));
+  char newWord[255]={};
+  memcpy(newWord,b,s-b);
+  push(&names,stringForHash(newWord));
 
-    while(*s==' ') s++;
-    if(*s=='&'){
+  while(*s==' ') s++;
+  if(*s=='&'){
+    if(!tangled){//puede haber un ampersand suelto si es la primera variable
       tangled=true;
-      s++;
+      char* k=s+1;
+      while(*k==' ') k++;
+      if(*k!='='){
+        goto loop;
+      }
+      s=k;
+    }else{
+      goto loop;
     }
-  }while(*s!='=');
+  }
+  failIf(*s!='=',"macro definition must be > name = , with maybe multiple names linked with &");
   s++;
 
   for(int i=0;i<names.size;i++){
@@ -496,7 +508,7 @@ void loadMacro(parseData* pd,char** sp){
   generateTokensForMacros(pd,&macros,&s);
 
 
-  int group=tangled?pd->lastTangledGroup++:0;
+  int group=tangled?++pd->lastTangledGroup:0;
   for(int i=0;i<macros.size;i++){
     int tok=global?pd->lastGlobalMacro++:pd->lastLocalMacro++;
     macros[i].tangledGroup=group;
@@ -596,10 +608,10 @@ void expandMacros(parseData* pd,vector<int>* into,vector<int>* from,int* movStar
         char macroType=m.tangledGroup==0?1:2;
         if(*movType==0){
           *movType=macroType;
-          *expansionTypeData=into->size;
+          *expansionTypeData=macroType==1?into->size:m.tangledGroup;
         }else if(*movType==2&&macroType==1){//expandir no ligados toma prioridad
           *movType=1;
-          *expansionTypeData=m.tangledGroup;
+          *expansionTypeData=into->size;
         }
         push(into, tok);
       }else{
@@ -639,6 +651,7 @@ se expande el primero y si se encuentra otro que este ligado tambien. Se necesit
 de a donde se freno en los otros
 */
 void expandVersions(parseData* pd,vector<int>* from,vector<int>* into,int movStart,int movEnd,int firstMultiMacro){
+  printf("nononono");
   int j=0;
   bool lastLap=false;
   do{
@@ -718,7 +731,7 @@ void expandTangledVersions(parseData* pd,vector<int>* from,vector<int>* into,int
             }
             tok=m.expansion[j];
             if(tok==tmacroSeparator){
-              it->end=j;
+              it->end=j+1;
               break;
             }
             push(from,tok);
@@ -803,7 +816,7 @@ void processTokens(parseData* pd,vector<int>* tokens){
   //cantidad de movimientos y tamaños de memoria local.
   for(int i=0;i<tokensExpanded.size;i++){
     int tok=tokensExpanded[i];
-    switch(tok){//TODO limpiar tambien separadores y click repetidos
+    switch(tok){//TODO limpiar tambien click repetidos
     case tmovEnd:
       if(finalTokens->size==0||
          finalTokens->data[finalTokens->size-1]==tmovEnd)
@@ -1029,7 +1042,11 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
       break;
       //spwn n con n positivo quiere decir mismo bando, negativo bando enemigo
     case tcolor:
-      push(&colorsTemp,crearColor(getNum(),getNum(),getNum()));
+      {
+        int r=getNum();
+        int g=getNum();
+      push(&colorsTemp,crearColor(r,g,getNum()));
+      }
       break;
       //       colorr(sprt);
       //       colorr(numShow);
