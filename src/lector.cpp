@@ -73,17 +73,26 @@ void initParser(parseData* pd){
 #if debugMode
   pd->tokenToWord[tmovEnd]=stringForHash(";");
   pd->tokenToWord[tmacroSeparator]=stringForHash("|");
+  pd->tokenToWord[tseparator]=stringForHash("or");
   pd->tokenToWord[tW]=stringForHash("w");
   pd->tokenToWord[tA]=stringForHash("a");
   pd->tokenToWord[tS]=stringForHash("s");
   pd->tokenToWord[tD]=stringForHash("d");
+  pd->tokenToWord[tclick]=stringForHash("c");
+  pd->tokenToWord[tmlocal]=stringForHash("l");
+  pd->tokenToWord[tmpiece]=stringForHash("p");
+  pd->tokenToWord[tmglobal]=stringForHash("g");
+  pd->tokenToWord[tmtile]=stringForHash("t");
 #endif
   pd->lastGlobalMacro=tlast;
   pd->lastTangledGroup=0;
   init(&pd->memLocalSize,4);
+  pd->memLocalSizeMax=0;
   pd->memPieceSize=0;
   pd->memGlobalSize=0;
   pd->memTileSlots=0;
+
+  pd->spawner=false;
 
   init(&pd->boardInit);
   init(&pd->ids);
@@ -222,6 +231,8 @@ void makePieces(parseData* pd,vector<Piece*>* pieces,bucket* b){
     pd->macros.size=pd->lastGlobalMacro-tlast;
     tokens.size=0;
   }
+  init(&memMov,pd->memLocalSizeMax);
+  memMov.size=pd->memLocalSizeMax;
 }
 
 bool whiteSpace(char c){
@@ -651,7 +662,6 @@ se expande el primero y si se encuentra otro que este ligado tambien. Se necesit
 de a donde se freno en los otros
 */
 void expandVersions(parseData* pd,vector<int>* from,vector<int>* into,int movStart,int movEnd,int firstMultiMacro){
-  printf("nononono");
   int j=0;
   bool lastLap=false;
   do{
@@ -754,8 +764,10 @@ void expandTangledVersions(parseData* pd,vector<int>* from,vector<int>* into,int
 al vector que haga estas cosas al momento de expandir*/
 
 void growMemory(parseData* pd,int gType,int val){
+  val++;//0 counted
   switch(gType){
-  case tmlocal: pd->memLocalSize[pd->movQ-1] = std::max(pd->memLocalSize[pd->movQ-1],val);break;
+  case tmlocal: pd->memLocalSize[pd->movQ-1] = std::max(pd->memLocalSize[pd->movQ-1],val);
+                pd->memLocalSizeMax=std::max(pd->memLocalSizeMax,val); break;
   case tmpiece: pd->memPieceSize = std::max(pd->memPieceSize,val);break;
   case tmtile:  pd->memTileSlots = std::max(pd->memTileSlots,val);break;
   case tmglobal:pd->memGlobalSize = std::max(pd->memGlobalSize,val);break;
@@ -904,13 +916,12 @@ void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
   alloc(operatorBucket,&piece->movs,pd->movQ);
 
   piece->hsSize=0;
-  parseMovData p{operatorBucket,pd,*tokens,0,0,0,false,false,false};
+  parseMovData p{operatorBucket,pd,*tokens,0,0,0,false};
   for(int i=0;i<pd->movQ;i++){
     p.movSize=0;
     p.memLocalSize=pd->memLocalSize[i];
     p.clickExplicit=false;
 
-    reserve(&memMov,pd->memLocalSize[i]);
     piece->movs[i]->memLocalSize=pd->memLocalSize[i];
     piece->movs[i]->raiz=parseOp(&p);
     piece->movs[i]->size=p.movSize;
@@ -918,12 +929,12 @@ void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
     failIf(pop(&p)!=tmovEnd,"missing ;");
   }
   assert(p.ind==tokens->size);
-  piece->spawner=p.spawner;
-  piece->kamikase=p.kamikase;
+  piece->spawner=pd->spawner;
+  //piece->kamikase=p.kamikase;
   piece->hsSize+=sizeof(Holder)
     +pd->memPieceSize*sizeof(int)
-    +(pd->movQ+(piece->spawner||piece->kamikase?1:0))*sizeof(movHolder*)
-    +pd->movQ*sizeof(Base);
+    +pd->movQ*(sizeof(movHolder*)+sizeof(Base))
+    +(pd->spawner?(sizeof(movHolder*)+sizeof(Base)+sizeof(spawnerGen)):0);
   piece->ind=pieces->size;
   push(pieces,piece);
 }
@@ -954,7 +965,7 @@ void gatherCte(vector<T>* vec,int tok){
   switch(tok){
   case tposX: push(vec,(T)posXRead);break;
   case tposY: push(vec,(T)posYRead);break;
-  default:   push(vec,(T)(tok-2048));break;
+  default:    push(vec,(T)(tok-2048));break;
   }
 }
 
@@ -980,7 +991,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                       allocCopy(p->b,&n->colors,colorsTemp.size,colorsTemp.data);
                     };
 
-  p->movSize+=sizeof(normalHolder)+p->memLocalSize*sizeof(int);
+  p->movSize+=sizeof(normalHolder)+p->memLocalSize*sizeof(int);//+ mov de spawner
   n->tipo=NORMAL;
   n->bools&=~(hasClick|makeClick|doEsp);
   n->relPos=v(0,0);
@@ -1028,15 +1039,15 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
       acc(pausa);
     case tcapt:
       push(&accsTemp,capt);
-      if(n->relPos==v(0,0))
-        p->kamikase=true;
+      //if(n->relPos==v(0,0))
+      //  p->kamikase=true;
       break;
     case tspwn:
       {
-        int id=getNum();
+        intptr id=getNum();
         push(&accsTemp,spwn);
-        push(&accsTemp,(void(*)(void))(id));
-        p->spawner=true;
+        push(&accsTemp,(actionBuffer)(id));
+        p->pd->spawner=true;
         addIdIfMissing(p->pd,id);
       }
       break;
@@ -1045,7 +1056,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
       {
         int r=getNum();
         int g=getNum();
-      push(&colorsTemp,crearColor(r,g,getNum()));
+        push(&colorsTemp,crearColor(r,g,getNum()));
       }
       break;
       //       colorr(sprt);
@@ -1074,7 +1085,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
         if(write&&isCte(tok)){
           fail("write on constant");
         }
-        bool action=write&&(tok==tmglobal||tmtile);
+        bool action=write&&(tok==tmglobal||tok==tmtile);
         if(action){
           int i=0;
           int nextTok=peek(p);
@@ -1095,6 +1106,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
           for(;i<2;i++){
             tok=pop(p);
             if(i==1&&isCte(tok)){
+              push(&accsTemp,(actionBuffer)cteRead);
               gatherCte(&accsTemp,tok);
               break;
             }
@@ -1124,9 +1136,18 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
             }
           }
         }else{
-          push(&condsTemp,(conditionBuffer)op);
+          conditionBuffer cond;
+          switch(op){
+          case tmset: cond=msetC;break;
+          case tmadd: cond=maddC;break;
+          case tmdist:cond=mdist;break;
+          case tmcmp: cond=mcmp;break;
+          default: fail("bad condition");
+          }
+          push(&condsTemp,cond);
           for(int i=0;i<2;i++){
             if(isCte(tok)){
+              push(&condsTemp,(conditionBuffer)cteRead);
               gatherCte(&condsTemp,tok);
               continue;
             }
@@ -1142,6 +1163,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                 }
                 tok=pop(p);
                 gatherCte(&condsTemp,tok);
+                tok=pop(p);
                 break;
               }else{
                 switch(tok){
@@ -1193,7 +1215,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
     default:
       p->ind--;
       setupBarrays();
-      n->sig=parseOp(p);
+      n->sig=parseOp(p,true);
       return n;
       }
     }
@@ -1263,7 +1285,7 @@ exc* parseExc(parseMovData* p){
     operador* op=parseOp(p);
     push(&opsTemp,op);
     finalTok=pop(p);
-  }while(finalTok!=tseparator);
+  }while(finalTok==tseparator);
   failIf(finalTok!=tend,"exc with no end");
 
   allocCopy(p->b,&e->ops,opsTemp.size,opsTemp.data);
@@ -1298,9 +1320,13 @@ isol* parseIsol(parseMovData* p){
   i->bools&=~makeClick;
 
   int movSizeBefore=p->movSize;
+
   i->inside=parseOp(p);
+  failIf(pop(p)!=tend,"isol with no end");
+
   p->movSize+=sizeof(isolHolder);
   i->size=p->movSize-movSizeBefore;
+
 
   if(!p->clickExplicit)
     i->bools|=makeClick;
@@ -1321,8 +1347,8 @@ desopt* parseDesopt(parseMovData* p){
   }
 
   int movSizeBefore=p->movSize;
-  vector<operador*> opsTemp;defer(&opsTemp);
-  vector<int> sizesTemp;defer2(&sizesTemp);
+  vector<operador*> opsTemp;init(&opsTemp);defer(&opsTemp);
+  vector<int> sizesTemp;init(&sizesTemp);defer2(&sizesTemp);
   int branches=0;
   do{
     int movSizeBefore=p->movSize;
@@ -1338,10 +1364,10 @@ desopt* parseDesopt(parseMovData* p){
   for(int i=0;i<sizesTemp.size;i++)
     sizesTemp[i]+=sizeof(desoptHolder::node*);
 
-  p->movSize+=branches*sizeof(desoptHolder::node*);
 
   allocCopy(p->b,&d->movSizes,branches,sizesTemp.data);
 
+  p->movSize+=branches*sizeof(desoptHolder::node*);
   d->clusterSize=p->movSize-movSizeBefore;
   d->dinamClusterBaseOffset=d->clusterSize+d->clusterSize*branches;
 

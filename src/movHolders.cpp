@@ -1,4 +1,9 @@
 
+//TODO no me termina de convencer tirar triggers por moverse nomas, me gustaria volver a separar la idea de esp de trigger.
+//por ejemplo desliz w isol mover end end pone un trigger en el desliz en vez de adentro del isol, y hace recalcular toda la
+//cadena al pedo. Se podría hacer un sistema mas intelgente, que tambien en caso de cosas como
+//w exc mover or captura end ponga el trigger antes del exc
+
 inline v getActualPos(v relPos,v offset){
   bool negate=actualHolder.h->bando;
   relPos.y=(relPos.y^-negate)+negate;
@@ -14,17 +19,17 @@ void initMovH(movHolder* m,operador* op,Base* base_){
   if(!base_->root)
     base_->root=m;
   m->base=base_;
-  m->bools|=op->bools;//setea makeClick, hasClick y doEsp en normalh
+  m->bools=op->bools;//setea makeClick, hasClick y doEsp en normalh
 }
 
 void generarSig(movHolder* m){
   //se llama cuando valor == true
   if(m->sig){
     m->sig->table->generar(m->sig);
-    if(m->bools&hasClick||m->sig->bools&valorCadena)//puede que haya una forma de no usar el if?
+    if(m->bools&hasClick)
       m->bools|=valorCadena;
     else
-      m->bools&=~valorCadena;
+      m->bools|=m->sig->bools&valorCadena;
     m->bools|=m->sig->bools&valorFinal;
   }else
     m->bools|=valorFinal|valorCadena;
@@ -42,16 +47,17 @@ void reaccionarSig(movHolder*m,auto nhs){
   if(m->sig){
     reaccionarOverload(m->sig,nhs);
     if(switchToGen){
-      if(m->bools&hasClick||m->sig->bools&valorCadena)
+      if(m->bools&hasClick)
         m->bools|=valorCadena;
       else
-        m->bools&=~valorCadena;
+        m->bools|=m->sig->bools&valorCadena;
       m->bools|=m->sig->bools&valorFinal;
     }
   }
 }
 
 inline void generarProperNormalH(normalHolder* n){
+  n->bools&=~(valorFinal|valorCadena|valor);
   int i=0;
   actualHolder.buffer=(void(**)(void))n->op->conds.beg;
   actualHolder.bufferPos=&i;
@@ -59,7 +65,6 @@ inline void generarProperNormalH(normalHolder* n){
       c+i != n->op->conds.after;
       i++)
     if(!(*(c+i))()){
-      n->bools&=~(valorFinal|valorCadena|valor);
       return;
     }
   offset=n->pos;
@@ -96,6 +101,8 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
   normalHolder* self=(normalHolder*) m;
 
   if(nh==self){
+    actualHolder.nh=nh;
+
     memcpy(memMov.data,self->memAct.beg,self->base->memLocalSize*sizeof(int));
     switchToGen=true;
 
@@ -180,10 +187,10 @@ void drawNormalH(normalHolder* n){
 void initNormalH(normal* org,Base* base_,char** head)
 {
   fromCast(n,*head,normalHolder*);
-  *head+=sizeof(normalHolder);
-
   initMovH(n,org,base_);
   n->table=&normalTable;
+  
+  *head+=sizeof(normalHolder);
 
   n->op=org;
   /*for(auto trigInfo:n->op->setUpMemTriggersPerNormalHolder)
@@ -235,8 +242,8 @@ void generarDeslizH(movHolder* m){
   generarSig(d);
 }
 inline void reaccionarNhDesliz(deslizHolder* d,normalHolder* nh){
-  assert((char*)nh>(char*)d);
-  intptr_t diff=(char*)nh-(char*)d;
+  assert((char*)nh>=(char*)d->movs.beg);
+  intptr diff=(char*)nh-(char*)d->movs.beg;
   int iter=diff/d->op->iterSize;
   for(int i=0;i<iter;++i){
     if(!(((movHolder*)d->movs[i])->bools&valorFinal)){
@@ -245,7 +252,11 @@ inline void reaccionarNhDesliz(deslizHolder* d,normalHolder* nh){
   }
   movHolder* act=(movHolder*)d->movs[iter];
   act->table->reaccionar(act,nh);
-  assert(switchToGen);
+  //assert(switchToGen); TODO no es valido porque los isols pueden apagarlo. Si hago un lngjmp en isol si se podria volver a meter
+  /*if(!switchToGen) return;//por isols nomas. Si hago lo del lngjmp no es necesario
+    para que funcione correctamente debería ser return solo en la version simple, en la version vector
+    debería llamarse a si misma, sacando el nh mas bajo. Por ahora no lo hago porque es una optimizacion
+  */
   for(;act->bools&valorFinal;){
     iter++;
     maybeAddIteration(d,iter);
@@ -295,17 +306,16 @@ void cargarDeslizH(movHolder* m,vector<normalHolder*>* norms){
 //solo de desliz sin mucho problema, como cambiar la pos de retorno o breaks.
 void initDeslizH(desliz* org,Base* base_,char** head){
   fromCast(d,*head,deslizHolder*);
-  *head+=sizeof(deslizHolder);
 
   initMovH(d,org,base_);
   d->table=&deslizTable;
 
+  *head+=sizeof(deslizHolder);
   d->op=org;
   d->movs.beg=*head;
   d->movs.after=(char*)d->movs.beg+org->insideSize;
   d->movs.elemSize=org->iterSize;
 
-  *head+=sizeof(deslizHolder);
   crearMovHolder(org->inside,base_,head);//crear primera iteracion
   *head=(char*)d->movs.after;
   d->cantElems=1;
@@ -410,11 +420,10 @@ void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
 virtualTableMov excTable={generarExcH,reaccionarExcH,reaccionarExcH,cargarExcH};
 void initExcH(exc* org,Base* base_,char** head){
   fromCast(e,*head,excHolder*);
-  *head+=sizeof(excHolder);
-
   initMovH(e,org,base_);
   e->table=&excTable;
 
+  *head+=sizeof(excHolder);
   e->ops.beg=(movHolder**)*head;
   e->ops.after=(movHolder**)(*head+size(org->ops));
   *head=(char*)e->ops.after;
@@ -470,10 +479,11 @@ void reaccionarIsolH(movHolder* m,vector<normalHolder*>* nhs){
 }
 void cargarIsolH(movHolder*m,vector<normalHolder*>* norms){
   fromCast(s,m,isolHolder*);
-  vector<normalHolder*> normExt=*norms; ///@optim agregar y cortar en lugar de copiar. O copiar aca y no en clicker devuelta
-  s->inside->table->cargar(s->inside,&normExt);
-  if(s->bools&makeClick&&!normExt.size==0)//evitar generar clickers sin normales
+  int sizeBefore=norms->size;
+  s->inside->table->cargar(s->inside,norms);
+  if(s->bools&makeClick&&!norms->size==0)//evitar generar clickers sin normales
     push(&clickers,makeClicker(norms,s->base->h));
+  norms->size=sizeBefore;
   if(s->sig)
     s->sig->table->cargar(s->sig,norms);
 }
@@ -481,8 +491,6 @@ void cargarIsolH(movHolder*m,vector<normalHolder*>* norms){
  virtualTableMov isolTable={generarIsolH,reaccionarIsolH,reaccionarIsolH,cargarIsolH};
 void initIsolH(isol* org,Base* base_,char** head){
   fromCast(s,*head,isolHolder*);
-  *head+=sizeof(isolHolder);
-
   initMovH(s,org,base_);
   s->table=&isolTable;
 
@@ -499,7 +507,6 @@ void initIsolH(isol* org,Base* base_,char** head){
 
 void construirYGenerarNodo(desoptHolder*,int);
 
-vector<int> memGenStack;//copia de memoria actual para reestablecer en el cambio de rama en generaciones. Es un stack de arrays aplanado
 void generarDesoptH(movHolder* m){
   //se tiene la base y primera iteracion construidos, rondas mas alla de estas usan el resto de memoria
   //de forma dinamica. Es un punto intermedio entre tener todo construido y reservar mucha memoria que probablemente
@@ -690,8 +697,6 @@ void cargarDesoptH(movHolder*m,vector<normalHolder*>* norms){
                               reaccionarDesoptH,cargarDesoptH};
 void initDesoptH(desopt* org,Base* base_,char** head){
   fromCast(d,*head,desoptHolder*);
-  *head+=sizeof(desoptHolder);
-
   initMovH(d,org,base_);
   d->table=&desoptTable;
 
@@ -726,7 +731,7 @@ void generarNewlySpawned(movHolder* m){
   if(justSpawned.size==0)
     return;
 
-  vector<Holder*> justSpawnedC;//evitar bucles infinitos
+  vector<Holder*> justSpawnedC;//evitar bucles infinitos si spawneo un spawner
   justSpawnedC.data=justSpawned.data;
   justSpawnedC.size=justSpawned.size;
   justSpawned.size=0;
@@ -742,9 +747,10 @@ void cargarNothing(movHolder*m,vector<normalHolder*>* nh){
 }
 
  virtualTableMov spawnerTable={generarNewlySpawned,nullptr,nullptr,cargarNothing};
-void initSpawner(spawnerGen* s,Holder* h,bool kamikaseNext){
+void initSpawner(spawnerGen* s,Holder* h,Base* b,bool kamikaseNext){
   s->table=&spawnerTable;
   s->h=h;
+  s->base=b;
   s->kamikaseNext=kamikaseNext;
 }
 

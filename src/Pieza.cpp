@@ -41,39 +41,39 @@
 
 
 
-//por el momento sigo usando buckets. Aunque se el tamaño de antes, voy llenandola progresivamente para poder reutilizar el codigo con piezas que aparezcan por spawn, y usen el otro bucket.
 Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
-  Holder* h=alloc<Holder>(hb);
+  ensureSpace(hb,p->hsSize);
+  Holder* h=allocNC<Holder>(hb);
 
   h->bando=bando==1;
   h->piece=p;
   h->tile=pos;
   h->inPlay=true;
   
-  alloc(hb,&h->movs,count(p->movs)+(p->spawner||p->kamikase?1:0));
+  allocNC(hb,&h->movs,count(p->movs)+(p->spawner/*||p->kamikase*/?1:0));
 
-  alloc(hb,&h->memPiece,p->memPieceSize);
+  allocNC(hb,&h->memPiece,p->memPieceSize);
   memset(h->memPiece.beg,0,p->memPieceSize*sizeof(int));
 
   int i=0;
-  if(p->spawner||p->kamikase){
-    //allocInitNC(hb,Base,base,{h,nullptr,0}); estos no ponen triggers, no necesitan acceder a una base
+  if(p->spawner/*||p->kamikase*/){
+    allocInitNC(hb,Base,base,{h,nullptr,0}); //para algunas cosas especificas que necesitan tratar a todos los movholders por igual, no se usa directamente
+    //puntualmente creo que es solo el memset que limpia la memoria local
     if(p->spawner){
       spawnerGen* sp =alloc<spawnerGen>(hb);
-      initSpawner(sp,h,h->piece->kamikase);
+      initSpawner(sp,h,base,false/*h->piece->kamikase*/);
       *h->movs[0]=(movHolder*)sp;
       //b->size=sizeof(spawnerGen);
-    }else{
+    }/*else{
       kamikaseCntrl* kc=alloc<kamikaseCntrl>(hb);
       initKamikase(kc,h);
       *h->movs[0]=(movHolder*)kc;
       //b->size=sizeof(kamikaseCntrl);
-    }
+      }*/
     i=1;
   }
 
   for(pBase& pb:p->movs){
-    char* headB=hb->head;
     //TODO lo de que root arranque en null y lo setee el primer movimiento se me hace raro, por que no lo marco desde aca?
     allocInitNC(hb,Base,base,{h,nullptr,pb.memLocalSize});
     *h->movs[i++]=(movHolder*)hb->head;
@@ -83,8 +83,7 @@ Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
   //para cantidades grandes de movimientos el real mide 72 menos que el declarado, el tamaño de una normalHolder
   //este bucle itera la cantidad de veces correcta, si fuera que faltara una vez la diferencia seria normalHolder+base
 
-  //printf("real %d == declared %d\n",hb->head-(char*)h,p->hsSize);
-  assert(hb->head-(char*)h==p->hsSize);
+  assertf(hb->head-(char*)h==p->hsSize,"real %d == declared %d\n",hb->head-(char*)h,p->hsSize);
   return h;
 }
 

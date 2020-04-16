@@ -168,9 +168,11 @@ int* tileReadNTi(){
 
 //cteRead == (int)(*)()getNextInBuffer
 
+//en vez de usar esto podría tener un if que vea si hay un numero o un puntero a funcion en el buffer,
+//pero esto es lo mismo y es mas limpio, no tengo claro cual sería mas rapido
 int* cteRead(){
-  int* cte=(int*)&actualHolder.buffer[*actualHolder.bufferPos];//cast void** to int* 
   (*actualHolder.bufferPos)++;
+  int* cte=(int*)&actualHolder.buffer[*actualHolder.bufferPos];//cast void** to int* 
 #if debugMode
   //debería haber un if para no mostar durante accion supongo
   //TODO si hago esto evito duplicar algunas cosas de pieza y local

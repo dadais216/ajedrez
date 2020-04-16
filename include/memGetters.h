@@ -26,7 +26,7 @@ int* localgi();
 int* piecegi();
 int* posXRead();
 int* posYRead();
-
+int* cteRead();
 
 
 #endif // MEMGETTERS_H

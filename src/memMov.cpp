@@ -44,13 +44,14 @@ bool mless(){
   get g=getGetter2();
   CONDRET(*g.a<*g.b);
 }
-bool mmoreCond(){
+bool mmore(){
   get g=getGetter2();
-  CONDRET(g.a>g.b);
+  CONDRET(*g.a>*g.b);
 }
-bool mdistCond(){
+bool mdist(){
   get g=getGetter2();
-  CONDRET(g.a!=g.b);
+  printf("%d =? %d\n",*g.a,*g.b);
+  CONDRET(*g.a!=*g.b);
 }
 
 

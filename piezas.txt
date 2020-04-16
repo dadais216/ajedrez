@@ -1,44 +1,47 @@
+>green=color 0 255 0;
+>red=color 255 0 0;
+>blue=color 0 0 255;
+>mover=vacio mov green;
+>captura=piece capt red;
+
+>W&=w|a|s|d;
+>WA&=wa|wd|sa|sd;
+>WASD&=W|WA;
 
 :1 0 #peon
-#>Y&C&C2=w&0&255|a&100&200|s&200&100|d&255&0;
-#Y color C 0 C2;
->A=w|a|s|d;
->B&C=w&a|s&d;
-B A C vacio mov color 255 0 0;
+#>A=a|d;
+#>B=w|s;
+#>R1&R2=A&B|B&A;
+#desliz R1 isol desliz R2 mover c end end end;
+#desliz a isol desliz w mover c end end end;
+desliz 5 madd l0 1 mdist l0 5 W mover end;
+
+
 
 :2 1 #torre
-desliz w mover c end w captura
-desliz a mover c end a captura
-desliz d mover c end d captura
-desliz s mover c end s captura
-#{w,a,s,d} mover
+desliz W mover c end W captura
 
 :3 2 #caballo
-{{ww,ss}{a,d},{aa,dd}{w,s}} exc mover or captura end
-
+>A=ww|ss;
+>A2=a|d;
+>B=aa|dd;
+>B2=w|s;
+>C=A A2|B B2;
+C exc mover or captura end;
+#{{ww,ss}{a,d},{aa,dd}{w,s}} exc mover or captura end
 
 :4 3 #alfil
-desliz wa mover c end wa captura
-desliz as mover c end as captura
-desliz dw mover c end dw captura
-desliz sd mover c end sd captura
+desliz WA mover c end WA captura;
 
 :5 4 #reina
-desliz w mover c end w captura
-desliz a mover c end a captura
-desliz d mover c end d captura
-desliz s mover c end s captura
-desliz wa mover c end wa captura
-desliz as mover c end as captura
-desliz dw mover c end dw captura
-desliz sd mover c end sd captura
+desliz WASD mover c end WASD captura;
 
 :6 5 #rey
-{w,wa,a,as,s,sd,d,dw} exc mover or captura end
+WASD exc mover or captura end;
 
 :7 5 #emperador
-desliz w end desliz a end \
-desliz isol desliz isol mover c end d end end s end
+desliz w end desliz a end
+desliz isol desliz isol mover c end d end end s end;
 
 :8 0 #test caballos
 #{{ww,ss}{a,d},{aa,dd}{w,s}} mover

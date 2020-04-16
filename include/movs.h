@@ -92,6 +92,12 @@ bool enemigo();
 bool aliado();
 bool pass();
 bool piece();
+bool msetC();
+bool maddC();
+bool mcmp();
+bool mdist();
+bool mmore();
+bool mless();
 
 colort* crearColor(int,int,int);
 

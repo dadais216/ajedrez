@@ -1,5 +1,8 @@
 
 
+board* getBoard(properState* ps){
+  return (board*)ps->gameState.firstBlock->data;
+}
 
 int dt=0;
 int clickI=0;
@@ -39,7 +42,7 @@ void humanTurn(bool bando,board* brd){
       input.check();
 #if debugMode
       if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-        //static_cast<Proper*>(j->actual)->init();///@leaks
+        properGameInit((properState*)stateMem);
         while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
         throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
       }
@@ -79,7 +82,7 @@ int cProm=0;
 double minV=10000;
 double maxV=0;
 void randomTurn(bool bando,properState* ps){
-  board* brd=(board*)ps->gameState.data;
+  board* brd=getBoard(ps);
   if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
     properGameInit(ps);
     while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
@@ -118,7 +121,7 @@ void randomTurn(bool bando,properState* ps){
     cProm++;
     if(cProm==100){
       std::cout<<"normalSize  "<<sizeof(normalHolder)
-               <<"\nbucketMovSize  "<<ps->gameState.head - ps->gameState.data - (intptr)(((board*)ps->gameState.data)->tiles)
+               <<"\nbucketMovSize  "<<ps->gameState.head - ps->gameState.data - (intptr)(getBoard(ps))->tiles
                <<"\nbucketOpSize  "<<ps->pieceOps.head-ps->pieceOps.data
                <<"\npromedio: "<<std::fixed<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos"
                <<"\nmin: "<<minV/CLOCKS_PER_SEC
@@ -183,6 +186,8 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   init(&clickers);
   init(&pisados);
   init(&trigsActivados);
+  init(&reciclaje);
+  init(&justSpawned);
 
   actualStateUpdate=properUpdate;
   properGameInit(ps);
@@ -190,6 +195,31 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
 
 
 void properGameInit(properState* ps){
+#if debugMode
+  //cosas para resetear
+
+  if(ps->pieces.size>0){//chequeo trucho para ver si es la primera corrida
+    clearBucket(&ps->gameState);
+  }
+
+  ps->pieces.size=0;
+
+  colores.size=0;
+
+  clearBucket(&ps->pieceOps);
+
+  normales.size=0;
+  clickers.size=0;
+  pisados.size=0;
+  trigsActivados.size=0;
+  reciclaje.size=0;
+  justSpawned.size=0;
+
+  for(int i=tlast;i<ps->pd.lastLocalMacro;i++){
+    ps->pd.wordToToken.erase(ps->pd.tokenToWord[i]);
+  }
+  ps->pd.lastLocalMacro=ps->pd.lastGlobalMacro=tlast;
+#endif
   ps->clickers.size=0;
   ps->turno=1;
 
@@ -204,7 +234,7 @@ void properGameInit(properState* ps){
       ps->hsSize+=ps->pieces[getIndexById(&ps->pd.ids,id)]->hsSize;
     }
   }
-
+  
   ps->hsSize+=sizeof(board)
             + ps->pd.dims.x*ps->pd.dims.y*(sizeof(Tile)+ps->pd.memTileSlots*sizeof(memData))
             + ps->pd.memGlobalSize*sizeof(memData);
@@ -218,12 +248,13 @@ void properGameInit(properState* ps){
     }
     cout<<endl;
     }*/
+
   drawScreen(properDraw);
 }
 
 void properDraw(char* mem){
   properState* ps=(properState*)mem;
-  board* brd=(board*)ps->gameState.data;
+  board* brd=getBoard(ps);
   drawTiles(brd);
   if(Clicker::drawClickers)
     for(Clicker& cli:clickers)
@@ -290,7 +321,7 @@ void properDraw(char* mem){
 
 void doTurn(properState* ps,int player,bool bando){
   switch(player){
-  case 1: humanTurn(bando,(board*)ps->gameState.data);break;
+  case 1: humanTurn(bando,getBoard(ps));break;
   case 2: randomTurn(bando,ps);srand(time(NULL));break;
   case 4: skipTurn();
   }

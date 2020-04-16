@@ -62,6 +62,7 @@ struct deferObj{
 #include <utility>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 template<typename... Ts>
 void fail(char const* err,Ts... args){
@@ -75,6 +76,16 @@ void failIf(bool cond,char const* err,Ts... args){
   if(cond){
     fail(err,args...);
   }
+}
+
+template<typename... Ts>
+void assertf(bool cond,char const* err,Ts... args){
+#if debugMode
+  if(!cond){
+    printf(err,args...);
+    assert(cond);
+  }
+#endif
 }
 
 //creo que es mas inteligente cargar todo el archivo y listo
@@ -102,7 +113,6 @@ char* loadFile(char const* fileName){
 #include <list>
 #include <map>
 #include <iostream>
-#include <assert.h>
 #include <string>
 #include <sstream>
 #include <random>
@@ -125,6 +135,7 @@ struct movHolder;
 struct Tile;
 struct board;
 struct properState;
+struct Clicker;
 
 typedef intptr_t intptr;
 

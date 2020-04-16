@@ -62,8 +62,10 @@ struct parseData{
   int lastTangledGroup;
 
   int movQ;
+  bool spawner;
 
   vector<int> memLocalSize;
+  int memLocalSizeMax;
   int memPieceSize;
   int memTileSlots;
   int memGlobalSize;
@@ -77,8 +79,6 @@ struct parseMovData{
   int movSize;
   int memLocalSize;
   bool clickExplicit;
-  bool kamikase;
-  bool spawner;
 };
 
 
@@ -140,7 +140,7 @@ esto solo pasa cuando se crear las piezas la primera vez.
 */
 
 #define actionBuffer void(*)(void)
-#define conditionBuffer bool(*)(void)
+typedef  bool(*conditionBuffer)(void);
 
 int getCodedPieceIndexById(vector<int>*,int);
 void generateTokens(parseData*,vector<int>*,char*);

@@ -84,7 +84,7 @@ struct excHolder:public movHolder{
     ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
     ///no estoy seguro de si seria mas rapido
   int size;//no debería estar en el op?
-    int actualBranch;
+  int actualBranch;
 };
 void initExcH(exc*,Base*,char**);
 
@@ -107,13 +107,14 @@ struct desoptHolder:public movHolder{
 };
 void initDesoptH(desopt*,Base*,char**);
 
-//comparten la tabla con los movHolders
+//comparten la tabla y base con los movHolders
 struct spawnerGen{
   virtualTableMov* table;
+  Base* base;
   Holder* h;
   bool kamikaseNext;
 };
-void initSpawner(spawnerGen*,Holder*,bool);
+void initSpawner(spawnerGen*,Holder*,Base*,bool);
 struct kamikaseCntrl{
   virtualTableMov* table;
   Holder* h;

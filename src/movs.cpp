@@ -91,7 +91,6 @@ struct spwn:public acm{
 };
 */
 
-
 void mov(){
     actualHolder.h->tile->step++;
     actualHolder.h->tile->holder=nullptr;
@@ -123,7 +122,8 @@ void capt(){
 void* getNextInBuffer(){
   //buffer es el buffer de punteros de funcion actual (sean acct o conds)
   //bufferPos es un puntero al iterador. Puede que necesite marcar el iterador como volatil?
-    return (void*)actualHolder.buffer[(*actualHolder.bufferPos)++];
+  (*actualHolder.bufferPos)++;
+  return (void*)actualHolder.buffer[*actualHolder.bufferPos];
 }
 
 
@@ -131,24 +131,29 @@ void spwn(){
   //antes cada acct era un objeto polimorfico en vez de una funcion, por lo que algunos podrian tener datos propios. Como ahora tengo un nivel de indireccion menos no puedo hacer eso, osea lo podría hacer pero tendría algo igual que lo anterior y podría probar otra cosa.
   //lo que voy a hacer es poner la informacion que necesiten los acc/cond en el mismo buffer en el que estan, despues de si, indicando al que recorre el buffer que los ignore. Lo malo de esto es que por ahi entorpece la iteracion, aunque seguro es mejor que tener un nivel de indireccion mal. Lo otro malo es que cada dato tiene que caber en el tamaño de un puntero de funcion
 
-  int codedId=*(int*)getNextInBuffer();
+  int codedId=(intptr)getNextInBuffer();
   int ind=abs(codedId)-1;
+  printf("spawn %d %d\n",codedId,ind);
   bool bando=codedId>0?actualHolder.h->bando:!actualHolder.h->bando;
 
+  Holder* h;
+  //TODO puede que sea buena idea mover todo este procesado a generarNewlySpawned
   for(int i=0;i<reciclaje.size;i++){
-    Holder* h=reciclaje[i];
-    if(h->piece->ind==ind){//reciclo piezas enemigas tambien
-      h->inPlay=true;
-      h->bando=bando;
-      memset(h->memPiece.beg,0,sizeof(int)*size(h->memPiece));
-      actualHolder.tile->holder=h;
-      h->tile=actualHolder.tile;
+    Holder* r=reciclaje[i];
+    if(r->piece->ind==ind){//reciclo piezas enemigas tambien
+      r->inPlay=true;
+      r->bando=bando;
+      memset(r->memPiece.beg,0,sizeof(int)*size(r->memPiece));
       unorderedErase(&reciclaje,i);
+      h=r;
       goto end;
     }
   }
-  initHolder(actualHolder.ps->pieces[ind],bando,actualHolder.tile,&actualHolder.ps->gameState);
+  h=initHolder(actualHolder.ps->pieces[ind],bando,actualHolder.tile,&actualHolder.ps->gameState);
  end:
+  actualHolder.tile->holder=h;
+  h->tile=actualHolder.tile;
+
   push(&justSpawned,actualHolder.tile->holder);
   push(&pisados,actualHolder.tile);
 }

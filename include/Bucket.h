@@ -2,24 +2,26 @@
 #define BUCKET_H
 
 
-
-//estructura de control. Hay una sola al inicio de la cadena de bloques, tiene la información del ultimo bloque para hacer las alocaciones. De necesitar mas de un bloque hay un puntero al siguiente al inicio de cada bloque. 
+//estructura de control. Hay una sola al inicio de la cadena de bloques, tiene la información del ultimo bloque para hacer las alocaciones. De necesitar mas de un bloque hay un puntero al siguiente al inicio de cada bloque.
 struct bucket{
+  struct block{
+    block* next;
+    char data[0];
+  };
   char* data;
   char* head;
   int size;
-  char* firstBlock;
+  block* firstBlock;
+  block* actualBlock(){
+    return (block*)(data-sizeof(block));
+  }
 };
 int bucketSize=1<<20;
 
 void allocNewBucketBlock(bucket* b){
-  b->data=new char[b->size+sizeof(char*)];
-
-  char** next=(char**)b->data;//TODO puede que ponerlo al principio cause problemas de alineamiento?
-  *next=nullptr;
-
-  b->head=b->data=b->data+sizeof(char*);
-
+  bucket::block* block=(bucket::block*)::operator new(b->size+sizeof(bucket::block));
+  block->next=nullptr;
+  b->head=b->data=block->data;
 #if debugMode
   memset(b->data,-1,b->size);
 #endif
@@ -28,17 +30,17 @@ void allocNewBucketBlock(bucket* b){
 void initBucket(bucket* b,int size=bucketSize){
   b->size=size;
   allocNewBucketBlock(b);
-  b->firstBlock=b->data;
+  b->firstBlock=b->actualBlock();
 }
 
-void ensureSpace(bucket* b,size_t size){
+void ensureSpace(bucket* b,int size){
   assert(size<b->size);
   if(b->head+size>b->data+b->size){
     printf("ajoi\n");
-    char** nextBlock=(char**)(b->data-sizeof(char*));
-    assert(*nextBlock==nullptr);
+    bucket::block* nextBlock=b->actualBlock();
+    assert(nextBlock->next==nullptr);
     allocNewBucketBlock(b);
-    *nextBlock=b->data;
+    nextBlock->next=b->actualBlock();
   }
 }
 
@@ -76,24 +78,17 @@ template<typename T> T* alloc(bucket* b){
    b->head+=sizeof(TIPO);
 */
 
-
-
-
-
-
-
-
-void resetBucket(bucket* b){
-  b->head=b->data=b->firstBlock;
-}
 void clearBucket(bucket* b){
-  for(char* data=b->firstBlock;
-      data;
-     ){
-    char* before=data;
-    data=(char*)*data;
-    delete[] before;
-  }
+  bucket::block* block=b->firstBlock;
+  b->head=b->data=b->firstBlock->data;
+
+  if(block->next==nullptr) return;
+  block=block->next;
+  do{
+    bucket::block* temp=block;
+    block=block->next;
+    delete temp;
+  }while(block);
 }
 
 #define getStruct(type,name,from)               \
@@ -116,11 +111,14 @@ template<typename T> int count(barray<T> ba){
 template<typename T> int size(barray<T> ba){
   return (char*)ba.after-(char*)ba.beg;
 }
-template<typename T> void alloc(bucket* b,barray<T>* ba,int elems){
-  ensureSpace(b,elems*sizeof(T));
+template<typename T> void allocNC(bucket* b,barray<T>* ba,int elems){
   ba->beg=(T*)b->head;
   b->head+=sizeof(T)*elems;
   ba->after=(T*)b->head;
+}
+template<typename T> void alloc(bucket* b,barray<T>* ba,int elems){
+  ensureSpace(b,elems*sizeof(T));
+  allocNC(b,ba,elems);
 }
 template<typename T,typename Y> void copy(barray<T> ba,Y* data){
   memcpy(ba.beg,data,size(ba));
