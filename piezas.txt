@@ -9,13 +9,10 @@
 >WASD&=W|WA;
 
 :1 0 #peon
-#>A=a|d;
-#>B=w|s;
-#>R1&R2=A&B|B&A;
-#desliz R1 isol desliz R2 mover c end end end;
-#desliz a isol desliz w mover c end end end;
-desliz 5 madd l0 1 mdist l0 5 W mover end;
-
+#mcmp t0 0 mset t0 1 W mover;
+#mcmp t0 1 WA mover;
+#msize g 10 mless g0 10 madd l0 g0 madd l0 1 mset g0 l0 mset gg0 l0;
+msize l 10 desliz mless l0 10 madd l0 1 mset ll0 l0 end;
 
 
 :2 1 #torre

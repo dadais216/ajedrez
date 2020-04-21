@@ -30,6 +30,10 @@ struct properState{
   int hsSize;
 
   int turno;
+
+#if debugMode
+  bool debugFirstRun;
+#endif
 };
 
 

@@ -88,6 +88,8 @@ void assertf(bool cond,char const* err,Ts... args){
 #endif
 }
 
+#define defaultAssert break; default: assert(false&&"bad switching\n");
+
 //creo que es mas inteligente cargar todo el archivo y listo
 //al principio quería manejarme con funciones de archivo porque tenia la idea de
 //que iban a ser mas rapidas, pero supongo que cargar todo el archivo de una y
@@ -152,6 +154,7 @@ typedef intptr_t intptr;
 #include "movs.h"
 #include "memGetters.h"
 #include "lector.h"
+#include "operator.h"
 
 #include "Input.h"
 #include "proper.h"
@@ -173,6 +176,7 @@ typedef intptr_t intptr;
 #include "Clicker.cpp"
 
 #include "lector.cpp"
+#include "operator.cpp"
 
 #include "Pieza.cpp"
 

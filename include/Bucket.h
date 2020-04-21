@@ -97,8 +97,8 @@ void clearBucket(bucket* b){
 template<typename T> struct barray{
   T* beg;
   T* after;
-  T* operator[](int i){
-    return beg+i;
+  T& operator[](int i){
+    return *(beg+i);
   }
   T* begin(){return beg;}
   T* end(){return after;}
@@ -266,6 +266,11 @@ void push(vector<T>* vec,T obj){
   }
   vec->data[vec->size]=obj;
   vec->size++;
+}
+
+template<typename T,typename E>
+void push(vector<T>* vec,E enumm){
+  push(vec,(int)enumm);
 }
 
 template<typename T>

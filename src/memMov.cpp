@@ -50,7 +50,6 @@ bool mmore(){
 }
 bool mdist(){
   get g=getGetter2();
-  printf("%d =? %d\n",*g.a,*g.b);
   CONDRET(*g.a!=*g.b);
 }
 
@@ -87,7 +86,7 @@ void msetGi(){
 }
 
 void msetT(){
-  int ind=*(int*)getNextInBuffer();
+  int ind=(intptr)getNextInBuffer();
   memData* md=getTileMd(ind,actualHolder.brd);
   setCheck(md);
 }
@@ -96,4 +95,12 @@ void msetTi(){
   int ind=*g();
   memData* md=getTileMd(ind,actualHolder.brd);
   setCheck(md);
+}
+
+
+//set normal, pieza no necesita poner triggers. Igual a msetC pero sin las cosas debug
+//TODO podría tener un bool inAction para hacer un if en codigo debug
+void msetP(){
+  get g=getGetter2();
+  *g.a=*g.b;
 }

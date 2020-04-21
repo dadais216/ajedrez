@@ -193,14 +193,14 @@ Text textValMem;
 RectangleShape posPiece;
 RectangleShape posActGood;
 RectangleShape posActBad;
+RectangleShape posMem;
 RectangleShape* tileActDebug;
 
 Text textDebug;
-bool drawDebugTiles;
+bool drawDebug;
 bool ZPressed=false;
 int mil=25;
 
-bool drawMemDebug;
 
 void stall(){
   ///@cleanup como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
@@ -239,23 +239,26 @@ void debugShowAndWait(char const* name,bool val){
     textDebug.setColor(sf::Color(240,70,40,240));
   }
   posPiece.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
-  drawDebugTiles=true;
+  drawDebug=true;
   drawScreen(properDraw);
-  drawDebugTiles=false;
+  drawDebug=false;
         
   stall();
 }
 void debugShowAndWaitMem(char const* name,bool val){
   textDebug.setString(name);
-  
+
+  tileActDebug=&posPiece;
+  posPiece.setPosition(-32*escala,-32*escala);
+
   if(val)
     textDebug.setColor(sf::Color(78,84,68,100));
   else
     textDebug.setColor(sf::Color(240,70,40,240));
   
-  drawMemDebug=true;
+  drawDebug=true;
   drawScreen(properDraw);
-  drawMemDebug=false;
+  drawDebug=false;
   
   stall();
 }

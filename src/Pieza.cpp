@@ -62,7 +62,7 @@ Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
     if(p->spawner){
       spawnerGen* sp =alloc<spawnerGen>(hb);
       initSpawner(sp,h,base,false/*h->piece->kamikase*/);
-      *h->movs[0]=(movHolder*)sp;
+      h->movs[0]=(movHolder*)sp;
       //b->size=sizeof(spawnerGen);
     }/*else{
       kamikaseCntrl* kc=alloc<kamikaseCntrl>(hb);
@@ -76,7 +76,7 @@ Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
   for(pBase& pb:p->movs){
     //TODO lo de que root arranque en null y lo setee el primer movimiento se me hace raro, por que no lo marco desde aca?
     allocInitNC(hb,Base,base,{h,nullptr,pb.memLocalSize});
-    *h->movs[i++]=(movHolder*)hb->head;
+    h->movs[i++]=(movHolder*)hb->head;
     crearMovHolder(pb.raiz,base,&hb->head);
   }
 

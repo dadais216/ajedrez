@@ -5,6 +5,10 @@ bool Clicker::drawClickers;
 vector<Clicker> clickers;
 v getActualPos(v,v);
 
+#if debugMode
+bool debugInCondition=true;
+#endif
+
 Clicker makeClicker(vector<normalHolder*>* normales,Holder* h){
   Clicker clicker;
   clicker.h=h;
@@ -80,9 +84,16 @@ void executeClicker(Clicker* c,board* brd){
   int stepBef=tileBef->step;
 
   Clicker::drawClickers=false;
+
+#if debugMode
+  debugInCondition=false;
+#endif
   for(normalHolder* n:c->normales){
     accionarNormalH(n);
   }
+#if debugMode
+  debugInCondition=true;
+#endif
 
   //TODO con step en holder esto no es necesario
   ///@optim esto esta para movimientos que no mueven la pieza, que son una minoria

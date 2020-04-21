@@ -18,7 +18,7 @@ int fpsLock;
 
 int main()
 {
-  setbuf(stdout,NULL);//eso esto porque printf se lleva mal con cout. Debería dejar uno de los 2
+  setbuf(stdout,NULL);//eso esto porque printf se lleva mal con cout. Debería dejar uno de los 2 TODO podria hacer un printf sin tipos para boludear
 
   image.adddir("sprites/");
   font.loadFromFile("sprites/VL-PGothic-Regular.ttf");

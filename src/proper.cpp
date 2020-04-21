@@ -154,10 +154,10 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   ps->turnoNegro.setPosition(510,0);
 
 #if debugMode
-  auto color=sf::Color(250,240,190,150);
-  posPiece.setFillColor(color);
+  posPiece.setFillColor(sf::Color(250,240,190,150));
   posActGood.setFillColor(sf::Color(180,230,100,100));
   posActBad.setFillColor(sf::Color(240,70,40,100));
+  posMem.setFillColor(sf::Color(0,0,200,100));
   textDebug.setFont(font);
   textDebug.setPosition(520,465);
   backgroundMem.setFillColor(sf::Color(240,235,200));
@@ -171,6 +171,9 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   textValMem.setColor(Color::Black);
   textValMem.setFont(font);
   textValMem.setPosition(570,10);
+
+  ps->debugFirstRun=true;
+  init(&debugDrawChannel);
 #endif
 
 
@@ -180,7 +183,6 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   init(&colores);
 
   actualHolder.ps=ps;
-  initBucket(&ps->pieceOps);
 
   init(&normales);
   init(&clickers);
@@ -193,20 +195,39 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   properGameInit(ps);
 }
 
+void initOrDebugResetBucket(properState* ps,bucket* b,int size=bucketSize){
+#if debugMode
+  if(!ps->debugFirstRun){
+    clearBucket(b);
+    delete[] b->firstBlock;
+    initBucket(b,size);
+  }else
+#endif
+    initBucket(b,size);
+}
 
 void properGameInit(properState* ps){
 #if debugMode
   //cosas para resetear
+  parseData* pd=&ps->pd;
 
-  if(ps->pieces.size>0){//chequeo trucho para ver si es la primera corrida
-    clearBucket(&ps->gameState);
-  }
+  pd->lastGlobalMacro=tlast;
+  pd->lastTangledGroup=0;
+  init(&pd->memLocalSize,4);
+  pd->memLocalSizeMax=0;
+  pd->memPieceSize=0;
+  pd->memGlobalSize=0;
+  pd->memTileSlots=0;
+
+  pd->spawner=false;
+
+  init(&pd->boardInit);
+  init(&pd->ids);
+  init(&pd->macros);
 
   ps->pieces.size=0;
 
   colores.size=0;
-
-  clearBucket(&ps->pieceOps);
 
   normales.size=0;
   clickers.size=0;
@@ -220,6 +241,7 @@ void properGameInit(properState* ps){
   }
   ps->pd.lastLocalMacro=ps->pd.lastGlobalMacro=tlast;
 #endif
+  initOrDebugResetBucket(ps,&ps->pieceOps);
   ps->clickers.size=0;
   ps->turno=1;
 
@@ -238,7 +260,7 @@ void properGameInit(properState* ps){
   ps->hsSize+=sizeof(board)
             + ps->pd.dims.x*ps->pd.dims.y*(sizeof(Tile)+ps->pd.memTileSlots*sizeof(memData))
             + ps->pd.memGlobalSize*sizeof(memData);
-  initBucket(&ps->gameState,ps->hsSize);
+  initOrDebugResetBucket(ps,&ps->gameState,ps->hsSize);
   makeBoard(ps);
 
   /*
@@ -250,8 +272,30 @@ void properGameInit(properState* ps){
     }*/
 
   drawScreen(properDraw);
+
+#if debugMode
+  ps->debugFirstRun=false;
+#endif
 }
 
+
+int debugGet(auto* v,int i){
+  return v->operator[](i);
+}
+int debugGet(memData* v,int i){
+  return (v+i)->val;
+}
+void debugDrawMemory(int memSize, int yOffset,auto memory){
+  for(int i=0;i<memSize;i++){
+    backgroundMem.setPosition(sf::Vector2f(530+25*(i%4),yOffset+45*(i/4-memSize/4)));
+    window.draw(backgroundMem);
+  }
+  for(int i=0;i<memSize;i++){
+    textValMem.setPosition(530+25*(i%4),yOffset+5+45*(i/4-memSize/4));
+    textValMem.setString(std::to_string(debugGet(memory,i)));
+    window.draw(textValMem);
+  }
+};
 void properDraw(char* mem){
   properState* ps=(properState*)mem;
   board* brd=getBoard(ps);
@@ -266,60 +310,76 @@ void properDraw(char* mem){
     window.draw(ps->turnoNegro);
 
   textValMem.setString(std::to_string(ps->turno));
+  textValMem.setPosition(sf::Vector2f(600,20));
   window.draw(textValMem);
 #if debugMode
-  if(drawDebugTiles){
+  if(drawDebug){
     window.draw(*tileActDebug);
   
     window.draw(posPiece);
     window.draw(textDebug);
-  /*int memSize=actualHolder.nh->base->memLocalSize;
-    for(int i=0;i<memSize;i++){
-    backGroundMem.setPosition(Vector2f(530+25*(i%4),405+45*(i/4-memSize/4)));
-    window.draw(backGroundMem);
+
+    debugDrawMemory(actualHolder.nh->base->memLocalSize,405,&memMov);
+    debugDrawMemory(actualHolder.h->piece-> memPieceSize,305,&actualHolder.h->memPiece);
+    debugDrawMemory(brd->memGlobalSize,205,brd->memGlobals);
+    debugDrawMemory(brd->memTileSlots,105,getTileMd(0,brd));
+
+    bool cteInThisIteration=false;
+    for(int i=0;i<debugDrawChannel.size;i++){
+      switch(debugDrawChannel[i]){
+      case tdebugSetIndirectColor:
+        backgroundMemDebug.setFillColor(sf::Color(178,135,221,150));
+        break;
+      case tdebugUnsetIndirectColor:
+        backgroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+        break;
+      case tdebugDrawCte:
+        {
+          int val=debugDrawChannel[++i];
+          textValMem.setPosition(610,cteInThisIteration?480:455);
+          textValMem.setString(std::to_string(val));
+          window.draw(textValMem);
+          cteInThisIteration=true;
+        }
+        break;
+      case tdebugDrawPos://esta siempre antes de posX,posY y los accesos a tile
+        posMem.setPosition(sf::Vector2f(32*escala*actualHolder.nh->pos.x,32*escala*actualHolder.nh->pos.y));
+        window.draw(posMem);
+        break;
+      case tdebugDrawPosX:
+      case tdebugDrawPosY:
+        textValMem.setPosition(610,cteInThisIteration?480:455);
+        textValMem.setString(debugDrawChannel[i]==tdebugDrawPosX?"X":"Y");
+        window.draw(textValMem);
+        cteInThisIteration=true;
+        break;
+      default:
+        {
+          //se podría reescribir esto para que no dependa de memSize
+          cteInThisIteration=false;
+          int ind=debugDrawChannel[i++];
+          int memSize=debugDrawChannel[i++];
+          int drawOffset=debugDrawChannel[i];
+          backgroundMemDebug.setPosition(Vector2f(530+25*(ind%4),
+                                                  drawOffset+45*(ind/4-memSize/4)));
+          window.draw(backgroundMemDebug);
+        }
+      }
     }
-    for(int i=0;i<memGlobalSize;i++){
-    backGroundMem.setPosition(Vector2f(530+25*(i%4),305+45*(i/4-memGlobalSize/4)));
-    window.draw(backGroundMem);
-    }
-    int memPieceSize=actualHolder.h->memPiece.count();
-    for(int i=0;i<memPieceSize;i++){
-    backGroundMem.setPosition(Vector2f(530+25*(i%4),205+45*(i/4-memPieceSize/4)));
-    window.draw(backGroundMem);
-    }
-    for(int i=0;i<memTileSize;i++){
-    backGroundMem.setPosition(Vector2f(530+25*(i%4),105+45*(i/4-memTileSize/4)));
-    window.draw(backGroundMem);
-    }
-    if(getterMemDebug1){
-    getterMemDebug1->drawDebugMem();
-    getterMemDebug2->drawDebugMem();
-    }
-    for(int i=0;i<memSize;i++){
-    textValMem.setPosition(530+25*(i%4),410+45*(i/4-memSize/4));
-    textValMem.setString(to_string(memMov[i]));
-    window.draw(textValMem);
-    }
-    for(int i=0;i<memGlobalSize;i++){
-    textValMem.setPosition(530+25*(i%4),310+45*(i/4-memGlobalSize/4));
-    textValMem.setString(to_string(memGlobal[i]));
-    window.draw(textValMem);
-    }
-    for(int i=0;i<memPieceSize;i++){
-    textValMem.setPosition(530+25*(i%4),210+45*(i/4-memPieceSize/4));
-    textValMem.setString(to_string(*actualHolder.h->memPiece[i]));
-    window.draw(textValMem);
-    }
-    for(int i=0;i<memTileSize;i++){
-    textValMem.setPosition(530+25*(i%4),110+45*(i/4-memTileSize/4));
-    textValMem.setString(to_string(tablptr->tile(posDebugTile)->memTile[i]));
-    window.draw(textValMem);
-    }*/
+    debugDrawChannel.size=0;
   }
 #endif
 }
 
 void doTurn(properState* ps,int player,bool bando){
+  /*board* brd=getBoard(ps);
+  if(!bando)
+  for(int i=0;i<ps->pd.memTileSlots*brd->dims.x*brd->dims.y;i++){
+    if(i%brd->dims.x*ps->pd.memTileSlots==0){
+      printf("\n");
+    }
+    printf("%d ",brd->memTiles[i].val);
+    }*/
   switch(player){
   case 1: humanTurn(bando,getBoard(ps));break;
   case 2: randomTurn(bando,ps);srand(time(NULL));break;

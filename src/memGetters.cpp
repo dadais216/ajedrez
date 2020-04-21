@@ -4,28 +4,47 @@
 //triggers globales se crean en la creacion de la pieza y son fijos
 //triggers de memoria tile e indirectos funcionan los posicionales, se crean dinamicamente y solo son validos los generados en un mismo turno
 
+#if debugMode
+//necesito diferir los dibujados de debug para que se hagan despues de que se dibujen las demas cosas.
+//tengo un vector de ints donde estan las instrucciones y los datos de este frame. Esta bueno porque tengo todo
+//el codigo en un lugar solo
+vector<int> debugDrawChannel;
+enum{
+     tdebugSetIndirectColor=-9999,tdebugUnsetIndirectColor,
+     tdebugDrawCte,tdebugDrawPosX,tdebugDrawPosY,
+     tdebugDrawPos, 
+};
 
-//lo unico malo de esta version es que el debug quedo ligado a la ejecucion
-//si por algun motivo quiero separarlos va a ser un asco
-//una solucion sería cambiar las funciones por un switch, porque en ese caso
-//debug seria un segundo switch aparte que no le molesta a nadie.
-//usar switch podría tener una ventaja ademas de eso, podría probar si tengo ganas (podría ser inherentemente mas rapido?, int en vez de punteros en el buffer, puedo reutilizar codigo en el switch)
+
+#endif
+
 void debugDrawMem(int ind,int memSize,int drawOffset){  
 #if debugMode
-  backgroundMemDebug.setPosition(Vector2f(530+25*(ind%4),
-                                          305+drawOffset+45*(ind/4-memSize/4)));
-  window.draw(backgroundMemDebug);
-#endif
-}
-void debugSetIndirectColor(){
-#if debugMode
-  backgroundMemDebug.setFillColor(sf::Color(178,235,221));
+  push(&debugDrawChannel,ind);
+  push(&debugDrawChannel,memSize);
+  push(&debugDrawChannel,drawOffset);
 #endif
 }
 
+//en vez de poner el if aca lo podría haber puesto antes de dibujar en proper, se me ocurrio tarde
+void debugDrawMemMaybeAction(int ind,int memSize,int drawOffset){
+#if debugMode
+  if(debugInCondition){
+    debugDrawMem(ind,memSize,drawOffset);
+  }
+#endif
+}
+
+//se podria hacer algo para sacar la redundacia de instrucciones aca si hay varias indirecciones,
+//pero es codigo debug no lo vale
+void debugSetIndirectColor(){
+#if debugMode
+  push(&debugDrawChannel,tdebugSetIndirectColor);
+#endif
+}
 void debugUnsetIndirectColor(){
 #if debugMode
-  backgroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+  push(&debugDrawChannel,tdebugUnsetIndirectColor);
 #endif
 }
 
@@ -38,13 +57,13 @@ void debugUnsetIndirectColor(){
 
 int* localg(){
   intptr ind=(intptr)getNextInBuffer();;
-  debugDrawMem(ind,actualHolder.nh->base->memLocalSize,100);
+  debugDrawMem(ind,actualHolder.nh->base->memLocalSize,405);
   return &memMov[ind];
 }
 
 int* localAccg(){
   intptr ind=(intptr)getNextInBuffer();;
-  return actualHolder.nh->memAct[ind];
+  return &actualHolder.nh->memAct[ind];
 }
 
 int* localgi(){
@@ -52,40 +71,29 @@ int* localgi(){
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();;
-  debugDrawMem(ind,actualHolder.nh->base->memLocalSize,100);
+  debugDrawMem(ind,actualHolder.nh->base->memLocalSize,405);
   return &memMov[ind];
 }
 
 int* localAccgi(){//aparece en cadenas de 3 o mas
   getter g=(getter)getNextInBuffer();
   int ind=*g();
-  return actualHolder.nh->memAct[ind];
+  return &actualHolder.nh->memAct[ind];
 }
 
 int* pieceg(){
   intptr ind=(intptr)getNextInBuffer();
-  debugDrawMem(ind,size(actualHolder.h->memPiece),400);
-  return actualHolder.h->memPiece[ind];
-}
-
-int* pieceAccg(){//unico motivo de existir es no tirar codigo debug en accion
-  intptr ind=(intptr)getNextInBuffer();
-  return actualHolder.h->memPiece[ind];
+  debugDrawMemMaybeAction(ind,count(actualHolder.h->memPiece),305);
+  return &actualHolder.h->memPiece[ind];
 }
 
 int* piecegi(){
   getter g=(getter)getNextInBuffer();
-  debugSetIndirectColor();
+  debugSetIndirectColor();//esto se pone al pedo pero se cancela solo
   int ind=*g();
   debugUnsetIndirectColor();
-  debugDrawMem(ind,size(actualHolder.h->memPiece),400);
-  return actualHolder.h->memPiece[ind];
-}
-
-int* pieceAccgi(){//unico motivo de existir es no tirar codigo debug en accion
-  getter g=(getter)getNextInBuffer();
-  int ind=*g();
-  return actualHolder.h->memPiece[ind];
+  debugDrawMemMaybeAction(ind,count(actualHolder.h->memPiece),305);
+  return &actualHolder.h->memPiece[ind];
 }
 
 
@@ -95,7 +103,7 @@ int* pieceAccgi(){//unico motivo de existir es no tirar codigo debug en accion
 
 int* globalRead(){
   intptr ind=(intptr)getNextInBuffer();;
-  debugDrawMem(ind,actualHolder.brd->memGlobalSize,0);
+  debugDrawMem(ind,actualHolder.brd->memGlobalSize,205);
 
   memData* md=&actualHolder.brd->memGlobals[ind];
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);//probar triggers fijos despues
@@ -112,7 +120,7 @@ int* globalReadi(){
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();
-  debugDrawMem(ind,actualHolder.brd->memGlobalSize,0);
+  debugDrawMem(ind,actualHolder.brd->memGlobalSize,205);
   memData* md=&actualHolder.brd->memGlobals[ind];
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);
   return &md->val;
@@ -123,37 +131,42 @@ int* globalReadNTi(){
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();;
-  debugDrawMem(ind,actualHolder.brd->memGlobalSize,0);
+  debugDrawMem(ind,actualHolder.brd->memGlobalSize,205);
   return &actualHolder.brd->memGlobals[ind].val;
 }
 
-
-v posDebugTile(0,0);
+void debugPushPosition(){
+#if debugMode
+  push(&debugDrawChannel,tdebugDrawPos);
+#endif
+}
 
 memData* getTileMd(int ind,board* b){
-  return &b->memTiles[ind+actualHolder.nh->pos.x*b->dims.y+actualHolder.nh->pos.y*b->dims.x*b->memTileSlots];
+  return &b->memTiles[ind+actualHolder.nh->pos.x*b->memTileSlots+actualHolder.nh->pos.y*b->dims.x*b->memTileSlots];
 }
 
 int* tileRead(){
+  debugPushPosition();
   intptr ind=(intptr)getNextInBuffer();
-  debugDrawMem(ind,actualHolder.brd->memTileSlots,200);
+  debugDrawMem(ind,actualHolder.brd->memTileSlots,105);
 
   memData* md=getTileMd(ind,actualHolder.brd);
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);
   return &md->val;
 }
-int* tileReadNT(){  
+int* tileReadNT(){
   intptr ind=(intptr)getNextInBuffer();
   return &getTileMd(ind,actualHolder.brd)->val;
 ;
 }
 
 int* tileReadi(){
+  debugPushPosition();
   getter g=(getter)getNextInBuffer();
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();
-  debugDrawMem(ind,actualHolder.brd->memTileSlots,200);
+  debugDrawMem(ind,actualHolder.brd->memTileSlots,105);
 
   memData* md=getTileMd(ind,actualHolder.brd);
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);
@@ -174,26 +187,34 @@ int* cteRead(){
   (*actualHolder.bufferPos)++;
   int* cte=(int*)&actualHolder.buffer[*actualHolder.bufferPos];//cast void** to int* 
 #if debugMode
-  //debería haber un if para no mostar durante accion supongo
-  //TODO si hago esto evito duplicar algunas cosas de pieza y local
-  textValMem.setPosition(610,470);
-  textValMem.setString(std::to_string(*cte));
-  window.draw(textValMem);
+  if(debugInCondition){
+    push(&debugDrawChannel,tdebugDrawCte);
+    push(&debugDrawChannel,*cte);
+  }
 #endif
   return cte;
 }
 
 //pos se trata como una cte porque no puede variar desde la generacion hasta la accion inclusive
 int* posXRead(){
-  //para evitar usar una variable global (porque podría ser mas lenta, no creo pero ni idea) se podría dejar un int en el buffer que se escribe aca
-  static int x=offset.x+actualHolder.nh->relPos.x;
 #if debugMode
-  //
+  if(debugInCondition){
+    push(&debugDrawChannel,tdebugDrawPos);
+    push(&debugDrawChannel,tdebugDrawPosX);
+  }
 #endif
+  //para evitar usar una variable global (porque podría ser mas lenta, no creo pero ni idea) se podría dejar un int en el buffer que se escribe aca
+  static int x=offset.x+actualHolder.nh->relPos.x;//TODO porque no uso pos?
   return &x;
 }
 
 int* posYRead(){
+#if debugMode
+  if(debugInCondition){
+    push(&debugDrawChannel,tdebugDrawPos);
+    push(&debugDrawChannel,tdebugDrawPosY);
+  }
+#endif
   static int y;
   y=offset.y+actualHolder.nh->relPos.y;
   if(actualHolder.nh->base->h->bando){

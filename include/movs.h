@@ -86,6 +86,7 @@ void msetG();
 void msetT();
 void msetGi();
 void msetTi();
+void msetP();
 
 bool vacio();
 bool enemigo();

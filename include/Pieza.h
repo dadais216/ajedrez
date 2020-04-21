@@ -27,7 +27,7 @@ struct Holder{
   Piece* piece;
   Tile* tile;
   
-  barray<int> memPiece;
+  barray<int> memPiece;//podria ser 1 puntero en vez de 2 TODO
   
   barray<movHolder*> movs;
   bool bando;

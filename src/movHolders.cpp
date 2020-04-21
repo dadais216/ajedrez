@@ -330,7 +330,7 @@ void generarExcH(movHolder* m){
   int i;
   v offsetOrg=offset;
   for(i=0;i<count(e->ops);i++){
-    movHolder* branch=*e->ops[i];
+    movHolder* branch=e->ops[i];
     branch->table->generar(branch);
     if(branch->bools&valorCadena){
       //si una rama con un clicker puso el clicker y despues fallo se toma como rama buena,
@@ -350,13 +350,13 @@ inline void reaccionarNhExcH(excHolder* e,normalHolder* nh){
   movHolder* branch;
   int i;
   for(i=1;i<=e->actualBranch;++i){
-    movHolder* nextBranch=*e->ops[i];
+    movHolder* nextBranch=e->ops[i];
     if(nextBranch>nh){
-      branch=*e->ops[i-1];
+      branch=e->ops[i-1];
       goto branchFound;
     }
   }
-  branch=*e->ops[e->actualBranch];
+  branch=e->ops[e->actualBranch];
  branchFound:
   branch->table->reaccionar(branch,nh);
   if(switchToGen){//solo falso si la nh es innaccesible, por ejemplo esta en la parte invalida de un desliz
@@ -364,7 +364,7 @@ inline void reaccionarNhExcH(excHolder* e,normalHolder* nh){
       int j;
       for(j=0;j<count(e->ops);j++){
         if(i-1!=j){
-          movHolder* brancj=*e->ops[j];
+          movHolder* brancj=e->ops[j];
           brancj->table->generar(brancj);
           if(brancj->bools&valorCadena){
             e->bools|=valor;
@@ -409,7 +409,7 @@ void reaccionarExcH(movHolder*m,vector<normalHolder*>* nhs){
 void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
   fromCast(e,m,excHolder*);
   if(!valorCadena) return;
-  movHolder* branch=*e->ops[e->actualBranch];
+  movHolder* branch=e->ops[e->actualBranch];
   branch->table->cargar(branch,norms);
   if(e->bools&makeClick)
     push(&clickers,makeClicker(norms,e->base->h));

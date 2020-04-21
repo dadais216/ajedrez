@@ -17,9 +17,10 @@ void makeBoard(properState* p){
   brd->n.setTextureRect(IntRect(32,0,32,32));
 
 #if debugMode
-  posPiece.setSize(Vector2f(32*escala,32*escala));
-  posActGood.setSize(Vector2f(32*escala,32*escala));
-  posActBad.setSize(Vector2f(32*escala,32*escala));
+  posPiece.setSize(sf::Vector2f(32*escala,32*escala));
+  posActGood.setSize(sf::Vector2f(32*escala,32*escala));
+  posActBad.setSize(sf::Vector2f(32*escala,32*escala));
+  posMem.setSize(sf::Vector2f(32*escala,32*escala));
 #endif
   for(Piece* piece:p->pieces){
     piece->spriteb.setScale(escala,escala);
@@ -34,12 +35,13 @@ void makeBoard(properState* p){
   brd->memTileSlots=pd->memTileSlots;
   brd->memGlobals=(memData*)(brd->tiles+brd->dims.x*brd->dims.y);
   memset(brd->memGlobals,0,pd->memGlobalSize*sizeof(memData));
-  brd->memTiles=brd->memGlobals+pd->memGlobalSize*sizeof(memData);
+  brd->memTiles=brd->memGlobals+pd->memGlobalSize;
   memset(brd->memTiles,0,pd->memTileSlots*brd->dims.x*brd->dims.y*sizeof(memData));
 
   p->gameState.head+=sizeof(board)
     + pd->dims.x*pd->dims.y*(sizeof(Tile)+pd->memTileSlots*sizeof(memData))
     + pd->memGlobalSize*sizeof(memData);
+
 
   memset(brd->tiles,0,sizeof(Tile)*pd->dims.x*pd->dims.y);
   for(int i=0; i<brd->dims.x*brd->dims.y; i++){
@@ -52,14 +54,14 @@ void makeBoard(properState* p){
     }
   }
 
-  assert(p->gameState.head==p->gameState.data+p->hsSize);
+  assertf(p->gameState.head==p->gameState.data+p->hsSize,"antes de generar %d %d\n",p->gameState.head-p->gameState.data,p->hsSize);
   //TODO cuando haga el codigo general tendría que generar primero un bando, correr el codigo, despues el otro
   for(int i=0;i<brd->dims.x*brd->dims.y;i++){
     Holder* hAct=brd->tiles[i].holder;
     if(hAct)
       generar(hAct);
   }
-  assert(p->gameState.head==p->gameState.data+p->hsSize);
+  assertf(p->gameState.head==p->gameState.data+p->hsSize,"despues de generar %d %d\n",p->gameState.head-p->gameState.data,p->hsSize);
 }
 
 Tile* tile(board* brd,v pos){
