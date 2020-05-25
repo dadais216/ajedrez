@@ -3,6 +3,7 @@
 
 enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
 
+//TODO valorCadena es solo una optimizacion de la carga? es necesario? como que fue reemplazado por valorFinal y solo hace eso ahora
 const int32_t valorCadena=1;//la cadena de movholders es valida. Una cadena va desde la base hasta un clicker o el final
 const int32_t valorFinal=1<<1;//se llegó al final. Esto sirve para saber si seguir iterando en un desliz
 const int32_t valor=1<<2;//lo usa normal para saber si sus condiciones son verdaderas,y exc si tiene una rama valida

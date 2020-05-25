@@ -1,6 +1,19 @@
+
 >green=color 0 255 0;
 >red=color 255 0 0;
 >blue=color 0 0 255;
+
+#TEST NO TOCAR
+>TW&=w|a|s|d;
+>TWA&=wa|wd|sa|sd;
+>TWASD&=TW|TWA;
+>Tmover=vacio mov green;
+>Tcaptura=enemigo capt mov red;
+#/TEST
+
+
+
+
 >mover=vacio mov green;
 >captura=piece capt red;
 
@@ -12,11 +25,14 @@
 #mcmp t0 0 mset t0 1 W mover;
 #mcmp t0 1 WA mover;
 #msize g 10 mless g0 10 madd l0 g0 madd l0 1 mset g0 l0 mset gg0 l0;
-msize l 10 desliz mless l0 10 madd l0 1 mset ll0 l0 end;
-
+#msize l 10 desliz mless l0 10 madd l0 1 mset ll0 l0 end;
+#desliz WA mover capt spwn 2 end;
+#desliz WA mover isol capt spwn 2 end end;
+#TW Tmover TW vacio spwn 1 color 0 0 255;
+pass;
 
 :2 1 #torre
-desliz W mover c end W captura
+desliz W mover c end W captura;
 
 :3 2 #caballo
 >A=ww|ss;
@@ -67,13 +83,7 @@ s mover
 #       mdist l0 1 sa captura sa mover pausa mset l0 2 or \
 #       mdist l0 0 sd captura sd mover pausa mset l0 3 end #dama que no se banca bucles
            #l0 iterador, l1 tamaño, l2 en adelante array de posiciones
-#def newPos mset l0 2 desliz mless l0 l1 exc mdist x ll0 madd l0 2 or madd l0 1 mdist y ll0 madd l0 1 end end mcmp l0 l1
-#def addPos mset ll1 x madd l1 1 mset ll1 y madd l1 1 
-#msize l 20 mset l1 2 desopt \
-#       wa captura wa mover newPos addPos c or \
-#       wd captura wd mover newPos addPos c or \
-#       sa captura sa mover newPos addPos c or \
-#       sd captura sd mover newPos addPos c end
+
 
 
 :10 2
@@ -86,6 +96,146 @@ mcmp x y d mover
 w pieza mcmp o1 1 ss mover
 mcmp p1 1 aw mover mset t0 1 mset p1 0
 mcmp p1 0 dw mover mset p1 1
+
+:12 7
+>newPos= mset l0 2 desliz 
+          mless l0 l1 exc 
+           mdist x ll0 madd l0 2 
+          or 
+           madd l0 1 mdist y ll0 madd l0 1 
+          end 
+         end 
+         mcmp l0 l1;
+>addPos= mset ll1 x madd l1 1 mset ll1 y madd l1 1;
+msize l 20 mset l1 2 desopt
+       wa captura wa mover newPos addPos c or 
+       wd captura wd mover newPos addPos c or 
+       sa captura sa mover newPos addPos c or 
+       sd captura sd mover newPos addPos c end;
+
+#el problema con la anterior es que puede haber bucles donde se pase 2 veces por el mismo lugar,
+#y como se guarda donde se para se invalidarian.
+#la solucion es guardar las piezas capturadas en vez de el lugar donde se aterriza
+:13 6
+>newPos= mset l0 2 desliz 
+          mless l0 l1 exc 
+           mdist x ll0 madd l0 2 
+          or 
+           madd l0 1 mdist y ll0 madd l0 1 
+          end 
+         end 
+         mcmp l0 l1;
+>addPos= mset ll1 x madd l1 1 mset ll1 y madd l1 1;
+msize l 20 mset l1 2 desopt
+       wa enemigo wa exc vacio or self end sd newPos addPos capt red wa mov green c or
+       wd enemigo wd exc vacio or self end sa newPos addPos capt red wd mov green c or
+       sa enemigo sa exc vacio or self end wd newPos addPos capt red sa mov green c or
+       sd enemigo sd exc vacio or self end wa newPos addPos capt red sd mov green c end;
+#la cosa seria registrar en una memoria pos de capturas y el aterrizaje, teniendo al principio un contador de puntos.
+#despues del desopt tendría que encontrar el maximo de las memorias, y armar el camino
+#supongo que va a haber 2 pass, el primero para encontrar el maximo y el segundo para armar, porque puede haber empates.
+
+:14 6
+desopt 
+ wa mover c or 
+ wd mover c end;
+
+
+
+
+
+#####TEST
+
+#ajedrez sin jaque, enroque y corte al paso
+#el corte al paso lo pense como escribir en la tile el turno anterior,
+#y para eso necesito poder llevar un contador de turno, y para eso necesito
+#codigo suelto
+
+
+:21 0 #peon 
+>promover = isol mcmp y 7 capt isol spwn 23 end spwn 25 end; 
+w Tmover mset p0 1 promover;
+>X=wa|wd;
+X Tcaptura mset p0 1 promover;
+mcmp p0 0 ww Tmover mset p0 1;
+
+:22 1 #torre
+desliz TW Tmover c end TW Tcaptura c;
+
+:23 2 #caballo
+>A=ww|ss;
+>A2=a|d;
+>B=aa|dd;
+>B2=w|s;
+>C=A A2|B B2;
+C exc Tmover or Tcaptura end;
+
+:24 3 #alfil
+desliz TWA Tmover c end TWA Tcaptura c;
+
+:25 4 #reina
+desliz TWASD Tmover c end TWASD Tcaptura c;
+
+:26 5 #rey
+TWASD exc Tmover or Tcaptura end;
+
+
+:27 0 #peon con isols
+>promover23 = mcmp y 7 capt spwn 23; 
+>promover25 = mcmp y 7 capt spwn 25;
+
+mcmp p0 0 
+ isol ww Tmover mset p0 1 end 
+ isol w Tmover mset p0 1 end
+ isol wa Tcaptura mset p0 1 end
+ wd Tcaptura mset p0 1;
+mcmp p0 1 
+ isol w Tmover promover23 end
+ isol wa Tcaptura promover23 end
+ isol wd Tcaptura promover23 end
+ isol w Tmover promover25 end
+ isol wa Tcaptura promover25 end
+ isol wd Tcaptura promover25 end
+ ;
+
+:28 0 #simple
+TW Tmover; 
+
+:29 3 #spawner simple
+#TW Tmover TW exc vacio spwn 29 or pass end;
+TW Tmover TW vacio spwn 29 color 0 0 255;
+
+:30 2 #local y pieza #probar meter un isol para los desliz
+mset l0 p0 madd l0 1 desliz mdist l1 l0 TW isol Tmover mset p0 l0 end madd l1 1 end; 
+
+:31 0 #tile 1
+mset t0 1 TW Tmover;
+
+:32 2 #tile 2
+TW mcmp t0 1 mover mset t0 0;
+
+:33 5 #emperador
+desliz w end desliz a end 
+desliz isol desliz isol mover c end d end end s end;
+
+:34 2 #desopt
+>X&Y=wa&wd|sa&sd;
+desopt X mover or Y mover end
+
+:35 2 #spam en lugar de desopt
+>X=wa|wd;
+>Y=X|;
+X Y Y mover;
+>X=sa|sd;
+X Y Y mover;
+
+:36 #dama
+
+:37 4 #reina que no captura
+desliz TWASD Tmover c end; 
+
+
+
 
 
 

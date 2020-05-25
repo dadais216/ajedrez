@@ -42,7 +42,7 @@ void humanTurn(bool bando,board* brd){
       input.check();
 #if debugMode
       if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-        properGameInit((properState*)stateMem);
+        properGameInit((properState*)stateMem,true);
         while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
         throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
       }
@@ -65,6 +65,7 @@ void humanTurn(bool bando,board* brd){
         Holder* act=tile(brd,input.get())->holder;
         if(act&&act->bando==bando){
           makeCli(act);
+          debugPrintClickers(brd);
         }
         drawScreen(properDraw);
       }
@@ -77,65 +78,10 @@ void skipTurn(){
 
 
 
-double sProm=0;
-int cProm=0;
-double minV=10000;
-double maxV=0;
-void randomTurn(bool bando,properState* ps){
-  board* brd=getBoard(ps);
-  if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-    properGameInit(ps);
-    while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
-    throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
-  }
-  bool alive=false;
-  for(int i=0; i<brd->dims.x; i++)
-    for(int j=0; j<brd->dims.y; j++){
-      Holder* act=tile(brd,v(i,j))->holder;
-      if(act&&act->bando==bando){
-        alive=true;
-        makeCli(act);
-      }
-    }
-  //drawScreen();
-  if(!alive)
-    while(true){
-      if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-        properGameInit(ps);///@leaks
-        while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
-        throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
-      }
-    }
-  if(clickers.size>0){
-    //sleep(milliseconds(120));
-    
-    
-    clock_t t=clock();
-    executeClicker(&clickers[rand()%clickers.size],brd);
-    double val=clock()-t;
-    sProm+=val;
-    if(val>maxV)
-      maxV=val;
-    if(val<minV)
-      minV=val;
-    cProm++;
-    if(cProm==100){
-      std::cout<<"normalSize  "<<sizeof(normalHolder)
-               <<"\nbucketMovSize  "<<ps->gameState.head - ps->gameState.data - (intptr)(getBoard(ps))->tiles
-               <<"\nbucketOpSize  "<<ps->pieceOps.head-ps->pieceOps.data
-               <<"\npromedio: "<<std::fixed<<sProm/(double)cProm/CLOCKS_PER_SEC<<" segundos"
-               <<"\nmin: "<<minV/CLOCKS_PER_SEC
-               <<"\nmax: "<<maxV/CLOCKS_PER_SEC<<std::endl;
-      exit(0);
-    }
-    
-    clickers.size=0;
-  }
-}
 
 
 void properUpdate();
-void properInit(char* mem,int boardId,int player1Id,int player2Id){
+void properInit(char* mem,int boardId,int player1Id,int player2Id,bool forTest){
   properState* ps=new(mem)properState();
   ps->boardId=boardId;
   ps->player1=player1Id;
@@ -172,7 +118,6 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   textValMem.setFont(font);
   textValMem.setPosition(570,10);
 
-  ps->debugFirstRun=true;
   init(&debugDrawChannel);
 #endif
 
@@ -191,57 +136,55 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   init(&reciclaje);
   init(&justSpawned);
 
-  actualStateUpdate=properUpdate;
-  properGameInit(ps);
-}
-
-void initOrDebugResetBucket(properState* ps,bucket* b,int size=bucketSize){
-#if debugMode
-  if(!ps->debugFirstRun){
-    clearBucket(b);
-    delete[] b->firstBlock;
-    initBucket(b,size);
-  }else
-#endif
-    initBucket(b,size);
-}
-
-void properGameInit(properState* ps){
-#if debugMode
-  //cosas para resetear
-  parseData* pd=&ps->pd;
-
-  pd->lastGlobalMacro=tlast;
-  pd->lastTangledGroup=0;
-  init(&pd->memLocalSize,4);
-  pd->memLocalSizeMax=0;
-  pd->memPieceSize=0;
-  pd->memGlobalSize=0;
-  pd->memTileSlots=0;
-
-  pd->spawner=false;
-
-  init(&pd->boardInit);
-  init(&pd->ids);
-  init(&pd->macros);
-
-  ps->pieces.size=0;
-
-  colores.size=0;
-
-  normales.size=0;
-  clickers.size=0;
-  pisados.size=0;
-  trigsActivados.size=0;
-  reciclaje.size=0;
-  justSpawned.size=0;
-
-  for(int i=tlast;i<ps->pd.lastLocalMacro;i++){
-    ps->pd.wordToToken.erase(ps->pd.tokenToWord[i]);
+  if(!forTest){
+    actualStateUpdate=properUpdate;
+    properGameInit(ps);
   }
-  ps->pd.lastLocalMacro=ps->pd.lastGlobalMacro=tlast;
-#endif
-  initOrDebugResetBucket(ps,&ps->pieceOps);
+}
+
+void resetBucket(properState* ps,bucket* b,int size=bucketSize){
+  clearBucket(b);
+  delete b->firstBlock;
+  initBucket(b,size);
+}
+
+void properGameInit(properState* ps,bool reset){
+  if(reset){
+    parseData* pd=&ps->pd;
+
+    pd->lastGlobalMacro=tlast;
+    pd->lastTangledGroup=0;
+    init(&pd->memLocalSize,4);
+    pd->memLocalSizeMax=0;
+    pd->memPieceSize=0;
+    pd->memGlobalSize=0;
+    pd->memTileSlots=0;
+    
+    pd->spawner=false;
+    
+    init(&pd->boardInit);
+    init(&pd->ids);
+    init(&pd->macros);
+    
+    ps->pieces.size=0;
+    
+    colores.size=0;
+    
+    normales.size=0;
+    clickers.size=0;
+    pisados.size=0;
+    trigsActivados.size=0;
+    reciclaje.size=0;
+    justSpawned.size=0;
+
+    for(int i=tlast;i<ps->pd.lastLocalMacro;i++){
+      ps->pd.wordToToken.erase(ps->pd.tokenToWord[i]);
+    }
+    ps->pd.lastLocalMacro=ps->pd.lastGlobalMacro=tlast;
+    resetBucket(ps,&ps->pieceOps);
+  }else{
+    initBucket(&ps->pieceOps);
+  }
   ps->clickers.size=0;
   ps->turno=1;
 
@@ -260,7 +203,12 @@ void properGameInit(properState* ps){
   ps->hsSize+=sizeof(board)
             + ps->pd.dims.x*ps->pd.dims.y*(sizeof(Tile)+ps->pd.memTileSlots*sizeof(memData))
             + ps->pd.memGlobalSize*sizeof(memData);
-  initOrDebugResetBucket(ps,&ps->gameState,ps->hsSize);
+
+  if(reset)
+    resetBucket(ps,&ps->gameState,ps->hsSize);
+  else
+    initBucket(&ps->gameState,ps->hsSize);
+
   makeBoard(ps);
 
   /*
@@ -272,10 +220,6 @@ void properGameInit(properState* ps){
     }*/
 
   drawScreen(properDraw);
-
-#if debugMode
-  ps->debugFirstRun=false;
-#endif
 }
 
 
@@ -286,6 +230,7 @@ int debugGet(memData* v,int i){
   return (v+i)->val;
 }
 void debugDrawMemory(int memSize, int yOffset,auto memory){
+#if debugMode
   for(int i=0;i<memSize;i++){
     backgroundMem.setPosition(sf::Vector2f(530+25*(i%4),yOffset+45*(i/4-memSize/4)));
     window.draw(backgroundMem);
@@ -295,7 +240,12 @@ void debugDrawMemory(int memSize, int yOffset,auto memory){
     textValMem.setString(std::to_string(debugGet(memory,i)));
     window.draw(textValMem);
   }
+#endif
 };
+
+
+
+
 void properDraw(char* mem){
   properState* ps=(properState*)mem;
   board* brd=getBoard(ps);
@@ -309,10 +259,11 @@ void properDraw(char* mem){
   else
     window.draw(ps->turnoNegro);
 
+
+#if debugMode
   textValMem.setString(std::to_string(ps->turno));
   textValMem.setPosition(sf::Vector2f(600,20));
   window.draw(textValMem);
-#if debugMode
   if(drawDebug){
     window.draw(*tileActDebug);
   
@@ -328,7 +279,7 @@ void properDraw(char* mem){
     for(int i=0;i<debugDrawChannel.size;i++){
       switch(debugDrawChannel[i]){
       case tdebugSetIndirectColor:
-        backgroundMemDebug.setFillColor(sf::Color(178,135,221,150));
+        backgroundMemDebug.setFillColor(sf::Color(168,35,221,150));
         break;
       case tdebugUnsetIndirectColor:
         backgroundMemDebug.setFillColor(sf::Color(163,230,128,150));
@@ -382,7 +333,7 @@ void doTurn(properState* ps,int player,bool bando){
     }*/
   switch(player){
   case 1: humanTurn(bando,getBoard(ps));break;
-  case 2: randomTurn(bando,ps);srand(time(NULL));break;
+  case 2: randomTurnTestPlayer(bando,ps);break;
   case 4: skipTurn();
   }
 }

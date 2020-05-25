@@ -294,7 +294,7 @@ T& at(vector<T>* vec,int ind){//retorna referencia para que se pueda tomar direc
 
 template<typename T>
 void free(vector<T>* vec){
-  free(vec->data);
+  delete[] vec->data;
 }
 
 template<typename T>

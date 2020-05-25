@@ -104,8 +104,9 @@ void executeClicker(Clicker* c,board* brd){
   }
 
 
-  for(Tile* tile:pisados)
+  for(Tile* tile:pisados){
     chargeTriggers(&tile->triggersUsed,&tile->firstTriggerBox);
+  }
 
   actualHolder.ps->turno++;
 
@@ -137,6 +138,25 @@ void executeClicker(Clicker* c,board* brd){
   clickers.size=0;
 }
 
+void debugPrintClickers(board* brd){
+  vector<int> clicks;init(&clicks,brd->dims.x*brd->dims.y);defer(&clicks);
+  clicks.size=clicks.cap;
+  for(int i=0;i<clicks.size;i++){
+    clicks[i]=0;
+  }
+  for(Clicker& cli:clickers){
+    clicks[cli.clickPos.x+cli.clickPos.y*brd->dims.x]++;
+  }
+
+  printf("c=%d\n",clickers.size);
+  for(int i=0;i<clicks.size;i++){
+    printf("%d ",clicks[i]);
+    if((i+1)%brd->dims.x==0){
+      printf("\n");
+    }
+  }
+  printf("\n\n");
+}
 /*void Clicker::activacion(int clickI)
 {
     activo=val==clickI%mod;

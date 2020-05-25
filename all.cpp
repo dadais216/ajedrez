@@ -2,9 +2,11 @@
 
 
 
-
-
+#ifdef __OPTIMIZE__
+#define debugMode 0
+#else
 #define debugMode 1
+#endif
 
 //decidi tener una version debug y una version no debug, esto me permite hacer mas cosas. Antes para no afectar la velocidad necesitaba meter las cosas debug de forma opcional en lugares donde no molestacen, especificamente en listas de polimorfismo de movs y movholders, lo que me limitaba lo que podia hacer y era incomodo.
 //la cagada de tener una version normal y una version debug es que en este proyecto quiero que el usuario tenga acceso a las cosas debug, por lo que tendria que tener 2 exes del juego. Por lo menos por esta version. Cuando haga la version compilada, como se compila en el momento, puedo tener la opcion de compilar en distintas formas y listo.
@@ -47,7 +49,7 @@ struct deferObj{
 #define defer(func,obj) deferObj<decltype(obj),func>(obj);*/
 
 void free(char* c){
-  delete c;
+  delete[] c;
 }
 template<typename T>
 struct deferObj{
@@ -55,9 +57,10 @@ struct deferObj{
   deferObj(T obj_){obj=obj_;}
   ~deferObj(){free(obj);}
 };
-#define defer(obj) deferObj<decltype(obj)>  defer(obj);//Medio choto, solo borra cosas. Cuando tenga internet voy a mirar lo de la lambda
-#define defer2(obj) deferObj<decltype(obj)> defer2(obj);
-#define defer3(obj) deferObj<decltype(obj)> defer3(obj);
+//no entiendo porque tengo que hacer 2 pasadas para que me expanda el macro antes de concatenarlo pero bueno
+#define deferN2(p) defer##p
+#define deferN(p) deferN2(p)
+#define defer(obj) deferObj<decltype(obj)>  deferN(__COUNTER__) (obj);
 
 #include <utility>
 #include <stdlib.h>
@@ -127,6 +130,7 @@ char* loadFile(char const* fileName){
 #include <cstring>
 #include <time.h>
 #include <ctime>
+#include "float.h"
 
 #include <SFML/Graphics.hpp>
 using namespace sf;
@@ -167,7 +171,6 @@ typedef intptr_t intptr;
 #include "selector.cpp"
 
 #include "tablero.h"
-#include "operador.h"
 
 #include "movs.cpp"
 #include "tablero.cpp"
@@ -184,10 +187,11 @@ typedef intptr_t intptr;
 #include "movHolders.cpp"
 #include "memGetters.cpp"
 #include "memMov.cpp"
-#include "operador.cpp"
 
 
 #include "proper.cpp"
+
+#include "test.cpp"
 
 //en el momento me parecio buena idea delegar toda la construccion a este archivo,
 //se podría haber dejado los headers en cada cpp, como es todo una unica unidad de compilacion

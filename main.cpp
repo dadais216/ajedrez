@@ -13,17 +13,22 @@ constexpr int max(int a,int b){
 char stateMem[max(max(sizeof(sf::Sprite),sizeof(selectorState)),sizeof(properState))];
 
 void arranqueInit(char*);
+void doTests(char*);
 
 int fpsLock;
 
-int main()
-{
+int main(int argc,char** argv){
   setbuf(stdout,NULL);//eso esto porque printf se lleva mal con cout. Debería dejar uno de los 2 TODO podria hacer un printf sin tipos para boludear
 
   image.adddir("sprites/");
   font.loadFromFile("sprites/VL-PGothic-Regular.ttf");
 
-  properInit(stateMem,6,1,4);
+  if(argc==2){
+    doTests(stateMem);
+    return 0;
+  }
+
+  properInit(stateMem,7,1,4);
   //arranqueInit(stateMem);
 
   float fpsLock=1./60.; //maximos fps TODO en test de velocidad que sea 0

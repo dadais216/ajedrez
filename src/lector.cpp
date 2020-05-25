@@ -9,7 +9,7 @@
 enum {
       tW,tA,tS,tD,tN,
       tmov,tcapt,tspwn,tpausa,
-      tvacio,tpiece,tenemigo,tpass,tesp,
+      tvacio,tpiece,tenemigo,taliado,tself, tpass,tesp,
       tmcmp,tmset,tmadd,tmless,tmmore,tmdist,tmsize,
       tmlocal,tmglobal,tmpiece,tmtile,tposX,tposY,
       tdesliz,texc,tisol,tdesopt,
@@ -45,6 +45,8 @@ void initParser(parseData* pd){
   rel(vacio);
   rel(enemigo);
   rel(piece);
+  rel(aliado);
+  rel(self);
   rel(pass);
 
   rel(desliz);
@@ -169,7 +171,7 @@ void getBoardIds(parseData* pd,int n){
       }
     }
   }
-  fail("board not found");//no deberia pasar nunca igual
+  fail("board not found");
  foundBoard:
   bool firstLine=true;
   int x=0;
@@ -181,7 +183,7 @@ void getBoardIds(parseData* pd,int n){
         firstLine=false;
         pd->dims.x=x;
       }else{
-        assert(pd->dims.x==x);
+        assertf(pd->dims.x==x,"dims.x %d, x %d\n",pd->dims.x,x);
       }
       x=0;
       pd->dims.y++;
@@ -641,6 +643,8 @@ void expandMacros(parseData* pd,vector<int>* into,vector<int>* from,int* movStar
         expandMacros(pd,into,&m.expansion,movStart,movType,expansionTypeData);
       }
     }else{
+      assert(tok!=tmacroSeparator);
+      push(into,tok);
       if(tok==tmovEnd){ //solo relevante en movimiento, no en macro
         //printf("expand  f: ");
         //debugPrintTokens(pd,from);
@@ -657,8 +661,6 @@ void expandMacros(parseData* pd,vector<int>* into,vector<int>* from,int* movStar
         }
         *movStart=into->size;
       }
-      assert(tok!=tmacroSeparator);
-      push(into,tok);
     }
   }
 }
@@ -677,7 +679,7 @@ void expandVersions(parseData* pd,vector<int>* from,vector<int>* into,int movSta
   int j=0;
   bool lastLap=false;
   do{
-    for(int i=movStart;i<movEnd;i++){
+    for(int i=movStart;i<movEnd;i++){ //osea hasta ; inclusive
       int tok=into->data[i];
 
       if(i==firstMultiMacro){//TODO deberia haber un for antes y despues en vez de un for cortado por un if
@@ -702,7 +704,6 @@ void expandVersions(parseData* pd,vector<int>* from,vector<int>* into,int movSta
       }else
         push(from,tok);
     }
-    push(from,(int)tmovEnd);
     //printf("expandVersions  f: ");
     //debugPrintTokens(pd,from);
     //printf("expandVersions  i: ");
@@ -763,7 +764,6 @@ void expandTangledVersions(parseData* pd,vector<int>* from,vector<int>* into,int
       }else
         push(from,tok);
     }
-    push(from,(int)tmovEnd);
     if(lastLap)
       break;
     for(int k=0;k<iterations.size;k++)
@@ -852,7 +852,7 @@ void processTokens(parseData* pd,vector<int>* tokens){
     case tmsize:
       boundCheck(i+2,"mSize");
       matchNum(tokensExpanded[i+2],"mSize",false);
-      growMemory(pd,tokensExpanded[i+1],tokensExpanded[i+2]-2048);
+      growMemory(pd,tokensExpanded[i+1],tokensExpanded[i+2]-1-2048);//-1 porque no es 0 counted
       i+=2;continue;
       /*case spawn:
       boundCheck(i+1,"spawn");

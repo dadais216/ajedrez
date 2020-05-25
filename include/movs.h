@@ -91,6 +91,7 @@ void msetP();
 bool vacio();
 bool enemigo();
 bool aliado();
+bool self();
 bool pass();
 bool piece();
 bool msetC();

@@ -84,8 +84,8 @@ normal* parseNormal(parseMovData* p){
   normal* n=alloc<normal>(p->b);
 
   vector<void(*)(void)> accsTemp;init(&accsTemp);defer(&accsTemp);
-  vector<bool(*)(void)> condsTemp;init(&condsTemp);defer2(&condsTemp);
-  vector<colort*> colorsTemp;init(&colorsTemp);defer3(&colorsTemp);
+  vector<bool(*)(void)> condsTemp;init(&condsTemp);defer(&condsTemp);
+  vector<colort*> colorsTemp;init(&colorsTemp);defer(&colorsTemp);
 
   auto getNum=[&]()->int{
                 int tok=pop(p);
@@ -104,7 +104,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
 
   p->movSize+=sizeof(normalHolder)+p->memLocalSize*sizeof(int);//+ mov de spawner
   n->tipo=NORMAL;
-  n->bools&=~(hasClick|makeClick|doEsp);
+  n->bools=0;
   n->relPos=v(0,0);
   bool writeInLocalMem=false;
   while(true){
@@ -141,6 +141,8 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
       cond(vacio);
       cond(piece);
       cond(enemigo);
+      cond(aliado);
+      cond(self);
       cond(pass);
     case tesp:
       n->bools|=doEsp;
@@ -156,10 +158,10 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
     case tspwn:
       {
         intptr id=getNum();
+        addIdIfMissing(p->pd,std::abs(id));
         push(&accsTemp,spwn);
-        push(&accsTemp,(actionBuffer)(id));
+        push(&accsTemp,(actionBuffer)(intptr)getCodedPieceIndexById(&p->pd->ids,id));
         p->pd->spawner=true;
-        addIdIfMissing(p->pd,id);
       }
       break;
       //spwn n con n positivo quiere decir mismo bando, negativo bando enemigo
@@ -191,7 +193,6 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                        tok==tposX||
                        tok==tposY;
                    };
-
 
         int op=tok;
         bool write=op==tmset||op==tmadd;
@@ -361,7 +362,7 @@ desliz* parseDesliz(parseMovData* p){
   desliz* d=alloc<desliz>(p->b);
 
   d->tipo=DESLIZ;
-  d->bools&=~makeClick;
+  d->bools=0;
 
   int iters=0;
   if(peek(p)>2048){
@@ -403,6 +404,7 @@ exc* parseExc(parseMovData* p){
   exc* e=alloc<exc>(p->b);
 
   e->tipo=EXC;
+  e->bools=0;
   int movSizeBefore=p->movSize;
 
   int finalTok;
@@ -442,8 +444,8 @@ isol* parseIsol(parseMovData* p){
   p->clickExplicit=false;
 
   i->tipo=ISOL;
+  i->bools=0;
   i->bools|=hasClick;
-  i->bools&=~makeClick;
 
   int movSizeBefore=p->movSize;
 
@@ -466,6 +468,7 @@ isol* parseIsol(parseMovData* p){
 desopt* parseDesopt(parseMovData* p){
   desopt* d=alloc<desopt>(p->b);
   d->tipo=DESOPT;
+  d->bools=0;
 
   int slots=0;
   if(peek(p)>2048){
@@ -474,7 +477,7 @@ desopt* parseDesopt(parseMovData* p){
 
   int movSizeBefore=p->movSize;
   vector<operador*> opsTemp;init(&opsTemp);defer(&opsTemp);
-  vector<int> sizesTemp;init(&sizesTemp);defer2(&sizesTemp);
+  vector<int> sizesTemp;init(&sizesTemp);defer(&sizesTemp);
   int branches=0;
   do{
     int movSizeBefore=p->movSize;

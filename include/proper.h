@@ -30,10 +30,6 @@ struct properState{
   int hsSize;
 
   int turno;
-
-#if debugMode
-  bool debugFirstRun;
-#endif
 };
 
 
@@ -55,9 +51,11 @@ El tablero, la memoria global y tile quedaría en un malloc aparte
 */
 
 void properDraw(char*);
-void properInit(char*,int,int,int);
-void properGameInit(properState*);
+void properInit(char*,int,int,int,bool forTest=false);
+void properGameInit(properState*,bool reset=false);
 void properUpdate(char*);
 
+
+void randomTurnTestPlayer(bool,properState*);
 
 #endif // ESTADO_H

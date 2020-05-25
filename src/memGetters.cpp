@@ -204,7 +204,8 @@ int* posXRead(){
   }
 #endif
   //para evitar usar una variable global (porque podría ser mas lenta, no creo pero ni idea) se podría dejar un int en el buffer que se escribe aca
-  static int x=offset.x+actualHolder.nh->relPos.x;//TODO porque no uso pos?
+  static int x;
+  x=actualHolder.nh->pos.x;
   return &x;
 }
 
@@ -216,10 +217,10 @@ int* posYRead(){
   }
 #endif
   static int y;
-  y=offset.y+actualHolder.nh->relPos.y;
-  if(actualHolder.nh->base->h->bando){
+  y=actualHolder.nh->pos.y;
+  if(!actualHolder.nh->base->h->bando){
     y=actualHolder.brd->dims.y-1-y;
-      }
+  }
   return &y;
 }
 

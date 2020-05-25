@@ -133,7 +133,6 @@ void spwn(){
 
   int codedId=(intptr)getNextInBuffer();
   int ind=abs(codedId)-1;
-  printf("spawn %d %d\n",codedId,ind);
   bool bando=codedId>0?actualHolder.h->bando:!actualHolder.h->bando;
 
   Holder* h;
@@ -175,10 +174,21 @@ bool piece(){
   CONDRET(actualHolder.tile->holder);
 }
 bool enemigo(){
-    Holder* other=actualHolder.tile->holder;
-    if(other)
-      CONDRET(other->bando!=actualHolder.h->bando);
-    CONDRET(false);
+  Holder* other=actualHolder.tile->holder;
+  if(other){
+    CONDRET(other->bando!=actualHolder.h->bando);
+  }
+  CONDRET(false);
+}
+bool aliado(){
+  Holder* other=actualHolder.tile->holder;
+  if(other){
+    CONDRET(other->bando==actualHolder.h->bando);
+  }
+  CONDRET(false);
+}
+bool self(){
+  CONDRET(actualHolder.tile->holder==actualHolder.h);
 }
 
 bool pass(){
@@ -211,18 +221,18 @@ void stall(){
       if(!ZPressed){
         ZPressed=true;
         break;
-            }
+      }
     }else
       ZPressed=false;
     if(sf::Keyboard::isKeyPressed(sf::Keyboard::X)){
-      if(mil>10) mil-=1;
+      mil=75;
       break;
     }else
       mil=25;
-          if(sf::Keyboard::isKeyPressed(sf::Keyboard::C)){
-            mil=0;
-            break;
-          }
+    if(sf::Keyboard::isKeyPressed(sf::Keyboard::C)){
+      mil=0;
+      break;
+    }
   }
 }
 void debugShowAndWait(char const* name,bool val){

@@ -54,17 +54,21 @@ void makeBoard(properState* p){
     }
   }
 
-  assertf(p->gameState.head==p->gameState.data+p->hsSize,"antes de generar %d %d\n",p->gameState.head-p->gameState.data,p->hsSize);
+  //assertf(p->gameState.head==p->gameState.data+p->hsSize,"antes de generar %d %d\n",p->gameState.head-p->gameState.data,p->hsSize);
   //TODO cuando haga el codigo general tendría que generar primero un bando, correr el codigo, despues el otro
   for(int i=0;i<brd->dims.x*brd->dims.y;i++){
     Holder* hAct=brd->tiles[i].holder;
     if(hAct)
       generar(hAct);
   }
-  assertf(p->gameState.head==p->gameState.data+p->hsSize,"despues de generar %d %d\n",p->gameState.head-p->gameState.data,p->hsSize);
+  //assertf(p->gameState.head==p->gameState.data+p->hsSize,"despues de generar %d %d\n",p->gameState.head-p->gameState.data,p->hsSize);
 }
 
 Tile* tile(board* brd,v pos){
+  assert(pos.x>=0);
+  assert(pos.y>=0);
+  assert(pos.x<brd->dims.x);
+  assert(pos.y<brd->dims.y);
   return &brd->tiles[pos.x+pos.y*brd->dims.x];
 }
 
@@ -144,7 +148,7 @@ int newTriggerBox(triggerSpace* ts){
     ts->size*=2;//por ahi convendría crecer una cantidad fija para que no haya mucha dispersion, no sé
     triggerBox* newMem=new triggerBox[ts->size];
     memcpy(newMem,ts->mem,sizeBefore*sizeof(triggerBox));
-    delete ts->mem;
+    delete[] ts->mem;
     ts->mem=newMem;
     for(int i=sizeBefore;i<ts->size;i++){
       ts->mem[i].nextFree=i+1;

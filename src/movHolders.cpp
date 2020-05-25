@@ -25,6 +25,7 @@ void initMovH(movHolder* m,operador* op,Base* base_){
 void generarSig(movHolder* m){
   //se llama cuando valor == true
   if(m->sig){
+    m->bools&=~(valorCadena|valorFinal);
     m->sig->table->generar(m->sig);
     if(m->bools&hasClick)
       m->bools|=valorCadena;
@@ -47,6 +48,7 @@ void reaccionarSig(movHolder*m,auto nhs){
   if(m->sig){
     reaccionarOverload(m->sig,nhs);
     if(switchToGen){
+      m->bools&=~(valorCadena|valorFinal);
       if(m->bools&hasClick)
         m->bools|=valorCadena;
       else
@@ -57,7 +59,6 @@ void reaccionarSig(movHolder*m,auto nhs){
 }
 
 inline void generarProperNormalH(normalHolder* n){
-  n->bools&=~(valorFinal|valorCadena|valor);
   int i=0;
   actualHolder.buffer=(void(**)(void))n->op->conds.beg;
   actualHolder.bufferPos=&i;
@@ -65,6 +66,7 @@ inline void generarProperNormalH(normalHolder* n){
       c+i != n->op->conds.after;
       i++)
     if(!(*(c+i))()){
+      n->bools&=~(valorFinal|valorCadena|valor);
       return;
     }
   offset=n->pos;
@@ -116,7 +118,7 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
       //la alternativa a hacer esto es que todos los operadores contenedores guarden offset y memoria local
       //para cada iteración/rama, lo que tambien tiene sus desventajas.
     }
-  }else if(valor){ //@check esto tiene sentido?
+  }else if(self->bools&valor){
     reaccionarSig(self,nh);
     if(!(self->bools&valorFinal)){
       offset=getOffset(self->relPos,self->pos);
@@ -130,6 +132,8 @@ void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
   for(int i=0;i<nhs->size;++i){
     normalHolder* nh=(*nhs)[i];
     if(nh==s){
+      actualHolder.nh=nh;
+
       memcpy(memMov.data,s->memAct.beg,s->base->memLocalSize*sizeof(int));
       switchToGen=true;
       actualHolder.tile=tile(actualHolder.brd,s->pos);
@@ -143,7 +147,7 @@ void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
       return;
     }
   }
-  if(valor){
+  if(s->bools&valor){
     reaccionarSig(s,nhs);
     if(!(s->bools&valorFinal)){
       offset=getOffset(s->relPos,s->pos);
@@ -408,7 +412,7 @@ void reaccionarExcH(movHolder*m,vector<normalHolder*>* nhs){
 }
 void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
   fromCast(e,m,excHolder*);
-  if(!valorCadena) return;
+  if(!(e->bools&valorCadena)) return;
   movHolder* branch=e->ops[e->actualBranch];
   branch->table->cargar(branch,norms);
   if(e->bools&makeClick)
@@ -435,9 +439,6 @@ void initExcH(exc* org,Base* base_,char** head){
   }
 }
 
-
-
-
 void generarIsolH(movHolder* m){
   fromCast(s,m,isolHolder*);
 
@@ -460,6 +461,7 @@ void reaccionarIsolH(movHolder* m,normalHolder* nh){
     if(switchToGen){
       ///@optim podria hacerse un lngjmp
       switchToGen=false;
+      printf("s coming back\n");
     }
   }
   else if(s->sig)
@@ -470,9 +472,10 @@ void reaccionarIsolH(movHolder* m,vector<normalHolder*>* nhs){
   if((char*)(*nhs)[0]-(char*)s<s->size){
     s->inside->table->reaccionar(s->inside,(*nhs)[0]);
     if(switchToGen){
-      ///@optim podria hacerse un lngjmp
       switchToGen=false;
+      printf("v coming back\n");
     }
+    //unorderedErase(nhs,0);
   }
   if(s->sig)
     s->sig->table->reaccionarVec(s->sig,nhs);
@@ -497,7 +500,7 @@ void initIsolH(isol* org,Base* base_,char** head){
   *head+=sizeof(isolHolder);
   s->inside=(movHolder*)*head;
   crearMovHolder(org->inside,base_,head);
-  s->bools|=valorFinal|valorCadena;
+  s->bools|=valor|valorFinal|valorCadena;
   s->size=org->size;
 }
 
@@ -518,7 +521,6 @@ void generarDesoptH(movHolder* m){
   fromCast(d,m,desoptHolder*);
 
   d->dinamClusterHead=desoptMov+d->op->dinamClusterBaseOffset;
-
 
   int clusterOffset=0;
   char* correspondingCluster=desoptMov+d->op->clusterSize;
@@ -668,7 +670,7 @@ void cargarNodos(movHolder* m,desoptHolder::node* iter,vector<normalHolder*>* no
       actualMov->table->cargar(actualMov,norms);
       assert(nextIter->iter);
       cargarNodos(d,nextIter->iter,norms);
-    }else if(makeClick&&norms->size!=0){
+    }else if((d->bools&makeClick)&&norms->size!=0){
       push(&clickers,makeClicker(norms,d->base->h));
     }
     offset+=tam;
@@ -736,11 +738,15 @@ void generarNewlySpawned(movHolder* m){
   justSpawnedC.size=justSpawned.size;
   justSpawned.size=0;
 
+  Holder* spawnerH=actualHolder.h;
+
   for(Holder* h:justSpawnedC)
     if(s->h!=h)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
       generar(h);
   if(s->kamikaseNext)
     kamikaseCheckAlive(m);
+
+  actualHolder.h=spawnerH;
 }
 
 void cargarNothing(movHolder*m,vector<normalHolder*>* nh){
