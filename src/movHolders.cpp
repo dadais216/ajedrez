@@ -555,7 +555,7 @@ void generarDesoptH(movHolder* m){
           construirYGenerarNodo(d,localMemSize);
         }else
           secondIter->iter=nullptr;
-        clusterOffset2+=tam;
+        clusterOffset2+=tam; //@optim por ahi vale la pena saltarse esto en la ultima iteracion? en el bucle exterior dependeria de si hay sig
         offset=offsetOrg2;
         memcpy(memMov.data,memTemp2,localMemSize);
       }
@@ -566,7 +566,10 @@ void generarDesoptH(movHolder* m){
     offset=offsetOrg;
     memcpy(memMov.data,memTemp,localMemSize);
   }
+  if(d->sig)
+    d->sig->table->generar(d->sig);
 }
+//TODO es necesario contruir en el momento? no debería dar lo mismo construir todo al principio, si son siempre los mismos bloques?
 void construirYGenerarNodo(desoptHolder* d,int localMemSize){
   char* clusterBeg=d->dinamClusterHead;
   assert(d->dinamClusterHead<desoptMov+d->op->desoptInsideSize);
@@ -617,6 +620,32 @@ void generarNodo(desoptHolder* d,desoptHolder::node* iter,int localMemSize){//it
     memcpy(memMov.data,memTemp,localMemSize);
   }
 }
+/*
+  no siempre se quiere que se resetee la memoria local en cada rama. Si se esta haciendo algo como crecer un arbol hasta alcanzar n espacios
+  si se quiere, porque haces un madd en cada rama y un mcmp cte para cortar. Si no fuera asi tendrías que tener una segunda variable que guarde
+  una idea de en que parte del arbol se esta, que es un quilombo.
+
+  Hay varios casos igual donde mantener memoria entre ramas es util, como la dama. Poder marcar si en una rama se encontró una pieza enemiga capturable
+  es util para saber si se pueden hacer movimientos basicos. Tambien porque en la dama se guarda un monton de informacion entre ramas que despues se analiza.
+
+  Osea que sería util tener las 2 funcionalidades. Podría tener 2 versiones de desopt ahora, pero complicaria el codigo al pedo. Lo voy a dejar para
+  la version compilada, que sería un if durante la escritura nomas. Debería haber algo parecido para isol tambien.
+
+  Por ahora podría implementarlo como un if de un flag adentro de desopt, pero como por ahora nomas me interesa la segunda funcionalidad voy a comentar
+  lo que guarda y restaura memoria y listo.
+
+  Otra forma de tener las 2 funcionalidades es dejar que la memoria local se restaure y usar la memoria de pieza con mset* como memoria que no se restaura.
+  No me termina de convencer porque la memoria de pieza es persistente entre movimientos y tiene otros fines, medio hack
+
+  Otra forma de tener las 2 funcionalidades es marcar cierta region de la memoria local como no restaurable. No agregaria mucha complicacion al codigo porque
+  no es un nuevo tipo de memoria, es nomas un int para cada movimiento que solo sería leido por desopt e isol al momento de restaurar. Por ejemplo,
+  si un movimiento tiene marcado memResl 4 la memoria local de 0 a 3 se restauraria y de 4 para arriba no. No debería ser mas lento porque ese agregado
+  de memoria no deberia importar. No sé si me convence porque agrega una cosa mas al lenguaje, tener 2 desopts e isols parece mas simple y seria igual de
+  eficiente. La ventaja que tiene esto es que podrías tener memoria restaurada y no restaurada en un mismo operador. Si se quiere eso se puede usar la
+  version que no restaura y restaurar manualmente igual, tecnicamente se puede implementar desopt con desliz, excs y memoria tambien (exc(CODE,pass) para encargarse de la funcionalidad de seguir cargando aunque falle lo de adentro)
+
+  TODO?
+ */
 void reactIfNh(normalHolder* nh,movHolder* actualMov,int tam){
   if((char*)nh>=(char*)actualMov&&(char*)nh<(char*)actualMov+tam){
     actualMov->table->reaccionar(actualMov,nh);
@@ -629,7 +658,10 @@ void reactIfNh(vector<normalHolder*>* nhs,movHolder* actualMov,int tam){
 }
 template<typename T>
 void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
+  //@optim en vez de hacer esto se podría avanzar por la memoria, aprovechando que todos los bloques miden lo mismo,
+  //y meterse directamente en el correcto. Aunque como no se estaria recorriendo se podría acceder a memoria muerta, no sé.
   int offset=0;
+  int localMemSize=d->base->memLocalSize*sizeof(int);
   for(int tam:d->op->movSizes){
     desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+offset);
     movHolder* actualMov=(movHolder*)(nextIter+1);
@@ -640,10 +672,10 @@ void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
     if(actualMov->bools&valorFinal){
       if(switchToGen){
         if(nextIter->iter)
-          generarNodo(d,nextIter->iter,d->base->memLocalSize*sizeof(int));
+          generarNodo(d,nextIter->iter,localMemSize);
         else{
           nextIter->iter=(desoptHolder::node*)d->dinamClusterHead;
-          construirYGenerarNodo(d,d->base->memLocalSize*sizeof(int));
+          construirYGenerarNodo(d,localMemSize);
         }
       }else
         reaccionarProperDesoptH(d,nh,nextIter->iter);
@@ -653,11 +685,19 @@ void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
 }
 void reaccionarDesoptH(movHolder* m,normalHolder* n){
   fromCast(d,m,desoptHolder*);
-  reaccionarProperDesoptH(d,n,d->movs);
+  if((char*)n<(char*)d+sizeof(desoptHolder)+d->op->desoptInsideSize){
+    reaccionarProperDesoptH(d,n,d->movs);
+  }else{
+    d->sig->table->reaccionar(d->sig,n);
+  }
 }
 void reaccionarDesoptH(movHolder* m,vector<normalHolder*>* n){
   fromCast(d,m,desoptHolder*);
-  reaccionarProperDesoptH(d,n,d->movs);
+  if((char*)(n->operator[](0))<(char*)d+sizeof(desoptHolder)+d->op->desoptInsideSize){
+    reaccionarProperDesoptH(d,n,d->movs);
+  }else{
+    d->sig->table->reaccionarVec(d->sig,n);
+  }
 }
 void cargarNodos(movHolder* m,desoptHolder::node* iter,vector<normalHolder*>* norms){
   fromCast(d,m,desoptHolder*);
@@ -680,7 +720,7 @@ void cargarNodos(movHolder* m,desoptHolder::node* iter,vector<normalHolder*>* no
 void cargarDesoptH(movHolder*m,vector<normalHolder*>* norms){
   fromCast(d,m,desoptHolder*);
   cargarNodos(d,(desoptHolder::node*)desoptMov,norms);
-  if(m->sig)//puede que decida prohibir poner cosas despues de un desopt, obligar a envolver en un isol si se quiere
+  if(m->sig)
     m->sig->table->cargar(m->sig,norms);
 }
 /*

@@ -1,0 +1,851 @@
+%s:
+holder bucket 4294817
+op bucket 1904
+promedio s 0.000003
+promedio 2517.141500
+min prom 2371.461000
+###########################
+%s:
+holder bucket 4294824
+op bucket 4020
+promedio s 0.000003
+promedio 3090.196792
+min prom 2349.437500
+###########################
+%s:
+holder bucket 4294830
+op bucket 138980
+promedio s 0.000013
+promedio 13458.731800
+min prom 7968.920000
+###########################
+%s:
+holder bucket 4294837
+op bucket 12760
+promedio s 0.000004
+promedio 3677.322000
+min prom 3630.243000
+###########################
+%s:
+holder bucket 4294844
+op bucket 61549704
+promedio s 0.000008
+promedio 7627.138699
+min prom 5846.440816
+###########################
+%s:
+holder bucket 4294851
+op bucket 740944
+promedio s 0.000058
+promedio 57514.661840
+min prom 49923.312000
+###########################
+%s:
+holder bucket 4294857
+op bucket 678520
+promedio s 0.000007
+promedio 6656.714367
+min prom 4765.446667
+###########################
+%s:
+holder bucket 4294866
+op bucket 79800
+promedio s 0.000006
+promedio 6359.905737
+min prom 4102.450000
+###########################
+%s:
+holder bucket 4294529
+op bucket 34736
+promedio s 0.000025
+promedio 25400.010062
+min prom 24379.372500
+###########################
+%s:
+holder bucket 4294873
+op bucket 28464
+promedio s 0.000024
+promedio 24227.365000
+min prom 22864.563750
+###########################
+%s:
+holder bucket 4294878
+op bucket 1904
+promedio s 0.000002
+promedio 1864.082500
+min prom 1823.505000
+---------------------------
+%s:
+holder bucket 4294885
+op bucket 4020
+promedio s 0.000003
+promedio 2700.830500
+min prom 2051.197500
+---------------------------
+%s:
+holder bucket 4294891
+op bucket 138980
+promedio s 0.000014
+promedio 13850.216600
+min prom 9431.460000
+---------------------------
+%s:
+holder bucket 4294898
+op bucket 12760
+promedio s 0.000004
+promedio 3699.766000
+min prom 3695.784000
+---------------------------
+%s:
+holder bucket 4294905
+op bucket 61673424
+promedio s 0.000007
+promedio 7493.195180
+min prom 7274.901288
+---------------------------
+%s:
+holder bucket 4294912
+op bucket 740944
+promedio s 0.000056
+promedio 56489.751940
+min prom 42636.972000
+---------------------------
+%s:
+holder bucket 4294918
+op bucket 678520
+promedio s 0.000007
+promedio 6707.951367
+min prom 5033.653333
+---------------------------
+%s:
+holder bucket 4294927
+op bucket 79800
+promedio s 0.000007
+promedio 6577.563837
+min prom 4238.662500
+---------------------------
+%s:
+holder bucket 4294590
+op bucket 34736
+promedio s 0.000025
+promedio 24557.357313
+min prom 22611.315000
+---------------------------
+%s:
+holder bucket 4294934
+op bucket 28464
+promedio s 0.000025
+promedio 25319.670562
+min prom 23520.455625
+---------------------------
+###########################
+simple:
+holder bucket 1904
+op bucket 1096
+promedio s 0.000003
+promedio 2591.949000
+min prom 2554.718000
+---------------------------
+tiles:
+holder bucket 4020
+op bucket 2928
+promedio s 0.000003
+promedio 3161.070792
+min prom 2730.407500
+---------------------------
+growin:
+holder bucket 138980
+op bucket 3528
+promedio s 0.000014
+promedio 13534.708400
+min prom 8436.320000
+---------------------------
+puzzle:
+holder bucket 12760
+op bucket 1096
+promedio s 0.000004
+promedio 3646.019500
+min prom 3636.924000
+---------------------------
+germen:
+holder bucket 62572856
+op bucket 1544
+promedio s 0.000007
+promedio 7467.916463
+min prom 7291.949580
+---------------------------
+reina:
+holder bucket 740944
+op bucket 4816
+promedio s 0.000057
+promedio 57443.347780
+min prom 42897.302000
+---------------------------
+caballos:
+holder bucket 678520
+op bucket 3624
+promedio s 0.000007
+promedio 6889.028500
+min prom 4619.793333
+---------------------------
+normal:
+holder bucket 79800
+op bucket 16144
+promedio s 0.000007
+promedio 6505.970087
+min prom 4010.162500
+---------------------------
+desopt:
+holder bucket 34736
+op bucket 1256
+promedio s 0.000025
+promedio 25270.841375
+min prom 24487.449375
+---------------------------
+desopt a manopla:
+holder bucket 28464
+op bucket 30856
+promedio s 0.000026
+promedio 26101.740813
+min prom 25775.979375
+---------------------------
+###########################
+simple:
+holder bucket 1904
+op bucket 1096
+promedio s 0.000003
+promedio 2698.214500
+mejor 2693.780000
+---------------------------
+tiles:
+holder bucket 4020
+op bucket 2928
+promedio s 0.000003
+promedio 3193.063417
+mejor 2881.225000
+---------------------------
+growin:
+holder bucket 138980
+op bucket 3528
+promedio s 0.000014
+promedio 13635.887700
+mejor 11171.940000
+---------------------------
+puzzle:
+holder bucket 12760
+op bucket 1096
+promedio s 0.000004
+promedio 3721.556000
+mejor 3713.461000
+---------------------------
+germen:
+holder bucket 62353416
+op bucket 1544
+promedio s 0.000007
+promedio 7466.926276
+mejor 5267.395745
+---------------------------
+reina:
+holder bucket 740944
+op bucket 4816
+promedio s 0.000056
+promedio 55789.455560
+mejor 47434.574000
+---------------------------
+caballos:
+holder bucket 678520
+op bucket 3624
+promedio s 0.000007
+promedio 6851.380333
+mejor 6399.730000
+---------------------------
+normal:
+holder bucket 79800
+op bucket 16144
+promedio s 0.000007
+promedio 6559.326213
+mejor 4002.225000
+---------------------------
+desopt:
+holder bucket 34736
+op bucket 1256
+promedio s 0.000024
+promedio 24265.372687
+mejor 18012.727500
+---------------------------
+desopt a manopla:
+holder bucket 28464
+op bucket 30856
+promedio s 0.000026
+promedio 26205.016813
+mejor 25431.076875
+---------------------------
+###########################
+simple:
+holder bucket 1904
+op bucket 1096
+promedio s 0.000003
+promedio 2684.956500
+mejor 2652.045000
+---------------------------
+tiles:
+holder bucket 4020
+op bucket 2928
+promedio s 0.000003
+promedio 3187.071167
+mejor 3065.162500
+---------------------------
+growin:
+holder bucket 138980
+op bucket 3528
+promedio s 0.000014
+promedio 13636.779000
+mejor 11545.420000
+---------------------------
+puzzle:
+holder bucket 12760
+op bucket 1096
+promedio s 0.000004
+promedio 3699.419500
+mejor 3691.928000
+---------------------------
+germen:
+holder bucket 61910768
+op bucket 1544
+promedio s 0.000007
+promedio 7378.155122
+mejor 5128.834043
+---------------------------
+reina:
+holder bucket 740944
+op bucket 4816
+promedio s 0.000056
+promedio 55782.080420
+mejor 48702.274000
+---------------------------
+caballos:
+holder bucket 678520
+op bucket 3624
+promedio s 0.000007
+promedio 7090.404400
+mejor 5480.853333
+---------------------------
+normal:
+holder bucket 79800
+op bucket 16144
+promedio s 0.000007
+promedio 6809.469600
+mejor 4545.950000
+---------------------------
+desopt:
+holder bucket 34736
+op bucket 1256
+promedio s 0.000026
+promedio 25855.234250
+mejor 24895.162500
+---------------------------
+desopt a manopla:
+holder bucket 28464
+op bucket 30856
+promedio s 0.000027
+promedio 26695.933063
+mejor 25904.129375
+---------------------------
+###########################
+simple:
+holder bucket 1904
+op bucket 1096
+promedio s 0.000003
+promedio 2875.343500
+mejor 2807.679000
+---------------------------
+tiles:
+holder bucket 4020
+op bucket 2928
+promedio s 0.000003
+promedio 3191.133750
+mejor 2687.715000
+---------------------------
+growin:
+holder bucket 138980
+op bucket 3528
+promedio s 0.000014
+promedio 13735.045400
+mejor 9533.620000
+---------------------------
+puzzle:
+holder bucket 12760
+op bucket 1096
+promedio s 0.000004
+promedio 3808.366500
+mejor 3742.836000
+---------------------------
+germen:
+holder bucket 62664352
+op bucket 1544
+promedio s 0.000008
+promedio 7610.121997
+mejor 5826.043103
+---------------------------
+reina:
+holder bucket 740944
+op bucket 4816
+promedio s 0.000052
+promedio 51627.063880
+mejor 37620.130000
+---------------------------
+caballos:
+holder bucket 678520
+op bucket 3624
+promedio s 0.000005
+promedio 4627.908600
+mejor 4480.770000
+---------------------------
+normal:
+holder bucket 6884120
+op bucket 16144
+promedio s 0.000006
+promedio 6280.400238
+mejor 3860.187500
+---------------------------
+desopt:
+holder bucket 34736
+op bucket 1256
+promedio s 0.000025
+promedio 25074.744750
+mejor 24253.151875
+---------------------------
+desopt a manopla:
+holder bucket 28464
+op bucket 30856
+promedio s 0.000026
+promedio 25952.752375
+mejor 23465.595625
+---------------------------
+###########################
+simple:
+holder bucket 1904
+op bucket 1096
+promedio s 0.000002
+promedio 1803.632500
+mejor 1777.072000
+---------------------------
+tiles:
+holder bucket 4020
+op bucket 2928
+promedio s 0.000002
+promedio 2125.892167
+mejor 2064.922500
+---------------------------
+growin:
+holder bucket 138980
+op bucket 3528
+promedio s 0.000009
+promedio 9182.982100
+mejor 7828.160000
+---------------------------
+puzzle:
+holder bucket 12760
+op bucket 1096
+promedio s 0.000002
+promedio 2450.822000
+mejor 2444.319000
+---------------------------
+germen:
+holder bucket 60831704
+op bucket 1544
+promedio s 0.000005
+promedio 5073.430045
+mejor 4885.211864
+---------------------------
+reina:
+holder bucket 740944
+op bucket 4816
+promedio s 0.000049
+promedio 49181.584800
+mejor 37704.160000
+---------------------------
+caballos:
+holder bucket 678520
+op bucket 3624
+promedio s 0.000005
+promedio 4963.355233
+mejor 4389.683333
+---------------------------
+normal:
+holder bucket 79800
+op bucket 16144
+promedio s 0.000007
+promedio 6531.044500
+mejor 4107.287500
+---------------------------
+desopt:
+holder bucket 34736
+op bucket 1256
+promedio s 0.000025
+promedio 24944.645750
+mejor 24316.676875
+---------------------------
+desopt a manopla:
+holder bucket 28464
+op bucket 30856
+promedio s 0.000026
+promedio 26223.757250
+mejor 25526.329375
+---------------------------
+###########################
+simple:
+holder bucket 1904
+op bucket 1096
+promedio s 0.000003
+promedio 2727.866500
+mejor 2720.563000
+---------------------------
+tiles:
+holder bucket 4020
+op bucket 2928
+promedio s 0.000003
+promedio 3278.669667
+mejor 2209.222500
+---------------------------
+growin:
+holder bucket 138980
+op bucket 3528
+promedio s 0.000013
+promedio 13136.730600
+mejor 8932.500000
+---------------------------
+puzzle:
+holder bucket 12760
+op bucket 1096
+promedio s 0.000004
+promedio 3700.147000
+mejor 3684.828000
+---------------------------
+germen:
+holder bucket 62138232
+op bucket 1544
+promedio s 0.000007
+promedio 7458.228923
+mejor 7298.098712
+---------------------------
+reina:
+holder bucket 740944
+op bucket 4816
+promedio s 0.000056
+promedio 55961.136720
+mejor 55212.412000
+---------------------------
+caballos:
+holder bucket 678520
+op bucket 3624
+promedio s 0.000007
+promedio 6861.227700
+mejor 6704.000000
+---------------------------
+normal:
+holder bucket 79800
+op bucket 16144
+promedio s 0.000006
+promedio 6337.420363
+mejor 3922.187500
+---------------------------
+desopt:
+holder bucket 34736
+op bucket 1256
+promedio s 0.000019
+promedio 19408.378312
+mejor 16082.408125
+---------------------------
+desopt a manopla:
+holder bucket 28464
+op bucket 30856
+promedio s 0.000026
+promedio 25743.879375
+mejor 24387.563750
+---------------------------
+###########################
+simple:
+holder bucket 1904	+0
+op bucket 1096		+0
+promedio s 0.000003	-0.000000
+promedio 2683.246000	-44.620500
+mejor 2681.568000	-38.995000
+---------------------------
+tiles:
+holder bucket 4020	+0
+op bucket 2928		+0
+promedio s 0.000003	+0.000000
+promedio 3204.770792	-73.898875
+mejor 3100.935000	+891.712500
+---------------------------
+growin:
+holder bucket 138980	+0
+op bucket 3528		+0
+promedio s 0.000014	+0.000001
+promedio 13574.184800	+437.454200
+mejor 11490.440000	+2557.940000
+---------------------------
+puzzle:
+holder bucket 12760	+0
+op bucket 1096		+0
+promedio s 0.000004	-0.000000
+promedio 3705.421500	+5.274500
+mejor 3698.925000	+14.097000
+---------------------------
+germen:
+holder bucket 62089216	-49016
+op bucket 1544		+0
+promedio s 0.000007	+0.000000
+promedio 7335.056922	-123.172001
+mejor 5011.463115	-2286.635597
+---------------------------
+reina:
+holder bucket 740944	+0
+op bucket 4816		+0
+promedio s 0.000057	+0.000001
+promedio 56970.181560	+1009.044840
+mejor 52511.220000	-2701.192000
+---------------------------
+caballos:
+holder bucket 678520	+0
+op bucket 3624		+0
+promedio s 0.000007	-0.000000
+promedio 6840.317733	-20.909967
+mejor 5267.560000	-1436.440000
+---------------------------
+normal:
+holder bucket 79800	+0
+op bucket 16144		+0
+promedio s 0.000006	+0.000000
+promedio 6421.894513	+84.474150
+mejor 4046.200000	+124.012500
+---------------------------
+desopt:
+holder bucket 34736	+0
+op bucket 1256		+0
+promedio s 0.000025	+0.000006
+promedio 25175.543438	+5767.165125
+mejor 23158.029375	+7075.621250
+---------------------------
+desopt a manopla:
+holder bucket 28464	+0
+op bucket 30856		+0
+promedio s 0.000025	-0.000001
+promedio 25019.614875	-724.264500
+mejor 21603.954375	-2783.609375
+---------------------------
+###########################
+simple:
+holder bucket 1904	+0
+op bucket 1096		+0
+promedio s 0.000003	-0.000000
+promedio 2586.533500	-96.712500
+mejor 2486.883000	-194.685000
+---------------------------
+tiles:
+holder bucket 4020	+0
+op bucket 2928		+0
+promedio s 0.000003	+0.000000
+promedio 3159.717292	-45.053500
+mejor 2459.247500	-641.687500
+---------------------------
+growin:
+holder bucket 138980	+0
+op bucket 3528		+0
+promedio s 0.000014	+0.000000
+promedio 14332.007700	+757.822900
+mejor 8357.240000	-3133.200000
+---------------------------
+puzzle:
+holder bucket 12760	+0
+op bucket 1096		+0
+promedio s 0.000004	-0.000000
+promedio 3704.721500	-0.700000
+mejor 3684.166000	-14.759000
+---------------------------
+germen:
+holder bucket 60970856	-1118360
+op bucket 1544		+0
+promedio s 0.000008	+0.000001
+promedio 7506.914875	+171.857953
+mejor 6070.305785	+1058.842670
+---------------------------
+reina:
+holder bucket 740944	+0
+op bucket 4816		+0
+promedio s 0.000058	+0.000001
+promedio 57783.518020	+813.336460
+mejor 55271.112000	+2759.892000
+---------------------------
+caballos:
+holder bucket 678520	+0
+op bucket 3624		+0
+promedio s 0.000008	+0.000001
+promedio 7672.366300	+832.048567
+mejor 5006.160000	-261.400000
+---------------------------
+normal:
+holder bucket 79800	+0
+op bucket 16144		+0
+promedio s 0.000006	+0.000000
+promedio 6423.484000	+1.589487
+mejor 3975.925000	-70.275000
+---------------------------
+desopt:
+holder bucket 34736	+0
+op bucket 1256		+0
+promedio s 0.000024	-0.000001
+promedio 23713.603938	-1461.939500
+mejor 16882.910000	-6275.119375
+---------------------------
+desopt a manopla:
+holder bucket 28464	+0
+op bucket 30856		+0
+promedio s 0.000027	+0.000002
+promedio 27132.269750	+2112.654875
+mejor 26214.806250	+4610.851875
+---------------------------
+###########################
+simple:
+holder bucket 1904	+0
+op bucket 1096		+0
+promedio s 0.000003	-0.000000
+promedio 2684.306000	+97.772500
+mejor 2662.938000	+176.055000
+---------------------------
+tiles:
+holder bucket 4020	+0
+op bucket 2928		+0
+promedio s 0.000003	+0.000000
+promedio 3175.813417	+16.096125
+mejor 2412.437500	-46.810000
+---------------------------
+growin:
+holder bucket 138980	+0
+op bucket 3528		+0
+promedio s 0.000014	-0.000000
+promedio 13905.934700	-426.073000
+mejor 11325.620000	+2968.380000
+---------------------------
+puzzle:
+holder bucket 12760	+0
+op bucket 1096		+0
+promedio s 0.000004	-0.000000
+promedio 3792.776000	+88.054500
+mejor 3789.796000	+105.630000
+---------------------------
+germen:
+holder bucket 62261608	+1290752
+op bucket 1544		+0
+promedio s 0.000008	-0.000000
+promedio 7544.214799	+37.299924
+mejor 5479.546610	-590.759175
+---------------------------
+reina:
+holder bucket 740944	+0
+op bucket 4816		+0
+promedio s 0.000056	-0.000002
+promedio 55947.168560	-1836.349460
+mejor 54018.376000	-1252.736000
+---------------------------
+caballos:
+holder bucket 678520	+0
+op bucket 3624		+0
+promedio s 0.000007	-0.000001
+promedio 6770.820833	-901.545467
+mejor 5257.263333	+251.103333
+---------------------------
+normal:
+holder bucket 79800	+0
+op bucket 16144		+0
+promedio s 0.000005	-0.000001
+promedio 5462.224687	-961.259313
+mejor 3703.825000	-272.100000
+---------------------------
+desopt:
+holder bucket 34736	+0
+op bucket 1256		+0
+promedio s 0.000017	-0.000007
+promedio 16963.484812	-6750.119126
+mejor 16464.583125	-418.326875
+---------------------------
+desopt a manopla:
+holder bucket 28464	+0
+op bucket 30856		+0
+promedio s 0.000025	-0.000002
+promedio 24753.792813	-2378.476937
+mejor 17321.289375	-8893.516875
+---------------------------
+###########################
+simple:
+holder bucket 1904	+0
+op bucket 1096		+0
+promedio s 0.000002	-0.000001
+promedio 1817.283000	-867.023000
+mejor 1796.874000	-866.064000
+---------------------------
+tiles:
+holder bucket 4020	+0
+op bucket 2928		+0
+promedio s 0.000002	-0.000001
+promedio 2110.456417	-1065.357000
+mejor 2043.220000	-369.217500
+---------------------------
+growin:
+holder bucket 138980	+0
+op bucket 3528		+0
+promedio s 0.000010	-0.000004
+promedio 10309.078300	-3596.856400
+mejor 7891.220000	-3434.400000
+---------------------------
+puzzle:
+holder bucket 12760	+0
+op bucket 1096		+0
+promedio s 0.000004	-0.000000
+promedio 3683.007000	-109.769000
+mejor 3669.033000	-120.763000
+---------------------------
+germen:
+holder bucket 61935144	-326464
+op bucket 1544		+0
+promedio s 0.000007	-0.000001
+promedio 7455.775134	-88.439665
+mejor 7224.214912	+1744.668302
+---------------------------
+reina:
+holder bucket 740944	+0
+op bucket 4816		+0
+promedio s 0.000056	-0.000000
+promedio 55843.038100	-104.130460
+mejor 54952.662000	+934.286000
+---------------------------
+caballos:
+holder bucket 678520	+0
+op bucket 3624		+0
+promedio s 0.000007	-0.000000
+promedio 6622.684433	-148.136400
+mejor 6480.100000	+1222.836667
+---------------------------
+normal:
+holder bucket 79800	+0
+op bucket 16144		+0
+promedio s 0.000006	+0.000001
+promedio 5749.402012	+287.177325
+mejor 3740.525000	+36.700000
+---------------------------
+desopt:
+holder bucket 34736	+0
+op bucket 1256		+0
+promedio s 0.000017	-0.000000
+promedio 16689.818687	-273.666124
+mejor 16285.571875	-179.011250
+---------------------------
+desopt a manopla:
+holder bucket 28464	+0
+op bucket 30856		+0
+promedio s 0.000023	-0.000002
+promedio 23148.531313	-1605.261500
+mejor 17218.631875	-102.657500
+---------------------------
+###########################

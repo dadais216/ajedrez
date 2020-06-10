@@ -97,7 +97,7 @@ w pieza mcmp o1 1 ss mover
 mcmp p1 1 aw mover mset t0 1 mset p1 0
 mcmp p1 0 dw mover mset p1 1
 
-:12 7
+:12 7 #dama que solo captura kakeada
 >newPos= mset l0 2 desliz 
           mless l0 l1 exc 
            mdist x ll0 madd l0 2 
@@ -116,7 +116,7 @@ msize l 20 mset l1 2 desopt
 #el problema con la anterior es que puede haber bucles donde se pase 2 veces por el mismo lugar,
 #y como se guarda donde se para se invalidarian.
 #la solucion es guardar las piezas capturadas en vez de el lugar donde se aterriza
-:13 6
+:13 6 #dama que solo captura
 >newPos= mset l0 2 desliz 
           mless l0 l1 exc 
            mdist x ll0 madd l0 2 
@@ -131,18 +131,39 @@ msize l 20 mset l1 2 desopt
        wd enemigo wd exc vacio or self end sa newPos addPos capt red wd mov green c or
        sa enemigo sa exc vacio or self end wd newPos addPos capt red sa mov green c or
        sd enemigo sd exc vacio or self end wa newPos addPos capt red sd mov green c end;
+
+:14 6 #dama que captura y mueve
+>newPos= mset l0 4 desliz 
+          mless l0 l1 exc 
+           mdist x ll0 madd l0 2 
+          or 
+           madd l0 1 mdist y ll0 madd l0 1 
+          end 
+         end 
+         mcmp l0 l1;
+>addPos= mset ll1 x madd l1 1 mset ll1 y madd l1 1;
+msize l 22 mset l1 4 desopt
+       wa enemigo wa exc vacio or self end sd newPos addPos capt red wa mov green mset l2 1 c or
+       wd enemigo wd exc vacio or self end sa newPos addPos capt red wd mov green mset l2 1 c or
+       sa enemigo sa exc vacio or self end wd newPos addPos capt red sa mov green mset l2 1 c or
+       sd enemigo sd exc vacio or self end wa newPos addPos capt red sd mov green mset l2 1 c end
+    mcmp l2 0 isol wa mover c end isol wd mover c end isol sa mover c end sd mover c;
+
 #la cosa seria registrar en una memoria pos de capturas y el aterrizaje, teniendo al principio un contador de puntos.
 #despues del desopt tendría que encontrar el maximo de las memorias, y armar el camino
 #supongo que va a haber 2 pass, el primero para encontrar el maximo y el segundo para armar, porque puede haber empates.
 
-:14 6
-desopt 
- wa mover c or 
- wd mover c end;
+
+#optimizaciones:
+#hacer que la lista de pos se recorra de atras para adelante, la mayoria de las veces es el ultimo el repetido
+#por ahi guardar en una variable en que direccion se movio, para evitar moverse en la direccion opuesta
+#en vez de guardar posiciones guardar un bitfield del tablero, que mediria la mitad porque se usa solo un color
 
 
 
-
+#PIEZAS PARA TEST
+#desopt que haga un arbol de 4 de altura para arriba y para abajo. Como ahora la memoria se mantiene entre ramas va a necesitar un control en memoria que maneje eso
+#pieza que implemente desopt usando deslices, exc y memoria. Para boludear mas que nada, igual estaria bueno ver la eficiencia ganada, ademas de la legibilidad, por hacer desopt un operador basico.
 
 #####TEST
 
@@ -220,14 +241,15 @@ desliz isol desliz isol mover c end d end end s end;
 
 :34 2 #desopt
 >X&Y=wa&wd|sa&sd;
-desopt X mover or Y mover end
+desopt 98 X mover c or Y mover c end;
 
 :35 2 #spam en lugar de desopt
 >X=wa|wd;
->Y=X|;
-X Y Y mover;
+>Y=X X X X X|X X X X|X X X|X X|X|;
+X Y mover;
 >X=sa|sd;
-X Y Y mover;
+>Y=X X X X X|X X X X|X X X|X X|X|;
+X Y mover;
 
 :36 #dama
 

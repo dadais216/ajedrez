@@ -214,6 +214,9 @@ void makePieces(parseData* pd,vector<Piece*>* pieces,bucket* b){
     char c;
     int id,sn;
     while((c=*(s++))){
+      if(c=='#'){
+        do{s++;}while(*s!='\n'); s++;
+      }
       if(c==':'){
         id=stringToInt(&s);
         if(pd->ids[i]==id){
@@ -506,7 +509,7 @@ void loadMacro(parseData* pd,char** sp){
       goto loop;
     }
   }
-  failIf(*s!='=',"macro definition must be > name = , with maybe multiple names linked with &");
+  failIf(*s!='=',"macro definition must be > name = expansion; with maybe multiple names linked with &");
   s++;
 
   for(int i=0;i<names.size;i++){
@@ -547,6 +550,21 @@ void loadMacro(parseData* pd,char** sp){
     pd->tokenToWord.size=tok+1;
     pd->tokenToWord[tok]=names[i];//puede que tenga que hacer un memcpy no se
   }
+
+  /*
+    en caso de tener
+    >X=a;
+    >Y=X;
+    Y mov;
+    >X=b;
+    Y mov;
+    Y va a usar el X viejo, no el nuevo. Para hacer que use el nuevo debería tener un flag que se active si se esta pisando un local,
+    y que despues recorra y actualice macros locales. Se puede hacer y no sería caro. No sé si me convence porque la unica utilidad
+    que tiene es poder meter hacer macros parametricos, que arranquen con un X que no signifique nada y despues se acomode a una X especifica.
+    No me convence mucho porque no funcionaria con globales (por ahora), y nomas funciona entre macros, y es medio raro por necesitar una X dummy.
+    Tenia pensado agregar macros con parametros bien, y si lo hago no tendría sentido hacer esto asi que no lo voy a hacer
+  */
+
 
   *sp=s;
 }

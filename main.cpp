@@ -17,6 +17,8 @@ void doTests(char*);
 
 int fpsLock;
 
+bool saveBenchmark;
+
 int main(int argc,char** argv){
   setbuf(stdout,NULL);//eso esto porque printf se lleva mal con cout. Debería dejar uno de los 2 TODO podria hacer un printf sin tipos para boludear
 
@@ -24,11 +26,12 @@ int main(int argc,char** argv){
   font.loadFromFile("sprites/VL-PGothic-Regular.ttf");
 
   if(argc==2){
+    saveBenchmark=argv[1][1]!='n';
     doTests(stateMem);
     return 0;
   }
 
-  properInit(stateMem,7,1,4);
+  properInit(stateMem,9,1,4);
   //arranqueInit(stateMem);
 
   float fpsLock=1./60.; //maximos fps TODO en test de velocidad que sea 0

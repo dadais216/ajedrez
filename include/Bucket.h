@@ -36,7 +36,7 @@ void initBucket(bucket* b,int size=bucketSize){
 void ensureSpace(bucket* b,int size){
   assert(size<b->size);
   if(b->head+size>b->data+b->size){
-    printf("ajoi\n");
+    //printf("ajoi\n");
     bucket::block* nextBlock=b->actualBlock();
     assert(nextBlock->next==nullptr);
     allocNewBucketBlock(b);
@@ -271,6 +271,17 @@ void push(vector<T>* vec,T obj){
 template<typename T,typename E>
 void push(vector<T>* vec,E enumm){
   push(vec,(int)enumm);
+}
+
+template<typename T>
+T* newElem(vector<T>* vec){
+  assert(vec->size<=vec->cap);
+  assert(vec->cap>0);
+  if(vec->size==vec->cap){
+    privateGrow(vec,vec->cap*2);//TODO probar 1,5
+  }
+  vec->size++;
+  return &vec->data[vec->size-1];
 }
 
 template<typename T>
