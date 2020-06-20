@@ -31,7 +31,7 @@ int main(int argc,char** argv){
     return 0;
   }
 
-  properInit(stateMem,9,1,4);
+  properInit(stateMem,20,1,4);
   //arranqueInit(stateMem);
 
   float fpsLock=1./60.; //maximos fps TODO en test de velocidad que sea 0

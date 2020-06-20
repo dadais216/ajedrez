@@ -75,6 +75,7 @@ void selectorInit(char* mem){
   genPlayerSelector(&st->player2,1,4);
 
   char* boardFile=loadFile("tableros.txt");//podría guardarla en algun lado para no volver a cargarla en el parser
+  defer(boardFile);
   char* s=boardFile;
 
   int i=0;

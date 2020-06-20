@@ -9,17 +9,19 @@ v getActualPos(v,v);
 bool debugInCondition=true;
 #endif
 
-Clicker makeClicker(vector<normalHolder*>* normales,Holder* h){
-  Clicker clicker;
-  clicker.h=h;
+void makeClicker(vector<normalHolder*>* normales,Holder* h){
+  Clicker* clicker=newElem(&clickers);
+  clicker->h=h;
 
   //TODO No alocar devuelta
-  initCopy(&clicker.normales,normales->data,normales->size);//con un array bastaria, pero usar un vector tiene el costo de un int mas nomas asi que ya fue
+  //TODO creo? que tengo que alocar algo aparte si o si, igual estaria bueno tenerlo en un espacio continuo, total se libera todo junto y
+  //si tengo ganas podría tener superposiciones
+  initCopy(&clicker->normales,normales->data,normales->size);//con un array bastaria, pero usar un vector tiene el costo de un int mas nomas asi que ya fue
+
+  actualHolder.h=h;//?
 
   normalHolder* lastN=normales->data[normales->size-1];
-
-  actualHolder.h=h;
-  clicker.clickPos=lastN->pos;
+  clicker->clickPos=lastN->pos;
 
   //clickPos.show();
   ///solapamientos
@@ -37,7 +39,13 @@ Clicker makeClicker(vector<normalHolder*>* normales,Holder* h){
     mod=conflictos+1;
     }
   */
-  return clicker;
+}
+
+void clearClickers(){
+  for(Clicker& cli:clickers){
+    free(&cli.normales);
+  }
+  clickers.size=0;
 }
 
 void drawClicker(Clicker* c){
@@ -134,8 +142,6 @@ void executeClicker(Clicker* c,board* brd){
         cout<<endl;
     }
     */
-
-  clickers.size=0;
 }
 
 void debugPrintClickers(board* brd){

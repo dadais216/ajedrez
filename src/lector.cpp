@@ -201,6 +201,34 @@ void getBoardIds(parseData* pd,int n){
     x++;
   }
 }
+
+macro getMacro(parseData* pd,int token){
+  int ind=token-tlast;
+  return pd->macros[ind];
+}
+//TODO por que no borro la local del arbol aca?
+void clearLocalMacros(parseData* pd){
+  //si estuvieran todos las expansiones en un vector lo limpiaria y listo, ademas de tener menos accesos al heap. No sé si vale hacerlo ahora igual
+  for(int i=pd->lastGlobalMacro+1;i<pd->lastLocalMacro;i++){
+    macro m=getMacro(pd,i);
+    free(&m.expansion);
+  }
+  pd->lastLocalMacro=pd->lastGlobalMacro;
+  pd->macros.size=pd->lastGlobalMacro-tlast;
+}
+
+void clearMacros(parseData* pd){
+  for(int i=tlast;i<pd->lastLocalMacro;i++){
+    macro m=getMacro(pd,i);
+    free(&m.expansion);
+    pd->wordToToken.erase(pd->tokenToWord[i]);
+  }
+  pd->lastLocalMacro=pd->lastGlobalMacro=tlast;
+  pd->macros.size=0;
+}
+//TODO en algun momento podría mirar de limpiar todas las cosas del parser despues de usarlo. Que queden no es un leak pero quedan ahi al pedo igual
+//la funcion de arriba solo se usa para test pero debería usarse normalmente 
+
 //consigo todas las pieces juntas para saber los tamaños de las memorias. Esto incluye piezas que no esten en el tablero, aparezcan por spawn
 void makePieces(parseData* pd,vector<Piece*>* pieces,bucket* b){
   char* filePtr=loadFile("piezas.txt");
@@ -208,7 +236,7 @@ void makePieces(parseData* pd,vector<Piece*>* pieces,bucket* b){
 
   loadGlobalMacros(pd,filePtr);
 
-  vector<int> tokens;init(&tokens);
+  vector<int> tokens;init(&tokens);defer(&tokens);//algunos de estos vectores podrían ser globales y reutilizarse
   for(int i=0;i<pd->ids.size;i++){
     char* s=filePtr;
     char c;
@@ -235,8 +263,7 @@ void makePieces(parseData* pd,vector<Piece*>* pieces,bucket* b){
     for(int i=pd->lastGlobalMacro;i<pd->lastLocalMacro;i++){
       pd->wordToToken.erase(pd->tokenToWord[i]);
     }
-    pd->lastLocalMacro=pd->lastGlobalMacro;
-    pd->macros.size=pd->lastGlobalMacro-tlast;
+    clearLocalMacros(pd);
     tokens.size=0;
   }
   init(&memMov,pd->memLocalSizeMax);
@@ -482,7 +509,7 @@ template<bool global>
 void loadMacro(parseData* pd,char** sp){
   char* s=*sp;
   bool tangled=false;
-  vector<stringForHash> names;init(&names);
+  vector<stringForHash> names;init(&names);defer(&names);
   vector<macro> macros;init(&macros);defer(&macros);
 
  loop:
@@ -491,9 +518,10 @@ void loadMacro(parseData* pd,char** sp){
   char* b=s;
   while(*s!=' '&&*s!='&'&&*s!='=') s++;
 
-  char newWord[255]={};
-  memcpy(newWord,b,s-b);
-  push(&names,stringForHash(newWord));
+  //char newWord[255]={};
+  //memcpy(newWord,b,s-b);
+  //push(&names,stringForHash(newWord));
+  push(&names,stringForHash(b,s));
 
   while(*s==' ') s++;
   if(*s=='&'){
@@ -631,10 +659,6 @@ igual no creo que lo valga, es algo bastante raro. Y no es que no se puede hacer
 
 */
 
-macro getMacro(parseData* pd,int token){
-  int ind=token-tlast;
-  return pd->macros[ind];
-}
 
 bool isMacro(int tok){
   return tok>=tlast&&tok<1024;
@@ -743,6 +767,7 @@ struct tangledMacroIteration{
   int beg;
   int end;
 };
+//TODO segun valgrind hay un leak aca pero ni idea
 void expandTangledVersions(parseData* pd,vector<int>* from,vector<int>* into,int movStart,int movEnd,int tangledGroup){
   bool lastLap=false;
   vector<tangledMacroIteration> iterations;init(&iterations);defer(&iterations);
@@ -807,6 +832,7 @@ void growMemory(parseData* pd,int gType,int val){
 
 void processTokens(parseData* pd,vector<int>* tokens){
   vector<int> tokensExpanded;init(&tokensExpanded,tokens->size*2);
+  defer(&tokensExpanded);
 
   int movStart=0;
   char movType=0;

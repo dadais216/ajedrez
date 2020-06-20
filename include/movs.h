@@ -20,7 +20,9 @@ struct colort{
   virtual void draw(void)=0;
 };
 struct color:public colort{
-  color(RectangleShape*);
+  void init(RectangleShape* rs_){
+    rs=rs_;//init en vez de constructor para poder usarlo en uno de mis vectores
+  }
   RectangleShape* rs;
   virtual void draw();
 };

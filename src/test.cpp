@@ -21,7 +21,10 @@ struct testPrintData{
 struct{
   vector<testPrintData> before;
   vector<testPrintData> after;//guardo al final en vez de por test para no guardar en caso de crash
+  char const* name;
 }testPrint;
+
+const int runs=5;
 
 template<typename T>
 void sGetNext(char** ss,T* var){
@@ -57,53 +60,87 @@ void getOldStats(){
 
   char* str=loadFile("benchmarks");//no sé si se puede hacer algo mejor que esto, nomas necesito lo que este al final del archivo pero el offset no es fijo
   //(supongo que podria calcular el offset haciendo los datos const y teniendo una funcion constexpr aca pero eh)
+  defer(str);
   FILE* file=fopen("benchmarks","r");//medio bizarro reabrir pero bueno
   fseek(file,0,2);
   int size=ftell(file);
   fclose(file);
 
-  int i;
-  for(i=size-40;i>0;i--){
-    if(str[i]=='#'){
-      i+=2;//saltar # y \n
-      break;
+  if(size>10){
+    int i;
+    for(i=size-40;i>0;i--){
+      if(str[i]=='#'){
+        i+=2;//saltar # y \n
+        break;
+      }
     }
+    assert(str[i]=='@');
+    i++;
+    while(str[i]!='@') i++;
+    i+=2;//saltar @ y \n
+
+    char* s=str+i;
+    
+    do{
+      testPrintData* oldBench=newElem(&testPrint.before);
+      char* b=s;
+      do{s++;
+      }while(*s!=':');
+      oldBench->name=new char[s-b+1];//podria tener un char[256] sino no importa
+      memcpy((char*)oldBench->name,b,s-b);//podria no copiar y mantener str, pero lo libero por las dudas de que tenga un impacto, no creo igual
+      *(char*)(oldBench->name+(s-b))=0;//que rompe bola son los const
+      
+      sGetNext(&s,&oldBench->holderBucketSize);
+      sGetNext(&s,&oldBench->opBucketSize);
+      sGetNext(&s,&oldBench->promSec);
+      sGetNext(&s,&oldBench->prom);
+      sGetNext(&s,&oldBench->minProm);
+    
+      s+=5;//saltar el posible - en el ultimo delta, medio garca
+      do{s++;}while(*s!='-');
+      do{s++;}while(*s=='-');
+      s++;
+    }while(*s!='#');
   }
-  char* s=str+i;
-
-  do{
-    testPrintData* oldBench=newElem(&testPrint.before);
-    char* b=s;
-    do{s++;
-    }while(*s!=':');
-    oldBench->name=new char[s-b+1];//podria tener un char[256] sino no importa
-    memcpy((char*)oldBench->name,b,s-b);//podria no copiar y mantener str, pero lo libero por las dudas de que tenga un impacto, no creo igual
-    *(char*)(oldBench->name+(s-b))=0;//que rompe bola son los const
-
-    sGetNext(&s,&oldBench->holderBucketSize);
-    sGetNext(&s,&oldBench->opBucketSize);
-    sGetNext(&s,&oldBench->promSec);
-    sGetNext(&s,&oldBench->prom);
-    sGetNext(&s,&oldBench->minProm);
-
-    s+=5;//saltar el posible - en el ultimo delta, medio garca
-    do{s++;}while(*s!='-');
-    do{s++;}while(*s=='-');
-    s++;
-  }while(*s!='#');
-
-  delete[] str;
 }
 
 void saveStats(){
+  printf("@%s@\n",testPrint.name);
   FILE* file;
   if(saveBenchmark){
     file=fopen("benchmarks","a");
+    fprintf(file,"@%s@\n",testPrint.name);
   }
-  for(int i=0;i<testPrint.after.size;i++){
+
+  //estaba entre tener un array[runs] en cada test donde ir poniendo los datos, alocando solo
+  //en la primera corrida o esto, un vector donde pongo los test y se repiten por cada run.
+  //lo bueno de este es que no necesito saber de antemano o calcular la cantidad de test arrastrando un contador,
+  //porque la saco haciendo esta division al final. Otra cosa buena es que reutilizo el mismo
+  //struct que en before, y tambien esta bueno que se escribe todo de corrido y no hay que volver para atras.
+  //lo malo es que se repiten los nombres y que hace alocaciones de mas por ser un vector. Lo segundo se podría
+  //hacer igual de eficiente que en el otro haciendo que al final de la primera corrida
+  //se reserve el tamaño*runs, pero no lo vale aca
+
+  int testQ=testPrint.after.size/runs;
+
+  for(int i=0;i<testQ;i++){
     testPrintData* actual=&testPrint.after[i];
     int holderBucketSizeDelta=0,opBucketSizeDelta=0;
     double promSecDelta=0,promDelta=0,minPromDelta=0;
+
+
+    for(int k=1;k<runs;k++){
+      testPrintData* otherRun=&testPrint.after[i+k*testQ];
+      actual->holderBucketSize=std::max(actual->holderBucketSize,otherRun->holderBucketSize);
+      actual->opBucketSize=std::max(actual->opBucketSize,otherRun->opBucketSize);
+      actual->promSec+=otherRun->promSec;
+      actual->prom+=otherRun->prom;
+      actual->minProm=std::min(actual->minProm,otherRun->minProm);//por ahi debería tomar el promedio, no śe
+    }
+    actual->promSec/=runs;
+    actual->prom/=runs;
+
+
 
     for(int j=0;j<testPrint.before.size;j++){
       testPrintData* before=&testPrint.before[j];
@@ -174,6 +211,18 @@ void runTest(properState* ps,char const* name,int map,int turns,int times,bool p
   result->minProm=testData.minProm;
 }
 
+void segmentationHandler(int sig){
+  //undefined behavior pero debería andar
+  int res=system("cpupower frequency-set --governor powersave");
+  if(res!=0)
+    printf("check cpu governor\n");
+  if(sig==SIGSEGV)
+    fail("crash on test\n");
+  else{
+    printf("stopped\n");
+    abort();
+  }
+}
 
 void doTests(char* mem){
   properInit(mem,0,2,2,true);
@@ -181,21 +230,35 @@ void doTests(char* mem){
   srand(time(NULL));
   getOldStats();
 
+  std::signal(SIGSEGV,segmentationHandler);
+  std::signal(SIGINT,segmentationHandler);
+  int res=system("cpupower frequency-set --governor performance");
+  failIf(res!=0,"testing needs sudo\n");
+
   timespec beg,end;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&beg);
 
-  runTest(ps,"simple",14,1000,2,false,true);
-  runTest(ps,"tiles",21,400,60,false);
-  runTest(ps,"growin",20,50,200,false);
-  runTest(ps,"puzzle",15,1000,2,false);
-  runTest(ps,"germen",19,399,100,false);
-  runTest(ps,"reina",18,500,100,false);
-  //runTest(ps,"emperadores",22,300,10,false); no anda porque isol en desliz no esta bien hecho y hay 2 formas de solucionarlo
-  //runTest(ps,"rebote",23,300,10,false); no anda porque no hay normales no esp por ahora
-  runTest(ps,"caballos",17,300,100,true);
-  runTest(ps,"normal",16,80,1000,true);
-  runTest(ps,"desopt",23,1600,10,false);
-  runTest(ps,"desopt a manopla",24,1600,10,false);
+  testPrint.name="normalisin + governor performance";
+
+  for(int i=0;i<runs;i++){
+    runTest(ps,"simple",14,10,3000,false,i==0);
+    runTest(ps,"tiles",21,600,800,false);
+    runTest(ps,"growin",20,2500,500,false);
+    runTest(ps,"puzzle",15,1000,300,false);
+    runTest(ps,"germen",19,399,1500,false);
+    runTest(ps,"desliz",18,3000,120,false);
+    //runTest(ps,"emperadores",22,300,10,false); no anda porque isol en desliz no esta bien hecho y hay 2 formas de solucionarlo
+    //runTest(ps,"rebote",23,300,10,false); no anda porque no hay normales no esp por ahora
+    runTest(ps,"caballos",17,150,450,true);
+    runTest(ps,"normal",16,80,10000,true);
+    runTest(ps,"desopt",23,500,600,false);
+    runTest(ps,"desopt a manopla",24,500,800,false);
+  }
+  //la desviacion entre 2 corridas iguales es de menos de 100, para estar seguro lo corro 5 veces
+
+  res=system("cpupower frequency-set --governor powersave");
+  if(res!=0)
+    printf("check cpu governor\n");
 
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&end);
   double elapsed=(end.tv_sec-beg.tv_sec)+(end.tv_nsec-beg.tv_nsec)/1e9;
@@ -228,10 +291,10 @@ void randomTurnTestPlayer(bool bando,properState* ps){
     testData.dProm++;
     testData.nProm+=elapsed;
 
-    clickers.size=0;
+    clearClickers();
   }else{
     testData.cutEarly=true;
   }
-  drawScreen(properDraw);
+  //drawScreen(properDraw);
 }
 

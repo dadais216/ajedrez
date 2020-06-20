@@ -337,6 +337,10 @@ void forEachFunc(vector<auto> vec,auto lambda){
 */
 
 
+//TODO estaria bueno tener una estructura tipo vector pero con capacidad nomas, que se acceda por index.
+//entonces haces at(vec,8) y hay un if que te aloca si 8 esta fuera de rango. Tendría el mismo costo que
+//vector, un if, un int menos y es util en algunos lugares
+
 
 
 

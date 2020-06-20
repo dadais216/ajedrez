@@ -56,10 +56,11 @@ void humanTurn(bool bando,board* brd){
           if(posClicked==cli.clickPos){
             executeClicker(&cli,brd);//accionar
             drawScreen(properDraw);
+            clearClickers();
             return;
           }
         }
-        clickers.size=0;
+        clearClickers();
         printf("(%d,%d)\n",input.get().x,input.get().y);
 
         Holder* act=tile(brd,input.get())->holder;
@@ -126,6 +127,7 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id,bool forTest){
   initParser(&ps->pd);
 
   init(&colores);
+  init(&coloresImp);
 
   actualHolder.ps=ps;
 
@@ -142,7 +144,7 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id,bool forTest){
   }
 }
 
-void resetBucket(properState* ps,bucket* b,int size=bucketSize){
+void resetBucket(bucket* b,int size=bucketSize){
   clearBucket(b);
   delete b->firstBlock;
   initBucket(b,size);
@@ -152,24 +154,22 @@ void properGameInit(properState* ps,bool reset){
   if(reset){
     parseData* pd=&ps->pd;
 
-    pd->lastGlobalMacro=tlast;
+    clearMacros(pd);
     pd->lastTangledGroup=0;
-    init(&pd->memLocalSize,4);
+    pd->memLocalSize.size=0;
     pd->memLocalSizeMax=0;
     pd->memPieceSize=0;
     pd->memGlobalSize=0;
     pd->memTileSlots=0;
-    
     pd->spawner=false;
-    
-    init(&pd->boardInit);
-    init(&pd->ids);
-    init(&pd->macros);
-    
+    pd->boardInit.size=0;
+    pd->ids.size=0;
+
     ps->pieces.size=0;
     
-    colores.size=0;
-    
+    //colores.size=0;
+    coloresImp.size=0;
+
     normales.size=0;
     clickers.size=0;
     pisados.size=0;
@@ -177,11 +177,11 @@ void properGameInit(properState* ps,bool reset){
     reciclaje.size=0;
     justSpawned.size=0;
 
-    for(int i=tlast;i<ps->pd.lastLocalMacro;i++){
-      ps->pd.wordToToken.erase(ps->pd.tokenToWord[i]);
-    }
-    ps->pd.lastLocalMacro=ps->pd.lastGlobalMacro=tlast;
-    resetBucket(ps,&ps->pieceOps);
+    board* brd=getBoard(ps);
+    delete[] brd->ts.mem;
+
+    free(&memMov);
+    resetBucket(&ps->pieceOps);
   }else{
     initBucket(&ps->pieceOps);
   }
@@ -205,7 +205,7 @@ void properGameInit(properState* ps,bool reset){
             + ps->pd.memGlobalSize*sizeof(memData);
 
   if(reset)
-    resetBucket(ps,&ps->gameState,ps->hsSize);
+    resetBucket(&ps->gameState,ps->hsSize);
   else
     initBucket(&ps->gameState,ps->hsSize);
 

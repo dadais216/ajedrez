@@ -227,7 +227,8 @@ TW Tmover;
 TW Tmover TW vacio spwn 29 color 0 0 255;
 
 :30 2 #local y pieza #probar meter un isol para los desliz
-mset l0 p0 madd l0 1 desliz mdist l1 l0 TW isol Tmover mset p0 l0 end madd l1 1 end; 
+>X=a|d;
+mset l0 p0 exc mless l0 5 madd l0 1 or mset l0 1 end desliz mdist l1 l0 X isol Tmover mset p0 l0 end madd l1 1 end; 
 
 :31 0 #tile 1
 mset t0 1 TW Tmover;
@@ -241,20 +242,21 @@ desliz isol desliz isol mover c end d end end s end;
 
 :34 2 #desopt
 >X&Y=wa&wd|sa&sd;
-desopt 98 X mover c or Y mover c end;
+desopt 25 X mover c or Y mover c end;
 
 :35 2 #spam en lugar de desopt
 >X=wa|wd;
->Y=X X X X X|X X X X|X X X|X X|X|;
+>Y=X X X|X X|X|;
 X Y mover;
 >X=sa|sd;
->Y=X X X X X|X X X X|X X X|X X|X|;
+>Y=X X X|X X|X|;
 X Y mover;
 
-:36 #dama
+:36 6 #dama
 
-:37 4 #reina que no captura
-desliz TWASD Tmover c end; 
+:37 4 #
+>X=w|s;
+desliz X Tmover c end; 
 
 
 

@@ -59,6 +59,7 @@ struct parseData{
   vector<macro> macros;
   int lastGlobalMacro;//arranca en el mayor token + 1
   int lastLocalMacro;//arranca en lastGlobalMacro + 1
+  //en realidad no son el ultimo, son el proximo. Deberia cambiar el nombre
   int lastTangledGroup;
 
   int movQ;

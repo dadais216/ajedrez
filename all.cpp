@@ -112,9 +112,8 @@ char* loadFile(char const* fileName){
   return content;
 }
 
-
-
-
+#include <csignal>
+#include "stdlib.h"
 #include <list>
 #include <map>
 #include <iostream>

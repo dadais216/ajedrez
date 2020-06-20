@@ -2,13 +2,17 @@
 
 
 //TODO mirar esto
-color::color(RectangleShape* rs_){
-    rs=rs_;///@optim es necesario tener un rectangleShape para cada uno? por ahi es mas rapido reutilizar. No usaria memoria dinamica ahi
-}
+//reutilizar rs
 void color::draw(){
   rs->setPosition(actualHolder.nh->pos.x*32*escala,actualHolder.nh->pos.y*32*escala);
   window.draw(*rs);
 }
+
+vector<color> coloresImp;
+//TODO temporal, despues voy a hacer lo de la union y eso
+//necesito guardar aparte la implementacion porque la aloco cada vez por algun motivo
+//(es una indireccion totalmente al pedo, es algo que quedo de antes)
+
 vector<RectangleShape*> colores;
 colort* crearColor(int r,int g,int b){
     ///se crea una instancia del sprite y cada colort la guarda en un puntero, se diferencia por tipo
@@ -17,12 +21,19 @@ colort* crearColor(int r,int g,int b){
     //el motivo de manejarme con rectangleshapes es que es lo que comparten todos, total la pos se va a tener
     //que setear en cada dibujo sea compartida o no
     for(RectangleShape* c:colores)
-        if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b)
-            return new color(c);
+      if(c->getFillColor().r==r&&c->getFillColor().g==g&&c->getFillColor().b==b){
+        color* col=newElem(&coloresImp);
+        new(col)color();
+        col->init(c);
+        return col;
+      }
     RectangleShape* rs=new RectangleShape();
     rs->setFillColor(sf::Color(r,g,b,40));
     push(&colores,rs);
-    return new color(rs);
+    color* col=newElem(&coloresImp);
+    new(col)color();
+    col->init(rs);
+    return col;
 }
 
 /*
