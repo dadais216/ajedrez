@@ -57,7 +57,7 @@ Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
 
   int i=0;
   if(p->spawner/*||p->kamikase*/){
-    allocInitNC(hb,Base,base,{h,nullptr,0}); //para algunas cosas especificas que necesitan tratar a todos los movholders por igual, no se usa directamente
+    allocInitNC(hb,Base,base,{h,nullptr,{0,0}}); //para algunas cosas especificas que necesitan tratar a todos los movholders por igual, no se usa directamente
     //puntualmente creo que es solo el memset que limpia la memoria local
     if(p->spawner){
       spawnerGen* sp =alloc<spawnerGen>(hb);
@@ -75,7 +75,7 @@ Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
 
   for(pBase& pb:p->movs){
     //TODO lo de que root arranque en null y lo setee el primer movimiento se me hace raro, por que no lo marco desde aca?
-    allocInitNC(hb,Base,base,{h,nullptr,pb.memLocalSize});
+    allocInitNC(hb,Base,base,{h,nullptr,pb.memLocal});
     h->movs[i++]=(movHolder*)hb->head;
     crearMovHolder(pb.raiz,base,&hb->head);
   }
@@ -100,6 +100,8 @@ void crearMovHolder(operador* op,Base* base,char** place){
     initIsolH((isol*)op,base,place); break;
   case DESOPT:
     initDesoptH((desopt*)op,base,place); break;
+  case FAILOP:
+    initFailH(place);break;
   default:
     assert(false);
   }
@@ -143,7 +145,7 @@ void generar(Holder* h){
     actualHolder.h=h;
     for(movHolder* m:h->movs){
         offset=h->tile->pos;
-        memset(memMov.data,0,m->base->memLocalSize*sizeof(int));
+        memset(memMov.data,0,m->base->memLocal.size*sizeof(int));
         m->table->generar(m);
     }
 }

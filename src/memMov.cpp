@@ -53,6 +53,19 @@ bool mdist(){
   CONDRET(*g.a!=*g.b);
 }
 
+//TODO forzar no esp si esta al inicio de la normal, sino hace un esp y deja un trigger al pedo
+bool mgoto(){
+  get g=getGetter2();
+  actualHolder.nh->pos=v(*g.a,*g.b);
+  if(espFail(actualHolder.nh->pos)){
+    CONDRET(false);
+  }
+  actualHolder.tile=tile(actualHolder.brd,actualHolder.nh->pos);
+  pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
+  CONDRET(true);
+  //otra opcion es forzar un corte de normales despues de mgoto, y dejar que el codigo normal haga el esp y ponga el trigger, sería mas lindo pero cortar normales es un poco mas ineficiente y complicado
+}
+
 
 //las acciones de memoria tienen una version global y tile, porque ahora son los unicos buffers globales y necesitan hacer cosas distintas
 //piden un getter solo porque el primero siempre es write

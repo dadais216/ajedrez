@@ -27,10 +27,13 @@ void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
   parseMovData p{operatorBucket,pd,*tokens,0,0,0,false};
   for(int i=0;i<pd->movQ;i++){
     p.movSize=0;
-    p.memLocalSize=pd->memLocalSize[i];
+    p.memLocalSize=pd->memLocal[i].size;
     p.clickExplicit=false;
 
-    piece->movs[i].memLocalSize=pd->memLocalSize[i];
+    failIf(pd->memLocal[i].resetUntil>pd->memLocal[i].size,"reset size %d bigger than size %d",pd->memLocal[i].resetUntil,pd->memLocal[i].size);//prefiero fallar a poner el maximo, queda medio raro sino
+    piece->movs[i].memLocal.size=pd->memLocal[i].size;
+    piece->movs[i].memLocal.resetUntil=pd->memLocal[i].resetUntil==-1?pd->memLocal[i].size:pd->memLocal[i].resetUntil;
+
     piece->movs[i].raiz=parseOp(&p);
     piece->movs[i].size=p.movSize;
     piece->hsSize+=p.movSize;
@@ -54,6 +57,7 @@ operador* parseOp(parseMovData* p,bool fromNormal){//=false
   case texc:    p->ind++;op=parseExc(p);break;
   case tisol:   p->ind++;op=parseIsol(p);break;
   case tdesopt: p->ind++;op=parseDesopt(p);break;
+  case tfail:   p->ind++;op=parseFail(p);break;
   case tend:
   case tmovEnd:
   case tseparator:       op=nullptr;break;
@@ -180,6 +184,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
     case tmless:
     case tmmore:
     case tmdist:
+    case tmgoto:
       {
         //mset l0 4 mset g0 l0 <-en este caso necesito cortar en 2 normales, para que el segundo set tenga registrado el primero
 
@@ -197,6 +202,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
         int op=tok;
         bool write=op==tmset||op==tmadd;
         tok=peek(p);
+#define badParameter default: fail("memory operator %s has bad parameter %d as %s",tokenToWord(p->pd,op),i+1,tokenToWord(p->pd,tok));
 
         if(write&&isCte(tok)){
           fail("write on constant");
@@ -211,7 +217,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
             case tmglobal: push(&accsTemp,msetG);break;
             case tmtile:   push(&accsTemp,msetT);break;
             case tmpiece:  push(&accsTemp,msetP);push(&accsTemp,(actionBuffer)pieceg);break;
-            defaultAssert;
+            badParameter;
             }
             tok=pop(p);
             gatherCte(&accsTemp,tok);
@@ -221,7 +227,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
             case tmglobal: push(&accsTemp,msetGi);break;
             case tmtile:   push(&accsTemp,msetTi);break;
             case tmpiece:  push(&accsTemp,msetP);push(&accsTemp,(actionBuffer)piecegi);break;
-            defaultAssert;
+            badParameter;
             }
           }
           for(;i<2;i++){
@@ -239,7 +245,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                 case tmlocal:  push(&accsTemp,(actionBuffer)localAccg);
                   if(writeInLocalMem) goto splitNormal;break;
                 case tmpiece:  push(&accsTemp,(actionBuffer)pieceg);break;
-                defaultAssert;
+                badParameter;
                 }
                 tok=pop(p);
                 gatherCte(&accsTemp,tok);
@@ -251,13 +257,14 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                 case tmlocal:  push(&accsTemp,(actionBuffer)localAccgi);
                   if(writeInLocalMem) goto splitNormal;break;
                 case tmpiece:  push(&accsTemp,(actionBuffer)piecegi);break;
-                defaultAssert;
+                badParameter;
                 }
               }
               tok=pop(p);
             }
           }
         }else{
+
           conditionBuffer cond;
           switch(op){
           case tmset: cond=msetC;break;
@@ -266,6 +273,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
           case tmcmp: cond=mcmp;break;
           case tmless:cond=mless;break;
           case tmmore:cond=mmore;break;
+          case tmgoto:cond=mgoto;break;
           default: fail("bad condition");
           }
           push(&condsTemp,cond);
@@ -284,7 +292,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                 case tmlocal:  push(&condsTemp,(conditionBuffer)localg);
                   if(i==0&&write){writeInLocalMem=true;}break;
                 case tmpiece:  push(&condsTemp,(conditionBuffer)pieceg);break;
-                defaultAssert;
+                badParameter;
                 }
                 tok=pop(p);
                 gatherCte(&condsTemp,tok);
@@ -295,7 +303,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                 case tmtile:   push(&condsTemp,(conditionBuffer)tileReadi);break;
                 case tmlocal:  push(&condsTemp,(conditionBuffer)localgi);break;
                 case tmpiece:  push(&condsTemp,(conditionBuffer)piecegi);break;
-                defaultAssert;
+                badParameter;
                 }
               }
               tok=pop(p);
@@ -327,6 +335,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
           //parametrizarlo y esta funcion ya es un quilombo y este es un caso
           //oscuro
         }
+        #undef badParameter
         break;
       }
     case tclick:
@@ -520,4 +529,13 @@ desopt* parseDesopt(parseMovData* p){
       }
   }
   return d;
+}
+
+operador* parseFail(parseMovData* p){
+  operador* failOp=alloc<operador>(p->b);
+  failOp->tipo=FAILOP;
+  failOp->sig=nullptr;
+  failOp->bools=0;
+  p->movSize+=sizeof(movHolder);
+  return failOp;
 }

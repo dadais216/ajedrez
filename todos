@@ -1,0 +1,42 @@
+hay que ver el tema de la comunicacion entre isols y deslizs
+
+Cuando se reacciona en isol y se genera algo internamente, desliz NO debería seguir regenerando, debería cortar ahí.
+A menos que sea la version de muchas normales, en ese caso debería consumir la que usó isol y seguir.
+A menos que isol diga que desliz genere, lo que pasaria en caso de usar memoria no reseteable
+
+
+En el caso de desopt, si la memoria no es reseteable, no solo tengo que regenerar los nodos que salgan del que se activo pero tambien ramas que estaban siguientes en la generacion inicial, lo que implica otra forma de recorrer
+
+----
+
+Estaria bueno tener una forma de ver si la escritura de una tile fue hecha por una pieza que no se movió desde que la hizo. El mecanismo para esto ya esta, porque se usa para ver si el trigger debería activarse cuando se pisa, pero no esta expuesto al lenguaje. 
+Sería util para tener un mecanismo para marcar casilleros sin necesidad de tener que limpiarlos despues, que es para lo que se usa ahora, nomas que el lenguaje no lo puede aprovechar.
+
+Podría haber un sistema aparte con funciones mark y checkMark, pero reutilizar lo que se tiene en tiles es mejor porque practicamente no hay que hacer codigo nuevo, se usan las estructuras existentes y desde el lenguaje es mas flexible, porque se pueden usar distintos slots de memoria de tile y el contenido de las memorias.
+Lo unico que se agregaria es una condicion marked que toma un numero, que indica que slot de la tile sobre la que se esta parado mirar. Si hay algun trigger, y este trigger no varió en step con la pieza que lo puso, devuelve verdadero.
+
+
+No es un operador que indica directamente si un casillero esta siendo amenazado igual, porque piezas que tengan mas de un paso, como un torre, podrian ser cortadas y mantendrían marcados casilleros donde ya no estan haciendo nada. Esto no es un problema con triggers, porque serían triggers falseados y listo, pero usar esto para logica de lenguaje podría ser confuso. Para manejar algo asi sería necesario que las piezas que se cortan sigan recorriendo, y escriban en ese slot algo que indique que la marca no es valida, que despues se tiene que contrastar ademas de mirar si esta marcado. El tema esta en que cuando uno esta generando no sabe si es una generacion inicial o una regeneracion, y este codigo solo tiene sentido en una regeneracion. Cuando se choca con una pieza no se sabe si es porque esta cortó el movimiento o si nomas se choco con una pieza, y la solucion simple es seguir hasta llegar al borde del tablero siempre.
+Que tenga este problema me hace dudar de si vale la pena agregarlo.
+
+La funcion mas util que tiene es para piezas como el rey, que solo se pueden mover a espacios no marcados. Igual soluciona solo parte del problema, y el rey se puede implementar de otra forma.
+
+----
+
+Creo, creo, que el rey se puede implementar sin hacer cosas raras haciendo que:
+El rey haga el movimiento inverso a cada pieza para mirar si alguien lo esta amenazando.
+Atraviesa piezas aliadas para mirar mas alla, si hay una pieza enemiga marca la aliada para que esta no se pueda mover
+Cuando una pieza enemiga se mueve y lo amenaza va a tener que hacer todo el quilombo de acciones en condiciones igual gg
+
+
+----
+
+No sé hasta que punto valdría la pena agregar funciones de alto nivel como tener un comando no-repeat que automaticamente prohiba moverse a casilleros que se marquen con otro comando, o un comando que marque casilleros y desmarque comforme las piezas se muevan y corten entre si. Estas cosas son caras para el interpretador pero serían baratas para la version compilada. No me convencen mucho porque nomas sirven para cosas especificas, y estas cosas se pueden implementar en el lenguaje de todas formas. Tampoco me gusta porque agrega complejidad al lenguaje, cosas que hay que aprender. Siempre tuve una mentalidad de bajo nivel, y creo que me voy a mantener asi.
+
+-----
+
+Seria interesante agregar un modo inmediato al ajederes, donde se hacen todos los movimientos cada vez, no hay recalculos. Debería agregar algo de metaprogramacion para no duplicar codigo. Es un proyecto interesante, y serviria para tener una idea de que tanto beneficio me da el mecanismo de recalcular.
+
+
+
+

@@ -65,13 +65,16 @@ struct deferObj{
 #include <utility>
 #include <stdlib.h>
 #include <stdio.h>
-#include <assert.h>
 
 template<typename... Ts>
 void fail(char const* err,Ts... args){
+  #pragma GCC diagnostic push
+  #pragma GCC diagnostic ignored "-Wformat-security"
   printf(err,args...);//me parece un poco mas lindo que va_list
+  #pragma GCC diagnostic pop
   printf("\n\n");
   exit(0);
+
 }
 
 template<typename... Ts>
@@ -81,6 +84,13 @@ void failIf(bool cond,char const* err,Ts... args){
   }
 }
 
+#if debugMode
+#include <assert.h>
+#else
+void assert(bool ignored){
+  
+}
+#endif
 template<typename... Ts>
 void assertf(bool cond,char const* err,Ts... args){
 #if debugMode

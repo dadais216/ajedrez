@@ -74,13 +74,17 @@ inline void generarProperNormalH(normalHolder* n){
   n->bools|=valor;
   generarSig(n);
 }
+bool espFail(v pos){
+  return pos.x<0||pos.x>=actualHolder.brd->dims.x
+       ||pos.y<0||pos.y>=actualHolder.brd->dims.y;
+}
 void generarNormalH(movHolder* m){
   normalHolder* n=(normalHolder*) m;
   actualHolder.nh=n;
-  memcpy(n->memAct.beg,memMov.data,n->base->memLocalSize*sizeof(int));
+  memcpy(n->memAct.beg,memMov.data,n->base->memLocal.size*sizeof(int));
   n->pos=getActualPos(n->relPos,offset);//pos se calcula siempre porque se usa para actualizar offset
   if(n->bools&doEsp){
-    if(n->pos.x<0||n->pos.x>=actualHolder.brd->dims.x||n->pos.y<0||n->pos.y>=actualHolder.brd->dims.y){
+    if(espFail(n->pos)){
       n->bools&=~(valorFinal|valorCadena|valor);
       return;
     }
@@ -105,7 +109,7 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
   if(nh==self){
     actualHolder.nh=nh;
 
-    memcpy(memMov.data,self->memAct.beg,self->base->memLocalSize*sizeof(int));
+    memcpy(memMov.data,self->memAct.beg,self->base->memLocal.size*sizeof(int));
     switchToGen=true;
 
     actualHolder.tile=tile(actualHolder.brd,self->pos);
@@ -113,7 +117,7 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
     generarProperNormalH(self);
     if(!(self->bools&valorFinal)){
       offset=getOffset(self->relPos,self->pos);
-      memcpy(memMov.data,self->memAct.beg,self->base->memLocalSize*sizeof(int));
+      memcpy(memMov.data,self->memAct.beg,self->base->memLocal.size*sizeof(int));
       //esta restauracion esta para que el operador que contenga reciba el offset y mem local correcta
       //la alternativa a hacer esto es que todos los operadores contenedores guarden offset y memoria local
       //para cada iteración/rama, lo que tambien tiene sus desventajas.
@@ -122,7 +126,7 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
     reaccionarSig(self,nh);
     if(!(self->bools&valorFinal)){
       offset=getOffset(self->relPos,self->pos);
-      memcpy(memMov.data,self->memAct.beg,self->base->memLocalSize*sizeof(int));
+      memcpy(memMov.data,self->memAct.beg,self->base->memLocal.size*sizeof(int));
     }
   }
 }
@@ -134,14 +138,14 @@ void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
     if(nh==s){
       actualHolder.nh=nh;
 
-      memcpy(memMov.data,s->memAct.beg,s->base->memLocalSize*sizeof(int));
+      memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
       switchToGen=true;
       actualHolder.tile=tile(actualHolder.brd,s->pos);
       pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
       generarProperNormalH(s);
       if(!(s->bools&valorFinal)){
         offset=getOffset(s->relPos,s->pos);
-        memcpy(memMov.data,s->memAct.beg,s->base->memLocalSize*sizeof(int));
+        memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
       }
       unorderedErase(nhs,i);
       return;
@@ -151,7 +155,7 @@ void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
     reaccionarSig(s,nhs);
     if(!(s->bools&valorFinal)){
       offset=getOffset(s->relPos,s->pos);
-      memcpy(memMov.data,s->memAct.beg,s->base->memLocalSize*sizeof(int));
+      memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
     }
   }
 }
@@ -188,8 +192,7 @@ void drawNormalH(normalHolder* n){
 
  virtualTableMov normalTable={generarNormalH,reaccionarNormalH,reaccionarNormalH,cargarNormalH};
 
-void initNormalH(normal* org,Base* base_,char** head)
-{
+void initNormalH(normal* org,Base* base_,char** head){
   fromCast(n,*head,normalHolder*);
   initMovH(n,org,base_);
   n->table=&normalTable;
@@ -207,7 +210,7 @@ void initNormalH(normal* org,Base* base_,char** head)
       turnoTrigs[base_->h->bando].push_back({base_->h,n}); ///@check
       }*/
   n->memAct.beg=(int*)*head;
-  n->memAct.after=((int*)*head)+base_->memLocalSize;
+  n->memAct.after=((int*)*head)+base_->memLocal.size;
   *head=(char*)n->memAct.after;
 
   n->relPos=n->op->relPos;
@@ -301,7 +304,7 @@ void cargarDeslizH(movHolder* m,vector<normalHolder*>* norms){
     d->sig->table->cargar(d->sig,norms);
 }
 
- virtualTableMov deslizTable={generarDeslizH,reaccionarDeslizH,reaccionarDeslizH,cargarDeslizH};
+virtualTableMov deslizTable={generarDeslizH,reaccionarDeslizH,reaccionarDeslizH,cargarDeslizH};
 //esta version del desliz retrocede a la posicion de inicio de una iteracion si la iteracion falla
 //esto la hace mas consistente en casos donde se usen multiples normales y cosas asi. Pero para
 //casos comunes como la torre no se usa, agrega codigo y almacenamiento, y lo mas importante es
@@ -326,7 +329,16 @@ void initDeslizH(desliz* org,Base* base_,char** head){
 }
 
 
-
+void generarSigExc(movHolder* e,movHolder* validBranch){
+  assert(validBranch->bools&valorCadena);
+  if(validBranch->bools&valorFinal){
+    generarSig(e);
+  }else{
+    e->bools|=valorCadena;
+    e->bools&=~valorFinal;
+    //una rama a medias es valida pero corta el flujo, mantiene la posicion
+  }
+}
 
 void generarExcH(movHolder* m){
   fromCast(e,m,excHolder*);
@@ -337,12 +349,9 @@ void generarExcH(movHolder* m){
     movHolder* branch=e->ops[i];
     branch->table->generar(branch);
     if(branch->bools&valorCadena){
-      //si una rama con un clicker puso el clicker y despues fallo se toma como rama buena,
-      //pero la pos vuelve al origen. Medio raro. Por ahora lo dejo asi porque asi esta el sistema,
-      //si se quiere hacer algo distinto no sería problema agregarlo en la version compilada
       e->bools|=valor;
       e->actualBranch=i; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que valorCadena==true
-      generarSig(e);
+      generarSigExc(e,branch);
       return;
     }
     offset=offsetOrg;
@@ -365,7 +374,7 @@ inline void reaccionarNhExcH(excHolder* e,normalHolder* nh){
   branch->table->reaccionar(branch,nh);
   if(switchToGen){//solo falso si la nh es innaccesible, por ejemplo esta en la parte invalida de un desliz
     if(!(branch->bools&valorCadena)){ //si el ab al recalcularse se invalida generar todo devuelta, saltandolo
-      int j;
+      int j;//TODO no debería arrancar en la siguiente rama? por que hace las anteriores devuelta?
       for(j=0;j<count(e->ops);j++){
         if(i-1!=j){
           movHolder* brancj=e->ops[j];
@@ -373,17 +382,17 @@ inline void reaccionarNhExcH(excHolder* e,normalHolder* nh){
           if(brancj->bools&valorCadena){
             e->bools|=valor;
             e->actualBranch=j;
-            generarSig(e);
+            generarSigExc(e,brancj);
             return;
           }
         }
       }
-      e->bools&=~(valorCadena|valor);
+      e->bools&=~(valor|valorCadena|valorFinal);
       e->actualBranch=j-1;
     }else{ //se valido una rama que era invalida
       e->actualBranch=i-1;
       e->bools|=valor;
-      generarSig(e);
+      generarSigExc(e,branch);
     }
   }
 }
@@ -417,7 +426,7 @@ void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
   branch->table->cargar(branch,norms);
   if(e->bools&makeClick)
     makeClicker(norms,e->base->h);
-  if(e->sig)
+  if(e->sig&&(branch->bools&valorFinal))
     e->sig->table->cargar(e->sig,norms);
 }
 
@@ -443,11 +452,12 @@ void generarIsolH(movHolder* m){
   fromCast(s,m,isolHolder*);
 
   v tempPos=offset;
-  void* memTemp=alloca(s->base->memLocalSize*sizeof(int));
-  memcpy(memTemp,memMov.data,s->base->memLocalSize*sizeof(int));
+  int resetSize=s->base->memLocal.resetUntil*sizeof(int);
+  void* memTemp=alloca(resetSize);
+  memcpy(memTemp,memMov.data,resetSize);
   s->inside->table->generar(s->inside);
   offset=tempPos;
-  memcpy(memMov.data,memTemp,s->base->memLocalSize*sizeof(int));
+  memcpy(memMov.data,memTemp,resetSize);
   if(s->sig){
     s->sig->table->generar(s->sig);
     s->bools&=~valorFinal;
@@ -461,7 +471,13 @@ void reaccionarIsolH(movHolder* m,normalHolder* nh){
     if(switchToGen){
       ///@optim podria hacerse un lngjmp
       switchToGen=false;
-      printf("s coming back\n");
+      //printf("s coming back\n");
+
+      //si se esta usando memoria no resetable potencialmente haya cosas que dependan del cambio
+      //TODO falta la comunicacion con un desliz que lo contenga
+      if(s->base->memLocal.size!=s->base->memLocal.resetUntil&&s->sig){
+        s->sig->table->generar(s->sig,nh);
+      }
     }
   }
   else if(s->sig)
@@ -469,11 +485,20 @@ void reaccionarIsolH(movHolder* m,normalHolder* nh){
 }
 void reaccionarIsolH(movHolder* m,vector<normalHolder*>* nhs){
   fromCast(s,m,isolHolder*);
+  //int resetSize; TODO descomentar
+  //void* memTemp;
+  //if(nhs->size>1){
+  //  resetSize=s->base->resetUntil*sizeof(int);
+  //  memTemp=alloca(resetSize);
+  //  memcpy(memTemp,memMov.data,resetSize);
+  //}
   if((char*)(*nhs)[0]-(char*)s<s->size){
     s->inside->table->reaccionar(s->inside,(*nhs)[0]);
     if(switchToGen){
       switchToGen=false;
       printf("v coming back\n");
+      //if(nhs->size==1) return;
+      //memcpy(memMov.data,memTemp,resetSize);
     }
     //unorderedErase(nhs,0);
   }
@@ -527,7 +552,7 @@ void generarDesoptH(movHolder* m){
 
   v offsetOrg=offset;
 
-  int localMemSize=d->base->memLocalSize*sizeof(int);
+  int localMemSize=d->base->memLocal.resetUntil*sizeof(int);
   void* memTemp=alloca(localMemSize);
   memcpy(memTemp,memMov.data,localMemSize);
 
@@ -566,7 +591,7 @@ void generarDesoptH(movHolder* m){
     offset=offsetOrg;
     memcpy(memMov.data,memTemp,localMemSize);
   }
-  if(d->sig)
+  if(d->sig)//TODO quiero soportar esto? deberia propagar el valorFinal como isol
     d->sig->table->generar(d->sig);
 }
 //TODO es necesario contruir en el momento? no debería dar lo mismo construir todo al principio, si son siempre los mismos bloques?
@@ -661,7 +686,7 @@ void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
   //@optim en vez de hacer esto se podría avanzar por la memoria, aprovechando que todos los bloques miden lo mismo,
   //y meterse directamente en el correcto. Aunque como no se estaria recorriendo se podría acceder a memoria muerta, no sé.
   int offset=0;
-  int localMemSize=d->base->memLocalSize*sizeof(int);
+  int localMemSize=d->base->memLocal.resetUntil*sizeof(int);
   for(int tam:d->op->movSizes){
     desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+offset);
     movHolder* actualMov=(movHolder*)(nextIter+1);
@@ -767,6 +792,31 @@ void initDesoptH(desopt* org,Base* base_,char** head){
 
 
 
+//fail tambien se podría implementar retornando falso en todo y forzando el operador anterior a tener hasClick,
+//las 2 cosas resultan en generarSig y simil de isol haciendo que se propague valorCadena true y valorFinal false
+//elegi esta porque me parece mas simple
+void generarFail(movHolder* m){
+  m->bools=valorCadena; //valorFinal=false, el resto no importa
+  return;
+}
+void reaccionarFail(movHolder* m, normalHolder* nh){}
+void reaccionarFail(movHolder* m, vector<normalHolder*>* nhs){}
+void cargarFail(movHolder* m, vector<normalHolder*>* norms){}
+virtualTableMov failTable={generarFail,reaccionarFail,reaccionarFail,cargarFail};
+
+void initFailH(char** head){
+  fromCast(f,*head,movHolder*);
+  f->table=&failTable;
+  f->base=nullptr;
+  f->bools=0;
+  *head+=sizeof(movHolder);
+}
+
+
+
+
+
+
 void generarNewlySpawned(movHolder* m){
   fromCast(s,m,spawnerGen*);
 
@@ -813,4 +863,23 @@ void initKamikase(kamikaseCntrl* k,Holder* h){
   k->h=h;
 }
 
+/*
+sobre isol/desopt y memoria no reseteable:
+necesito una forma de poder transmitir informacion afuera del desopt para manejar cosas como la dama, y me imagino que hay casos donde saltar un isol tambien es util.
+Por default isol y desopt resetean la memoria local y la posicion cuando terminan y en desopt cada vez que cambia de rama.
 
+Lo que hice es marcar una region de memoria local para que no se resetee, lo que en generacion funciona y dentro de todo es simple y no tiene costo.
+El problema esta en la regeneracion, antes podia cortar la regeneracion si esta se disparaba adentro de un isol, o limitarla a la propagacion de una rama en desopt. Pero ahora que estos pueden transmitir informacion mas alla de si la regeneracion se tiene que propagar afuera tambien. Creo que lo voy a hacer de todas formas porque es lo que se quiere y lo que se necesita, pero es algo que no tuve en cuenta al principio y me agarró de sorpresa ahora. La propagacion solo pasa cuando se usa memoria no reseteable, lo que se testea facil. Me hace un poco de ruido porque isol termina siendo un restaurador de posicion y memoria nomas, y desopt lo mismo pero trayendo una estructura de arbol. Pero bueno, son utiles y ya estan hechos. Creo que es el mejor compromiso que se me ocurrió, y dan lugar a optimizaciones a veces. Me estoy olvidando que isol y desopt tambien manejan el buffer de acciones, lo que en realidad era su funcion principal y es lo mas util.
+
+Otra cosa que pensé es volar la memoria local no reseteable y usar la memoria de pieza como memoria persistente, con un operador asignacion-durante-condicion especial, aunque esto tiene problemas:
+-Es una memoria que persiste entre movimientos, lo que puede ser un poco molesto pero se puede ignorar
+-Es una memoria que persiste entre generaciones, lo que implica que al inicio de cada generacion se debe resetear manualmente.
+Y hay que tener en cuenta que no es como la memoria local, que al reaccionar se resetea al estado que tenia en la generacion en ese momento. El estado es el estado del final de la generacion, y si eso no se maneja en el codigo puede tener comportamientos extraños.
+Esto agrega un monton de complejidad y sigue teniendo el mismo problema que el anterior, en caso de reaccion regenera todo devuelta o tiene reglas muy raras sobre cuando saltar isols en regeneraciones. Asi que no.
+-
+Igual la idea de usar una memoria persistente entre regeneraciones para optimizar recalculos podría ser interesante. Por ejemplo en la dama, si una rama cambia no sería necesario recalcular las proximas ramas devuelta, porque no cambiaron y no dependen de este cambio (mas o menos, puede que sean la rama ganadora ahora). Lo unico que se necesita recalcular es el codigo que viene despues, y solo en caso de que el nuevo recalculo mueva el maximo de cadena que estaba. Supongo que se podrían agregar reglas al lenguaje para poder decir cosas como esta, pero no quiero agregar mas complejidad al lenguaje para optimizaciones. Recalcular todo siempre maneja todos los casos y es simple. Por ahí en la version compilada se podría agregar alguna optimizacion que vea que regiones de memoria se tocan y decida si recalcular otras ramas, o partes de estas, y cosas asi, estaria bueno. Pero no es algo del lenguaje, por ahora nada.
+
+Otra opcion mas loca es borrar isol y desopt porque se hicieron muy bloated, y agregar comandos de bajo nivel para manejar la restauracion de posiciones, regiones de memoria local y el buffer de acciones. Lo malo de esto es que no se puede optimizar tanto como isol y desopt, ya que tendrían sus propias memorias y no aprovechan lo que se guarda en normales para restaurar en reacciones.  Y si aprovechan eso son basicamente lo mismo que tengo ahora, pero mas dificil de programar. Y tiene los mismos problemas, recalculan todo siempre. Asi que no
+
+
+ */

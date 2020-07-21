@@ -95,8 +95,8 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id,bool forTest){
   ps->turnoNegro.setTexture(image.get("tiles.png"));
   ps->turnoBlanco.setTextureRect(IntRect(0,0,32,32));
   ps->turnoNegro.setTextureRect(IntRect(32,0,32,32));
-  ps->turnoBlanco.setScale(12,16);
-  ps->turnoNegro.setScale(12,16);
+  ps->turnoBlanco.setScale(22,16);
+  ps->turnoNegro.setScale(22,16);
   ps->turnoBlanco.setPosition(510,0);
   ps->turnoNegro.setPosition(510,0);
 
@@ -110,14 +110,18 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id,bool forTest){
   backgroundMem.setFillColor(sf::Color(240,235,200));
   backgroundMem.setOutlineColor(sf::Color(195,195,175));
   backgroundMem.setOutlineThickness(4);
-  backgroundMem.setSize(Vector2f(20,40));
+  backgroundMem.setSize(Vector2f(40,40));
   backgroundMemDebug.setFillColor(sf::Color(163,230,128,150));
   backgroundMemDebug.setOutlineColor(sf::Color(195,195,175));
   backgroundMemDebug.setOutlineThickness(4);
-  backgroundMemDebug.setSize(Vector2f(20,40));
-  textValMem.setColor(Color::Black);
+  backgroundMemDebug.setSize(sf::Vector2f(40,40));
+  textValMem.setColor(sf::Color::Black);
   textValMem.setFont(font);
   textValMem.setPosition(570,10);
+  localMemorySeparator.setFillColor(sf::Color(150,150,150));
+  localMemorySeparator.setOutlineColor(sf::Color::Red);
+  localMemorySeparator.setOutlineThickness(2);
+  localMemorySeparator.setSize(sf::Vector2f(1,40));
 
   init(&debugDrawChannel);
 #endif
@@ -156,7 +160,7 @@ void properGameInit(properState* ps,bool reset){
 
     clearMacros(pd);
     pd->lastTangledGroup=0;
-    pd->memLocalSize.size=0;
+    pd->memLocal.size=0;
     pd->memLocalSizeMax=0;
     pd->memPieceSize=0;
     pd->memGlobalSize=0;
@@ -223,20 +227,22 @@ void properGameInit(properState* ps,bool reset){
 }
 
 
-int debugGet(auto* v,int i){
-  return v->operator[](i);
-}
 int debugGet(memData* v,int i){
   return (v+i)->val;
 }
+int debugGet(auto* v,int i){
+  return *(v+i);
+}
+const int cellsPerRow=16;
+const int cellSpacing=39;
 void debugDrawMemory(int memSize, int yOffset,auto memory){
 #if debugMode
   for(int i=0;i<memSize;i++){
-    backgroundMem.setPosition(sf::Vector2f(530+25*(i%4),yOffset+45*(i/4-memSize/4)));
+    backgroundMem.setPosition(sf::Vector2f(530+cellSpacing*(i%cellsPerRow),yOffset+45*(i/cellsPerRow-memSize/cellsPerRow)));
     window.draw(backgroundMem);
   }
   for(int i=0;i<memSize;i++){
-    textValMem.setPosition(530+25*(i%4),yOffset+5+45*(i/4-memSize/4));
+    textValMem.setPosition(530+cellSpacing*(i%cellsPerRow),yOffset+5+45*(i/cellsPerRow-memSize/cellsPerRow));
     textValMem.setString(std::to_string(debugGet(memory,i)));
     window.draw(textValMem);
   }
@@ -270,10 +276,17 @@ void properDraw(char* mem){
     window.draw(posPiece);
     window.draw(textDebug);
 
-    debugDrawMemory(actualHolder.nh->base->memLocalSize,405,&memMov);
-    debugDrawMemory(actualHolder.h->piece-> memPieceSize,305,&actualHolder.h->memPiece);
+    debugDrawMemory(actualHolder.nh->base->memLocal.size,405,memMov.data);
+    debugDrawMemory(actualHolder.h->piece-> memPieceSize,305,actualHolder.h->memPiece.beg);
     debugDrawMemory(brd->memGlobalSize,205,brd->memGlobals);
     debugDrawMemory(brd->memTileSlots,105,getTileMd(0,brd));
+
+    if(actualHolder.nh->base->memLocal.size!=actualHolder.nh->base->memLocal.resetUntil){
+      int resetUntil=actualHolder.nh->base->memLocal.resetUntil;
+      localMemorySeparator.setPosition(sf::Vector2f(530+cellSpacing*(resetUntil%cellsPerRow),405+45*(resetUntil/cellsPerRow-actualHolder.nh->base->memLocal.size/cellsPerRow)));
+      window.draw(localMemorySeparator);
+    }
+    
 
     bool cteInThisIteration=false;
     for(int i=0;i<debugDrawChannel.size;i++){
@@ -311,8 +324,8 @@ void properDraw(char* mem){
           int ind=debugDrawChannel[i++];
           int memSize=debugDrawChannel[i++];
           int drawOffset=debugDrawChannel[i];
-          backgroundMemDebug.setPosition(Vector2f(530+25*(ind%4),
-                                                  drawOffset+45*(ind/4-memSize/4)));
+          backgroundMemDebug.setPosition(Vector2f(530+cellSpacing*(ind%cellsPerRow),
+                                                  drawOffset+45*(ind/cellsPerRow-memSize/cellsPerRow)));
           window.draw(backgroundMemDebug);
         }
       }

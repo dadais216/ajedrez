@@ -65,7 +65,7 @@ struct parseData{
   int movQ;
   bool spawner;
 
-  vector<int> memLocalSize;
+  vector<memLocalt> memLocal;
   int memLocalSizeMax;
   int memPieceSize;
   int memTileSlots;

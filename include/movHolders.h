@@ -1,12 +1,19 @@
 #ifndef MOVHOLDERS_H
 #define MOVHOLDERS_H
 
-enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT};
+enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT,FAILOP};
 
-//TODO valorCadena es solo una optimizacion de la carga? es necesario? como que fue reemplazado por valorFinal y solo hace eso ahora
-const int32_t valorCadena=1;//la cadena de movholders es valida. Una cadena va desde la base hasta un clicker o el final
-const int32_t valorFinal=1<<1;//se llegó al final. Esto sirve para saber si seguir iterando en un desliz
-const int32_t valor=1<<2;//lo usa normal para saber si sus condiciones son verdaderas,y exc si tiene una rama valida
+//las cadenas terminan en un clicker o cuando no hay nada despues
+
+//valor indica si el movHolder es valido. Se usa para saber si seguir buscando en una cadena o cortar. Solo lo usan normal y exc
+//valorCadena si la cadena es valida, puede darse que un eslabon lo sea pero el proximo no e invalida la cadena, no se tiene que cargar
+//valorFinal si las cadenas contenidas en un operador son validas hasta el final, lo que solo es importante en operadores con varias cadenas
+
+//valorCadena no es absolutamente necesario en la carga pero la hace mas rapida. Tambien se usa en exc y desliz para diferenciar una rama completa y una a medias
+
+const int32_t valorCadena=1;
+const int32_t valorFinal=1<<1;
+const int32_t valor=1<<2;
 const int32_t lastNotFalse=1<<2;//lo usa desliz
 const int32_t makeClick=1<<3;
 const int32_t hasClick=1<<4;
@@ -38,11 +45,14 @@ struct virtualTableMov{//probar implementar lo mismo con switches a ver que pasa
   void (*cargar)(movHolder*,vector<normalHolder*>*);
 };
 
-
+struct memLocalt{
+  int size;
+  int resetUntil;
+};
 struct Base{ ///datos compartidos de un movimiento entero
-    Holder* h;
-    movHolder* root;
-    int memLocalSize;//este es cte entre todos los holders por lo que podria estar en algun lugar del lado de operador
+  Holder* h;
+  movHolder* root;
+  memLocalt memLocal;//estos son cte entre todos los holders por lo que podrian estar en algun lugar del lado de operador
 };
 //@optim? se podria hacer que esta base sea global durante la generacion para no tenerla apuntada desde cada
 //movholder. el problema esta que durante la reaccion necesito recuperar esa informacion, y la unica forma de
@@ -108,6 +118,8 @@ struct desoptHolder:public movHolder{
 };
 void initDesoptH(desopt*,Base*,char**);
 
+void initFailH(char**);
+
 //comparten la tabla y base con los movHolders
 struct spawnerGen{
   virtualTableMov* table;
@@ -122,4 +134,7 @@ struct kamikaseCntrl{
 };
 void initKamikase(kamikaseCntrl*,Holder*);
 void kamikaseCheckAlive(movHolder*);
+
+
+
 #endif // MOVHOLDERS_H

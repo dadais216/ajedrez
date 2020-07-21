@@ -1,0 +1,170 @@
+
+
+el problema de los operadores es que ligan flujo de datos con si las condiciones fallan o no, lo que en principio esta bueno porque en la mayoria de los casos es lo que se quiere, pero si se necesita la otra cosa no se puede. No sé si desligar las cosas o agregar alguna notacion rara para manejar el segundo caso, creo que prefiero eso
+
+
+desliz COND ACC end
+=>
+while COND
+ ACC
+end
+
+exc COND1 ACC1 or COND2 ACC2 end
+=>
+if COND1
+ ACC1
+else if COND2
+ ACC2
+end
+
+isol COND ACC end
+=>
+if COND
+ ACC
+ ROLLBACK
+end
+
+desopt COND1 ACC1 or COND2 ACC2 end
+=>
+if COND1
+ ACC1
+ RECUR
+ ROLLBACK
+end
+if COND2
+ ACC2
+ RECUR
+ ROLLBACK
+end
+
+tambien hay cosas raras como que las condiciones tienen efecto, por lo que por ejemplo ramas anteriores de un exc tienen un impacto en la actual, y las condiciones no son conmutativas. Esto por ahí podría arreglarse haciendo que las condiciones con efecto corran despues de las sin efecto, aunque puede que esto haga todo mas confuso, no sé. Y hay condiciones sin efecto que dependen de condiciones con efecto, asi que no.
+Igual creo que esto es relevante solo en contextos raros, y con una notacion que marque bien las cosas no debería importar mucho;
+exc y desliz cuando fallan resetean la posicion pero no resetean la memoria local, lo que por ahí es raro. Se podría agregar eso, sería mas ineficiente porque tengo que guardar la memoria local pero bueno, hace el lenguaje mas consistente y saca este caso raro de tener ramas anteriores fallidas del exc/ultima iteracion del desliz con potencial de tener efecto. En la version compilada no importa porque solo se agregaria este codigo cuando se necesite de verdad, que es casi nunca.
+Otro tema es que solo se resetearia la memoria reseteable, por lo que la funcionalidad anterior va a seguir estando en el area no reseteable se quiera o no.
+
+Otro tema raro son cadenas cortables. desliz A c B end corre hasta que falle A o B, si falla B queda media iteracion al final.
+en exc A c B or [] end si falla B se toma esa rama como valida igual, lo que supongo que es lo que se quiere. 
+
+
+
+Supongamos que tengo
+
+desliz exc A or B false end C end
+
+La rama B parece no tener sentido, y no lo tiene, a menos que haga algo con efecto como actualizar memoria local (por ahora toda, puede que despues solo deje la memoria local no reseteable), o tener un isol o c.
+El desliz solo iteraria por A y C hasta que caiga B, y ahí corta. 
+Igual esto puede reescribirse como
+
+desliz mset l0 1 A mset l0 0 C end exc mmcmp l0 1 B end 
+desliz l0<=1 A l0<=0 C end exc l0==1 B end
+
+lo que es mas entendible y sería preferible. Notece que para que esto funcione desliz NO tiene que resetear la memoria local, y me parece que tiene sentido y debería ser asi. No sé si opino lo mismo con exc, pero para mantener consistencia quedaría. 
+Exc es raro porque uno no piensa que las ramas se ejecutan secuencialmente, pero bueno. Mas adelante pensaba tener calculos de memoria temporal, que en muchos casos sacan la necesidad de actualizar memoria local.
+
+El segundo caso tambien permite que B pueda tener acciones comunes, sin necesidad de poner un c
+
+
+Igual para manejar el primer caso podría agregar un comando especial fail, que retorne falso pero en una nueva cadena, manteniendo la validez de la anterior (como tener c pero sin hacer un clicker).
+Entonces tendría
+
+desliz exc A or B fail end C end
+fail marcaría a exc como valido hasta la mitad, por la rama 2. Si hubiera una rama 3 no correría, tampoco corre C (creo, si no es asi lo cambiaría). Para casos de operadores anidados si se usarían flags, y como aca tambien por ahora no vale la pena agregarlo.
+
+
+
+
+
+
+
+Ahora el problema esta con un caso parecido en desopt
+
+desopt exc A or B end or [] end
+
+quiero correr B solo si A falla, pero quiero que si corro B no se vuelva a iterar. Podría hacer:
+desopt exc A or B false end or [] end
+pero eso solo funciona si B hace algo como escribir memoria local, tener un isol o c. Si solo quiero agregar acciones comunes que vengan de B no puedo.
+
+Usando flags podría hacer
+desopt l0==0 exc A or l0<=1 end or l0==0 [] end
+lo que funcionaría, la proxima iteracion pasa pero la bloqueo en todas las ramas.
+
+Igual me parece que vale la pena agregar algun operador, no tan general como un break, que frene la iteracion del desopt actual.
+Lo que pasa con desopt es que no puedo correr codigo despues de él, en el caso del desliz puedo poner codigo despues y listo. Tambien esta el tema de si este codigo debería correr despues de todas las ramas o algunas
+
+usando esto quedaría 
+
+desopt exc A or B destop end or [] end
+desopt A desoptEnd B end or [] end
+
+lo que es util porque da una forma de tener codigo que finalice en desopt, lo que no es un caso muy raro. De paso es eficiente porque no tengo que hacer una iteracion mas
+La segunda opcion es mas facil de implementar pero me gusta mas la primera porque agrega un comando en vez de un operador, y es mas poderosa porque puede estar adentro de una anidacion de operadores.
+(el comando no cambia el flujo, nomas setea un flag que se mira antes de iterar)
+
+
+Otra alternativa sería
+
+desopt exc A or B fail end or [] end
+
+que hace lo que quiero hacer sin necesidad de agregar mecanicas nuevas, y es eficiente. Asi que voy a usar este. Hace algunas cosas de desliz un poco mas comodas, y eso se marca mas con desopt. Igual no es algo absolutamente necesario, pero lo vale.
+
+--
+
+Podría agregarse un operador break para tener mas control sobre el flujo. Hasta ahora no lo necesite pero podría ser util, por ejemplo:
+desliz A exc B break or C end D end E
+
+Pero puede verse que este caso es cubierto reemplazando break por fail, o reescribiendo
+desliz A n(B) C D end E
+
+
+Por ahí sería util para saltar de un nido de operadores, pero para eso necesitaría un mecanismo propio que sepa a donde ir y deje a todos los operadores intermedios en un estado de "contiene cosas validas pero no hasta el final". Creo que se puede hacer pero hasta ahora no lo necesite y es un quilombo y se pueden manejar con flags. No creo que valga la pena, me parece mejor idea mover todo a flags y no tener casos raros en el lenguaje.
+
+
+---
+
+Un caso que quería analizar es poder correr codigo cuando todos las ramas de un desopt fallen. Si el codigo puede correrse mas veces de las necesarias se puede poner en todas las ramas, incluso solo en una, usando exc y fail. Pero digamos que por eficiencia, o porque el codigo necesita solo correr cuando fallen todas las ramas, se tiene que hacer bien. 
+No creo que valga la pena agregar algo especial al lenguaje para este caso, pero quiero ver que tan complejo es manejarlo.
+
+desopt A or B or C end
+
+usando memoria no reseteable
+
+mset l0 10 desopt madd l0 1 A or B or madd l0 -1 C end
+
+l0 es el index de un array de bools que indica si alguna rama de el nivel l0 fue valida 
+
+desopt madd l0 1 A mset ll0 1 or B mset ll0 1 or madd l0 -1 exc C or exc mcmp ll0 1 madd l0 -1 or madd l0 -1 D fail end end end 
+
+donde D es el codigo que corre cuando fallen todas las ramas. No es horrible, y en muchos casos no se necesita porque se puede hacer alguna comparacion que tengan que ver con el dominio para ahorrar casos.
+
+Igual si se necesita mucha dependendia entre las ramas se puede pensar de implementar el desopt con desliz y isol y muchas operaciones de memoria
+
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+ 

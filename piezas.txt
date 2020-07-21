@@ -132,7 +132,16 @@ msize l 20 mset l1 2 desopt
        sa enemigo sa exc vacio or self end wd newPos addPos capt red sa mov green c or
        sd enemigo sd exc vacio or self end wa newPos addPos capt red sd mov green c end;
 
-:14 6 #dama que captura y mueve
+#la cosa seria registrar en una memoria pos de capturas y el aterrizaje, teniendo al principio un contador de puntos.
+#despues del desopt tendría que encontrar el maximo de las memorias, y armar el camino
+#supongo que va a haber 2 pass, el primero para encontrar el maximo y el segundo para armar, porque puede haber empates.
+
+#optimizaciones:
+#hacer que la lista de pos se recorra de atras para adelante, la mayoria de las veces es el ultimo el repetido
+#por ahi guardar en una variable en que direccion se movio, para evitar moverse en la direccion opuesta
+#en vez de guardar posiciones guardar un bitfield del tablero, que mediria la mitad porque se usa solo un color
+
+:14 6 #dama que captura y mueve y busca el maximo
 >newPos= mset l0 4 desliz 
           mless l0 l1 exc 
            mdist x ll0 madd l0 2 
@@ -142,23 +151,58 @@ msize l 20 mset l1 2 desopt
          end 
          mcmp l0 l1;
 >addPos= mset ll1 x madd l1 1 mset ll1 y madd l1 1;
-msize l 22 mset l1 4 desopt
-       wa enemigo wa exc vacio or self end sd newPos addPos capt red wa mov green mset l2 1 c or
-       wd enemigo wd exc vacio or self end sa newPos addPos capt red wd mov green mset l2 1 c or
-       sa enemigo sa exc vacio or self end wd newPos addPos capt red sa mov green mset l2 1 c or
-       sd enemigo sd exc vacio or self end wa newPos addPos capt red sd mov green mset l2 1 c end
-    mcmp l2 0 isol wa mover c end isol wd mover c end isol sa mover c end sd mover c;
+>maybeCopyList= exc mmore l2 l20 mset l20 l2 mset l21 1 mset l22 24 or mdist l2 0 mcmp l2 l20 madd l21 1 end 
+                mset l0 4 desliz mless l0 l1 mset ll22 ll0 madd l0 1 madd l22 1 mset ll22 ll0 madd l0 1 madd l22 1 end 
+                mset ll22 x madd l22 1 mset ll22 y madd l22 1;
+msize l 60 mreset 20 mset l1 4 desopt
+         wa enemigo wa exc vacio or self end sd newPos addPos red wa green madd l2 1
+       or
+         wd enemigo wd exc vacio or self end sa newPos addPos red wd green madd l2 1      
+       or
+         sa enemigo sa exc vacio or self end wd newPos addPos red sa green madd l2 1
+       or exc       
+         sd enemigo sd exc vacio or self end wa newPos addPos red sd green madd l2 1 
+         or maybeCopyList fail end end
+    exc mcmp l20 0 isol wa mover c end isol wd mover c end isol sa mover c end sd mover c
+    or  desliz mless l0 l21 mset l1 24 mset l2 24 madd l2 l20 
+         desliz mless l1 l2 mset l3 ll1 madd l1 1 goto l3 ll1 capt madd l1 1 end mset l3 ll1 madd l1 1 goto l3 ll1 mov madd l1 1 c
+         madd l0 1 
+        end
+    end;
 
-#la cosa seria registrar en una memoria pos de capturas y el aterrizaje, teniendo al principio un contador de puntos.
-#despues del desopt tendría que encontrar el maximo de las memorias, y armar el camino
-#supongo que va a haber 2 pass, el primero para encontrar el maximo y el segundo para armar, porque puede haber empates.
+#el problema esta en que maybeCopyList tiene que retornar falso y hacer su cosa. Se puede implementar con una condicion falsa, pero si necesitara tener acciones no y es medio raro. Por ahi vale la pena hacer algo distinto con el lenguaje, hay varios casos raros asi.
+#tambien estaría bueno hacer el maybeCopyList solo cuando fallen todas las ramas de desopt, no cambia mucho pero como se expresaria algo asi?
+
+#l0 contador lista de pos
+#l1 tamaño lista pos, capturas + pos final
+#l2 contador capturas
+#l4-19 lista pos actual
+#l20 max contador capturas
+#l21 cantidad de cadenas validas
+#l22 contador lista copia
+#l0 contador cadenas validas
+#l1 contador copia de cadena
+#l2 contador tope de copia
+#l3 copia de x para el goto
+#l24-60 lista de pos validas, pegadas. Se sabe que el tamaño es l20+2
 
 
-#optimizaciones:
-#hacer que la lista de pos se recorra de atras para adelante, la mayoria de las veces es el ultimo el repetido
-#por ahi guardar en una variable en que direccion se movio, para evitar moverse en la direccion opuesta
-#en vez de guardar posiciones guardar un bitfield del tablero, que mediria la mitad porque se usa solo un color
+#una version alternativa podría guardar el tablero en vez de la lista de posiciones
+#otra cosa que se podría hacer es guardar una lista de por que ramas del desliz se avanzó, se usaria la mtiad de memoria
 
+#cosas que podrían hacer esto mas lindo: mejor sintaxis de memoria, operadores de bloques tipo memcpy
+
+
+#probar hacer la dama sin desopt, tecnicamente se puede
+
+:15 6 
+>X=w|s;
+msize l 15 mreset 5 desliz madd l4 1 mless l4 5 X mover c isol madd l5 1 madd l0 6 mcmp l5 3 aa mover c end end;
+
+:16 5
+#W madd l0 t0 madd l0 1 mset t0 l0 mover; goto t0 t0 mover; 
+#exc w mover c a mover or d mover end ss mover c;
+msize l 60 mreset 30 desliz exc d mover or ss mover fail end w mover end;
 
 
 #PIEZAS PARA TEST

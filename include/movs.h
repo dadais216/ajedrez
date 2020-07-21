@@ -102,6 +102,7 @@ bool mcmp();
 bool mdist();
 bool mmore();
 bool mless();
+bool mgoto();
 
 colort* crearColor(int,int,int);
 

@@ -1,7 +1,11 @@
 
 
-
+#if debugMode
+RenderWindow window(VideoMode(1200,512),"ajedres --debug");
+#else
 RenderWindow window(VideoMode(640,512),"ajedres");
+#endif
+
 Manager<Texture> image;
 Font font;
 Input input;
@@ -31,7 +35,7 @@ int main(int argc,char** argv){
     return 0;
   }
 
-  properInit(stateMem,20,1,4);
+  properInit(stateMem,7,1,4);
   //arranqueInit(stateMem);
 
   float fpsLock=1./60.; //maximos fps TODO en test de velocidad que sea 0

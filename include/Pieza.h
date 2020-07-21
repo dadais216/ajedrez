@@ -4,7 +4,7 @@ struct operador;
 struct Piece;
 struct pBase{
   operador* raiz;
-  int memLocalSize;
+  memLocalt memLocal;
   int size;
 };
 struct Piece{

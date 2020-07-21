@@ -24,7 +24,7 @@ struct{
   char const* name;
 }testPrint;
 
-const int runs=5;
+const int runs=7;
 
 template<typename T>
 void sGetNext(char** ss,T* var){
@@ -225,6 +225,10 @@ void segmentationHandler(int sig){
 }
 
 void doTests(char* mem){
+#if debugMode
+  fail("testing perfomance in debug compilation xd\n");
+#endif
+
   properInit(mem,0,2,2,true);
   properState* ps=(properState*)mem;
   srand(time(NULL));
@@ -238,7 +242,7 @@ void doTests(char* mem){
   timespec beg,end;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&beg);
 
-  testPrint.name="normalisin + governor performance";
+  testPrint.name="separador de memoria";
 
   for(int i=0;i<runs;i++){
     runTest(ps,"simple",14,10,3000,false,i==0);

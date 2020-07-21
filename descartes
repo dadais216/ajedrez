@@ -6,7 +6,7 @@ ww vacio mov exc a vacio mov c or d vacio mov or w vacio mov end
 tiene una manipulacion de strings simple que lo lleva a
 w+w+vacio+mov+exc(a+vacio+mov+c,exc(d+vacio+mov,w+vacio+mov))
 y esto se linkea directamente a c++, donde tengo objetos para cada simbolo que se relacionan por el 
-operador + y toda la cosa. La ventaja estaría en que me salto tener que hacer el parser, al precio de
+operador + y constructores. La ventaja estaría en que me salto tener que hacer el parser, al precio de
 tener que manejar estos objetos y sus relaciones. Para optimizar debería traducir estos objetos a versiones
 finales, aunque si no me interesa podría trabajarse con esos
 
@@ -28,4 +28,38 @@ y despues asd en procesaria su propia linea de alguna forma
 Que sé yo, es una idea y se podría probar en algun otro proyecto. Igual no estoy seguro de que sea mejor que parsear directamente
 
 ------------------
+
+Estaría bueno que los movimientos no dependan del estado del tablero actual, sino del estado del tablero como si lo estuvieran modificando mientras se procesa. 
+
+Por ejemplo en
+w captura [...] ww [...] aa vacio
+el vacio da falso porque la pieza no es capturada hasta el tiempo de accion
+
+Una forma de manejar esto sería mover la pieza y volver todo a la normalidad despues, como tengo pensado hacer para movimientos de segundo orden. El tema esta en que es costoso, y no solo hay que volver para atras al final sino tambien para cada rama un desopt, despues de un isol y cada vez que falle una rama de exc o desliz.
+
+Otra idea es tener unos bytes en el tablero para indicar que se hizo algo ahí. Creo que sería mas barato que limpiar. Por ejemplo se marca un tile como vacio despues de moverse de él y al capturar. Habría un byte con un contador de turnos para saber si la informacion que esta ahí es de este turno, si no lo es se mira lo que esta en el tile. 
+Habría un sistema parecido para la memoria, lo que es costoso en perspectiva porque sería duplicar todo.
+El sistema es costoso tambien porque implica un if en cada condicion, que mira si la tile esta marcada o limpia para saber contra que comparar. Este if se podría sacar si al principio de cada turno se escribe el estado real de la tile en este byte ensuciable,
+lo que efectivamente es lo mismo que duplicar el tablero.
+Y sigue teniendo el mismo problema, hay que retroceder en cada operador que pueda fallar o tenga varias ramas. Por ahí hay una forma de marcar en unos bytes si la informacion marcada es util o no, pero no se me ocurre. Por ejemplo un exc, como sabe si la informacion que encuentra es valida y no de una rama falsa anterior, sin descartar informacion escrita antes del exc?
+
+La idea de tener una copia del tablero no se me hace tan loca, es un int para cada posicion + un int para cada memoria. El tema es la limpieza constante, y lo que me convence de no hacerlo es que es algo que se estaría haciendo constantemente y no se usa casi nunca. La unica pieza que lo necesita de las comunes es la dama. La implementacion de la dama se puede hacer usando un sistema como este, tener una copia del tablero o una lista de posiciones en memoria local.
+
+Lo malo de que los movimientos se basen en el tablero actual es que no es intuitivo, pero bueno.
+
+-----------------
+
+
+Estaría bueno agregar algunas cosas de metaprogramacion para boludear.
+
+Sería un programa que preparsea algunos archivos, toma codigo, lo compila y lo corre. Ese codigo genera codigo que se compila al programa principal.
+
+Una de las cosas que podría automatizarse es agregar movimientos nuevos, solo necesitaria escribir en algun lado el codigo y los tokens y ligamientos se generan solos.
+
+Igual no lo necesito, sería algo que esta bueno nomas.
+
+
+
+
+
 

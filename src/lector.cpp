@@ -10,10 +10,11 @@ enum {
       tW,tA,tS,tD,tN,
       tmov,tcapt,tspwn,tpausa,
       tvacio,tpiece,tenemigo,taliado,tself, tpass,tesp,
-      tmcmp,tmset,tmadd,tmless,tmmore,tmdist,tmsize,
+      tmcmp,tmset,tmadd,tmless,tmmore,tmdist,tmgoto,
+      tmsize,tmreset,
       tmlocal,tmglobal,tmpiece,tmtile,tposX,tposY,
       tdesliz,texc,tisol,tdesopt,
-      tclick,
+      tclick,tfail,
       tcolor,tsprt,tnumShow,
       tmovEnd,tseparator,tend,
       tmacroSeparator,
@@ -55,7 +56,7 @@ void initParser(parseData* pd){
   rel(desopt);
   rel(end);
 
-  pd->wordToToken["c"]=tclick;
+  pd->wordToToken["c"]=tclick;//TODO por que no uso stringForHash aca? igual tendria que volar todo eso
   pd->wordToToken["or"]=tseparator;
   
   rel(mcmp);
@@ -64,8 +65,13 @@ void initParser(parseData* pd){
   rel(mless);
   rel(mmore);
   rel(mdist);
+  pd->wordToToken["goto"]=tmgoto;
+  pd->tokenToWord[tmgoto]="goto";
 
   rel(msize);
+  rel(mreset);
+
+  rel(fail);
 #undef rel
   pd->wordToToken["=="]=tmcmp;
   pd->wordToToken["="]=tmset;
@@ -92,7 +98,7 @@ void initParser(parseData* pd){
 #endif
   pd->lastGlobalMacro=tlast;
   pd->lastTangledGroup=0;
-  init(&pd->memLocalSize,4);
+  init(&pd->memLocal,4);
   pd->memLocalSizeMax=0;
   pd->memPieceSize=0;
   pd->memGlobalSize=0;
@@ -821,7 +827,7 @@ al vector que haga estas cosas al momento de expandir*/
 void growMemory(parseData* pd,int gType,int val){
   val++;//0 counted
   switch(gType){
-  case tmlocal: pd->memLocalSize[pd->movQ-1] = std::max(pd->memLocalSize[pd->movQ-1],val);
+  case tmlocal: pd->memLocal[pd->movQ-1].size = std::max(pd->memLocal[pd->movQ-1].size,val);
                 pd->memLocalSizeMax=std::max(pd->memLocalSizeMax,val); break;
   case tmpiece: pd->memPieceSize = std::max(pd->memPieceSize,val);break;
   case tmtile:  pd->memTileSlots = std::max(pd->memTileSlots,val);break;
@@ -844,7 +850,7 @@ void processTokens(parseData* pd,vector<int>* tokens){
 
   auto matchNum=[&](int tok,char const* op,bool doPush=true){
                   if(tok<1024)
-                    fail("% requires number",op);
+                    fail("%s requires number",op);
                   if(doPush)
                     push(finalTokens,tok);
                 };
@@ -873,7 +879,7 @@ void processTokens(parseData* pd,vector<int>* tokens){
                       fail("% with no parameters at end of input",op);
                   };
 
-  push(&pd->memLocalSize,0);
+  push(&pd->memLocal,memLocalt{0,-1});
   pd->movQ=1;
   //esto se podría hacer en el scanner, pero hacerlo aca es casi gratis y es mas comodo
   //si se hace en el scanner no se podrían mezclar ciertas cosas con macros, turn y llaves, por ejemplo
@@ -890,14 +896,19 @@ void processTokens(parseData* pd,vector<int>* tokens){
          finalTokens->data[finalTokens->size-1]==tmovEnd)
         continue;
       else{
-        push(&pd->memLocalSize,0);
+        push(&pd->memLocal,memLocalt{0,-1});
         pd->movQ++;
       }break;
     case tmsize:
       boundCheck(i+2,"mSize");
       matchNum(tokensExpanded[i+2],"mSize",false);
-      growMemory(pd,tokensExpanded[i+1],tokensExpanded[i+2]-1-2048);//-1 porque no es 0 counted
+      growMemory(pd,tokensExpanded[i+1],tokensExpanded[i+2]-1-2048);//-1 para contrarrestar el +1 de la funcion xd
       i+=2;continue;
+    case tmreset:
+      boundCheck(i+1,"mReset");
+      matchNum(tokensExpanded[i+1],"mReset",false);
+      pd->memLocal[pd->movQ-1].resetUntil=tokensExpanded[i+1]-2048;
+      i+=1;continue;
       /*case spawn:
       boundCheck(i+1,"spawn");
       matchNum(tv[i+1],"spawn");

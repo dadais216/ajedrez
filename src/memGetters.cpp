@@ -57,7 +57,7 @@ void debugUnsetIndirectColor(){
 
 int* localg(){
   intptr ind=(intptr)getNextInBuffer();;
-  debugDrawMem(ind,actualHolder.nh->base->memLocalSize,405);
+  debugDrawMem(ind,actualHolder.nh->base->memLocal.size,405);
   return &memMov[ind];
 }
 
@@ -71,7 +71,7 @@ int* localgi(){
   debugSetIndirectColor();
   int ind=*g();
   debugUnsetIndirectColor();;
-  debugDrawMem(ind,actualHolder.nh->base->memLocalSize,405);
+  debugDrawMem(ind,actualHolder.nh->base->memLocal.size,405);
   return &memMov[ind];
 }
 

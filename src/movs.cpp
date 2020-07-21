@@ -209,6 +209,7 @@ bool pass(){
 #if debugMode
 RectangleShape backgroundMem;
 RectangleShape backgroundMemDebug;
+RectangleShape localMemorySeparator;
 Text textValMem;
 
 RectangleShape posPiece;

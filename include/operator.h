@@ -76,3 +76,4 @@ desliz* parseDesliz(parseMovData*);
 exc* parseExc(parseMovData*);
 isol* parseIsol(parseMovData*);
 desopt* parseDesopt(parseMovData*);
+operador* parseFail(parseMovData*);
