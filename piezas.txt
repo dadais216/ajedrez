@@ -29,7 +29,7 @@
 #desliz WA mover capt spwn 2 end;
 #desliz WA mover isol capt spwn 2 end end;
 #TW Tmover TW vacio spwn 1 color 0 0 255;
-pass;
+W mover;
 
 :2 1 #torre
 desliz W mover c end W captura;
@@ -151,7 +151,7 @@ msize l 20 mset l1 2 desopt
          end 
          mcmp l0 l1;
 >addPos= mset ll1 x madd l1 1 mset ll1 y madd l1 1;
->maybeCopyList= exc mmore l2 l20 mset l20 l2 mset l21 1 mset l22 24 or mdist l2 0 mcmp l2 l20 madd l21 1 end 
+>maybeCopyList= exc mmore l2 l20 mset l20 l2 mset l21 1 mset l22 25 or mdist l2 0 mcmp l2 l20 madd l21 1 end 
                 mset l0 4 desliz mless l0 l1 mset ll22 ll0 madd l0 1 madd l22 1 mset ll22 ll0 madd l0 1 madd l22 1 end 
                 mset ll22 x madd l22 1 mset ll22 y madd l22 1;
 msize l 60 mreset 20 mset l1 4 desopt
@@ -164,11 +164,16 @@ msize l 60 mreset 20 mset l1 4 desopt
          sd enemigo sd exc vacio or self end wa newPos addPos red sd green madd l2 1 
          or maybeCopyList fail end end
     exc mcmp l20 0 isol wa mover c end isol wd mover c end isol sa mover c end sd mover c
-    or  desliz mless l0 l21 mset l1 24 mset l2 24 madd l2 l20 
-         desliz mless l1 l2 mset l3 ll1 madd l1 1 goto l3 ll1 capt madd l1 1 end mset l3 ll1 madd l1 1 goto l3 ll1 mov madd l1 1 c
-         madd l0 1 
+    or mset l22 25 mset l23 25 madd l23 l20 madd l23 l20
+       desliz mless l24 l21 
+         isol 
+           desliz mless l22 l23 mset l3 ll22 madd l22 1 goto l3 ll22 capt red madd l22 1 end 
+           mset l3 ll22 madd l22 1 goto l3 ll22 mov green madd l22 1 c  
+         end
+         madd l24 1 madd l23 l20 madd l23 l20 madd l23 2
         end
     end;
+pass blue;
 
 #el problema esta en que maybeCopyList tiene que retornar falso y hacer su cosa. Se puede implementar con una condicion falsa, pero si necesitara tener acciones no y es medio raro. Por ahi vale la pena hacer algo distinto con el lenguaje, hay varios casos raros asi.
 #tambien estaría bueno hacer el maybeCopyList solo cuando fallen todas las ramas de desopt, no cambia mucho pero como se expresaria algo asi?
@@ -180,11 +185,10 @@ msize l 60 mreset 20 mset l1 4 desopt
 #l20 max contador capturas
 #l21 cantidad de cadenas validas
 #l22 contador lista copia
-#l0 contador cadenas validas
-#l1 contador copia de cadena
-#l2 contador tope de copia
-#l3 copia de x para el goto
-#l24-60 lista de pos validas, pegadas. Se sabe que el tamaño es l20+2
+#l23 contador tope de copia
+#l24 contador cadenas validas
+#l0 copia de x para el goto
+#l25-60 lista de pos validas, pegadas. Se sabe que el tamaño es l20+2
 
 
 #una version alternativa podría guardar el tablero en vez de la lista de posiciones
@@ -195,14 +199,91 @@ msize l 60 mreset 20 mset l1 4 desopt
 
 #probar hacer la dama sin desopt, tecnicamente se puede
 
-:15 6 
->X=w|s;
-msize l 15 mreset 5 desliz madd l4 1 mless l4 5 X mover c isol madd l5 1 madd l0 6 mcmp l5 3 aa mover c end end;
+:15 6 #dama
+>newPos= mset l0 4 desliz 
+          mless l0 l1 exc 
+           mdist x ll0 madd l0 2 
+          or 
+           madd l0 1 mdist y ll0 madd l0 1 
+          end 
+         end 
+         mcmp l0 l1;
+>addPos= mset ll1 x madd l1 1 mset ll1 y madd l1 1;
+>maybeCopyList= exc mmore l2 l20 mset l20 l2 mset l21 1 mset l22 25 or mdist l2 0 mcmp l2 l20 madd l21 1 end 
+                mset l0 4 desliz mless l0 l1 mset ll22 ll0 madd l0 1 madd l22 1 mset ll22 ll0 madd l0 1 madd l22 1 end 
+                mset ll22 x madd l22 1 mset ll22 y madd l22 1;
+msize l 121 mreset 20 mset l1 4 desopt 32
+         wa enemigo wa exc vacio or self end sd newPos addPos red wa green madd l2 1
+       or
+         wd enemigo wd exc vacio or self end sa newPos addPos red wd green madd l2 1      
+       or
+         sa enemigo sa exc vacio or self end wd newPos addPos red sa green madd l2 1
+       or exc       
+         sd enemigo sd exc vacio or self end wa newPos addPos red sd green madd l2 1 
+         or maybeCopyList fail end end
+    exc mcmp l20 0 isol wa mover c end isol wd mover c end isol sa mover c end sd mover c
+    or mset l22 25 mset l23 25 madd l23 l20 madd l23 l20
+       desliz mless l24 l21 
+         mset l1 0
+         isol 
+           desliz mless l22 l23 mset l0 ll22 madd l22 1 
+             exc mcmp ll22 1 mset l1 1 or pass end
+             goto l0 ll22 capt red madd l22 1 end 
+           mset l0 ll22 madd l22 1 goto l0 ll22 madd l22 1
+           exc mcmp l1 0 mov green c or mov capt spwn 16 blue green c end 
+         end
+         madd l24 1 madd l23 l20 madd l23 l20 madd l23 2
+        end
+    end;
+#los tamaños de memoria son para manejar el peor caso posible que apareció corriendo test aleatorios, 
+#que es tener una cadena de 7 capturas con 6 caminos posibles
+#el peor caso posible sería tener 9 capturas, pero ni siquiera sé si es posible llegar a ese estado en un juego. 
+#Para manejar algo asi habría que reservar mas memoria local, memoria de desopt y de los desliz
+
+:16 7 #dama promocionada. Puede que esta sea la pieza que se llama dama
+>newPos= mset l0 4 desliz 
+          mless l0 l1 exc 
+           mdist x ll0 madd l0 2 
+          or 
+           madd l0 1 mdist y ll0 madd l0 1 
+          end 
+         end 
+         mcmp l0 l1;
+>addPos= mset ll1 x madd l1 1 mset ll1 y madd l1 1;
+>maybeCopyList= exc mmore l2 l20 mset l20 l2 mset l21 1 mset l22 25 or mdist l2 0 mcmp l2 l20 madd l21 1 end 
+                mset l0 4 desliz mless l0 l1 mset ll22 ll0 madd l0 1 madd l22 1 mset ll22 ll0 madd l0 1 madd l22 1 end 
+                mset ll22 x madd l22 1 mset ll22 y madd l22 1;
+>damaDesliz1= exc mcmp l3 0 desliz;
+>damaDesliz2= mover end or pass end; #muh macros con parametros
+msize l 60 mreset 20 mset l1 4 desopt
+         damaDesliz1 wa damaDesliz2 wa enemigo wa exc vacio or self end sd newPos addPos red wa green madd l2 1 mset l3 1
+       or
+         damaDesliz1 wd damaDesliz2 wd enemigo wd exc vacio or self end sa newPos addPos red wd green madd l2 1 mset l3 1
+       or
+         damaDesliz1 sa damaDesliz2 sa enemigo sa exc vacio or self end wd newPos addPos red sa green madd l2 1 mset l3 1
+       or exc       
+         damaDesliz1 sd damaDesliz2 sd enemigo sd exc vacio or self end wa newPos addPos red sd green madd l2 1 mset l3 1
+         or maybeCopyList fail end end
+    exc mcmp l20 0 
+         isol desliz wa mover c end end isol desliz wd mover c end end isol desliz sa mover c end end desliz sd mover c end
+    or mset l22 25 mset l23 25 madd l23 l20 madd l23 l20
+       desliz mless l24 l21 
+         mset l1 0
+         isol 
+           desliz mless l22 l23 mset l0 ll22 madd l22 1 goto l0 ll22 capt red madd l22 1 end 
+           mset l0 ll22 madd l22 1 goto l0 ll22 madd l22 1 mov green c 
+         end
+         madd l24 1 madd l23 l20 madd l23 l20 madd l23 2
+        end
+    end;
+#se podría haber implementado evitando el exc con poner el desopt en un macro y llamarlo 4 veces, una vez para cada direccion, pero esto me parecio mas limpio porque no cambia casi nada sobre la dama normal. 
 
 :16 5
 #W madd l0 t0 madd l0 1 mset t0 l0 mover; goto t0 t0 mover; 
 #exc w mover c a mover or d mover end ss mover c;
 msize l 60 mreset 30 desliz exc d mover or ss mover fail end w mover end;
+#>X=w|s;
+#msize l 15 mreset 5 desliz madd l4 1 mless l4 5 X mover c isol madd l5 1 madd l0 6 mcmp l5 3 aa mover c end end;
 
 
 #PIEZAS PARA TEST
@@ -302,7 +383,81 @@ X Y mover;
 >X=w|s;
 desliz X Tmover c end; 
 
+:38 6 #dama
+>newPos= mset l0 4 desliz 
+          mless l0 l1 exc 
+           mdist x ll0 madd l0 2 
+          or 
+           madd l0 1 mdist y ll0 madd l0 1 
+          end 
+         end 
+         mcmp l0 l1;
+>addPos= mset ll1 x madd l1 1 mset ll1 y madd l1 1; 
+#exc mmore l1 19 assert or pass end;
+>maybeCopyList= exc mmore l2 l20 mset l20 l2 mset l21 1 mset l22 25 or mdist l2 0 mcmp l2 l20 madd l21 1 end 
+                mset l0 4 desliz mless l0 l1 mset ll22 ll0 madd l0 1 madd l22 1 mset ll22 ll0 madd l0 1 madd l22 1 end 
+                mset ll22 x madd l22 1 mset ll22 y madd l22 1;
+msize l 121 mreset 20 mset l1 4 desopt 32 
+         wa enemigo wa exc vacio or self end sd newPos addPos red wa green madd l2 1
+       or
+         wd enemigo wd exc vacio or self end sa newPos addPos red wd green madd l2 1      
+       or
+         sa enemigo sa exc vacio or self end wd newPos addPos red sa green madd l2 1
+       or exc       
+         sd enemigo sd exc vacio or self end wa newPos addPos red sd green madd l2 1 
+         or maybeCopyList fail end end
+    exc mcmp l20 0 isol wa mover c end isol wd mover c end isol sa mover c end sd mover c
+    or mset l22 25 mset l23 25 madd l23 l20 madd l23 l20
+       desliz mless l24 l21 
+         mset l1 0
+         isol 
+           desliz mless l22 l23 mset l0 ll22 madd l22 1 
+             exc mcmp ll22 1 mset l1 1 or pass end
+             goto l0 ll22 capt red madd l22 1 end 
+           mset l0 ll22 madd l22 1 goto l0 ll22 madd l22 1
+           #exc mcmp l1 0 mov green c or mov capt spwn 1 blue green c end
+           mov green c 
+         end
+         madd l24 1 madd l23 l20 madd l23 l20 madd l23 2
+        end
+    end;
 
+:39 7 #dama promocionada. Puede que esta sea la pieza que se llama dama
+>newPos= mset l0 4 desliz 
+          mless l0 l1 exc 
+           mdist x ll0 madd l0 2 
+          or 
+           madd l0 1 mdist y ll0 madd l0 1 
+          end 
+         end 
+         mcmp l0 l1;
+>addPos= mset ll1 x madd l1 1 mset ll1 y madd l1 1;
+>maybeCopyList= exc mmore l2 l20 mset l20 l2 mset l21 1 mset l22 25 or mdist l2 0 mcmp l2 l20 madd l21 1 end 
+                mset l0 4 desliz mless l0 l1 mset ll22 ll0 madd l0 1 madd l22 1 mset ll22 ll0 madd l0 1 madd l22 1 end 
+                mset ll22 x madd l22 1 mset ll22 y madd l22 1;
+>damaDesliz1= exc mcmp l3 0 desliz;
+>damaDesliz2= mover end or pass end; #muh macros con parametros
+msize l 60 mreset 20 mset l1 4 desopt
+         damaDesliz1 wa damaDesliz2 wa enemigo wa exc vacio or self end sd newPos addPos red wa green madd l2 1 mset l3 1
+       or
+         damaDesliz1 wd damaDesliz2 wd enemigo wd exc vacio or self end sa newPos addPos red wd green madd l2 1 mset l3 1
+       or
+         damaDesliz1 sa damaDesliz2 sa enemigo sa exc vacio or self end wd newPos addPos red sa green madd l2 1 mset l3 1
+       or exc       
+         damaDesliz1 sd damaDesliz2 sd enemigo sd exc vacio or self end wa newPos addPos red sd green madd l2 1 mset l3 1
+         or maybeCopyList fail end end
+    exc mcmp l20 0 
+         isol desliz wa mover c end end isol desliz wd mover c end end isol desliz sa mover c end end desliz sd mover c end
+    or mset l22 25 mset l23 25 madd l23 l20 madd l23 l20
+       desliz mless l24 l21 
+         mset l1 0
+         isol 
+           desliz mless l22 l23 mset l0 ll22 madd l22 1 goto l0 ll22 capt red madd l22 1 end 
+           mset l0 ll22 madd l22 1 goto l0 ll22 madd l22 1 mov green c 
+         end
+         madd l24 1 madd l23 l20 madd l23 l20 madd l23 2
+        end
+    end;
 
 
 

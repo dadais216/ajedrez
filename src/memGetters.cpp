@@ -218,10 +218,15 @@ int* posYRead(){
 #endif
   static int y;
   y=actualHolder.nh->pos.y;
-  if(!actualHolder.nh->base->h->bando){
-    y=actualHolder.brd->dims.y-1-y;
-  }
   return &y;
+}
+
+int* posSYRead(){
+  int* posY=posYRead();
+  if(!actualHolder.nh->base->h->bando){
+    *posY=actualHolder.brd->dims.y-1-*posY;
+  }
+  return posY;
 }
 
 //por ahi algo para acceder al step de la pieza seria util?

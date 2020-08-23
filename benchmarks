@@ -286,3 +286,82 @@ promedio 3665.107452	-35.136722
 mejor 3560.220000	-17.938000
 ---------------------------
 ###########################
+@dama, movholders para memoria no reseteable@
+simple:
+holder bucket 1904	+0
+op bucket 1112		-16
+promedio s 0.000001	+0.000000
+promedio 1366.293743	-16.711500
+mejor 1282.400000	-16.900000
+---------------------------
+tiles:
+holder bucket 4020	+0
+op bucket 2960		-32
+promedio s 0.000002	-0.000000
+promedio 1510.239216	-36.593074
+mejor 1428.016667	-44.458333
+---------------------------
+growin:
+holder bucket 16756	+0
+op bucket 2688		-8
+promedio s 0.000003	-0.000000
+promedio 2960.621995	-200.506528
+mejor 2824.064800	-195.885200
+---------------------------
+puzzle:
+holder bucket 12760	+0
+op bucket 1112		-16
+promedio s 0.000002	-0.000000
+promedio 1793.209721	-2.771409
+mejor 1750.645000	+15.036000
+---------------------------
+germen:
+holder bucket 577024	-71736
+op bucket 1544		-32
+promedio s 0.000003	+0.000000
+promedio 3300.482576	-48.938679
+mejor 3210.827731	-29.507071
+---------------------------
+desliz:
+holder bucket 21088	+0
+op bucket 3816		-72
+promedio s 0.000011	+0.000000
+promedio 11192.524592	-143.509380
+mejor 11095.287333	-120.962334
+---------------------------
+caballos:
+holder bucket 678520	+0
+op bucket 3624		-64
+promedio s 0.000004	-0.000000
+promedio 3859.194559	+1.814951
+mejor 3700.833333	+4.853333
+---------------------------
+normal:
+holder bucket 79800	+0
+op bucket 16160		-272
+promedio s 0.000003	+0.000000
+promedio 3366.660837	-17.397629
+mejor 2779.937500	-17.575000
+---------------------------
+desopt:
+holder bucket 10608	+0
+op bucket 1256		-16
+promedio s 0.000004	-0.000000
+promedio 3748.397708	-32.346082
+mejor 3572.078000	-35.874000
+---------------------------
+desopt a manopla:
+holder bucket 7728	+0
+op bucket 8056		-240
+promedio s 0.000004	-0.000000
+promedio 3644.140052	-20.967400
+mejor 3538.182000	-22.038000
+---------------------------
+damas:
+holder bucket 24644888	+0
+op bucket 10840		+0
+promedio s 0.000007	+0.000000
+promedio 6564.081679	+0.000000
+mejor 6068.000000	+0.000000
+---------------------------
+###########################

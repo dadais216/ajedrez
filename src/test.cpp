@@ -225,24 +225,25 @@ void segmentationHandler(int sig){
 }
 
 void doTests(char* mem){
-#if debugMode
-  fail("testing perfomance in debug compilation xd\n");
-#endif
-
   properInit(mem,0,2,2,true);
   properState* ps=(properState*)mem;
   srand(time(NULL));
   getOldStats();
 
+#if debugMode
+  for(int i=0;i<20;i++)
+    printf("in debug mode!!\n");
+#else
   std::signal(SIGSEGV,segmentationHandler);
   std::signal(SIGINT,segmentationHandler);
   int res=system("cpupower frequency-set --governor performance");
   failIf(res!=0,"testing needs sudo\n");
+#endif
 
   timespec beg,end;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&beg);
 
-  testPrint.name="separador de memoria";
+  testPrint.name="dama, movholders para memoria no reseteable";
 
   for(int i=0;i<runs;i++){
     runTest(ps,"simple",14,10,3000,false,i==0);
@@ -257,18 +258,23 @@ void doTests(char* mem){
     runTest(ps,"normal",16,80,10000,true);
     runTest(ps,"desopt",23,500,600,false);
     runTest(ps,"desopt a manopla",24,500,800,false);
+    runTest(ps,"damas",25,1,4000,true);
   }
-  //la desviacion entre 2 corridas iguales es de menos de 100, para estar seguro lo corro 5 veces
+  //la desviacion entre 2 corridas iguales es de menos de 100 (150 para dama y desopt a veces), para estar seguro lo corro 5 veces
 
+#if !debugMode
   res=system("cpupower frequency-set --governor powersave");
   if(res!=0)
     printf("check cpu governor\n");
+#endif
 
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&end);
   double elapsed=(end.tv_sec-beg.tv_sec)+(end.tv_nsec-beg.tv_nsec)/1e9;
   printf("\ntotal time %f\n",elapsed);
 
+#if !debugMode
   saveStats();
+#endif
 }
 
 

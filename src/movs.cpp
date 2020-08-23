@@ -13,8 +13,9 @@ vector<color> coloresImp;
 //necesito guardar aparte la implementacion porque la aloco cada vez por algun motivo
 //(es una indireccion totalmente al pedo, es algo que quedo de antes)
 
+//TODO retornar int en vez de puntero
 vector<RectangleShape*> colores;
-colort* crearColor(int r,int g,int b){
+int crearColor(int r,int g,int b){
     ///se crea una instancia del sprite y cada colort la guarda en un puntero, se diferencia por tipo
     ///en un parametro de esta funcion, por ahora solo manejo colores
 
@@ -25,7 +26,7 @@ colort* crearColor(int r,int g,int b){
         color* col=newElem(&coloresImp);
         new(col)color();
         col->init(c);
-        return col;
+        return coloresImp.size-1;
       }
     RectangleShape* rs=new RectangleShape();
     rs->setFillColor(sf::Color(r,g,b,40));
@@ -33,7 +34,7 @@ colort* crearColor(int r,int g,int b){
     color* col=newElem(&coloresImp);
     new(col)color();
     col->init(rs);
-    return col;
+    return coloresImp.size-1;
 }
 
 /*
@@ -206,24 +207,10 @@ bool pass(){
   CONDRET(true);
 }//se usa al final de exc para retornar verdadero aunque las otras ramas hayan fallado
 
-#if debugMode
-RectangleShape backgroundMem;
-RectangleShape backgroundMemDebug;
-RectangleShape localMemorySeparator;
-Text textValMem;
 
-RectangleShape posPiece;
-RectangleShape posActGood;
-RectangleShape posActBad;
-RectangleShape posMem;
-RectangleShape* tileActDebug;
 
-Text textDebug;
-bool drawDebug;
 bool ZPressed=false;
 int mil=25;
-
-
 void stall(){
   ///@cleanup como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
   while(true){
@@ -247,6 +234,32 @@ void stall(){
     }
   }
 }
+bool langAssert(){
+  printf("something wrong!!\n");
+  mil=2000;
+  stall();
+  return true;
+}
+
+#if debugMode
+RectangleShape backgroundMem;
+RectangleShape backgroundMemDebug;
+RectangleShape localMemorySeparator;
+Text textValMem;
+
+RectangleShape posPiece;
+RectangleShape posActGood;
+RectangleShape posActBad;
+RectangleShape posMem;
+RectangleShape* tileActDebug;
+
+Text textDebug;
+bool drawDebug;
+
+
+
+
+
 void debugShowAndWait(char const* name,bool val){
   textDebug.setString(name);
   

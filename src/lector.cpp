@@ -12,10 +12,10 @@ enum {
       tvacio,tpiece,tenemigo,taliado,tself, tpass,tesp,
       tmcmp,tmset,tmadd,tmless,tmmore,tmdist,tmgoto,
       tmsize,tmreset,
-      tmlocal,tmglobal,tmpiece,tmtile,tposX,tposY,
+      tmlocal,tmglobal,tmpiece,tmtile,tposX,tposY,tposSY,
       tdesliz,texc,tisol,tdesopt,
       tclick,tfail,
-      tcolor,tsprt,tnumShow,
+      tcolor,tsprt,tnumShow,tassert,
       tmovEnd,tseparator,tend,
       tmacroSeparator,
       tlast
@@ -65,6 +65,7 @@ void initParser(parseData* pd){
   rel(mless);
   rel(mmore);
   rel(mdist);
+
   pd->wordToToken["goto"]=tmgoto;
   pd->tokenToWord[tmgoto]="goto";
 
@@ -72,6 +73,8 @@ void initParser(parseData* pd){
   rel(mreset);
 
   rel(fail);
+
+  rel(assert);
 #undef rel
   pd->wordToToken["=="]=tmcmp;
   pd->wordToToken["="]=tmset;
@@ -378,6 +381,7 @@ void tokenWord(parseData* pd,vector<int>* tokens,char* b,char* e){
       case 'l': tok=tmlocal;break;
       case 'x': tok=tposX;break;
       case 'y': tok=tposY;break;
+      case 'Y': tok=tposSY;break;//TODO cambiar Y por sy? puede que sea medio molesto tener un getter con 2 letras, ver
       default:
         push(tokens,stringToInt(&s)+2048);
         return;
@@ -908,7 +912,8 @@ void processTokens(parseData* pd,vector<int>* tokens){
       boundCheck(i+1,"mReset");
       matchNum(tokensExpanded[i+1],"mReset",false);
       pd->memLocal[pd->movQ-1].resetUntil=tokensExpanded[i+1]-2048;
-      i+=1;continue;
+      i+=1;
+      continue;
       /*case spawn:
       boundCheck(i+1,"spawn");
       matchNum(tv[i+1],"spawn");

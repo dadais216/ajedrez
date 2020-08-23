@@ -5,8 +5,9 @@ struct parseMovData{
   vector<int> tokens;
   int ind;
   int movSize;
-  int memLocalSize;
+  memLocalt memLocal;
   bool clickExplicit;
+  bool writeInLocalMem;//para ver si isol y desopt necesitan la version no resetable
 };
 
 
@@ -22,7 +23,7 @@ struct operador{
 struct normal:public operador{
   barray<void(*)(void)> accs;
   barray<bool(*)(void)> conds;
-  barray<colort*> colors;
+  barray<int> colors;
   //struct setupTrigInfo{
   //    char type; //0 global 1 pieza 2 turno
   //    int ind;

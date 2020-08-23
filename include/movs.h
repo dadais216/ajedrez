@@ -103,7 +103,8 @@ bool mdist();
 bool mmore();
 bool mless();
 bool mgoto();
+bool langAssert();
 
-colort* crearColor(int,int,int);
+int crearColor(int,int,int);
 
 #endif // MOVS_H

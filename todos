@@ -1,3 +1,62 @@
+
+
+----
+
+cortar regeneracion si la normal que disparó el trigger no cambia de estado (falso->falso o verdadero->verdadero)
+Para hacer esto necesito el mecanismo de longjmp para poder huir. Si hay mas de un trigger se vuelve a modo busqueda, no pasa nada
+Esto no andaria si la normal depende de memoria global/tile y hace un pasaje a memoria local, ya que aunque mantenga su estado de validez puede propagar algo distinto. En principio que la memoria sea reseteable o no no cambia esto. 
+Para manejar esto debería haber un bit "pasa memoria global a local" en cada normalH. Tambien podría haber un bit "trigger de memoria global", para no activar en caso de que el trigger por otra cosa, pero creo que por ahora no vale agregar un campo nuevo a trigger solo por eso.
+
+----
+
+ver que el manejo de ventana y eso no tenga un efecto en la medicion de performance. Estoy casi seguro de que no igual.
+
+----
+
+ver si pasarme a sdl. No sé si me aportaría algo mas alla de tener codigo no objetos. Si es solo eso como que no vale el esfuerzo
+
+----
+
+hacer que los colores se saturen menos. No importa si el sistema es lento porque solo corre cuando se dibuja. 
+Creo que lo que quiero hacer es promediar los colores, pero desfasar un poco el divisor para que colores iguales se aumenten un poco
+Tendria un array de colores, donde los voy sumando y actualizando el contador. Al final de todo hago un bucle for y los dibujo
+
+----
+
+mirar test growin, pone clickers donde no deberia y siguen generando despues del isol
+
+----
+
+hacer memcpys sobre el buffer, para evitar fragmentacion interna?
+no sé si esto rompe la generalidad de los getters, y los getters son lo que mas lo usa. Ver
+
+se avanzaria por (sizeof(struct) + sizeof(pointer) - 1)/sizeof(pointer)
+
+----
+
+relPos esta en operador y holder por algun motivo¿
+
+----
+
+Creo que no voy a hacer test que verifiquen que las cosas anden bien, los test de velocidad ya me dicen si alguien rompe, y si algo anda distinto se deberia ver en el tiempo. 
+
+Los test que verifiquen cosas se podrían hacer teniendo condiciones y acciones especiales, que miren cosas como cantidad de triggers, etc. La verdad es que es medio interesante y se podría hacer, que sé yo.
+
+----
+
+mover step de tile a holder
+
+----
+
+cambiar sig por centinela? medio experimental. Creo que no igual porque sig no esta al final de los operadores con tamaño variable
+
+---
+
+codigo no ligado a pieza que corre todos los turnos. Con eso se puede implementar corte al paso, haciendo que el peon inicial al moverse ponga un peon tecnico que es eliminado por el codigo general (al que se le pasa la pos del peon), de paso hacer una pieza que tire un orbe que se mueve una tile cada turno.
+Tambien implementa piezas que reaccionen a turnos actualizando una memoria global todos los turnos. Tambien maneja tener turnos como que avanza 1 por jugador o 1 por ronda.
+
+----
+
 hay que ver el tema de la comunicacion entre isols y deslizs
 
 Cuando se reacciona en isol y se genera algo internamente, desliz NO debería seguir regenerando, debería cortar ahí.
@@ -7,8 +66,123 @@ A menos que isol diga que desliz genere, lo que pasaria en caso de usar memoria 
 
 En el caso de desopt, si la memoria no es reseteable, no solo tengo que regenerar los nodos que salgan del que se activo pero tambien ramas que estaban siguientes en la generacion inicial, lo que implica otra forma de recorrer
 
+-
+
+El problema que hay es que isol no puede manejar memoria no reseteable, la diferencia esta en la reaccion.
+
+Isol comun al reaccionar y activarse solo genera codigo interno, por lo que no necesita restaurar nada despues. El codigo interno se encarga de tener la informacion y hacer sus cosas.
+Ahora con memoria no reseteable un isol tiene potencial de afectar cosas que esten despues de si, por lo que pierde esta propiedad de estar aislado. Es fundamentalmente distinto, al reaccionar y activarse necesita seguir generando. Y el tema es que para seguir generando y mantenerse consistente necesita restaurar la memoria antes de haber generado, y para eso la tiene que guardar.
+
+Puedo hacer una segunda version de isol que maneje esto, pero no sé si vale la pena porque es re niche. Lo mismo con desopt. Pero bueno, por ahora es la unica forma de poder restaurar posicion, memoria local y buffer de accion ademas podiendo propagar informacion para adelante. Por ahí hay una forma distinta de hacer eso?
+
+revisar los otros planteos que tenia, igual ir por esto no es tan malo. El nuevo isol reutiliza casi todo el codigo de isol, nomas que la reaccion es distinta. Y tiene tamaño variable. Lo que me molesta es que es un re asco por algo que se usa poco, pero si no se me ocurre otra cosa ya fue.
+
+Por ahi tener funciones generateOnFirstNormal en vez de guardar memoria variable 
+
 ----
 
+ver si bools esta inicializado en movholders
+
+----
+
+es medio raro que en holder tengo las bases y los movimientos iniciales, podria tener las bases nomas. Hay que cambiar el contador de tamaño tambien
+
+----
+
+medir tiempo de carga tambien, porque tiene un impacto en la IA. Seria el tiempo que tarda en cargar todos los clickers, promediado.
+
+----
+
+nunca testie el sistema viejo de triggers, confio en que es peor pero bueno, fue un cambio que hice antes de medir.
+El sistema era tener un vector por cada tile y memoria.
+
+----
+
+un modelo alternativo a los movholders seria usar solo normales, estas teniendo un puntero para avanzar en el caso bueno y otro para caso malo. Desliz y exc se pueden implementar con eso, isol por ahi tambien pero con algun chequeo mas, me imagino que desopt tambien. Estaria reemplazando el polimorfismo por un super coso con un monton de chequeos, lo que tiene la ventaja de que en la reaccion no necesito recorrer toda la estructura ni trepar el stack, puedo saltar directamente al lugar del trigger. Que todos los operadores tengan el mismo tamaño, porque son todas normales, tiene algunas ventajas supongo.
+Un tema son los falsos positivos. Recorrer la estructura buscando triggers no solo cumplia la funcion de armar la estructura en el stack, tambien cumplia la funcion de no activar ramas falsas, porque nunca se llega a estas. Lo que se puede hacer para evitar esto es trashear las ramas falsas durante la generacion, y despues preguntar por eso. Hace recorridas extras durante la generacion pero evita la reaccion, podría servir o no que sé yo
+
+Otra alternativa es que cada operador tenga un puntero hacia su padre, y armar los operadores a la inversa. Creo que habia descartado esto antes, pero no me acuerdo por que. Debe ser porque tiene el probelma de los falsos positivos, y para solucionarlo tengo que hacer algo bastante igual a lo que hago con armar el arbol, y mas feo porque no tengo el stack bien
+
+---
+
+el sistema para no copiar todo el bloque de memoria es que cada movimiento sepa el rango de memoria de movimiento que usa, y para la memoria global, triggers de tile guardar un array de bits que corresponda a sectores de memoria. Cuando se accede se setea el bit, al final se recorre y se copia los bits en 1
+
+---
+
+se podria sacar la base de cada movholder, hasta ahora estaba porque es la forma que tengo de conseguir la base en la reaccion, pero como ahora busco por rangos puedo sacarlo con un par de comparaciones. No sé si es mejor igual
+
+---
+
+movimiento (wasd) antes de operador hace normal al pedo
+
+---
+
+podria usar menos cosas globales, queda mas lindo a veces. Ahora puedo ver si tiene un impacto o no
+
+---
+
+barray que interprete lo que tiene despues como begptr podria servir, medio especifico igual
+
+---
+
+pensar como hacer el tema de movimientos que dependen de bando. Si termino yendo por la idea de generar una version para cada uno por el tema de w/s, no estaria mal agregar un macro BANDO( | ) que tome que iria para cada uno y listo. w/s se podría implementar con eso tambien, aunque no sé si me gusta la idea de spamear macros porque es algo mas lento y cambian el orden de los movimientos. Podría solucionar lo segundo
+
+---
+
+hay cosas que se pueden mover al lado de pieza, como offsets y eso
+
+---
+
+probar si hacer todas las funciones estaticas hace mas rapida la compilacion, deberia
+
+---
+
+checkSelf
+
+----
+
+los operadores quedarian aparte del estado de juego porque son constantes, se copian cuando se guarda pero no cuando se replica para la ia. En el editor queda medio raro porque se generan justo antes de usarse, pero no deberia haber problema
+
+----
+
+las acciones en condiciones, que creo que voy a limitar a  un mset nomas, activan triggers desde triggers lo que puede ser un quilombo. La llamada a activar triggers tiene que estar adentro de la generacion, por lo que voy a necesitar una condicion especial al final que llame a eso,  o mas facil, tener un bit y setearlo desde el mset* y meter un if. Testear el costo de un if en el flujo principal, no creo que sea importante
+
+----
+
+ver que tan caro seria tener spawners y kamikases implementados con ifs. Puede que haya hecho trabajo al pedo con eso
+Los kamikases ahora estan inhabilitados
+
+Hacer un sistema que determine que pieza es kamikase es muy complejo, y en muchos casos va a tener falsos positivos (cualquier pieza que haga una captura a partir de una posicion que venga de memoria o despues de un goto). Podría hacer que el usuario marque que pieza es kamikase explicitamente. O hacer que el if mire eso y no hacer nada de lo otro.
+
+spawner no tiene problemas pero si el if no molesta es mas simple
+
+---
+
+small vector optimization para normales y eso? nah
+
+---
+
+arreglar todo el tema de esp que quedo todo roto
+
+---
+
+lector:
+detectar esps
+notacion infija
+
+se podría cambiar goto por mset x l0 y cosas asi? al principio no me convencia porque son 2 acciones, pero normalmente con goto terminan siendo 2 tambien porque necesito setear una variable temporal y eso. Cuando agregue variables temporales no va a importar igual
+
+Errores del scanner podrian imprimir los tokens hasta el punto del error. ERrores del parser podrian imprimir linea entera
+
+nombrar piezas por string, el tokenizador lo pasa a id. Va a haber una palabra other para indicar otro bando
+
+el codigo general tiene que prohibir mov
+
+notacion infija
+
+---
+
+----
 Estaria bueno tener una forma de ver si la escritura de una tile fue hecha por una pieza que no se movió desde que la hizo. El mecanismo para esto ya esta, porque se usa para ver si el trigger debería activarse cuando se pisa, pero no esta expuesto al lenguaje. 
 Sería util para tener un mecanismo para marcar casilleros sin necesidad de tener que limpiarlos despues, que es para lo que se usa ahora, nomas que el lenguaje no lo puede aprovechar.
 
@@ -23,20 +197,177 @@ La funcion mas util que tiene es para piezas como el rey, que solo se pueden mov
 
 ----
 
+para terminar la dama falta prohibir los movimientos de las demas piezas cuando se esta obligado a comer, lo que requiere un mecanismo que usa el rey tambien, que implica cambiar un flag, una accion, durante un recalculo de condicion. Viene de la mano la optimizacion esa para evitar recalculos. 
+Este caso tiene algo mas de complejidad porque puede darse que 2 piezas reaccionen al mismo tiempo, y las 2 efectuen el bloqueo. En este caso, implementado a lo perro, el orden de evaluacion tendria un efecto. No deberia pasar eso. Esto significa que hay que diferir las acciones en condiciones a despues de la evaluacion de todas las reacciones. Creo que esto no genera ningun problema.
+
+Si decido hacer que se puedan correr acciones aleatorias, no solo msets, podría tener otra forma de implementar el corte al paso, haciendo que el peon se suicide si detecta que alguien se movio atras de él. Es medio malo igual porque hay que manejar el caso especial de que lo coma un peon
+
+----
+
+algun chequeo de bordes opcional cuando se esta trabajando con memoria en el lenguaje?
+
+----
+
 Creo, creo, que el rey se puede implementar sin hacer cosas raras haciendo que:
 El rey haga el movimiento inverso a cada pieza para mirar si alguien lo esta amenazando.
 Atraviesa piezas aliadas para mirar mas alla, si hay una pieza enemiga marca la aliada para que esta no se pueda mover
 Cuando una pieza enemiga se mueve y lo amenaza va a tener que hacer todo el quilombo de acciones en condiciones igual gg
 
+El rey actualiza en tiempo de condicion una memoria global, y tambien pinta los tiles que se podrían pisar para bloquear el jaque.
+En cada pieza, envolviendo c hay un isol que mira esta global y el tile. Los recalculos estan contenidos en estos isoles, por lo que solo se recalcula eso. Aunque hay una explosion de triggers, pero bueno, es eso nomas. 
+Para esto no es necesario esa optimizacion de no recalcular cadenas validas que no recibieron triggers y estan mas alla de zonas que si recibieron cambios
+
+
+recordar que pienso agregar funciones que miren el futuro mas adelante, puede que la version final no sea tan enquilombada
+
+la dama podria usar memset* para prohibirse a si misma
 
 ----
 
-No sé hasta que punto valdría la pena agregar funciones de alto nivel como tener un comando no-repeat que automaticamente prohiba moverse a casilleros que se marquen con otro comando, o un comando que marque casilleros y desmarque comforme las piezas se muevan y corten entre si. Estas cosas son caras para el interpretador pero serían baratas para la version compilada. No me convencen mucho porque nomas sirven para cosas especificas, y estas cosas se pueden implementar en el lenguaje de todas formas. Tampoco me gusta porque agrega complejidad al lenguaje, cosas que hay que aprender. Siempre tuve una mentalidad de bajo nivel, y creo que me voy a mantener asi.
+Estaria bueno que debug te escriba todo el movimiento y te marque en que condicion estas. Tambien podría mostrar las acciones acumuladas y tener un efecto cuando se hace un clicker. Es todo un proyecto pero lo vale.
+
+Un tema es manejar el tamaño para asegurarse que entre en pantalla, y hasta por ahi hacerlo scrolleable si no entra. Lo mismo con memorias demasiado grandes. Creo que lo debería hacer porque esto es algo que va a usar el usuario tambien, tampoco que sea tan complicado pero bueno.
+
+----
+
+negar condiciones? podria andar pero nunca lo necesite por ahora
+
+----
+
+usar una notacion distinta para acciones y condiciones de memoria, por ejemplo
+mset g0 5 mcmp g0 5 es falso la primera vez, y puede ser confuso
+
+Supongo que haria esto junto con lo de notacion infija y variables temporales
+
+Macros con parametros no son absolutamente necesarios, pero serian utiles. 
+-
+Si agrego esto se podría agregar un token \;, para poder hacer un macro que se expanda en varios movimientos. Con esto se podrían hacer piezas parametrizables.
+-
+estaria bueno que estos macros puedan definir macros locales, seria comodo para definir piezas. Por ahi es medio raro de implementar igual porque la etapa de definicion es anterior a la expansion, ver
+Va igual se pueden definir esos macros locales como globales anteriores al macro para la pieza y listo, lo unico malo es que se contamina el namespace global pero no importa mucho
+
+Tambien estaria bueno poder expandir macros en secciones de movimientos, por ejemplo en el interior de un desopt. Igual no estoy muy seguro de como seria eso
+
+>X = a 
+>Y = b X b
+>X = c
+Y se expande a ???. Por ahora se expande a "b a b", porque no reacciona al cambio de x, ya esta fijado el token anterior. El shadowin hace efecto cuando se transforma texto en tokens. Podría cambiar las cosas para que no pase eso, haciendo que Y sea dependiente de X o algo asi, pero es algo bastante niche y no lo vale. Ademas si agrego parametros estos cubren este caso de uso.
+
+----
+
+se podria hacer un visualizador de memoria. Lo tendría que haber hecho antes pero por ahi sirve. Mas que nada si empiezo a cambiar la estructura para probar boludeces
+----
+
+comando? que repite turno, si hay solo un clicker se selecciona automaticamente.
+
+----
+
+?? comando que no actualice el step de una pieza, util para piezas que se bloquean pero sus triggers viejos les siguen interesando y no vuelven a generar. (Creo que estoy hablando de algo como la idea de lock vieja)
+
+----
+
+No sé hasta que punto valdría la pena agregar funciones de alto nivel como tener un comando no-repeat que automaticamente prohiba moverse a casilleros que se marquen con otro comando, o un comando que marque casilleros y desmarque comforme las piezas se muevan y corten entre si, o implementar el jaque automaticamente. Estas cosas son caras para el interpretador pero serían baratas para la version compilada. No me convencen mucho porque nomas sirven para cosas especificas, y estas cosas se pueden implementar en el lenguaje de todas formas. Tampoco me gusta porque agrega complejidad al lenguaje, cosas que hay que aprender. Siempre tuve una mentalidad de bajo nivel, y creo que me voy a mantener asi.
 
 -----
 
-Seria interesante agregar un modo inmediato al ajederes, donde se hacen todos los movimientos cada vez, no hay recalculos. Debería agregar algo de metaprogramacion para no duplicar codigo. Es un proyecto interesante, y serviria para tener una idea de que tanto beneficio me da el mecanismo de recalcular.
+Seria interesante agregar un modo inmediato al ajederes, donde se hacen todos los movimientos cada vez, no hay recalculos. Debería agregar algo de metaprogramacion para no duplicar codigo. Es un proyecto interesante, y serviria para tener una idea de que tanto beneficio me da el mecanismo de recalcular. Osea estaria bueno para tener una idea de que beneficios me dio hacerlo de la forma que lo hice.
+Igual es para probar yo nomas, no va a quedar como algo opcional. Mantener el codigo ese seria un asco, el lenguaje se comporta de forma distinta dependiendo del modo lo que es raro (condiciones y acciones y cargas se evaluan juntas), y es una opcion compleja y confusa para el usuario. Y tiene peor respuesta, porque los movimientos se calculan cuando se toca la pieza.
+
+Otra cosa que por ahí se puede probar es que cuando se active un trigger se recalcule el movimiento entero. Esto simplifica mucho las cosas porque saca la necesidad de reaccionar. Dudo mucho que incremente la velocidad porque reaccionar sobre un tramo de codigo es mas rapido que regenerarlo, lo que me hace dudar es que la mayoria de los movimientos complejos terminan recalculando una parte importante de si mismos, y el no tener que andar manejando multiples triggers y boludeces puede tener un impacto. No creo pero se podría probar si no tengo nada mejor que hacer.
+
+----
+
+la version interpretada se va a usar en el editor, y va a tener todas las boludeces de debug ahi. El compilado para el juego juego.
+
+----
+
+los vectores temporales podrian compartir una memoria. Es algo re opcional igual, si sale sale
+----
+eventos del SO deberian estar en un thread aparte diria
+---
+
+limpiar triggers falsos en tiempo muerto? osea cuando esta esperando al jugador
+
+sacar archivos de boludeces
 
 
+
+
+####
+
+
+alguna forma de seleccionar memoria para no copiar todo siempre. Hacerlo por campo me parece que seria mucho overhead, puedo partir por sectores inteligentes (por movimiento o algo asi) y tener memoria en bloques para memorias. O usar bloques para todo. Sé que bloque use porque para acceder hago que pase por un coso el puntero, lo que es overhead pero bueno. Se puede ver si lo vale. Esto se aplicaria solo a accesos a la memoria del juego o a todo los accesos
+
+El sistema de evaluacion de la IA esta en el lenguaje, con comandos que dan puntos. Lo bueno de esto es que puedo combinarlo con codigo que corre todos los turnos para tener una evaluacion totalmente configurable. Supongo que va a haber algunas cosas hechas como contar cantidad de piezas para ser mas rapido, pero si se quiere hacer algo aparte se puede. Igual creo que el evaluador principal es la cantidad de capt/movs que tiene cada jugador, y eso deberia venir hecho
+
+antes tenia planteada la idea de tener una matriz de cambio y manejar solo las diferencias con el tablero en lugar de tener el una copia por thread, no sé si vale la pena hacer eso pero es una idea.
+
+visualizaciones de la ia, barra de progreso
+
+algun control de quien tiene el turno para segundo orden? por ahi se pueden hacer cosas con esa
+
+las condiciones que ven el futuro pueden hacer paradojas, lo que es raro. Por ejemplo un movimiento que haga algo en funcion a un escenario futuro, al ver eso y hacer la accion va a crear un nuevo futuro. Creo que lo dejo ahi y listo, sino seria un bucle infinito. Pero es algo que pensar. 
+
+en la version compilada podria haber un flag que haga que no haya crashes por exceder deslices y eso
+
+probabilistica se puede meter usando una condicion nomas. Seria facil de entender pero la funcionalidad con la ia es media rara,  lo ve como una condicion comun y se manda por lo que salga. 
+
+threads en el levante de piezas
+
+Se podría agregar internet si me interesa meterme en eso. Él jugador cliente se conecta por ip al server que le pasa el tablero y las definiciones de las piezas, se construye el juego en los dos lados y la mayoría de los cálculos se hacen de los dos lados también. Necesitaría una forma de poder indicar que movimiento se eligió, mandar la pos de la pieza y click no es suficiente por el solapamiento, pero algo como esto sería lo más cómodo. Por ahí el índice de la lista de movimientos total la tengo que generar de los dos lados y debería ser igual.
+
+fuente de texto libre
+
+estetica:
+poder cambiar tamaño pantalla 
+poder hacer zoom en tableros grandes
+comandos que cambien sprites de piezas? y de fondo
+
+editor:
+para poner piezas se toca y se seleccionan de un menu
+para piezas nuevas hay un menu de sprites
+resistir crashes
+bloqueadores de camara
+
+
+esta la idea de hacer un juego meta, lo que necesitaria comandos meta. Medio choto igual no sé si me convence. Si es solo cambiar el estado de una pieza se puede hacer teniendo los caminos posibles desde un principio. Si es algo mas loco no creo que sea divertido, muy caotico
+
+-----
+
+Seria interesante generar una normal para cada combinacion posible de sus bools, porque son cte. Eso ahorraria unos ifs, no sé si tendria un gran impacto pero es algo que se podría hacer. Lo mismo con los getters y eso. Los templates no son suficientemente buenos porque tengo que hacer cada combinacion posible, y me gustaria hacerlo de forma automatica. Tambien me gustaria generar el codigo que llama a esto, que tambien seria un asco hacer a mano. No estoy muy seguro de que sea muy util y seguramente sigue siendo peor que hacer el compilador, que basicamente hace esto pero mejor y con todo el codigo, pero es un proyecto de metaprogramacion interesante. 
+
+-----
+
+
+>>
+metaprogramacion
+marcar regiones, dentro de estas regiones poder tener variables. Despues de la region hay codigo en c que se encarga de generar un archivo donde se va a pegar el codigo y compilar, con todo eso ya cubierto. El codigo solo hace el fprintf, por ahi con una notacion especial para abstraer el orden de parametros, y ahi se pueden hacer cosas como pegar el codigo n veces con algo cambiado o que sé yo
+
+Algo interesante seria tener un operador que transforme un grupo de acciones y condiciones en una accion. Con esto se estaria delegando todo un procesamiento a la ejecucion, lo que podría optimizar algunas cosas. Creo que tiene sentido esto y no estoy rompiendo nada.
+Si el operador envuelve todo el movimiento seria como estar en el modo inmediato. Y ahi esta el tema, que la IA no sabe que hacen estas cosas y no puede calcular el cambio cuando mueve una pieza, lo que lo fuerza a recalcular todas estas acciones para saber si quiera si cambiaron.
+
+agregar funciones, como una alternativa a macros, no tiene mucho sentido. Es muy complejo y no aporta mucho. No ahorraria el codigo repetido, que es la unica funcion que tiene y lo separaria de un macro, porque se necesita guardar la evaluacion para poder saltar a esta y eso. Por lo que las funciones solo servirian para cosas que no se guardan, que son practicamente nada.
+Por ahi si hay mucho codigo, en una misma pieza o entre piezas, y este codigo usa la misma memoria en la misma posicion y es todo igual se podria hacer una abstaccion que ahorre calcularlo cada vez, pero saber cuando calcular y cuando no es practicamente imposible y solo serviria en casos muy raros. Los triggers a que apuntarian? 
+
+operaciones de memoria usando un stack. El codigo supuestamente es mas simple pero es mas dificil de entender. 
+madd l0 l1 = push l0 push l1 add load l1 
+En vez de variables globales tendria el stack.
+No me gusta porque es mas complicado, es incomodo, y usa mas memoria, porque se tiene que guardar el stack y el puntero a este, mientras que con memoria nomas guardo la memoria (y los punteros estarian en el codigo). Ademas con el stack hay que pasarle el maximo tamaño que va a usar, lo que no es tan obvio.
+Algo a favor es que no necesita polimorfismo, es todo push y load
+
+No es buena idea juntar condiciones y acciones. El lenguaje se hace mas simple pero es mas lento. La idea era que con segundo orden tengo que hacer las acciones de todas formas, asi que las puedo hacer tambien intercaladas con las condiciones. Pero esto no aplica a la ultima iteracion, donde las acciones se harian al pedo. Y casos donde no se use segundo orden. Y mas importante, fallos de condiciones en un mismo movimiento que ahora van a forzar a hacer una regresion de las acciones, no sabría como implementar esto porque no tengo un snapshot antes de cada condicion, como si hago entre turnos. Y restaurar de un trigger, que es algo que sigue pasando, requeriria tambien una regresion rara.
+Es mucho quilombo y hay cosas que no sé si tienen sentido. 
+Forzar que el movimiento depende solo del estado actual del tablero no es una idea tan compleja
+
+
+PIEZAS:
+torre que hace la cruz en su pos actual y una en la que estuvo antes y marcó
+pieza que se duplica todas las veces que quiera, pero si se la comen se comen todas
+pieza que no se puede mover si el enemigo esta haciendo una formacion especifica con sus piezas
+pieza invisible que mata piezas que se muevan o atraviecen su casillero. La complejidad esta en que tiene que mockear los clickers de las otras piezas para que no parezca sospechoso
+serpiente con camino hamiltoniano
+todas las piezas se mueven hasta chocar con algo
+piezas que solo den estados alterados a otras piezas
+ajedrez 69 solomon
 
 

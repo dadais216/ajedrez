@@ -1,7 +1,7 @@
 #ifndef MOVHOLDERS_H
 #define MOVHOLDERS_H
 
-enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT,FAILOP};
+enum{NORMAL,DESLIZ,EXC,ISOL,DESOPT,ISOLNRM,DESOPTNRM,FAILOP};
 
 //las cadenas terminan en un clicker o cuando no hay nada despues
 
@@ -105,6 +105,7 @@ struct isolHolder:public movHolder{
     movHolder* inside;
 };
 void initIsolH(isol*,Base*,char**);
+void initIsolNonResetMemH(isol*,Base*,char**);
 
 struct desopt;
 struct desoptHolder:public movHolder{
@@ -117,6 +118,7 @@ struct desoptHolder:public movHolder{
   node movs[0];
 };
 void initDesoptH(desopt*,Base*,char**);
+void initDesoptNonResetMemH(desopt*,Base*,char**);
 
 void initFailH(char**);
 

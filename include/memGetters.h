@@ -26,6 +26,7 @@ int* localgi();
 int* piecegi();
 int* posXRead();
 int* posYRead();
+int* posSYRead();
 int* cteRead();
 
 

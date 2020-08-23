@@ -32,6 +32,7 @@ bool mcmp(){
 }
 bool msetC(){
   get g=getGetter2();
+
   *g.a=*g.b;
   CONDRET(true);
 }
@@ -65,6 +66,7 @@ bool mgoto(){
   CONDRET(true);
   //otra opcion es forzar un corte de normales despues de mgoto, y dejar que el codigo normal haga el esp y ponga el trigger, sería mas lindo pero cortar normales es un poco mas ineficiente y complicado
 }
+
 
 
 //las acciones de memoria tienen una version global y tile, porque ahora son los unicos buffers globales y necesitan hacer cosas distintas

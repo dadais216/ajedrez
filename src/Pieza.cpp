@@ -98,8 +98,12 @@ void crearMovHolder(operador* op,Base* base,char** place){
     initExcH((exc*)op,base,place); break;
   case ISOL:
     initIsolH((isol*)op,base,place); break;
+  case ISOLNRM:
+    initIsolNonResetMemH((isol*)op,base,place); break;
   case DESOPT:
     initDesoptH((desopt*)op,base,place); break;
+  case DESOPTNRM:
+    initDesoptNonResetMemH((desopt*)op,base,place);break;
   case FAILOP:
     initFailH(place);break;
   default:

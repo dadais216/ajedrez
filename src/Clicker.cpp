@@ -110,14 +110,17 @@ void executeClicker(Clicker* c,board* brd){
     push(&pisados,c->h->tile);
     ///@optim piezas que no se mueven no deberian generar todo
   }
-
+  else{
+    tileBef->step++;//evitar que se activen triggers viejos.
+                    //En principio evitaria redundancia nomas, pero como desopt reutiliza nhs puede triggerear un nh que ahora es distinta,
+                    //y eso es malo porque ahora se deja de buscar despues de encontrar la nh, y como esta es falsa ni siquiera se va a encontrar la verdadera
+  }
 
   for(Tile* tile:pisados){
     chargeTriggers(&tile->triggersUsed,&tile->firstTriggerBox);
   }
 
   actualHolder.ps->turno++;
-
   activateTriggers();
   pisados.size=0;
 

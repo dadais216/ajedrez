@@ -185,8 +185,8 @@ void cargarNormalH(movHolder* m,vector<normalHolder*>* norms){
 }
 void drawNormalH(normalHolder* n){
   actualHolder.nh=n;
-  for(colort* d:n->op->colors){
-    d->draw();
+  for(int i:n->op->colors){
+    coloresImp[i].draw();
   }
 }
 
@@ -370,21 +370,20 @@ inline void reaccionarNhExcH(excHolder* e,normalHolder* nh){
     }
   }
   branch=e->ops[e->actualBranch];
+  //TODO no me cierra esto. Si el nh esta en una rama despues de la actual no se debería hacer nada, aca se hace reaccionar a la actual
  branchFound:
   branch->table->reaccionar(branch,nh);
   if(switchToGen){//solo falso si la nh es innaccesible, por ejemplo esta en la parte invalida de un desliz
     if(!(branch->bools&valorCadena)){ //si el ab al recalcularse se invalida generar todo devuelta, saltandolo
-      int j;//TODO no debería arrancar en la siguiente rama? por que hace las anteriores devuelta?
-      for(j=0;j<count(e->ops);j++){
-        if(i-1!=j){
-          movHolder* brancj=e->ops[j];
-          brancj->table->generar(brancj);
-          if(brancj->bools&valorCadena){
-            e->bools|=valor;
-            e->actualBranch=j;
-            generarSigExc(e,brancj);
-            return;
-          }
+      int j;
+      for(j=i;j<count(e->ops);j++){
+        movHolder* brancj=e->ops[j];
+        brancj->table->generar(brancj);
+        if(brancj->bools&valorCadena){
+          e->bools|=valor;
+          e->actualBranch=j;
+          generarSigExc(e,brancj);
+          return;
         }
       }
       e->bools&=~(valor|valorCadena|valorFinal);
@@ -448,16 +447,27 @@ void initExcH(exc* org,Base* base_,char** head){
   }
 }
 
+//es un macro por alloca. Pido resetSize porque desopt lo guarda, para no buscarlo a la base cada vez. No creo que tenga un impacto eso igual
+#define storeState(resetSize)                      \
+  v tempPos=offset;                               \
+  void* tempLocalMem=alloca(resetSize);           \
+  memcpy(tempLocalMem,memMov.data,resetSize);
+
+
+#define restoreState(resetSize)                 \
+  offset=tempPos;                               \
+  memcpy(memMov.data,tempLocalMem,resetSize);
+
+
+
 void generarIsolH(movHolder* m){
   fromCast(s,m,isolHolder*);
 
-  v tempPos=offset;
   int resetSize=s->base->memLocal.resetUntil*sizeof(int);
-  void* memTemp=alloca(resetSize);
-  memcpy(memTemp,memMov.data,resetSize);
+  storeState(resetSize);
   s->inside->table->generar(s->inside);
-  offset=tempPos;
-  memcpy(memMov.data,memTemp,resetSize);
+  restoreState(resetSize);
+
   if(s->sig){
     s->sig->table->generar(s->sig);
     s->bools&=~valorFinal;
@@ -472,12 +482,6 @@ void reaccionarIsolH(movHolder* m,normalHolder* nh){
       ///@optim podria hacerse un lngjmp
       switchToGen=false;
       //printf("s coming back\n");
-
-      //si se esta usando memoria no resetable potencialmente haya cosas que dependan del cambio
-      //TODO falta la comunicacion con un desliz que lo contenga
-      if(s->base->memLocal.size!=s->base->memLocal.resetUntil&&s->sig){
-        s->sig->table->generar(s->sig,nh);
-      }
     }
   }
   else if(s->sig)
@@ -485,22 +489,14 @@ void reaccionarIsolH(movHolder* m,normalHolder* nh){
 }
 void reaccionarIsolH(movHolder* m,vector<normalHolder*>* nhs){
   fromCast(s,m,isolHolder*);
-  //int resetSize; TODO descomentar
-  //void* memTemp;
-  //if(nhs->size>1){
-  //  resetSize=s->base->resetUntil*sizeof(int);
-  //  memTemp=alloca(resetSize);
-  //  memcpy(memTemp,memMov.data,resetSize);
-  //}
   if((char*)(*nhs)[0]-(char*)s<s->size){
     s->inside->table->reaccionar(s->inside,(*nhs)[0]);
     if(switchToGen){
       switchToGen=false;
-      printf("v coming back\n");
-      //if(nhs->size==1) return;
-      //memcpy(memMov.data,memTemp,resetSize);
+      //printf("v coming back\n");
+      //aclaracion: aca la memoria tiene basura que se cargo en la generacion interna, no importa porque se volvio a modo reaccion y se va a pisar si se activa un proximo trigger
     }
-    //unorderedErase(nhs,0);
+    //unorderedErase(nhs,0); TODO mirar esto
   }
   if(s->sig)
     s->sig->table->reaccionarVec(s->sig,nhs);
@@ -550,13 +546,11 @@ void generarDesoptH(movHolder* m){
   int clusterOffset=0;
   char* correspondingCluster=desoptMov+d->op->clusterSize;
 
-  v offsetOrg=offset;
+  int resetSize=d->base->memLocal.resetUntil*sizeof(int);
 
-  int localMemSize=d->base->memLocal.resetUntil*sizeof(int);
-  void* memTemp=alloca(localMemSize);
-  memcpy(memTemp,memMov.data,localMemSize);
-
-  void* memTemp2=alloca(localMemSize);
+  storeState(resetSize);
+  
+  void* memTemp2=alloca(resetSize);
 
   for(int tam:d->op->movSizes){
     desoptHolder::node* firstIter=(desoptHolder::node*)(desoptMov+clusterOffset);
@@ -568,7 +562,7 @@ void generarDesoptH(movHolder* m){
       firstIter->iter=(desoptHolder::node*)correspondingCluster;
       int clusterOffset2=0;
       v offsetOrg2=offset;
-      memcpy(memTemp2,memMov.data,localMemSize);
+      memcpy(memTemp2,memMov.data,resetSize);
 
       for(int tam:d->op->movSizes){
         desoptHolder::node* secondIter=(desoptHolder::node*)((char*)firstIter->iter+clusterOffset2);
@@ -577,25 +571,24 @@ void generarDesoptH(movHolder* m){
         actualMov2->table->generar(actualMov2);
         if(actualMov2->bools&valorFinal){
           secondIter->iter=(desoptHolder::node*)d->dinamClusterHead;
-          construirYGenerarNodo(d,localMemSize);
+          construirYGenerarNodo(d,resetSize);
         }else
           secondIter->iter=nullptr;
         clusterOffset2+=tam; //@optim por ahi vale la pena saltarse esto en la ultima iteracion? en el bucle exterior dependeria de si hay sig
         offset=offsetOrg2;
-        memcpy(memMov.data,memTemp2,localMemSize);
+        memcpy(memMov.data,memTemp2,resetSize);
       }
     }else
       firstIter->iter=nullptr;
     clusterOffset+=tam;
     correspondingCluster+=d->op->clusterSize;
-    offset=offsetOrg;
-    memcpy(memMov.data,memTemp,localMemSize);
+    restoreState(resetSize);
   }
-  if(d->sig)//TODO quiero soportar esto? deberia propagar el valorFinal como isol
+  if(d->sig)//TODO deberia propagar el valorFinal como isol
     d->sig->table->generar(d->sig);
 }
 //TODO es necesario contruir en el momento? no debería dar lo mismo construir todo al principio, si son siempre los mismos bloques?
-void construirYGenerarNodo(desoptHolder* d,int localMemSize){
+void construirYGenerarNodo(desoptHolder* d,int resetSize){
   char* clusterBeg=d->dinamClusterHead;
   assert(d->dinamClusterHead<desoptMov+d->op->desoptInsideSize);
   for(operador* opos:d->op->ops){
@@ -604,9 +597,7 @@ void construirYGenerarNodo(desoptHolder* d,int localMemSize){
     crearMovHolder(opos,d->base,&d->dinamClusterHead);
   }
   int clusterOffset=0;
-  v offsetOrg=offset;
-  void* memTemp=alloca(localMemSize);
-  memcpy(memTemp,memMov.data,localMemSize);
+  storeState(resetSize);
 
   for(int tam:d->op->movSizes){
     desoptHolder::node* nextIter=(desoptHolder::node*)(clusterBeg+clusterOffset);
@@ -615,34 +606,30 @@ void construirYGenerarNodo(desoptHolder* d,int localMemSize){
     actualMov->table->generar(actualMov);
     if(actualMov->bools&valorFinal){
       nextIter->iter=(desoptHolder::node*)d->dinamClusterHead;
-      construirYGenerarNodo(d,localMemSize);
+      construirYGenerarNodo(d,resetSize);
     }
     clusterOffset+=tam;
-    offset=offsetOrg;
-    memcpy(memMov.data,memTemp,localMemSize);
+    restoreState(resetSize);
   }
 }
-void generarNodo(desoptHolder* d,desoptHolder::node* iter,int localMemSize){//iter valido
-  int clusterOffset=0;
-  v offsetOrg=offset;
+void generarNodo(desoptHolder* d,desoptHolder::node** iter,int resetSize){
+  if(*iter){
+    int clusterOffset=0;
+    storeState(resetSize);
 
-  void* memTemp=alloca(localMemSize);
-  memcpy(memTemp,memMov.data,localMemSize);
-  for(int tam:d->op->movSizes){
-    desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+clusterOffset);
-    movHolder* actualMov=(movHolder*)(nextIter+1);
-    actualMov->table->generar(actualMov);
-    if(actualMov->bools&valorFinal){
-      if(nextIter->iter){
-        generarNodo(d,nextIter->iter,localMemSize);
-      }else{
-        nextIter->iter=(desoptHolder::node*)d->dinamClusterHead;
-        construirYGenerarNodo(d,localMemSize);
+    for(int tam:d->op->movSizes){
+      desoptHolder::node* nextIter=(desoptHolder::node*)((char*)*iter+clusterOffset);
+      movHolder* actualMov=(movHolder*)(nextIter+1);
+      actualMov->table->generar(actualMov);
+      if(actualMov->bools&valorFinal){
+        generarNodo(d,&nextIter->iter,resetSize);
       }
+      clusterOffset+=tam;
+      restoreState(resetSize);
     }
-    clusterOffset+=tam;
-    offset=offsetOrg;
-    memcpy(memMov.data,memTemp,localMemSize);
+  }else{
+    *iter=(desoptHolder::node*)d->dinamClusterHead;
+    construirYGenerarNodo(d,resetSize);
   }
 }
 /*
@@ -679,51 +666,69 @@ void reactIfNh(normalHolder* nh,movHolder* actualMov,int tam){
 void reactIfNh(vector<normalHolder*>* nhs,movHolder* actualMov,int tam){
   for(normalHolder* nh:*nhs){
     reactIfNh(nh,actualMov,tam);
+    if(switchToGen) break;
   }
 }
 template<typename T>
-void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
+void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter,bool* found){
   //@optim en vez de hacer esto se podría avanzar por la memoria, aprovechando que todos los bloques miden lo mismo,
   //y meterse directamente en el correcto. Aunque como no se estaria recorriendo se podría acceder a memoria muerta, no sé.
-  int offset=0;
-  int localMemSize=d->base->memLocal.resetUntil*sizeof(int);
+  int branchOffset=0;
   for(int tam:d->op->movSizes){
-    desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+offset);
+    desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+branchOffset);
     movHolder* actualMov=(movHolder*)(nextIter+1);
-    offset+=tam;
+    branchOffset+=tam;
 
     reactIfNh(nh,actualMov,tam);
 
+    if(switchToGen){
+      if constexpr(std::is_same<T,normalHolder*>::value){
+        *found=true;
+      }else{
+        unorderedErase(nh,0);
+        if(nh->size==0)
+          *found=true;
+      }
+    }
+
     if(actualMov->bools&valorFinal){
       if(switchToGen){
-        if(nextIter->iter)
-          generarNodo(d,nextIter->iter,localMemSize);
-        else{
-          nextIter->iter=(desoptHolder::node*)d->dinamClusterHead;
-          construirYGenerarNodo(d,localMemSize);
-        }
+        generarNodo(d,&nextIter->iter,d->base->memLocal.resetUntil*sizeof(int));
       }else
-        reaccionarProperDesoptH(d,nh,nextIter->iter);
+        reaccionarProperDesoptH(d,nh,nextIter->iter,found);
     }
     switchToGen=false;
+    if(*found)
+      return;
   }
 }
+template<void(*reaccionarProper)(desoptHolder*,normalHolder*,desoptHolder::node*,bool*)>
 void reaccionarDesoptH(movHolder* m,normalHolder* n){
   fromCast(d,m,desoptHolder*);
+  bool found=false;
   if((char*)n<(char*)d+sizeof(desoptHolder)+d->op->desoptInsideSize){
-    reaccionarProperDesoptH(d,n,d->movs);
+    reaccionarProper(d,n,d->movs,&found);
   }else{
     d->sig->table->reaccionar(d->sig,n);
   }
 }
+template<void(*reaccionarProper)(desoptHolder*,vector<normalHolder*>*,desoptHolder::node*,bool*)>
 void reaccionarDesoptH(movHolder* m,vector<normalHolder*>* n){
   fromCast(d,m,desoptHolder*);
+  bool found=false;
   if((char*)(n->operator[](0))<(char*)d+sizeof(desoptHolder)+d->op->desoptInsideSize){
-    reaccionarProperDesoptH(d,n,d->movs);
+    reaccionarProper(d,n,d->movs,&found);
   }else{
     d->sig->table->reaccionarVec(d->sig,n);
   }
 }
+/*
+  como se reutiliza espacios de memoria puede que una rama ponga un trigger, y en una regeneracion por un trigger anterior la rama
+  quede invalidada, y se reutilice para otra memoria. Ahora este trigger invalido, a diferencia de desliz, no apunta a un lugar que
+  no se va a encontrar nunca. Apunta a un lugar que esta siendo usado para otra cosa, y esto va a causar una regeneracion al pedo. No
+  va a crear comportamientos erroneos, es calculos al pedo nomas. No creo que pase muy seguido igual, y si agrego la optimizacion de no
+  seguir generando si la normal que se activó no cambio su valor de validez, el impacto de esto se reduce a solo recalcular una normal.
+ */
 void cargarNodos(movHolder* m,desoptHolder::node* iter,vector<normalHolder*>* norms){
   fromCast(d,m,desoptHolder*);
   int res=norms->size;
@@ -731,7 +736,7 @@ void cargarNodos(movHolder* m,desoptHolder::node* iter,vector<normalHolder*>* no
   for(int tam:d->op->movSizes){
     desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+offset);
     movHolder* actualMov=(movHolder*)(nextIter+1);
-    if(actualMov->bools&valorFinal){
+    if(actualMov->bools&valorFinal){//TODO falta manejar estado intermedio no?
       actualMov->table->cargar(actualMov,norms);
       assert(nextIter->iter);
       cargarNodos(d,nextIter->iter,norms);
@@ -760,8 +765,8 @@ void cargarDesoptH(movHolder*m,vector<normalHolder*>* norms){
   @testarVelocidad con A a la izquierda, sin partir con c
 */
 
- virtualTableMov desoptTable={generarDesoptH,reaccionarDesoptH,
-                              reaccionarDesoptH,cargarDesoptH};
+virtualTableMov desoptTable={generarDesoptH,reaccionarDesoptH<reaccionarProperDesoptH>,
+                              reaccionarDesoptH<reaccionarProperDesoptH>,cargarDesoptH};
 void initDesoptH(desopt* org,Base* base_,char** head){
   fromCast(d,*head,desoptHolder*);
   initMovH(d,org,base_);
@@ -813,6 +818,146 @@ void initFailH(char** head){
 }
 
 
+
+normalHolder* getNextNormalH(movHolder*);
+void reaccionarIsolNonResetMemH(movHolder* m,normalHolder* nh){
+  fromCast(s,m,isolHolder*);
+  //printf("isol NRM\n");
+  if((char*)nh-(char*)s<s->size){
+    normalHolder* nh=getNextNormalH(s->inside);
+    v posBefore=getOffset(nh->relPos,nh->pos);
+    int resetSize=s->base->memLocal.resetUntil*sizeof(int);
+    void* memTemp=alloca(resetSize);
+    memcpy(memTemp,nh->memAct.beg,resetSize);
+
+    s->inside->table->reaccionar(s->inside,nh);
+    if(switchToGen){
+      offset=posBefore;
+      memcpy(memMov.data,memTemp,resetSize);
+
+      //se sigue generando porque potencialmente se cambio memoria que no se resetea
+      s->sig->table->generar(s->sig);
+      //switchToGen queda activado para que el contender empieze a generar
+    }
+  }
+  else if(s->sig)
+    s->sig->table->reaccionar(s->sig,nh);
+}
+#define storeFirstNormalState(movHolder)        \
+  normalHolder* tempNh=getNextNormalH(movHolder);   \
+  v tempPos=getOffset(tempNh->relPos,tempNh->pos);      \
+  memcpy(tempLocalMem,tempNh->memAct.beg,resetSize);
+
+void reaccionarIsolNonResetMemH(movHolder* m,vector<normalHolder*>* nhs){
+  fromCast(s,m,isolHolder*);
+  //printf("isol NRM\n");
+  if((char*)(*nhs)[0]-(char*)s<s->size){
+    int resetSize=s->base->memLocal.resetUntil*sizeof(int);
+    void* tempLocalMem=alloca(resetSize);
+    storeFirstNormalState(s->inside);
+
+    s->inside->table->reaccionar(s->inside,(*nhs)[0]);
+    if(switchToGen){
+      restoreState(resetSize);
+      s->sig->table->generar(s->sig);
+      return;
+    }
+  }
+  if(s->sig)
+    s->sig->table->reaccionarVec(s->sig,nhs);
+}
+
+
+virtualTableMov isolNRMTable={generarIsolH,reaccionarIsolNonResetMemH,reaccionarIsolNonResetMemH,cargarIsolH};
+void initIsolNonResetMemH(isol* org,Base* base_,char** head){
+  fromCast(s,*head,isolHolder*);
+  initIsolH(org,base_,head);
+  s->table=&isolNRMTable;
+}
+
+
+
+#define storeStateNoAlloc(resetSize)            \
+  v tempPos=offset;                             \
+  memcpy(tempLocalMem,memMov.data,resetSize);
+//desoptNRM se usa si alguna rama usa memoria no reseteable. Aunque una rama no toque esa memoria, que se haya disparado su trigger implica
+//que potencialmente va a invalidar o crear nodos futuros, y por lo menos uno de esos nodos si toca la memoria.
+template<typename T,bool firstReaccionar=true>
+void reaccionarProperDesoptNonResetMemH(desoptHolder* d,T nh,desoptHolder::node* iter,bool* found){
+  int branchOffset=0;
+  int resetSize=d->base->memLocal.resetUntil*sizeof(int);
+  void* tempLocalMem=alloca(resetSize);
+  //printf("desopt NRM\n");
+  for(int tam:d->op->movSizes){
+    desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+branchOffset);
+    movHolder* actualMov=(movHolder*)(nextIter+1);
+    branchOffset+=tam;
+
+
+    if(switchToGen){
+      //tengo que volver a generar todos los nodos que estan despues en el orden de generacion, no solo los siguientes al nodo que disparo el trigger
+      storeStateNoAlloc(resetSize);
+      actualMov->table->generar(actualMov);
+      if(actualMov->bools&valorFinal){
+        generarNodo(d,&nextIter->iter,resetSize);
+      }
+      restoreState(resetSize);
+    }else{
+      storeFirstNormalState(actualMov);
+      reactIfNh(nh,actualMov,tam);
+      if(switchToGen){
+        if(actualMov->bools&valorFinal){
+          generarNodo(d,&nextIter->iter,resetSize);
+        }
+      }else if(actualMov->bools&valorFinal){
+        reaccionarProperDesoptNonResetMemH<T,false>(d,nh,nextIter->iter,found);
+      }
+      restoreState(resetSize);
+    }
+  }
+  if constexpr(firstReaccionar){
+      if(switchToGen&&d->sig){
+        d->sig->table->generar(d->sig);
+      }
+    }
+}
+
+virtualTableMov desoptNRMTable={generarDesoptH,reaccionarDesoptH<reaccionarProperDesoptNonResetMemH>,
+                                reaccionarDesoptH<reaccionarProperDesoptNonResetMemH>,cargarDesoptH};
+void initDesoptNonResetMemH(desopt* org,Base* base_,char** head){
+  //printf("gbdfgbdf\n");
+  fromCast(d,*head,desoptHolder*);
+  initDesoptH(org,base_,head);
+  d->table=&desoptNRMTable;
+}
+
+
+//funcion que consigue la siguiente normal, lo usa isolNonResetMemH para obtener la posicion y memoria local para restaurarla despues
+//se podría haber hecho que isolNonResetMemH guarde esta informacion, pero preferi hacerlo asi para no tener la memoria redudante y
+//porque me parece mas simple 
+//esta funcion podría estar en las tablas virtuales, pero no quise ensuciarlas por este caso que es bastante niche. No sé si hay una
+//diferencia de performance por hacerlo de una forma u otra
+normalHolder* getNextNormalH(movHolder* m){
+  //se trae la informacion de la primera nh que se encuente, no importa si es la del camino valido, porque se sabe
+  //que se ejecutó y se puede extraer de esta la memoria y el offset antes de que se modificaran
+
+
+  //pense que se podia hacer un switch sobre punteros pero parece que no, asi que queda esto medio choto
+  if(m->table==&normalTable)
+    return (normalHolder*)m;
+  if(m->table==&deslizTable)
+    return getNextNormalH((movHolder*)((deslizHolder*)m)->movs[0]);
+  if(m->table==&excTable)
+    return getNextNormalH(((excHolder*)m)->ops[0]);
+  if(m->table==&isolTable || m->table==&isolNRMTable)
+    return getNextNormalH(((isolHolder*)m)->inside);
+  if(m->table==&desoptTable || m->table==&desoptNRMTable){
+    desoptHolder::node* firstIter=(desoptHolder::node*)((char*)m+sizeof(desoptHolder));
+    return getNextNormalH((movHolder*)(firstIter+1));
+  }
+  fail("getNextNormalH didn't found nh\n");
+  return nullptr;
+}
 
 
 

@@ -24,15 +24,15 @@ void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
   alloc(operatorBucket,&piece->movs,pd->movQ);
 
   piece->hsSize=0;
-  parseMovData p{operatorBucket,pd,*tokens,0,0,0,false};
+  parseMovData p{operatorBucket,pd,*tokens,0,0,0,false};//writeInLocalMem base nunca se lee
   for(int i=0;i<pd->movQ;i++){
     p.movSize=0;
-    p.memLocalSize=pd->memLocal[i].size;
     p.clickExplicit=false;
 
     failIf(pd->memLocal[i].resetUntil>pd->memLocal[i].size,"reset size %d bigger than size %d",pd->memLocal[i].resetUntil,pd->memLocal[i].size);//prefiero fallar a poner el maximo, queda medio raro sino
     piece->movs[i].memLocal.size=pd->memLocal[i].size;
     piece->movs[i].memLocal.resetUntil=pd->memLocal[i].resetUntil==-1?pd->memLocal[i].size:pd->memLocal[i].resetUntil;
+    p.memLocal=piece->movs[i].memLocal;
 
     piece->movs[i].raiz=parseOp(&p);
     piece->movs[i].size=p.movSize;
@@ -77,6 +77,7 @@ void gatherCte(vector<T>* vec,int tok,bool setCteReader=false){
   switch(tok){
   case tposX: push(vec,(T)posXRead);break;
   case tposY: push(vec,(T)posYRead);break;
+  case tposSY:push(vec,(T)posSYRead);break;
   default:
     if(setCteReader)
       push(vec,(T)cteRead);
@@ -89,7 +90,7 @@ normal* parseNormal(parseMovData* p){
 
   vector<void(*)(void)> accsTemp;init(&accsTemp);defer(&accsTemp);
   vector<bool(*)(void)> condsTemp;init(&condsTemp);defer(&condsTemp);
-  vector<colort*> colorsTemp;init(&colorsTemp);defer(&colorsTemp);
+  vector<int> colorsTemp;init(&colorsTemp);defer(&colorsTemp);
 
   auto getNum=[&]()->int{
                 int tok=pop(p);
@@ -106,7 +107,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                       allocCopy(p->b,&n->colors,colorsTemp.size,colorsTemp.data);
                     };
 
-  p->movSize+=sizeof(normalHolder)+p->memLocalSize*sizeof(int);//+ mov de spawner
+  p->movSize+=sizeof(normalHolder)+p->memLocal.size*sizeof(int);//+ mov de spawner
   n->tipo=NORMAL;
   n->bools=0;
   n->relPos=v(0,0);
@@ -151,6 +152,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
     case tesp:
       n->bools|=doEsp;
       break;
+    case tassert: push(&condsTemp,langAssert); break;
 #define acc(TOKEN) case t##TOKEN: push(&accsTemp,TOKEN);break
       acc(mov);
       acc(pausa);
@@ -196,7 +198,8 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
         auto isCte=[](int tok)->bool{
                      return tok>1024||
                        tok==tposX||
-                       tok==tposY;
+                       tok==tposY||
+                       tok==tposSY;
                    };
 
         int op=tok;
@@ -243,7 +246,8 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                 case tmglobal: push(&accsTemp,(actionBuffer)globalRead);break;
                 case tmtile:   push(&accsTemp,(actionBuffer)tileReadNT);break;
                 case tmlocal:  push(&accsTemp,(actionBuffer)localAccg);
-                  if(writeInLocalMem) goto splitNormal;break;
+                  if(writeInLocalMem) goto splitNormal;
+                  break;
                 case tmpiece:  push(&accsTemp,(actionBuffer)pieceg);break;
                 badParameter;
                 }
@@ -255,7 +259,8 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                 case tmglobal: push(&accsTemp,(actionBuffer)globalReadNTi);break;
                 case tmtile:   push(&accsTemp,(actionBuffer)tileReadNTi);break;
                 case tmlocal:  push(&accsTemp,(actionBuffer)localAccgi);
-                  if(writeInLocalMem) goto splitNormal;break;
+                  if(writeInLocalMem) goto splitNormal;
+                  break;
                 case tmpiece:  push(&accsTemp,(actionBuffer)piecegi);break;
                 badParameter;
                 }
@@ -290,7 +295,10 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                 case tmglobal: push(&condsTemp,(conditionBuffer)globalRead);/*setUpMemTriggersPerNormalHolderTemp.push_back({0,tg[j]});*/break;
                 case tmtile:   push(&condsTemp,(conditionBuffer)tileRead);break;
                 case tmlocal:  push(&condsTemp,(conditionBuffer)localg);
-                  if(i==0&&write){writeInLocalMem=true;}break;
+                  if(i==0&&write){
+                    writeInLocalMem=true;
+                    p->writeInLocalMem=true;
+                  }break;
                 case tmpiece:  push(&condsTemp,(conditionBuffer)pieceg);break;
                 badParameter;
                 }
@@ -451,8 +459,9 @@ isol* parseIsol(parseMovData* p){
 
   bool clickExplicitBefore=p->clickExplicit;
   p->clickExplicit=false;
+  bool writeInLocalMemBefore=p->writeInLocalMem;//en caso de anidar operadores
+  p->writeInLocalMem=false;
 
-  i->tipo=ISOL;
   i->bools=0;
   i->bools|=hasClick;
 
@@ -464,6 +473,11 @@ isol* parseIsol(parseMovData* p){
   p->movSize+=sizeof(isolHolder);
   i->size=p->movSize-movSizeBefore;
 
+  if(p->writeInLocalMem&&p->memLocal.size!=p->memLocal.resetUntil)
+    i->tipo=ISOLNRM;
+  else
+    i->tipo=ISOL;
+  p->writeInLocalMem=writeInLocalMemBefore;
 
   if(!p->clickExplicit)
     i->bools|=makeClick;
@@ -476,7 +490,6 @@ isol* parseIsol(parseMovData* p){
 
 desopt* parseDesopt(parseMovData* p){
   desopt* d=alloc<desopt>(p->b);
-  d->tipo=DESOPT;
   d->bools=0;
 
   int slots=0;
@@ -485,6 +498,7 @@ desopt* parseDesopt(parseMovData* p){
   }
 
   int movSizeBefore=p->movSize;
+  bool writeInLocalMemBefore=p->writeInLocalMem;
   vector<operador*> opsTemp;init(&opsTemp);defer(&opsTemp);
   vector<int> sizesTemp;init(&sizesTemp);defer(&sizesTemp);
   int branches=0;
@@ -516,6 +530,12 @@ desopt* parseDesopt(parseMovData* p){
 
   d->bools&=~makeClick;
 
+  if(p->writeInLocalMem&&p->memLocal.size!=p->memLocal.resetUntil)
+    d->tipo=DESOPTNRM;
+  else
+    d->tipo=DESOPT;
+  p->writeInLocalMem=writeInLocalMemBefore;
+  
   peekClick((operador*)d,p);//que significa que desopt sea click?
   d->sig=parseOp(p);
   if(d->bools&makeClick)
