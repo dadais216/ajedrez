@@ -1,5 +1,39 @@
 
 
+Cuando se tiene un desliz con 2 triggers, se activa el primero, se genera sobre el segundo y este nunca se vuelve a mirar.
+Si el primero no se encuentra es obvio que el segundo, de encontrarse en el desliz, tampoco se va a encontrar. Se busca más alla. Por ahi vale la pena chequear si el segundo esta mas allá (creo que podrían fallar unos asserts sino)
+el caso particular del emperador es un poco mas complejo. es un desliz con un isol adentro, cuando el trigger adentro del isol se active y isol lo borre, desliz va a darse cuenta de que el trigger que amago a tirar no activo nada. Si hay un segundo trigger debería intentar activarlo, y lo hace, porque este puede pertener a una proxima iteracion. El problema esta en que ese trigger puede tambien pertenecer a la misma iteracion que el primero, y generar calculos redudantes. No sé si vale la pena arreglarlo, pero la solucion a esto es hacer que isol no solo borre el trigger que activó, pero todos los que esten adentro de su rango. Lo mismo con desliz y su rango invalido.
+
+se podrían filtrar las normales que le pertenecen a un operador para que este las maneje. En la gran mayoria de los casos no es relevante, porque se pasa a generar cuando se encuentre la primera, pero podría ser importante en los casos de normales innaccesibles, porque se tiene que volver a un bucle for bastante atras reaccionando por movholders al pedo. El costo de filtrar no es muy alto pero existe, por eso quiero probar esto aparte para ver que pasa. Si funciona lo dejaria porque hace al sistema más limpio.
+Por ejemplo deslices anidados, el desliz exterior va a pasarle las normales de a una en lugar de pasarle todas las que le pertenecen, lo que en caso de que la primera sea innacesible va a causar un rebote entre los 2 que se podría saltar. 
+Para meter un mecanismo como este el desliz interior, despues de borrar las nhs innacesibles, en vez de saltar al inicio deberia saltar al bucle for exterior, lo que implica tener un stack de jmpbufs. Se hace
+esto me permite sacar el for del reaccionar de normal
+
+el desordenamiento de desopt rompe algunas cosas. Por ejemplo, hay un trigger en la segunda iteracion de la base y otro en una rama de la primera iteracion. Se va a procesar la primera iteracion, se va a ir a sus ramas y se va a saltar a la que tiene el segundo trigger. El primer trigger sigue en la lista, porque esta antes en memoria, aunque se procese despues. Esto rompe varios operadores.
+Hay 2 formas de solucionarlo, una es cambiar desopt para que reserve toda su memoria de forma dinamica, y de forma depth search, no poniendo bloques de toda la iteraciones de un nodo de una. La otra es, si hago filtrado, solo pasarle a un nodo las normales que estan más adelante que su base en memoria. Esto asegura que recibe las que le pertenecen y las que potencialmente pertenecen a sus ramas. La segunda opcion me parece mas razonable, incluso si decido no filtrar otras cosas. La primera requiere rehacer todo el movholder, porque tiene una forma de reserva distinta lo que sería más lento porque no tiene parte estatica, y, mas importante, una regeneracion implica volver a generar todos los nodos que vengan despues en la recorrida del arbol, no solo lo que salgan del nodo activado
+
+----
+
+medir tiempo de carga
+
+----
+
+reaccionar vs directo:
+en una primera instancia necesito generar todos los movimientos, esto se hace en los 2 modelos, en reaccionar se hace todo inicialmente, en el directo se hace justo antes de moverse. El directo es mas rapido porque no necesita poner triggers, y no necesita guardar estados intermedios. Asumo que la carga cuesta lo mismo en los dos, porque aunque en reaccionar sea un proceso aparte, en directo tambien se hace y el tema de pausar la generacion y retomar (o generar de 0 devuelta) despues puede tener un costo cuando una generacion hace varios movimientos.
+En la segunda iteracion se necesita hacer lo mismo, y aca esta la ventaja. En reaccionar solo se necesita generar la pieza que se movio y piezas que hayan sido afectadas por esta para llegar a un estado donde todos los movimientos estan a una carga de distancia. En directo se tiene que generar todo. Estoy bastante convencido que el costo de poner triggers y reaccionar a estos le gana a tener que generar todas las piezas devuelta, al menos en la mayoria de los casos.
+
+Cuando se efectua un movimiento en reaccionar simplemente se toma la rama corresponiente como la actual, y se calcula una nueva ultima iteracion. En directo en principio se tiene que hacer todo devuelta porque no se guarda estado
+
+Otra ventaja de tener modo reaccionar es que funciones de puntaje que evaluen cosas complicadas serian mas faciles de hacer, creo
+
+En principio reaccionar parece mejor pero para funcionar necesita tener que guardar estado por cada normal y tener triggers. Tengo miedo de que esto termine siendo mas costoso que las generaciones que ahorra. La version directa funciona solo usando operadores, no hay movholders ni sistema de triggers. Esta bien que con movimientos mas complejos rehacer todo tiene un costo, pero los movimientos complejos tienden a reaccionar de forma temprana y recalcular una parte importante, asi que puede que no cambie mucho.
+
+Me parece que el mejor curso de accion es seguir con reaccion hasta tener el rey y piezas de ese nivel de complejidad, hacer varios test y despues rehacer el ajedrez en modo directo para probarlo. El modo directo no me debería llevar demasiado tiempo, es volar las reacciones y meter la carga en la generacion, que generaria una version de normalholder que solo tiene acciones y posicion. El test que se haría para comparar es hacer un movimiento y llegar a un estado donde se tengan todos los movimientos del tablero, lo que simularia hacer un paso en un arbol minimax.
+- en reaccion, hacer un movimiento y generar la pieza y realizar las reacciones, despues cargar todos los movimientos.
+- en directo, hacer un movimiento y generar todas las piezas.
+
+si resulta que reaccion es mejor sigo como esta. Sino bueno, me cambio al otro que es mas simple. Un poco de bronca por la falacia de costo invertido pero bueno, este otro sistema tiene la ventaja de que es mas simple. Si hubiera ido por ese primero, y hubiera pensado en el otro, tambien tendría dudas de cual es mejor.
+
 ----
 
 cortar regeneracion si la normal que disparó el trigger no cambia de estado (falso->falso o verdadero->verdadero)

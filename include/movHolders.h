@@ -38,10 +38,11 @@ v offset;
 
 bool switchToGen;
 
+struct nhBuffer;
 struct virtualTableMov{//probar implementar lo mismo con switches a ver que pasa
   void (*generar)(movHolder*);
   void (*reaccionar)(movHolder*,normalHolder*);
-  void (*reaccionarVec)(movHolder*,vector<normalHolder*>*);
+  void (*reaccionarVec)(movHolder*,nhBuffer*);
   void (*cargar)(movHolder*,vector<normalHolder*>*);
 };
 
@@ -92,9 +93,9 @@ void initDeslizH(desliz*,Base*,char**);
 struct exc;
 struct excHolder:public movHolder{
     barray<movHolder*> ops;
-    ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio.
+    ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio y estaria del lado del operador
     ///no estoy seguro de si seria mas rapido
-  int size;//no debería estar en el op?
+  int size;//no debería estar en el op? TODO sacar
   int actualBranch;
 };
 void initExcH(exc*,Base*,char**);

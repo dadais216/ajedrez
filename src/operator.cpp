@@ -153,9 +153,11 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
       n->bools|=doEsp;
       break;
     case tassert: push(&condsTemp,langAssert); break;
+#undef cond
 #define acc(TOKEN) case t##TOKEN: push(&accsTemp,TOKEN);break
       acc(mov);
       acc(pausa);
+#undef acc
     case tcapt:
       push(&accsTemp,capt);
       //if(n->relPos==v(0,0))
@@ -457,8 +459,8 @@ exc* parseExc(parseMovData* p){
 isol* parseIsol(parseMovData* p){
   isol* i=alloc<isol>(p->b);
 
-  bool clickExplicitBefore=p->clickExplicit;
-  p->clickExplicit=false;
+  //bool clickExplicitBefore=p->clickExplicit;
+  //p->clickExplicit=false;
   bool writeInLocalMemBefore=p->writeInLocalMem;//en caso de anidar operadores
   p->writeInLocalMem=false;
 
@@ -479,9 +481,13 @@ isol* parseIsol(parseMovData* p){
     i->tipo=ISOL;
   p->writeInLocalMem=writeInLocalMemBefore;
 
-  if(!p->clickExplicit)
-    i->bools|=makeClick;
-  p->clickExplicit=clickExplicitBefore;
+  //al final decidi que isol ponga clickers automaticamente si no se explicitan
+  //porque en movimientos complejos hay casos donde se usan isoles sin clickers y es molesto recordar cancelar la actitud default
+  //podría hacerse que no influencie clickExplicit para el resto del movimiento, pero dejar eso haria que por ejemplo el emperador
+  //ponga un clicker en la esquina inferior izquierda, y a primera vista no esta claro por que
+  //if(!p->clickExplicit)
+  //  i->bools|=makeClick;
+  //p->clickExplicit=clickExplicitBefore;
 
   i->sig=parseOp(p);
 

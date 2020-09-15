@@ -40,7 +40,7 @@ void generarSig(movHolder* m){
 void reaccionarOverload(movHolder* m,normalHolder* nh){
   m->table->reaccionar(m,nh);
 }
-void reaccionarOverload(movHolder* m,vector<normalHolder*>* nh){
+void reaccionarOverload(movHolder* m,nhBuffer* nh){
   m->table->reaccionarVec(m,nh);
 }
 
@@ -130,16 +130,24 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
     }
   }
 }
-void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
+void reaccionarNormalH(movHolder* m,nhBuffer* nhs){
   normalHolder* s=(normalHolder*) m;
 
+  assert(nhs->size>0);
   for(int i=0;i<nhs->size;++i){
-    normalHolder* nh=(*nhs)[i];
+    normalHolder* nh=nhs->buf[i];
     if(nh==s){
+      #if debugMode
+      if(i!=0){
+        printf("normal fuera de orden\n");
+      }
+      #endif
+
       actualHolder.nh=nh;
 
       memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
       switchToGen=true;
+
       actualHolder.tile=tile(actualHolder.brd,s->pos);
       pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
       generarProperNormalH(s);
@@ -147,10 +155,10 @@ void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
         offset=getOffset(s->relPos,s->pos);
         memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
       }
-      unorderedErase(nhs,i);
+      nhs->beg++;//faltaria reordenar si no es el primero pero si hago lo de filtrar no es necesario
       return;
     }
-  }
+    }
   if(s->bools&valor){
     reaccionarSig(s,nhs);
     if(!(s->bools&valorFinal)){
@@ -159,6 +167,27 @@ void reaccionarNormalH(movHolder* m,vector<normalHolder*>* nhs){
     }
   }
 }
+/*
+  como las normales estan en orden en memoria, y se van descartando conforme se activan o no se encuentran,
+  la normal que se activaría en reaccionarNormalH nhs debería ser siempre la primera.
+  El unico caso para el que no se cumple esto es desopt, porque desopt puede evaluar cosas yendo y viniendo en la memoria.
+  Osea, la parte estatica tiene primero la primera iteracion y despues la segunda, y como hace un recorrido depth first salta
+  hacia adelante y hacia atras. Esto no puede arreglarse haciendo que la estructura estatica se guarde en memoria de forma distinta, porque
+  pasa el mismo problema entre la segunda iteracion y la parte dinamica. La unica solución a esto es hacer que toda la memoria de desopt sea
+  dinamica, y reserve haciendo depth first en vez de reservar todas las ramas de un nodo juntas, lo que seria un poco mas lento pero es mas simple y tiene esta ventaja.
+  La velocidad que aporta sacar ese bucle for esta adentro del ruido de variaciones entre mediciones, asi que no me parece que valga el esfuerzo
+  hacer el cambio, ademas de que implica un costo en desopt. Pero hay que tener en cuenta que ese bucle for en una parte bastante usada del codigo
+  esta ahi solo por un caso niche de desopt (2 triggers en ramas distintas, donde la rama que esta mas lejos en memoria se ejecuta primero por culpa
+  de las ramas estaticas)
+ */
+
+/*
+  hay 3 cosas que pueden pasar cuando se llama a una funcion reaccion de un operador mas complejos:
+  - que la normal se active, no importa si es valida o no, lleva a una generacion.
+  - que se determine que la normal es innacesible, si es la ultima o unica se hace un lngjmp porque no hay nada mas que hacer
+  - que se determine que la normal es innacesible, pero hay mas y se sigue la reaccion
+  operadores que corten la generacion para volver a una etapa de reaccion, si ven que no hay mas normales, hacen el lngjmp.
+ */
 
 void accionarNormalH(normalHolder* n){
   actualHolder.h=n->base->h;
@@ -217,6 +246,8 @@ void initNormalH(normal* org,Base* base_,char** head){
 }
 
 
+
+
 //TODO se me hace raro que se creen en el momento, no sería costoso armarlos todos al principio
 void maybeAddIteration(deslizHolder*d,int i){
   if(d->cantElems==i){
@@ -248,22 +279,63 @@ void generarDeslizH(movHolder* m){
   d->f=i;
   generarSig(d);
 }
-inline void reaccionarNhDesliz(deslizHolder* d,normalHolder* nh){
+normalHolder* getFirstNormal(normalHolder* nh){
+  return nh;
+}
+normalHolder* getFirstNormal(nhBuffer* nb){
+  return nb->buf[nb->beg];
+}
+
+void deleteInnacesibleNormalsMaybeJump(normalHolder* nh,auto cond){
+  longjmp(jmpReaccion,1);
+}
+void deleteInnacesibleNormalsMaybeJump(nhBuffer* nb,auto cond){
+  for(;
+      nb->beg<nb->size;
+      nb->beg++){
+    if(!cond(nb->buf[nb->beg])){
+      return;
+    }
+  }
+  longjmp(jmpReaccion,1);
+}
+
+template<typename T>
+void reaccionarDeslizH(movHolder* m,T tnh){
+  deslizHolder* d=(deslizHolder*)m;
+  constexpr bool singleNh=std::is_same<T,normalHolder*>::value;
+  normalHolder* nh=getFirstNormal(tnh);
+
+  if((char*)nh>=(char*)d+d->op->insideSize){
+    reaccionarSig(d,tnh);
+    return;
+  }
+
   assert((char*)nh>=(char*)d->movs.beg);
   intptr diff=(char*)nh-(char*)d->movs.beg;
   int iter=diff/d->op->iterSize;
   for(int i=0;i<iter;++i){
     if(!(((movHolder*)d->movs[i])->bools&valorFinal)){
+      deleteInnacesibleNormalsMaybeJump(tnh,[d](normalHolder* inh)->bool{
+                                                     return (char*)inh<(char*)d+d->op->insideSize;
+                                                    });
+      reaccionarSig(d,tnh);
       return;
     }
   }
   movHolder* act=(movHolder*)d->movs[iter];
-  act->table->reaccionar(act,nh);
-  //assert(switchToGen); TODO no es valido porque los isols pueden apagarlo. Si hago un lngjmp en isol si se podria volver a meter
-  /*if(!switchToGen) return;//por isols nomas. Si hago lo del lngjmp no es necesario
-    para que funcione correctamente debería ser return solo en la version simple, en la version vector
-    debería llamarse a si misma, sacando el nh mas bajo. Por ahora no lo hago porque es una optimizacion
-  */
+  reaccionarOverload(act,tnh);
+
+  if constexpr(!singleNh){
+    if(!switchToGen){
+      //esto pasa en caso de que la nh estaba en un isol, desopt o region innacesible de operador interior
+      //y hay mas normales en el buffer, que pueden estar en proximas iteraciones o despues
+      reaccionarDeslizH(m,tnh);
+      return;
+    }
+  }
+  assert(switchToGen==true);
+
   for(;act->bools&valorFinal;){
     iter++;
     maybeAddIteration(d,iter);
@@ -277,20 +349,6 @@ inline void reaccionarNhDesliz(deslizHolder* d,normalHolder* nh){
   d->f=iter;
   generarSig(d);
 }
-void reaccionarDeslizH(movHolder* m,normalHolder* nh){
-  deslizHolder* d=(deslizHolder*)m;
-  if((char*)nh<(char*)d+d->op->insideSize)
-    reaccionarNhDesliz(d,nh);
-  else
-    reaccionarSig(d,nh);
-}
-void reaccionarDeslizH(movHolder*m,vector<normalHolder*>* nhs){
-  deslizHolder* d=(deslizHolder*)m;
-  if((char*)(*nhs)[0]<(char*)d+d->op->insideSize)
-    reaccionarNhDesliz(d,(*nhs)[0]);
-  else
-    reaccionarSig(d,nhs);
-}
 void cargarDeslizH(movHolder* m,vector<normalHolder*>* norms){
   fromCast(d,m,deslizHolder*);
   if(!(d->bools&valorCadena)) return;
@@ -298,13 +356,13 @@ void cargarDeslizH(movHolder* m,vector<normalHolder*>* norms){
     fromCast(mov,d->movs[i],movHolder*);
     mov->table->cargar(mov,norms);
   }
-  if(d->bools&makeClick&&!norms->size==0) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
+  if(d->bools&makeClick&&!(norms->size==0)) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
     makeClicker(norms,d->base->h);
   if(d->sig)
     d->sig->table->cargar(d->sig,norms);
 }
 
-virtualTableMov deslizTable={generarDeslizH,reaccionarDeslizH,reaccionarDeslizH,cargarDeslizH};
+virtualTableMov deslizTable={generarDeslizH,reaccionarDeslizH<normalHolder*>,reaccionarDeslizH<nhBuffer*>,cargarDeslizH};
 //esta version del desliz retrocede a la posicion de inicio de una iteracion si la iteracion falla
 //esto la hace mas consistente en casos donde se usen multiples normales y cosas asi. Pero para
 //casos comunes como la torre no se usa, agrega codigo y almacenamiento, y lo mas importante es
@@ -359,21 +417,41 @@ void generarExcH(movHolder* m){
   e->bools&=~(valorFinal|valorCadena|valor);
   e->actualBranch=i-1;
 }
-inline void reaccionarNhExcH(excHolder* e,normalHolder* nh){
+template<typename T>
+void reaccionarExcH(movHolder* m,T tnh){
+  excHolder* e=(excHolder*)m;
+  constexpr bool singleNh=std::is_same<T,normalHolder*>::value;
+  normalHolder* nh=getFirstNormal(tnh);
+
+  int i=1;
+ loop:
+
+  if((char*)nh-(char*)e>=e->size){
+    reaccionarSig(e,tnh);
+    return;
+  }
+
   movHolder* branch;
-  int i;
-  for(i=1;i<=e->actualBranch;++i){
+  for(;i<=e->actualBranch;++i){
     movHolder* nextBranch=e->ops[i];
     if(nextBranch>nh){
       branch=e->ops[i-1];
       goto branchFound;
     }
   }
+  if(e->actualBranch!=count(e->ops)-1
+     && nh>=e->ops[e->actualBranch+1]){//si la actual no es la ultima existe la posibilidad de que el nh sea de una rama invalida
+    deleteInnacesibleNormalsMaybeJump(tnh,[e](normalHolder* inh)->bool{
+                                                           return (char*)inh<(char*)e+size(e->ops);
+                                                         });
+    reaccionarSig(e,tnh);
+    return;
+  }
+
   branch=e->ops[e->actualBranch];
-  //TODO no me cierra esto. Si el nh esta en una rama despues de la actual no se debería hacer nada, aca se hace reaccionar a la actual
  branchFound:
   branch->table->reaccionar(branch,nh);
-  if(switchToGen){//solo falso si la nh es innaccesible, por ejemplo esta en la parte invalida de un desliz
+  if(switchToGen){
     if(!(branch->bools&valorCadena)){ //si el ab al recalcularse se invalida generar todo devuelta, saltandolo
       int j;
       for(j=i;j<count(e->ops);j++){
@@ -393,29 +471,10 @@ inline void reaccionarNhExcH(excHolder* e,normalHolder* nh){
       e->bools|=valor;
       generarSigExc(e,branch);
     }
-  }
-}
-void reaccionarExcH(movHolder* m,normalHolder* nh){
-  fromCast(e,m,excHolder*);
-  if((char*)nh-(char*)e<e->size){
-    reaccionarNhExcH(e,nh);
-  }else if(e->bools&valor)
-    reaccionarSig(e,nh);
-}
-void reaccionarExcH(movHolder*m,vector<normalHolder*>* nhs){
-  //no puedo asumir que la primera normal es la que va a causar el cambio a generacion
-  //porque puede que esta este en un lugar innaccesible
-  fromCast(e,m,excHolder*);
-  for(normalHolder* nh:*nhs){
-    if((char*)nh-(char*)e<e->size){
-      reaccionarNhExcH(e,nh);
-      if(switchToGen){
-        break;
-      }
-    }else{
-      reaccionarSig(e,nh);
-      return;
-    }
+  }else{
+    assert(!singleNh);
+    assert(((nhBuffer*)tnh)->size>0);
+    goto loop;
   }
 }
 void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
@@ -429,7 +488,7 @@ void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
     e->sig->table->cargar(e->sig,norms);
 }
 
-virtualTableMov excTable={generarExcH,reaccionarExcH,reaccionarExcH,cargarExcH};
+virtualTableMov excTable={generarExcH,reaccionarExcH<normalHolder*>,reaccionarExcH<nhBuffer*>,cargarExcH};
 void initExcH(exc* org,Base* base_,char** head){
   fromCast(e,*head,excHolder*);
   initMovH(e,org,base_);
@@ -474,33 +533,22 @@ void generarIsolH(movHolder* m){
     s->bools|=s->sig->bools&valorFinal;
   }
 }
-void reaccionarIsolH(movHolder* m,normalHolder* nh){
-  fromCast(s,m,isolHolder*);
+
+template<typename T>
+void reaccionarIsolH(movHolder* m,T tnh){
+  isolHolder* s=(isolHolder*)m;
+  normalHolder* nh=getFirstNormal(tnh);
   if((char*)nh-(char*)s<s->size){
-    s->inside->table->reaccionar(s->inside,nh);
-    if(switchToGen){
-      ///@optim podria hacerse un lngjmp
-      switchToGen=false;
-      //printf("s coming back\n");
-    }
-  }
-  else if(s->sig)
-    s->sig->table->reaccionar(s->sig,nh);
-}
-void reaccionarIsolH(movHolder* m,vector<normalHolder*>* nhs){
-  fromCast(s,m,isolHolder*);
-  if((char*)(*nhs)[0]-(char*)s<s->size){
-    s->inside->table->reaccionar(s->inside,(*nhs)[0]);
-    if(switchToGen){
-      switchToGen=false;
-      //printf("v coming back\n");
-      //aclaracion: aca la memoria tiene basura que se cargo en la generacion interna, no importa porque se volvio a modo reaccion y se va a pisar si se activa un proximo trigger
-    }
-    //unorderedErase(nhs,0); TODO mirar esto
+    reaccionarOverload(s->inside,tnh);
+    deleteInnacesibleNormalsMaybeJump(tnh,[s](normalHolder* inh)->bool{
+                                            return (char*)inh<(char*)s+s->size;
+                                          });
+    switchToGen=false; //aca la memoria tiene basura que se cargo en la generacion interna, no importa porque se volvio a modo reaccion y se va a pisar si se activa un proximo trigger
   }
   if(s->sig)
-    s->sig->table->reaccionarVec(s->sig,nhs);
+    reaccionarOverload(s->sig,tnh);
 }
+
 void cargarIsolH(movHolder*m,vector<normalHolder*>* norms){
   fromCast(s,m,isolHolder*);
   int sizeBefore=norms->size;
@@ -512,7 +560,7 @@ void cargarIsolH(movHolder*m,vector<normalHolder*>* norms){
     s->sig->table->cargar(s->sig,norms);
 }
 
- virtualTableMov isolTable={generarIsolH,reaccionarIsolH,reaccionarIsolH,cargarIsolH};
+virtualTableMov isolTable={generarIsolH,reaccionarIsolH<normalHolder*>,reaccionarIsolH<nhBuffer*>,cargarIsolH};
 void initIsolH(isol* org,Base* base_,char** head){
   fromCast(s,*head,isolHolder*);
   initMovH(s,org,base_);
@@ -663,17 +711,19 @@ void reactIfNh(normalHolder* nh,movHolder* actualMov,int tam){
     actualMov->table->reaccionar(actualMov,nh);
   }
 }
-void reactIfNh(vector<normalHolder*>* nhs,movHolder* actualMov,int tam){
-  for(normalHolder* nh:*nhs){
-    reactIfNh(nh,actualMov,tam);
+void reactIfNh(nhBuffer* nhs,movHolder* actualMov,int tam){
+  for(int i=0;i<nhs->size;){
+    normalHolder* beforeNh=nhs->buf[i];
+    reactIfNh(beforeNh,actualMov,tam);
     if(switchToGen) break;
+    if(nhs->buf[i]==beforeNh) i++;//para manejar el caso donde el reaccionar consume el actual, y por ahi proximos, ahi no se avanza
   }
 }
 template<typename T>
-void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter,bool* found){
-  //@optim en vez de hacer esto se podría avanzar por la memoria, aprovechando que todos los bloques miden lo mismo,
-  //y meterse directamente en el correcto. Aunque como no se estaria recorriendo se podría acceder a memoria muerta, no sé.
+void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
+  bool found=false;
   int branchOffset=0;
+
   for(int tam:d->op->movSizes){
     desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+branchOffset);
     movHolder* actualMov=(movHolder*)(nextIter+1);
@@ -682,46 +732,36 @@ void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter,bool*
     reactIfNh(nh,actualMov,tam);
 
     if(switchToGen){
-      if constexpr(std::is_same<T,normalHolder*>::value){
-        *found=true;
-      }else{
-        unorderedErase(nh,0);
-        if(nh->size==0)
-          *found=true;
+      if(actualMov->bools&valorFinal){
+        generarNodo(d,&nextIter->iter,d->base->memLocal.resetUntil*sizeof(int));
       }
+      if constexpr(std::is_same<T,normalHolder*>::value){
+        longjmp(jmpReaccion,1);
+      }else{
+        if(nh->size==0)
+          longjmp(jmpReaccion,1);
+      }
+    }else{
+      if(actualMov->bools&valorFinal)
+        reaccionarProperDesoptH(d,nh,nextIter->iter);
     }
 
-    if(actualMov->bools&valorFinal){
-      if(switchToGen){
-        generarNodo(d,&nextIter->iter,d->base->memLocal.resetUntil*sizeof(int));
-      }else
-        reaccionarProperDesoptH(d,nh,nextIter->iter,found);
-    }
     switchToGen=false;
-    if(*found)
-      return;
   }
 }
-template<void(*reaccionarProper)(desoptHolder*,normalHolder*,desoptHolder::node*,bool*)>
-void reaccionarDesoptH(movHolder* m,normalHolder* n){
-  fromCast(d,m,desoptHolder*);
-  bool found=false;
-  if((char*)n<(char*)d+sizeof(desoptHolder)+d->op->desoptInsideSize){
-    reaccionarProper(d,n,d->movs,&found);
+
+template<typename T,void(*reaccionarProper)(desoptHolder*,T,desoptHolder::node*)>
+void reaccionarDesoptH(movHolder* m,T tnh){
+  desoptHolder* d=(desoptHolder*)m;
+  if((char*)getFirstNormal(tnh)<(char*)d+sizeof(desoptHolder)+d->op->desoptInsideSize){
+    reaccionarProper(d,tnh,d->movs);
   }else{
-    d->sig->table->reaccionar(d->sig,n);
+    reaccionarOverload(d,tnh);
   }
 }
-template<void(*reaccionarProper)(desoptHolder*,vector<normalHolder*>*,desoptHolder::node*,bool*)>
-void reaccionarDesoptH(movHolder* m,vector<normalHolder*>* n){
-  fromCast(d,m,desoptHolder*);
-  bool found=false;
-  if((char*)(n->operator[](0))<(char*)d+sizeof(desoptHolder)+d->op->desoptInsideSize){
-    reaccionarProper(d,n,d->movs,&found);
-  }else{
-    d->sig->table->reaccionarVec(d->sig,n);
-  }
-}
+
+
+
 /*
   como se reutiliza espacios de memoria puede que una rama ponga un trigger, y en una regeneracion por un trigger anterior la rama
   quede invalidada, y se reutilice para otra memoria. Ahora este trigger invalido, a diferencia de desliz, no apunta a un lugar que
@@ -765,8 +805,8 @@ void cargarDesoptH(movHolder*m,vector<normalHolder*>* norms){
   @testarVelocidad con A a la izquierda, sin partir con c
 */
 
-virtualTableMov desoptTable={generarDesoptH,reaccionarDesoptH<reaccionarProperDesoptH>,
-                              reaccionarDesoptH<reaccionarProperDesoptH>,cargarDesoptH};
+virtualTableMov desoptTable={generarDesoptH,reaccionarDesoptH<normalHolder*,reaccionarProperDesoptH>,
+                             reaccionarDesoptH<nhBuffer*,reaccionarProperDesoptH>,cargarDesoptH};
 void initDesoptH(desopt* org,Base* base_,char** head){
   fromCast(d,*head,desoptHolder*);
   initMovH(d,org,base_);
@@ -798,14 +838,12 @@ void initDesoptH(desopt* org,Base* base_,char** head){
 
 
 //fail tambien se podría implementar retornando falso en todo y forzando el operador anterior a tener hasClick,
-//las 2 cosas resultan en generarSig y simil de isol haciendo que se propague valorCadena true y valorFinal false
-//elegi esta porque me parece mas simple
 void generarFail(movHolder* m){
   m->bools=valorCadena; //valorFinal=false, el resto no importa
   return;
 }
 void reaccionarFail(movHolder* m, normalHolder* nh){}
-void reaccionarFail(movHolder* m, vector<normalHolder*>* nhs){}
+void reaccionarFail(movHolder* m, nhBuffer* nhs){}
 void cargarFail(movHolder* m, vector<normalHolder*>* norms){}
 virtualTableMov failTable={generarFail,reaccionarFail,reaccionarFail,cargarFail};
 
@@ -819,52 +857,33 @@ void initFailH(char** head){
 
 
 
-normalHolder* getNextNormalH(movHolder*);
-void reaccionarIsolNonResetMemH(movHolder* m,normalHolder* nh){
-  fromCast(s,m,isolHolder*);
-  //printf("isol NRM\n");
-  if((char*)nh-(char*)s<s->size){
-    normalHolder* nh=getNextNormalH(s->inside);
-    v posBefore=getOffset(nh->relPos,nh->pos);
-    int resetSize=s->base->memLocal.resetUntil*sizeof(int);
-    void* memTemp=alloca(resetSize);
-    memcpy(memTemp,nh->memAct.beg,resetSize);
-
-    s->inside->table->reaccionar(s->inside,nh);
-    if(switchToGen){
-      offset=posBefore;
-      memcpy(memMov.data,memTemp,resetSize);
-
-      //se sigue generando porque potencialmente se cambio memoria que no se resetea
-      s->sig->table->generar(s->sig);
-      //switchToGen queda activado para que el contender empieze a generar
-    }
-  }
-  else if(s->sig)
-    s->sig->table->reaccionar(s->sig,nh);
-}
-#define storeFirstNormalState(movHolder)        \
-  normalHolder* tempNh=getNextNormalH(movHolder);   \
-  v tempPos=getOffset(tempNh->relPos,tempNh->pos);      \
+#define storeFirstNormalState(movHolder)              \
+  normalHolder* tempNh=getNextNormalH(movHolder);     \
+  v tempPos=getOffset(tempNh->relPos,tempNh->pos);    \
   memcpy(tempLocalMem,tempNh->memAct.beg,resetSize);
+normalHolder* getNextNormalH(movHolder*);
 
-void reaccionarIsolNonResetMemH(movHolder* m,vector<normalHolder*>* nhs){
-  fromCast(s,m,isolHolder*);
-  //printf("isol NRM\n");
-  if((char*)(*nhs)[0]-(char*)s<s->size){
+template<typename T>
+void reaccionarIsolNonResetMemH(movHolder* m,T tnh){
+  isolHolder* s=(isolHolder*)m;
+  constexpr bool singleNh=std::is_same<T,normalHolder*>::value;
+  if((char*)getFirstNormal(tnh)-(char*)s<s->size){
     int resetSize=s->base->memLocal.resetUntil*sizeof(int);
     void* tempLocalMem=alloca(resetSize);
     storeFirstNormalState(s->inside);
 
-    s->inside->table->reaccionar(s->inside,(*nhs)[0]);
-    if(switchToGen){
+    reaccionarOverload(s->inside,tnh);
+    assert(singleNh?switchToGen:true);
+    if(singleNh||switchToGen){
       restoreState(resetSize);
-      s->sig->table->generar(s->sig);
+      if(s->sig) s->sig->table->generar(s->sig); //se sigue generando porque potencialmente se cambio memoria que no se resetea
+      //no se limpian normales extra que estan contenidas en este isol, si las hay, porque se sigue
+      //generando y no son relevantes. El isol comun si lo hace porque se vuelve a reaccionar.
       return;
     }
   }
   if(s->sig)
-    s->sig->table->reaccionarVec(s->sig,nhs);
+    reaccionarOverload(s->sig,tnh);
 }
 
 
@@ -883,7 +902,7 @@ void initIsolNonResetMemH(isol* org,Base* base_,char** head){
 //desoptNRM se usa si alguna rama usa memoria no reseteable. Aunque una rama no toque esa memoria, que se haya disparado su trigger implica
 //que potencialmente va a invalidar o crear nodos futuros, y por lo menos uno de esos nodos si toca la memoria.
 template<typename T,bool firstReaccionar=true>
-void reaccionarProperDesoptNonResetMemH(desoptHolder* d,T nh,desoptHolder::node* iter,bool* found){
+void reaccionarProperDesoptNonResetMemH(desoptHolder* d,T nh,desoptHolder::node* iter){
   int branchOffset=0;
   int resetSize=d->base->memLocal.resetUntil*sizeof(int);
   void* tempLocalMem=alloca(resetSize);
@@ -910,7 +929,7 @@ void reaccionarProperDesoptNonResetMemH(desoptHolder* d,T nh,desoptHolder::node*
           generarNodo(d,&nextIter->iter,resetSize);
         }
       }else if(actualMov->bools&valorFinal){
-        reaccionarProperDesoptNonResetMemH<T,false>(d,nh,nextIter->iter,found);
+        reaccionarProperDesoptNonResetMemH<T,false>(d,nh,nextIter->iter);
       }
       restoreState(resetSize);
     }
@@ -922,8 +941,8 @@ void reaccionarProperDesoptNonResetMemH(desoptHolder* d,T nh,desoptHolder::node*
     }
 }
 
-virtualTableMov desoptNRMTable={generarDesoptH,reaccionarDesoptH<reaccionarProperDesoptNonResetMemH>,
-                                reaccionarDesoptH<reaccionarProperDesoptNonResetMemH>,cargarDesoptH};
+virtualTableMov desoptNRMTable={generarDesoptH,reaccionarDesoptH<normalHolder*,reaccionarProperDesoptNonResetMemH>,
+                                reaccionarDesoptH<nhBuffer*,reaccionarProperDesoptNonResetMemH>,cargarDesoptH};
 void initDesoptNonResetMemH(desopt* org,Base* base_,char** head){
   //printf("gbdfgbdf\n");
   fromCast(d,*head,desoptHolder*);
@@ -1025,6 +1044,5 @@ Esto agrega un monton de complejidad y sigue teniendo el mismo problema que el a
 Igual la idea de usar una memoria persistente entre regeneraciones para optimizar recalculos podría ser interesante. Por ejemplo en la dama, si una rama cambia no sería necesario recalcular las proximas ramas devuelta, porque no cambiaron y no dependen de este cambio (mas o menos, puede que sean la rama ganadora ahora). Lo unico que se necesita recalcular es el codigo que viene despues, y solo en caso de que el nuevo recalculo mueva el maximo de cadena que estaba. Supongo que se podrían agregar reglas al lenguaje para poder decir cosas como esta, pero no quiero agregar mas complejidad al lenguaje para optimizaciones. Recalcular todo siempre maneja todos los casos y es simple. Por ahí en la version compilada se podría agregar alguna optimizacion que vea que regiones de memoria se tocan y decida si recalcular otras ramas, o partes de estas, y cosas asi, estaria bueno. Pero no es algo del lenguaje, por ahora nada.
 
 Otra opcion mas loca es borrar isol y desopt porque se hicieron muy bloated, y agregar comandos de bajo nivel para manejar la restauracion de posiciones, regiones de memoria local y el buffer de acciones. Lo malo de esto es que no se puede optimizar tanto como isol y desopt, ya que tendrían sus propias memorias y no aprovechan lo que se guarda en normales para restaurar en reacciones.  Y si aprovechan eso son basicamente lo mismo que tengo ahora, pero mas dificil de programar. Y tiene los mismos problemas, recalculan todo siempre. Asi que no
-
-
  */
+

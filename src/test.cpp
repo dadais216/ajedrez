@@ -202,6 +202,7 @@ void runTest(properState* ps,char const* name,int map,int turns,int times,bool p
   }
 
 
+#if !debugMode
   testPrintData* result=newElem(&testPrint.after);
   result->name=name;
   result->holderBucketSize=(intptr)(ps->gameState.head-(intptr)getBoard(ps));
@@ -209,6 +210,7 @@ void runTest(properState* ps,char const* name,int map,int turns,int times,bool p
   result->promSec=(testData.sProm/(double)times)/1e9;
   result->prom=testData.sProm/(double)times;
   result->minProm=testData.minProm;
+#endif
 }
 
 void segmentationHandler(int sig){
@@ -228,12 +230,13 @@ void doTests(char* mem){
   properInit(mem,0,2,2,true);
   properState* ps=(properState*)mem;
   srand(time(NULL));
-  getOldStats();
 
 #if debugMode
   for(int i=0;i<20;i++)
     printf("in debug mode!!\n");
 #else
+  getOldStats();
+
   std::signal(SIGSEGV,segmentationHandler);
   std::signal(SIGINT,segmentationHandler);
   int res=system("cpupower frequency-set --governor performance");
@@ -243,16 +246,16 @@ void doTests(char* mem){
   timespec beg,end;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&beg);
 
-  testPrint.name="dama, movholders para memoria no reseteable";
+  testPrint.name="longjmps en reaccion";
 
   for(int i=0;i<runs;i++){
-    runTest(ps,"simple",14,10,3000,false,i==0);
+    runTest(ps,"simple",14,3000,10,false,i==0);
     runTest(ps,"tiles",21,600,800,false);
     runTest(ps,"growin",20,2500,500,false);
     runTest(ps,"puzzle",15,1000,300,false);
     runTest(ps,"germen",19,399,1500,false);
     runTest(ps,"desliz",18,3000,120,false);
-    //runTest(ps,"emperadores",22,300,10,false); no anda porque isol en desliz no esta bien hecho y hay 2 formas de solucionarlo
+    runTest(ps,"emperadores",22,300,10,false);
     //runTest(ps,"rebote",23,300,10,false); no anda porque no hay normales no esp por ahora
     runTest(ps,"caballos",17,150,450,true);
     runTest(ps,"normal",16,80,10000,true);

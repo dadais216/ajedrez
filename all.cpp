@@ -122,6 +122,8 @@ char* loadFile(char const* fileName){
   return content;
 }
 
+
+#include <setjmp.h>
 #include <csignal>
 #include "stdlib.h"
 #include <list>

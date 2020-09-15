@@ -233,6 +233,8 @@ void chargeTriggers(int* used,int* source){
   *used=0;
 }
 
+
+jmp_buf jmpReaccion;
 int contador=0;
 void activateTriggers(){
     //los triggers duplicados (por dos condiciones poniendo dos triggers a un mismo normalHolder, o por
@@ -244,7 +246,8 @@ void activateTriggers(){
         Base* base=trigsActivados[0]->base;
         actualHolder.h=base->h;
 
-        base->root->table->reaccionar(base->root,trigsActivados[0]);
+        if(!setjmp(jmpReaccion))
+          base->root->table->reaccionar(base->root,trigsActivados[0]);
     }
     else{
       //@test no sería suficiente con ordenar segun nh desde el principio?
@@ -260,17 +263,23 @@ void activateTriggers(){
             while(j<trigsActivados.size&&trigsActivados[j]->base->root==base)
                 j++;
             actualHolder.h=base->base->h;
-            if(j==i+1)
-              base->table->reaccionar(base,trigsActivados[i]);
-            else{
-                vector<normalHolder*> nhs;
-                initCopy(&nhs,&trigsActivados[i],j-i);
-                
 
-                std::sort(&nhs[0],&nhs.data[nhs.size],[](normalHolder* a,normalHolder* b)->bool{return a<b;});
-                //estaria bueno no hacer una copia, no es muy importante igual
-                base->table->reaccionarVec(base,&nhs);
+            if(!setjmp(jmpReaccion)){
+              if(j==i+1)
+                base->table->reaccionar(base,trigsActivados[i]);
+              else{
+                nhBuffer nb;
+                nb.size=j-i;
+                nb.beg=0;
+                nb.buf=(normalHolder**)alloca(nb.size*sizeof(normalHolder*));
+                memcpy(nb.buf,&trigsActivados[i],(j-i)*sizeof(normalHolder*));
+
+                std::sort(&nb.buf[0],&nb.buf[nb.size],[](normalHolder* a,normalHolder* b)->bool{return a<b;});
+                //TODO si apunto al otro vector en vez de hacer la copia debería andar igual
+                base->table->reaccionarVec(base,&nb);
+              }
             }
+
             i=j;
         }
     }

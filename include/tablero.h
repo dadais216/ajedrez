@@ -91,6 +91,11 @@ struct board{
 //tengan el mismo id
 
 
+struct nhBuffer{
+  normalHolder** buf;
+  int size;
+  int beg;
+};
 
 void init(triggerSpace* ts);
 

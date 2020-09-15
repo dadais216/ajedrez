@@ -87,7 +87,9 @@ s mover
 
 
 :10 2
-{a,d,w,s} mover
+#exc aa mover or ss mover end;
+desliz s mover c end;
+pass;
 
 :11 3 #memoria
 #mmore T p0 mset l0 T madd l0 3 mset p0 l0 w mover
@@ -364,6 +366,11 @@ TW mcmp t0 1 mover mset t0 0;
 :33 5 #emperador
 desliz w end desliz a end 
 desliz isol desliz isol mover c end d end end s end;
+#desliz isol esp desliz isol esp mover c end d noEsp end end s noEsp end;
+#se puede escribir asi para optimizar. Queda medio choto pero tiene sentido, la opcion default es que
+#esp este cuando se varia la posicion, y si lo quiero controlar tengo que ser explicito. En la version
+#interpretada es medio feo porque hay muchas normales al pedo, para cada variacion de posicion y cada esp,
+#pero bueno
 
 :34 2 #desopt
 >X&Y=wa&wd|sa&sd;
@@ -421,6 +428,8 @@ msize l 121 mreset 20 mset l1 4 desopt 32
          madd l24 1 madd l23 l20 madd l23 l20 madd l23 2
         end
     end;
+pass;
+
 
 :39 7 #dama promocionada. Puede que esta sea la pieza que se llama dama
 >newPos= mset l0 4 desliz 
