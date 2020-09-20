@@ -1,4 +1,7 @@
 
+en el ultimo test estaba bastante seguro de que las cosas iban a ser iguales o ligeramente mejores, pero corriendo varias veces me dieron resultados variados, lo que asumo que quiere decir que la precision de los test sigue siendo mala. Lo que debería hacer es correr cada test hasta que converga, algo como correr cada test hasta que la diferencia de su valor promedio con los 2 anteriores sea <100
+
+----
 
 Cuando se tiene un desliz con 2 triggers, se activa el primero, se genera sobre el segundo y este nunca se vuelve a mirar.
 Si el primero no se encuentra es obvio que el segundo, de encontrarse en el desliz, tampoco se va a encontrar. Se busca más alla. Por ahi vale la pena chequear si el segundo esta mas allá (creo que podrían fallar unos asserts sino)

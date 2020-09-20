@@ -42,7 +42,7 @@ void humanTurn(bool bando,board* brd){
       input.check();
 #if debugMode
       if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
-        properGameInit((properState*)stateMem,true);
+        properGameInit<true>((properState*)stateMem);
         while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
         throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
       }
@@ -80,9 +80,9 @@ void skipTurn(){
 
 
 
-
 void properUpdate();
-void properInit(char* mem,int boardId,int player1Id,int player2Id,bool forTest){
+template<bool forTest>
+void properInit(char* mem,int boardId,int player1Id,int player2Id){
   properState* ps=new(mem)properState();
   ps->boardId=boardId;
   ps->player1=player1Id;
@@ -142,9 +142,17 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id,bool forTest){
   init(&reciclaje);
   init(&justSpawned);
 
-  if(!forTest){
+  initBucket(&ps->pieceOps);
+
+
+  if constexpr(forTest){
+    ps->gameState.size=0;
+    //marcar para no borrar la primera vez en test, porque no hay nada que borrar
+    //podría alocar algo al pedo para borrar, pero poner un if es mas simple y
+    //esto no es algo importante
+  }else{
     actualStateUpdate=properUpdate;
-    properGameInit(ps);
+    properGameInit<false>(ps);
   }
 }
 
@@ -154,8 +162,9 @@ void resetBucket(bucket* b,int size=bucketSize){
   initBucket(b,size);
 }
 
-void properGameInit(properState* ps,bool reset){
-  if(reset){
+template<bool reset>
+void properGameInit(properState* ps){
+  if constexpr(reset){
     parseData* pd=&ps->pd;
 
     clearMacros(pd);
@@ -181,14 +190,15 @@ void properGameInit(properState* ps,bool reset){
     reciclaje.size=0;
     justSpawned.size=0;
 
-    board* brd=getBoard(ps);
-    delete[] brd->ts.mem;
+    if(ps->gameState.size!=0){
+      board* brd=getBoard(ps);
+      delete[] brd->ts.mem;
 
-    free(&memMov);
-    resetBucket(&ps->pieceOps);
-  }else{
-    initBucket(&ps->pieceOps);
+      free(&memMov);
+      resetBucket(&ps->pieceOps);
+    }
   }
+
   ps->clickers.size=0;
   ps->turno=1;
 
@@ -208,9 +218,12 @@ void properGameInit(properState* ps,bool reset){
             + ps->pd.dims.x*ps->pd.dims.y*(sizeof(Tile)+ps->pd.memTileSlots*sizeof(memData))
             + ps->pd.memGlobalSize*sizeof(memData);
 
-  if(reset)
-    resetBucket(&ps->gameState,ps->hsSize);
-  else
+  if constexpr(reset){
+    if(ps->gameState.size!=0)
+      resetBucket(&ps->gameState,ps->hsSize);
+    else
+      initBucket(&ps->gameState,ps->hsSize);
+  }else
     initBucket(&ps->gameState,ps->hsSize);
 
   makeBoard(ps);

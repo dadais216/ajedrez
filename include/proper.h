@@ -51,8 +51,8 @@ El tablero, la memoria global y tile quedaría en un malloc aparte
 */
 
 void properDraw(char*);
-void properInit(char*,int,int,int,bool forTest=false);
-void properGameInit(properState*,bool reset=false);
+template<bool =false> void properInit(char*,int,int,int);
+template<bool =false> void properGameInit(properState*);
 void properUpdate(char*);
 
 

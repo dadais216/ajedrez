@@ -23,8 +23,7 @@ struct{
   vector<testPrintData> after;//guardo al final en vez de por test para no guardar en caso de crash
   char const* name;
 }testPrint;
-
-const int runs=7;
+const int runsToConverge=5;
 
 template<typename T>
 void sGetNext(char** ss,T* var){
@@ -112,35 +111,10 @@ void saveStats(){
     fprintf(file,"@%s@\n",testPrint.name);
   }
 
-  //estaba entre tener un array[runs] en cada test donde ir poniendo los datos, alocando solo
-  //en la primera corrida o esto, un vector donde pongo los test y se repiten por cada run.
-  //lo bueno de este es que no necesito saber de antemano o calcular la cantidad de test arrastrando un contador,
-  //porque la saco haciendo esta division al final. Otra cosa buena es que reutilizo el mismo
-  //struct que en before, y tambien esta bueno que se escribe todo de corrido y no hay que volver para atras.
-  //lo malo es que se repiten los nombres y que hace alocaciones de mas por ser un vector. Lo segundo se podría
-  //hacer igual de eficiente que en el otro haciendo que al final de la primera corrida
-  //se reserve el tamaño*runs, pero no lo vale aca
-
-  int testQ=testPrint.after.size/runs;
-
-  for(int i=0;i<testQ;i++){
+  for(int i=0;i<testPrint.after.size;i++){
     testPrintData* actual=&testPrint.after[i];
     int holderBucketSizeDelta=0,opBucketSizeDelta=0;
     double promSecDelta=0,promDelta=0,minPromDelta=0;
-
-
-    for(int k=1;k<runs;k++){
-      testPrintData* otherRun=&testPrint.after[i+k*testQ];
-      actual->holderBucketSize=std::max(actual->holderBucketSize,otherRun->holderBucketSize);
-      actual->opBucketSize=std::max(actual->opBucketSize,otherRun->opBucketSize);
-      actual->promSec+=otherRun->promSec;
-      actual->prom+=otherRun->prom;
-      actual->minProm=std::min(actual->minProm,otherRun->minProm);//por ahi debería tomar el promedio, no śe
-    }
-    actual->promSec/=runs;
-    actual->prom/=runs;
-
-
 
     for(int j=0;j<testPrint.before.size;j++){
       testPrintData* before=&testPrint.before[j];
@@ -180,37 +154,118 @@ void saveStats(){
   }
 }
 
-void runTest(properState* ps,char const* name,int map,int turns,int times,bool player2Random,bool firstTest=false){
-  printf("running %s\n",name);
+//en la version vieja corria todos los test en forma circular n veces para que haya mas variabilidad, y promediaba
+//pero justamente lo que quiero es que haya menos, asi que ahora corro un test las veces que necesite para converger
+//podría darse que justo este pasando algo en la computadora que haga variar al test, y como pasan todos juntos me 
+//mueva la convergencia. Pero no sé si es algo que pueda llegar a pasar, y ensuciar todo el codigo con manejo de 
+//una cola circular donde los elementos se eliminan al azar, pero la impresion final debe ser ordenada, me parece mucho
+//quilombo solo por eso. Y ese problema se va a presentar de todas formas al final, cuando la cola tenga pocos elementos
 
-  testData.sProm=0;
-  testData.minProm=DBL_MAX;
-  for(int i=0;i<times;i++){
-    ps->boardId=map;
-    ps->player2=player2Random?2:4;
-    properGameInit(ps,i!=0||!firstTest);//mas adelante debería hacer un copy paste del estado inicial en vez de recrear todo
-
-    testData.nProm=0;
-    testData.dProm=0;
-    testData.cutEarly=false;
-
-    while(testData.dProm<turns&&!testData.cutEarly){
-      properUpdate((char*)ps);
-    }
-    testData.sProm+=testData.nProm/testData.dProm;
-    testData.minProm=std::min(testData.minProm,testData.nProm/testData.dProm);
+/*probando boludeces template v1
+template<typename A,int size,typename B,B A::* m,typename lt>
+B foldInArrayMember(A* objArray,lt lambda){
+  B acc=(objArray[0].*m);
+  for(int i=1;i<size;i++){
+    acc=lambda(acc,(objArray[i].*m));
   }
+  return acc;
+}
+
+template<typename A,int size,typename B,B A::* m, typename lt>
+bool forAllPairsInArrayMember(A* objArray,lt lambda){
+  assert(size>1);
+  for(int i=0;i<size-1;i++){
+    for(int j=i+1;j<size;j++){
+      if(!lambda((objArray[i].*m),(objArray[j].*m)))
+        return false;
+    }
+  }
+  return true;
+}
+//se llama haciendo
+//forAllPairsInArrayMember<testPrintData,runsToConverge,double,&testPrintData::prom>(runData,[](double a,double b)->bool{return std::abs(a-b)<100;})
+//after->holderBucketSize=foldInArrayMember<testPrintData,runsToConverge,int,&testPrintData::holderBucketSize>(runData,[](int a,int b)->int{return std::max(a,b);})
+//intente hacer que no sea necesario especializar la lambda cuando es generica (usar std::max y std::plus en vez de hacer las lambdas esas)
+//usando algo como template<typename,typename> typename lt, pero parece que eso no anda con funciones template? no estoy seguro
+//tambien se podría mover la lambda al template y especializar el tipo ahi, pero es de c++20
+//tambien quise sacar el size apartir del array, pasandolo por decltype. pero no anda porque necesito el tipo no array para el metodo de acceso,
+// y B (std::remove_all_extents<A>::type)::* m no anda
+//se podría haber hecho con todas las boludeces, pero sin tipos, pasando un offset por template
+*/
+
+template<typename A,typename B,typename lt>
+B foldInArrayMember(A objArray,B first,lt lambda){
+  B acc=first;
+  for(int i=0;i<(int)std::extent<A>::value;i++){
+    acc=lambda(acc,objArray[0]);
+  }
+  return acc;
+}
+
+template<typename A,typename lt>
+bool forAllPairsInArrayMember(A objArray,lt lambda){
+  constexpr int size=std::extent<A>::value;
+  static_assert(size>1);
+  for(int i=0;i<size-1;i++){
+    for(int j=i+1;j<size;j++){
+      if(!lambda(objArray[i],objArray[j]))
+        return false;
+    }
+  }
+  return true;
+}
+//la version anterior esta buena porque las lambdas manejan el tipo base y no necesita valor default
+//,pero todo el quilombo que hay que hacer para eso no lo vale
 
 
-#if !debugMode
-  testPrintData* result=newElem(&testPrint.after);
-  result->name=name;
-  result->holderBucketSize=(intptr)(ps->gameState.head-(intptr)getBoard(ps));
-  result->opBucketSize=(intptr)(ps->pieceOps.head-ps->pieceOps.data);
-  result->promSec=(testData.sProm/(double)times)/1e9;
-  result->prom=testData.sProm/(double)times;
-  result->minProm=testData.minProm;
-#endif
+void runTest(properState* ps,char const* name,int map,int turns,int times,bool player2Random){
+  int run=0;
+  testPrintData runData[runsToConverge];
+
+  while(true){
+    printf("running %s #%d\n",name,run+1);
+
+    testData.sProm=0;
+    testData.minProm=DBL_MAX;
+    for(int i=0;i<times;i++){
+      ps->boardId=map;
+      ps->player2=player2Random?2:4;
+      properGameInit<true>(ps);//mas adelante debería hacer un copy paste del estado inicial en vez de recrear todo
+
+      testData.nProm=0;
+      testData.dProm=0;
+      testData.cutEarly=false;
+      
+      while(testData.dProm<turns&&!testData.cutEarly){
+        properUpdate((char*)ps);
+      }
+      testData.sProm+=testData.nProm/testData.dProm;
+      testData.minProm=std::min(testData.minProm,testData.nProm/testData.dProm);
+    }
+
+    testPrintData* result=&runData[run%runsToConverge];
+    result->holderBucketSize=(intptr)(ps->gameState.head-(intptr)getBoard(ps));
+    result->opBucketSize=(intptr)(ps->pieceOps.head-ps->pieceOps.data);
+    result->promSec=(testData.sProm/(double)times)/1e9;
+    result->prom=testData.sProm/(double)times;
+    result->minProm=testData.minProm;
+
+    if(run>=runsToConverge-1){
+      if(forAllPairsInArrayMember<decltype(runData)>(runData,[](testPrintData& a,testPrintData& b)->bool{
+                                                                                     return std::abs(a.prom-b.prom)<100;
+                                                                                   })){
+        testPrintData* after=newElem(&testPrint.after);
+        after->name=name;
+        after->holderBucketSize=foldInArrayMember<decltype(runData)>(runData,0,[](int a,testPrintData& b)->int{return std::max(a,b.holderBucketSize);});
+        after->opBucketSize=foldInArrayMember<decltype(runData)>(runData,0,[](int a,testPrintData& b)->int{return std::max(a,b.opBucketSize);});
+        after->prom=foldInArrayMember<decltype(runData)>(runData,0,[](double a,testPrintData& b)->double{return a+b.prom;})/runsToConverge;
+        after->promSec=foldInArrayMember<decltype(runData)>(runData,0,[](double a,testPrintData& b)->double{return a+b.promSec;})/runsToConverge;
+        after->minProm=foldInArrayMember<decltype(runData)>(runData,1<<30,[](double a,testPrintData& b)->double{return std::min(a,b.minProm);});
+        break;
+      }
+    }
+    run++;
+  }
 }
 
 void segmentationHandler(int sig){
@@ -227,7 +282,7 @@ void segmentationHandler(int sig){
 }
 
 void doTests(char* mem){
-  properInit(mem,0,2,2,true);
+  properInit<true>(mem,0,2,2);
   properState* ps=(properState*)mem;
   srand(time(NULL));
 
@@ -246,24 +301,22 @@ void doTests(char* mem){
   timespec beg,end;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&beg);
 
-  testPrint.name="longjmps en reaccion";
+  testPrint.name="se corren test hasta que convergan los ultimos n, en vez de correr n veces y promediar";
 
-  for(int i=0;i<runs;i++){
-    runTest(ps,"simple",14,3000,10,false,i==0);
-    runTest(ps,"tiles",21,600,800,false);
-    runTest(ps,"growin",20,2500,500,false);
-    runTest(ps,"puzzle",15,1000,300,false);
-    runTest(ps,"germen",19,399,1500,false);
-    runTest(ps,"desliz",18,3000,120,false);
-    runTest(ps,"emperadores",22,300,10,false);
-    //runTest(ps,"rebote",23,300,10,false); no anda porque no hay normales no esp por ahora
-    runTest(ps,"caballos",17,150,450,true);
-    runTest(ps,"normal",16,80,10000,true);
-    runTest(ps,"desopt",23,500,600,false);
-    runTest(ps,"desopt a manopla",24,500,800,false);
-    runTest(ps,"damas",25,1,4000,true);
-  }
-  //la desviacion entre 2 corridas iguales es de menos de 100 (150 para dama y desopt a veces), para estar seguro lo corro 5 veces
+  runTest(ps,"simple",14,3000,10,false);
+  runTest(ps,"tiles",21,600,800,false);
+  runTest(ps,"growin",20,2500,500,false);
+  runTest(ps,"puzzle",15,1000,300,false);
+  runTest(ps,"germen",19,399,1500,false);
+  runTest(ps,"desliz",18,3000,120,false);
+  runTest(ps,"emperadores",22,300,20,false);
+  //runTest(ps,"rebote",23,300,10,false); no anda porque no hay normales no esp por ahora
+  runTest(ps,"caballos",17,150,450,true);
+  runTest(ps,"normal",16,80,10000,true);
+  runTest(ps,"desopt",23,500,600,false);
+  runTest(ps,"desopt a manopla",24,500,800,false);
+  runTest(ps,"damas",25,1,4000,true);
+  
 
 #if !debugMode
   res=system("cpupower frequency-set --governor powersave");

@@ -428,7 +428,6 @@ msize l 121 mreset 20 mset l1 4 desopt 32
          madd l24 1 madd l23 l20 madd l23 l20 madd l23 2
         end
     end;
-pass;
 
 
 :39 7 #dama promocionada. Puede que esta sea la pieza que se llama dama

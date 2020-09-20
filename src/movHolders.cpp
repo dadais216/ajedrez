@@ -721,7 +721,6 @@ void reactIfNh(nhBuffer* nhs,movHolder* actualMov,int tam){
 }
 template<typename T>
 void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
-  bool found=false;
   int branchOffset=0;
 
   for(int tam:d->op->movSizes){

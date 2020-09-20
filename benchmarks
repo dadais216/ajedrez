@@ -370,84 +370,428 @@ simple:
 holder bucket 1904	+0
 op bucket 1112		+0
 promedio s 0.000001	+0.000000
-promedio 1357.142062	-9.151681
-mejor 1340.567000	+58.167000
+promedio 1334.855405	-31.438338
+mejor 1306.115333	+23.715333
 ---------------------------
 tiles:
 holder bucket 4020	+0
 op bucket 2960		+0
 promedio s 0.000002	-0.000000
-promedio 1576.504621	+66.265405
-mejor 1487.448333	+59.431666
+promedio 1551.020986	+40.781770
+mejor 1441.653333	+13.636666
 ---------------------------
 growin:
 holder bucket 16756	+0
 op bucket 2688		+0
-promedio s 0.000008	+0.000005
-promedio 7543.670240	+4583.048245
-mejor 7414.034000	+4589.969200
+promedio s 0.000007	+0.000004
+promedio 7492.744375	+4532.122380
+mejor 7420.645600	+4596.580800
 ---------------------------
 puzzle:
 holder bucket 12760	+0
 op bucket 1112		+0
 promedio s 0.000002	-0.000000
-promedio 1907.757513	+114.547792
-mejor 1847.612000	+96.967000
+promedio 1890.483850	+97.274129
+mejor 1838.464000	+87.819000
 ---------------------------
 germen:
-holder bucket 1397928	+820904
+holder bucket 1394632	+817608
 op bucket 1544		+0
 promedio s 0.000003	+0.000000
-promedio 3318.449779	+17.967203
-mejor 3227.408511	+16.580780
+promedio 3315.566593	+15.084017
+mejor 3239.361345	+28.533614
 ---------------------------
 desliz:
 holder bucket 21088	+0
 op bucket 3816		+0
 promedio s 0.000011	+0.000000
-promedio 11200.506238	+7.981646
-mejor 11122.630333	+27.343000
+promedio 11106.557020	-85.967572
+mejor 11017.633333	-77.654000
 ---------------------------
 emperadores:
 holder bucket 15000	+0
 op bucket 1332		+0
 promedio s 0.000009	+0.000000
-promedio 8522.984143	+0.000000
-mejor 7889.430000	+0.000000
+promedio 8554.733714	+0.000000
+mejor 8163.340000	+0.000000
 ---------------------------
 caballos:
 holder bucket 678520	+0
 op bucket 3624		+0
 promedio s 0.000004	+0.000000
-promedio 4016.388218	+157.193659
-mejor 3845.940000	+145.106667
+promedio 4178.970493	+319.775934
+mejor 3985.993333	+285.160000
 ---------------------------
 normal:
 holder bucket 79800	+0
 op bucket 16160		+0
 promedio s 0.000003	+0.000000
-promedio 3334.225919	-32.434918
-mejor 2726.637500	-53.300000
+promedio 3335.082690	-31.578147
+mejor 2740.887500	-39.050000
 ---------------------------
 desopt:
 holder bucket 10608	+0
 op bucket 1256		+0
 promedio s 0.000004	-0.000000
-promedio 3707.687303	-40.710405
-mejor 3526.428000	-45.650000
+promedio 3787.285309	+38.887601
+mejor 3634.144000	+62.066000
 ---------------------------
 desopt a manopla:
 holder bucket 7728	+0
 op bucket 8056		+0
 promedio s 0.000004	-0.000000
-promedio 3667.328325	+23.188273
-mejor 3560.158000	+21.976000
+promedio 3678.651300	+34.511248
+mejor 3570.974000	+32.792000
 ---------------------------
 damas:
-holder bucket 24645720	+832
-op bucket 10952		+112
-promedio s 0.000038	+0.000031
-promedio 37870.297464	+31306.215785
-mejor 6199.000000	+131.000000
+holder bucket 24644888	+0
+op bucket 10840		+0
+promedio s 0.000007	+0.000000
+promedio 7033.306036	+469.224357
+mejor 6147.000000	+79.000000
+---------------------------
+###########################
+@se corren test hasta que convergan los ultimos n, en vez de correr n veces y promediar@
+simple:
+holder bucket 1904	+0
+op bucket 1112		+0
+promedio s 0.000000	-0.000001
+promedio 1313.000000	-21.855405
+mejor 1293.000000	-13.115333
+---------------------------
+tiles:
+holder bucket 4020	+0
+op bucket 2960		+0
+promedio s 0.000000	-0.000002
+promedio 1559.000000	+7.979014
+mejor 1448.000000	+6.346667
+---------------------------
+growin:
+holder bucket 16756	+0
+op bucket 2688		+0
+promedio s 0.000000	-0.000007
+promedio 7442.000000	-50.744375
+mejor 7374.000000	-46.645600
+---------------------------
+puzzle:
+holder bucket 12760	+0
+op bucket 1112		+0
+promedio s 0.000000	-0.000002
+promedio 1847.000000	-43.483850
+mejor 1822.000000	-16.464000
+---------------------------
+germen:
+holder bucket 460112	-934520
+op bucket 1544		+0
+promedio s 0.000000	-0.000003
+promedio 3310.000000	-5.566593
+mejor 3249.000000	+9.638655
+---------------------------
+desliz:
+holder bucket 21088	+0
+op bucket 3816		+0
+promedio s 0.000000	-0.000011
+promedio 11016.000000	-90.557020
+mejor 10975.000000	-42.633333
+---------------------------
+emperadores:
+holder bucket 15000	+0
+op bucket 1332		+0
+promedio s 0.000000	-0.000009
+promedio 8423.000000	-131.733714
+mejor 8114.000000	-49.340000
+---------------------------
+caballos:
+holder bucket 678520	+0
+op bucket 3624		+0
+promedio s 0.000000	-0.000004
+promedio 3932.000000	-246.970493
+mejor 3769.000000	-216.993333
+---------------------------
+normal:
+holder bucket 79800	+0
+op bucket 16160		+0
+promedio s 0.000000	-0.000003
+promedio 3307.000000	-28.082690
+mejor 2676.000000	-64.887500
+---------------------------
+desopt:
+holder bucket 10608	+0
+op bucket 1256		+0
+promedio s 0.000000	-0.000004
+promedio 3715.000000	-72.285309
+mejor 3557.000000	-77.144000
+---------------------------
+desopt a manopla:
+holder bucket 7728	+0
+op bucket 8056		+0
+promedio s 0.000000	-0.000004
+promedio 3640.000000	-38.651300
+mejor 3556.000000	-14.974000
+---------------------------
+damas:
+holder bucket 24644888	+0
+op bucket 10840		+0
+promedio s 0.000000	-0.000007
+promedio 6480.000000	-553.306036
+mejor 6072.000000	-75.000000
+---------------------------
+###########################
+@se corren test hasta que convergan los ultimos n, en vez de correr n veces y promediar@
+simple:
+holder bucket 1904	+0
+op bucket 1112		+0
+promedio s 0.000000	+0.000000
+promedio 1305.000000	-8.000000
+mejor 1295.000000	+2.000000
+---------------------------
+tiles:
+holder bucket 4020	+0
+op bucket 2960		+0
+promedio s 0.000000	+0.000000
+promedio 1508.000000	-51.000000
+mejor 1460.000000	+12.000000
+---------------------------
+growin:
+holder bucket 16756	+0
+op bucket 2688		+0
+promedio s 0.000000	+0.000000
+promedio 7570.000000	+128.000000
+mejor 7535.000000	+161.000000
+---------------------------
+puzzle:
+holder bucket 12760	+0
+op bucket 1112		+0
+promedio s 0.000000	+0.000000
+promedio 1859.000000	+12.000000
+mejor 1831.000000	+9.000000
+---------------------------
+germen:
+holder bucket 0	-460112
+op bucket 1544		+0
+promedio s 0.000000	+0.000000
+promedio 3309.000000	-1.000000
+mejor 3252.000000	+3.000000
+---------------------------
+desliz:
+holder bucket 21088	+0
+op bucket 3816		+0
+promedio s 0.000000	+0.000000
+promedio 11014.000000	-2.000000
+mejor 10979.000000	+4.000000
+---------------------------
+emperadores:
+holder bucket 15000	+0
+op bucket 1332		+0
+promedio s 0.000000	+0.000000
+promedio 8343.000000	-80.000000
+mejor 8048.000000	-66.000000
+---------------------------
+caballos:
+holder bucket 678520	+0
+op bucket 3624		+0
+promedio s 0.000000	+0.000000
+promedio 3948.000000	+16.000000
+mejor 3838.000000	+69.000000
+---------------------------
+normal:
+holder bucket 79800	+0
+op bucket 16160		+0
+promedio s 0.000000	+0.000000
+promedio 3374.000000	+67.000000
+mejor 2850.000000	+174.000000
+---------------------------
+desopt:
+holder bucket 10608	+0
+op bucket 1256		+0
+promedio s 0.000000	+0.000000
+promedio 3724.000000	+9.000000
+mejor 3588.000000	+31.000000
+---------------------------
+desopt a manopla:
+holder bucket 7728	+0
+op bucket 8056		+0
+promedio s 0.000000	+0.000000
+promedio 3669.000000	+29.000000
+mejor 3589.000000	+33.000000
+---------------------------
+damas:
+holder bucket 24644888	+0
+op bucket 10840		+0
+promedio s 0.000000	+0.000000
+promedio 6623.000000	+143.000000
+mejor 6233.000000	+161.000000
+---------------------------
+###########################
+@se corren test hasta que convergan los ultimos n, en vez de correr n veces y promediar@
+simple:
+holder bucket 1904	+0
+op bucket 1112		+0
+promedio s 0.000000	+0.000000
+promedio 1313.000000	+8.000000
+mejor 1302.000000	+7.000000
+---------------------------
+tiles:
+holder bucket 4020	+0
+op bucket 2960		+0
+promedio s 0.000000	+0.000000
+promedio 1508.000000	+0.000000
+mejor 1454.000000	-6.000000
+---------------------------
+growin:
+holder bucket 16756	+0
+op bucket 2688		+0
+promedio s 0.000000	+0.000000
+promedio 7460.000000	-110.000000
+mejor 7412.000000	-123.000000
+---------------------------
+puzzle:
+holder bucket 12760	+0
+op bucket 1112		+0
+promedio s 0.000000	+0.000000
+promedio 1849.000000	-10.000000
+mejor 1815.000000	-16.000000
+---------------------------
+germen:
+holder bucket 0	+0
+op bucket 1544		+0
+promedio s 0.000000	+0.000000
+promedio 3321.000000	+12.000000
+mejor 3236.000000	-16.000000
+---------------------------
+desliz:
+holder bucket 21088	+0
+op bucket 3816		+0
+promedio s 0.000000	+0.000000
+promedio 11043.000000	+29.000000
+mejor 10994.000000	+15.000000
+---------------------------
+emperadores:
+holder bucket 15000	+0
+op bucket 1332		+0
+promedio s 0.000000	+0.000000
+promedio 8382.000000	+39.000000
+mejor 8090.000000	+42.000000
+---------------------------
+caballos:
+holder bucket 678520	+0
+op bucket 3624		+0
+promedio s 0.000000	+0.000000
+promedio 3925.000000	-23.000000
+mejor 3791.000000	-47.000000
+---------------------------
+normal:
+holder bucket 79800	+0
+op bucket 16160		+0
+promedio s 0.000000	+0.000000
+promedio 3382.000000	+8.000000
+mejor 2787.000000	-63.000000
+---------------------------
+desopt:
+holder bucket 10608	+0
+op bucket 1256		+0
+promedio s 0.000000	+0.000000
+promedio 3721.000000	-3.000000
+mejor 3580.000000	-8.000000
+---------------------------
+desopt a manopla:
+holder bucket 7728	+0
+op bucket 8056		+0
+promedio s 0.000000	+0.000000
+promedio 3662.000000	-7.000000
+mejor 3577.000000	-12.000000
+---------------------------
+damas:
+holder bucket 24644888	+0
+op bucket 10840		+0
+promedio s 0.000000	+0.000000
+promedio 6723.000000	+100.000000
+mejor 6320.000000	+87.000000
+---------------------------
+###########################
+@se corren test hasta que convergan los ultimos n, en vez de correr n veces y promediar@
+simple:
+holder bucket 1904	+0
+op bucket 1112		+0
+promedio s 0.000000	+0.000000
+promedio 1348.000000	+35.000000
+mejor 1320.000000	+18.000000
+---------------------------
+tiles:
+holder bucket 4020	+0
+op bucket 2960		+0
+promedio s 0.000000	+0.000000
+promedio 1547.000000	+39.000000
+mejor 1437.000000	-17.000000
+---------------------------
+growin:
+holder bucket 16756	+0
+op bucket 2688		+0
+promedio s 0.000000	+0.000000
+promedio 7404.000000	-56.000000
+mejor 7324.000000	-88.000000
+---------------------------
+puzzle:
+holder bucket 12760	+0
+op bucket 1112		+0
+promedio s 0.000000	+0.000000
+promedio 1855.000000	+6.000000
+mejor 1830.000000	+15.000000
+---------------------------
+germen:
+holder bucket 1647096	+1647096
+op bucket 1544		+0
+promedio s 0.000000	+0.000000
+promedio 3318.000000	-3.000000
+mejor 3250.000000	+14.000000
+---------------------------
+desliz:
+holder bucket 21088	+0
+op bucket 3816		+0
+promedio s 0.000000	+0.000000
+promedio 11035.000000	-8.000000
+mejor 10986.000000	-8.000000
+---------------------------
+emperadores:
+holder bucket 15000	+0
+op bucket 1332		+0
+promedio s 0.000000	+0.000000
+promedio 8472.000000	+90.000000
+mejor 8168.000000	+78.000000
+---------------------------
+caballos:
+holder bucket 678520	+0
+op bucket 3624		+0
+promedio s 0.000000	+0.000000
+promedio 3956.000000	+31.000000
+mejor 3840.000000	+49.000000
+---------------------------
+normal:
+holder bucket 79800	+0
+op bucket 16160		+0
+promedio s 0.000000	+0.000000
+promedio 3364.000000	-18.000000
+mejor 2812.000000	+25.000000
+---------------------------
+desopt:
+holder bucket 10608	+0
+op bucket 1256		+0
+promedio s 0.000000	+0.000000
+promedio 3731.000000	+10.000000
+mejor 3617.000000	+37.000000
+---------------------------
+desopt a manopla:
+holder bucket 7728	+0
+op bucket 8056		+0
+promedio s 0.000000	+0.000000
+promedio 3706.000000	+44.000000
+mejor 3626.000000	+49.000000
+---------------------------
+damas:
+holder bucket 24644888	+0
+op bucket 10840		+0
+promedio s 0.000000	+0.000000
+promedio 6566.000000	-157.000000
+mejor 6200.000000	-120.000000
 ---------------------------
 ###########################
