@@ -19,10 +19,10 @@ struct bucket{
 int bucketSize=1<<20;
 
 void allocNewBucketBlock(bucket* b){
-  bucket::block* block=(bucket::block*)::operator new(b->size+sizeof(bucket::block));
-  block->next=nullptr;
-  b->head=b->data=block->data;
-#if debugMode
+  bucket::block* nextBlock=(bucket::block*)::operator new(b->size+sizeof(bucket::block));
+  nextBlock->next=nullptr;
+  b->head=b->data=nextBlock->data;
+#if debugMode || testing  //para darse cuenta mas facil de memoria sin setear, y para tocar todos los espacios y tenerlos reservados cuando se hacen test
   memset(b->data,-1,b->size);
 #endif
 }
@@ -37,10 +37,16 @@ void ensureSpace(bucket* b,int size){
   assert(size<b->size);
   if(b->head+size>b->data+b->size){
     //printf("ajoi\n");
-    bucket::block* nextBlock=b->actualBlock();
-    assert(nextBlock->next==nullptr);
+    bucket::block* actualBlock=b->actualBlock();
+#if testing
+    if(actualBlock->next){
+      b->head=b->data=actualBlock->next->data;
+      return;
+    }
+#endif
+    assert(actualBlock->next==nullptr);
     allocNewBucketBlock(b);
-    nextBlock->next=b->actualBlock();
+    actualBlock->next=b->actualBlock();
   }
 }
 
@@ -77,6 +83,10 @@ template<typename T> T* alloc(bucket* b){
    TIPO* base=(TIPO*)b->head;
    b->head+=sizeof(TIPO);
 */
+
+void clearBucketNoFree(bucket* b){//para tests
+  b->head=b->data=b->firstBlock->data;
+}
 
 void clearBucket(bucket* b){
   bucket::block* block=b->firstBlock;

@@ -1,6 +1,10 @@
 
 en el ultimo test estaba bastante seguro de que las cosas iban a ser iguales o ligeramente mejores, pero corriendo varias veces me dieron resultados variados, lo que asumo que quiere decir que la precision de los test sigue siendo mala. Lo que debería hacer es correr cada test hasta que converga, algo como correr cada test hasta que la diferencia de su valor promedio con los 2 anteriores sea <100
 
+la convergencia anda razonablemente bien para todos los test MENOS la dama. Habría que mirar si la dama tiene algo raro.
+Supuestamente una forma mejor de medir es con el minimo, podría intentar converger con ese. 
+Otra es correrlo n veces y tomar el minimo, y correr todo devuelta. Mientras siga consiguiendo valores mas chicos se vuelve a correr todo.
+
 ----
 
 Cuando se tiene un desliz con 2 triggers, se activa el primero, se genera sobre el segundo y este nunca se vuelve a mirar.
@@ -25,9 +29,11 @@ reaccionar vs directo:
 en una primera instancia necesito generar todos los movimientos, esto se hace en los 2 modelos, en reaccionar se hace todo inicialmente, en el directo se hace justo antes de moverse. El directo es mas rapido porque no necesita poner triggers, y no necesita guardar estados intermedios. Asumo que la carga cuesta lo mismo en los dos, porque aunque en reaccionar sea un proceso aparte, en directo tambien se hace y el tema de pausar la generacion y retomar (o generar de 0 devuelta) despues puede tener un costo cuando una generacion hace varios movimientos.
 En la segunda iteracion se necesita hacer lo mismo, y aca esta la ventaja. En reaccionar solo se necesita generar la pieza que se movio y piezas que hayan sido afectadas por esta para llegar a un estado donde todos los movimientos estan a una carga de distancia. En directo se tiene que generar todo. Estoy bastante convencido que el costo de poner triggers y reaccionar a estos le gana a tener que generar todas las piezas devuelta, al menos en la mayoria de los casos.
 
+Y hay que pensar que para la IA voy a tener un arbol de movimientos de n turnos, en directo necesito generar esos n turnos cada vez, en reaccionar solo generaria la rama de la pieza que efectuó el movimiento, y los que reaccionen de esta. Acá esta la mayor ganancia, y va a ser mayor mientras mas turnos. La mayoría de las piezas se mantendrían inmutadas, solo se generarian nuevas ramas para las piezas que de repente tengan mas movimientos posibles, o menos, donde se invalidarian ramas nomas. Y estas reacciones no se limitan al primer movimiento de cada pieza, puede reaccionar un movimiento 3 turnos en el futuro tambien. Tengo que tener cuidado de hacer el procesado en orden e ignorar movimientos futuros que terminen siendo invalidados o duplicados. Creo que si me convenzo de esto es mejor no valdría la pena testear lo otro. 
+
 Cuando se efectua un movimiento en reaccionar simplemente se toma la rama corresponiente como la actual, y se calcula una nueva ultima iteracion. En directo en principio se tiene que hacer todo devuelta porque no se guarda estado
 
-Otra ventaja de tener modo reaccionar es que funciones de puntaje que evaluen cosas complicadas serian mas faciles de hacer, creo
+Otra ventaja de tener modo reaccionar es que funciones de puntaje que evaluen cosas complicadas (como cantidad de casilleros amenazados) serian mas faciles de hacer, creo
 
 En principio reaccionar parece mejor pero para funcionar necesita tener que guardar estado por cada normal y tener triggers. Tengo miedo de que esto termine siendo mas costoso que las generaciones que ahorra. La version directa funciona solo usando operadores, no hay movholders ni sistema de triggers. Esta bien que con movimientos mas complejos rehacer todo tiene un costo, pero los movimientos complejos tienden a reaccionar de forma temprana y recalcular una parte importante, asi que puede que no cambie mucho.
 
@@ -195,7 +201,7 @@ spawner no tiene problemas pero si el if no molesta es mas simple
 
 ---
 
-small vector optimization para normales y eso? nah
+small vector optimization para normales y eso? 
 
 ---
 
@@ -228,7 +234,8 @@ Lo unico que se agregaria es una condicion marked que toma un numero, que indica
 
 
 No es un operador que indica directamente si un casillero esta siendo amenazado igual, porque piezas que tengan mas de un paso, como un torre, podrian ser cortadas y mantendrían marcados casilleros donde ya no estan haciendo nada. Esto no es un problema con triggers, porque serían triggers falseados y listo, pero usar esto para logica de lenguaje podría ser confuso. Para manejar algo asi sería necesario que las piezas que se cortan sigan recorriendo, y escriban en ese slot algo que indique que la marca no es valida, que despues se tiene que contrastar ademas de mirar si esta marcado. El tema esta en que cuando uno esta generando no sabe si es una generacion inicial o una regeneracion, y este codigo solo tiene sentido en una regeneracion. Cuando se choca con una pieza no se sabe si es porque esta cortó el movimiento o si nomas se choco con una pieza, y la solucion simple es seguir hasta llegar al borde del tablero siempre.
-Que tenga este problema me hace dudar de si vale la pena agregarlo.
+Que tenga este problema me hace dudar de si vale la pena agregarlo. 
+Otra opcion es verificar si un trigger es falso o no con un recorrido como el que hace reaccionar, pero es un quilombo tambien
 
 La funcion mas util que tiene es para piezas como el rey, que solo se pueden mover a espacios no marcados. Igual soluciona solo parte del problema, y el rey se puede implementar de otra forma.
 
@@ -303,7 +310,7 @@ comando? que repite turno, si hay solo un clicker se selecciona automaticamente.
 
 ----
 
-No sé hasta que punto valdría la pena agregar funciones de alto nivel como tener un comando no-repeat que automaticamente prohiba moverse a casilleros que se marquen con otro comando, o un comando que marque casilleros y desmarque comforme las piezas se muevan y corten entre si, o implementar el jaque automaticamente. Estas cosas son caras para el interpretador pero serían baratas para la version compilada. No me convencen mucho porque nomas sirven para cosas especificas, y estas cosas se pueden implementar en el lenguaje de todas formas. Tampoco me gusta porque agrega complejidad al lenguaje, cosas que hay que aprender. Siempre tuve una mentalidad de bajo nivel, y creo que me voy a mantener asi.
+No sé hasta que punto valdría la pena agregar funciones de alto nivel como tener un comando no-repeat que automaticamente prohiba moverse a casilleros que se marquen con otro comando, o un comando que marque casilleros y desmarque comforme las piezas se muevan y corten entre si, o implementar el jaque automaticamente. Estas cosas son caras para el interpretador pero serían baratas para la version compilada. No me convencen mucho porque nomas sirven para cosas especificas, y estas cosas se pueden implementar en el lenguaje de todas formas. Tampoco me gusta porque agrega complejidad al lenguaje, cosas que hay que mantener y el usuario tiene que aprender. Siempre tuve una mentalidad de bajo nivel, y creo que me voy a mantener asi.
 
 -----
 

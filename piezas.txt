@@ -420,7 +420,7 @@ msize l 121 mreset 20 mset l1 4 desopt 32
          isol 
            desliz mless l22 l23 mset l0 ll22 madd l22 1 
              exc mcmp ll22 1 mset l1 1 or pass end
-             goto l0 ll22 capt red madd l22 1 end 
+             goto l0 ll22 red madd l22 1 end #capt al lado de red
            mset l0 ll22 madd l22 1 goto l0 ll22 madd l22 1
            #exc mcmp l1 0 mov green c or mov capt spwn 1 blue green c end
            mov green c 

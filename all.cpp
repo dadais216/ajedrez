@@ -8,6 +8,10 @@
 #define debugMode 1
 #endif
 
+#define testing 1 //por ahora solo cambia algunas cosas de bucket, para hacer las mediciones menos variables. No habría problema en dejarlo prendido siempre
+
+#define doAssertsOnRelease 1
+
 //decidi tener una version debug y una version no debug, esto me permite hacer mas cosas. Antes para no afectar la velocidad necesitaba meter las cosas debug de forma opcional en lugares donde no molestacen, especificamente en listas de polimorfismo de movs y movholders, lo que me limitaba lo que podia hacer y era incomodo.
 //la cagada de tener una version normal y una version debug es que en este proyecto quiero que el usuario tenga acceso a las cosas debug, por lo que tendria que tener 2 exes del juego. Por lo menos por esta version. Cuando haga la version compilada, como se compila en el momento, puedo tener la opcion de compilar en distintas formas y listo.
 //Otra opcion es dejar la version compilada como la version rapida sin nada, y dejar la interpretada con todas las cosas debug
@@ -84,7 +88,7 @@ void failIf(bool cond,char const* err,Ts... args){
   }
 }
 
-#if debugMode
+#if debugMode || doAssertsOnRelease
 #include <assert.h>
 #else
 void assert(bool ignored){
@@ -93,7 +97,7 @@ void assert(bool ignored){
 #endif
 template<typename... Ts>
 void assertf(bool cond,char const* err,Ts... args){
-#if debugMode
+#if debugMode || doAssertsOnRelease
   if(!cond){
     printf(err,args...);
     assert(cond);

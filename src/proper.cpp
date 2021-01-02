@@ -163,7 +163,7 @@ void resetBucket(bucket* b,int size=bucketSize){
 }
 
 template<bool reset>
-void properGameInit(properState* ps){
+void properGameInit(properState* ps,bool firstTestIteration){
   if constexpr(reset){
     parseData* pd=&ps->pd;
 
@@ -195,7 +195,10 @@ void properGameInit(properState* ps){
       delete[] brd->ts.mem;
 
       free(&memMov);
-      resetBucket(&ps->pieceOps);
+      if(firstTestIteration)//no termino de entender esto, la primera vez quien lo aloca? TODO
+        resetBucket(&ps->pieceOps);
+      else
+        clearBucketNoFree(&ps->pieceOps);
     }
   }
 
@@ -219,10 +222,15 @@ void properGameInit(properState* ps){
             + ps->pd.memGlobalSize*sizeof(memData);
 
   if constexpr(reset){
-    if(ps->gameState.size!=0)
-      resetBucket(&ps->gameState,ps->hsSize);
-    else
-      initBucket(&ps->gameState,ps->hsSize);
+    if(firstTestIteration){
+      if(ps->gameState.size!=0){
+        resetBucket(&ps->gameState,ps->hsSize);
+      }else{
+        initBucket(&ps->gameState,ps->hsSize);
+      }
+    }else{
+      clearBucketNoFree(&ps->gameState);
+    }
   }else
     initBucket(&ps->gameState,ps->hsSize);
 

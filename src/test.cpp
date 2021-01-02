@@ -16,6 +16,7 @@ struct testPrintData{
   double promSec;
   double prom;
   double minProm;
+  double delta;
 };
 
 struct{
@@ -23,7 +24,6 @@ struct{
   vector<testPrintData> after;//guardo al final en vez de por test para no guardar en caso de crash
   char const* name;
 }testPrint;
-const int runsToConverge=5;
 
 template<typename T>
 void sGetNext(char** ss,T* var){
@@ -95,8 +95,7 @@ void getOldStats(){
       sGetNext(&s,&oldBench->prom);
       sGetNext(&s,&oldBench->minProm);
     
-      s+=5;//saltar el posible - en el ultimo delta, medio garca
-      do{s++;}while(*s!='-');
+      do{s++;}while(*s!='-'||*(s+1)!='-');//frenar en el ----, ignorar posibles menos
       do{s++;}while(*s=='-');
       s++;
     }while(*s!='#');
@@ -131,21 +130,23 @@ void saveStats(){
                     return val>=0?'+':'-';
                   };
 
-    printf("%s:\nholder bucket %d\t%c%d\nop bucket %d\t\t%c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f\n---------------------------\n",
+    printf("%s:\nholder bucket %d\t%c%d\nop bucket %d\t\t%c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f  (/%f = %c%f)\n---------------------------\n",
            actual->name,
            actual->holderBucketSize,charSign(holderBucketSizeDelta),std::abs(holderBucketSizeDelta),
            actual->opBucketSize,charSign(opBucketSizeDelta),std::abs(opBucketSizeDelta),
            actual->promSec,charSign(promSecDelta),std::abs(promSecDelta),
            actual->prom,charSign(promDelta),std::abs(promDelta),
-           actual->minProm,charSign(minPromDelta),std::abs(minPromDelta));
+           actual->minProm,charSign(minPromDelta),std::abs(minPromDelta),
+           actual->delta,charSign(minPromDelta),std::abs(minPromDelta)/actual->delta);
     if(saveBenchmark){
-      fprintf(file,"%s:\nholder bucket %d\t%c%d\nop bucket %d\t\t%c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f\n---------------------------\n",
+      fprintf(file,"%s:\nholder bucket %d\t%c%d\nop bucket %d\t\t%c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f  (/%f = %c%f)\n---------------------------\n",
               actual->name,
               actual->holderBucketSize,charSign(holderBucketSizeDelta),std::abs(holderBucketSizeDelta),
               actual->opBucketSize,charSign(opBucketSizeDelta),std::abs(opBucketSizeDelta),
               actual->promSec,charSign(promSecDelta),std::abs(promSecDelta),
               actual->prom,charSign(promDelta),std::abs(promDelta),
-              actual->minProm,charSign(minPromDelta),std::abs(minPromDelta));
+              actual->minProm,charSign(minPromDelta),std::abs(minPromDelta),
+              actual->delta,charSign(minPromDelta),std::abs(minPromDelta)/actual->delta);
     }
   }
   if(saveBenchmark){
@@ -191,7 +192,6 @@ bool forAllPairsInArrayMember(A* objArray,lt lambda){
 //tambien quise sacar el size apartir del array, pasandolo por decltype. pero no anda porque necesito el tipo no array para el metodo de acceso,
 // y B (std::remove_all_extents<A>::type)::* m no anda
 //se podría haber hecho con todas las boludeces, pero sin tipos, pasando un offset por template
-*/
 
 template<typename A,typename B,typename lt>
 B foldInArrayMember(A objArray,B first,lt lambda){
@@ -217,20 +217,48 @@ bool forAllPairsInArrayMember(A objArray,lt lambda){
 //la version anterior esta buena porque las lambdas manejan el tipo base y no necesita valor default
 //,pero todo el quilombo que hay que hacer para eso no lo vale
 
+    if(run>=runsToConverge-1){
+      if(forAllPairsInArrayMember<decltype(runData)>(runData,[](testPrintData& a,testPrintData& b)->bool{
+                                                               bool ret=std::abs(a.prom-b.prom)<runsAcceptedDeviation;
+                                                               if(!ret)
+                                                                 printf("  %f",a.prom-b.prom);
+                                                               return ret;
+                                                             })){
+        testPrintData* after=newElem(&testPrint.after);
+        after->name=name;
+        after->holderBucketSize=foldInArrayMember<decltype(runData)>(runData,0,[](int a,testPrintData& b)->int{return std::max(a,b.holderBucketSize);});
+        after->opBucketSize=foldInArrayMember<decltype(runData)>(runData,0,[](int a,testPrintData& b)->int{return std::max(a,b.opBucketSize);});
+        after->prom=foldInArrayMember<decltype(runData)>(runData,0,[](double a,testPrintData& b)->double{return a+b.prom;})/runsToConverge;
+        after->promSec=foldInArrayMember<decltype(runData)>(runData,0,[](double a,testPrintData& b)->double{return a+b.promSec;})/runsToConverge;
+        after->minProm=foldInArrayMember<decltype(runData)>(runData,1<<30,[](double a,testPrintData& b)->double{return std::min(a,b.minProm);});
+        break;
+      }
+    }
+al final no use nada de esto porque termine corriendo hasta conseguir un minimo en vez de correr n veces buscando convergencia
+*/
 
+
+const int conscBiggerReq=100;//200
 void runTest(properState* ps,char const* name,int map,int turns,int times,bool player2Random){
   int run=0;
-  testPrintData runData[runsToConverge];
+  int runInd=0;
+  int conscBigger=0;
+  double sumDeltas=0;
+  testPrintData minimo,actual;
 
   while(true){
-    printf("running %s #%d\n",name,run+1);
+    printf("\nrunning %s #%d",name,run+1);
 
     testData.sProm=0;
     testData.minProm=DBL_MAX;
     for(int i=0;i<times;i++){
       ps->boardId=map;
       ps->player2=player2Random?2:4;
-      properGameInit<true>(ps);//mas adelante debería hacer un copy paste del estado inicial en vez de recrear todo
+      properGameInit<true>(ps,i==0&&run==0);
+      //podria hacer un copy paste del estado inicial en vez de recrear todo
+      //ahora se reutiliza la misma memoria bucket para no tener problemas de variabilidad.
+      //en test que necesiten reservar mas bloques, tambien se conservan estos. Para hacer eso
+      //se agregó mas cosas a bucket, atras de un macro. 
 
       testData.nProm=0;
       testData.dProm=0;
@@ -243,26 +271,41 @@ void runTest(properState* ps,char const* name,int map,int turns,int times,bool p
       testData.minProm=std::min(testData.minProm,testData.nProm/testData.dProm);
     }
 
-    testPrintData* result=&runData[run%runsToConverge];
+    testPrintData* result=&runData[runInd%2];
+
     result->holderBucketSize=(intptr)(ps->gameState.head-(intptr)getBoard(ps));
     result->opBucketSize=(intptr)(ps->pieceOps.head-ps->pieceOps.data);
     result->promSec=(testData.sProm/(double)times)/1e9;
     result->prom=testData.sProm/(double)times;
     result->minProm=testData.minProm;
 
-    if(run>=runsToConverge-1){
-      if(forAllPairsInArrayMember<decltype(runData)>(runData,[](testPrintData& a,testPrintData& b)->bool{
-                                                                                     return std::abs(a.prom-b.prom)<100;
-                                                                                   })){
-        testPrintData* after=newElem(&testPrint.after);
-        after->name=name;
-        after->holderBucketSize=foldInArrayMember<decltype(runData)>(runData,0,[](int a,testPrintData& b)->int{return std::max(a,b.holderBucketSize);});
-        after->opBucketSize=foldInArrayMember<decltype(runData)>(runData,0,[](int a,testPrintData& b)->int{return std::max(a,b.opBucketSize);});
-        after->prom=foldInArrayMember<decltype(runData)>(runData,0,[](double a,testPrintData& b)->double{return a+b.prom;})/runsToConverge;
-        after->promSec=foldInArrayMember<decltype(runData)>(runData,0,[](double a,testPrintData& b)->double{return a+b.promSec;})/runsToConverge;
-        after->minProm=foldInArrayMember<decltype(runData)>(runData,1<<30,[](double a,testPrintData& b)->double{return std::min(a,b.minProm);});
-        break;
+    if(runInd>0){
+      if(runData[runInd%2].minProm>=runData[(runInd-1)%2].minProm){
+        double delta=runData[runInd%2].minProm-runData[(runInd-1)%2].minProm;
+        printf("  delt %f    ",delta);
+        conscBigger++;
+        sumDeltas+=delta;
+        //la idea es que si los n ultimos fueron mas grandes, tengo el minimo. No pruebo con uno solo porque
+        //tengo miedo de que un fluke me haga cortar temprano. Si hay un fluke que hace que consiga un minimo
+        //muy bajo, no comun, me puede mover las mediciones. Por eso imprimo las diferencias, si hay un resultado
+        //sospechoso lo debería poder comprobar si fue por esto, aunque creo que eso no debería pasar
+        if(conscBigger==conscBiggerReq){
+          testPrintData* after=newElem(&testPrint.after);
+          *after=runData[(runInd-1)%2];
+          after->name=name;
+          after->delta=sumDeltas/(double)conscBiggerReq;
+          break;
+          //la idea de promediar los deltas es tener un valor de "error esperado" entre corridas iguales, con lo que
+          //poder normalizar la diferencia entre corridas distintas. Es una heuristica
+        }
+      }else{
+        printf("  %f < %f   ",runData[runInd%2].minProm,runData[(runInd-1)%2].minProm);
+        conscBigger=0;
+        sumDeltas=0;
+        runInd++;//swap del minimo
       }
+    }else{
+      runInd++;
     }
     run++;
   }
@@ -289,6 +332,7 @@ void doTests(char* mem){
 #if debugMode
   for(int i=0;i<20;i++)
     printf("in debug mode!!\n");
+  init(&testPrint.after);
 #else
   getOldStats();
 
@@ -301,22 +345,22 @@ void doTests(char* mem){
   timespec beg,end;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&beg);
 
-  testPrint.name="se corren test hasta que convergan los ultimos n, en vez de correr n veces y promediar";
+  testPrint.name="se corren el mismo test varias veces hasta que el minimo de varias corridas sea peor al minimo de varias corridas anteriores + no se realoca memoria entre corridas de mismo test";
 
-  runTest(ps,"simple",14,3000,10,false);
-  runTest(ps,"tiles",21,600,800,false);
-  runTest(ps,"growin",20,2500,500,false);
-  runTest(ps,"puzzle",15,1000,300,false);
-  runTest(ps,"germen",19,399,1500,false);
-  runTest(ps,"desliz",18,3000,120,false);
-  runTest(ps,"emperadores",22,300,20,false);
+  runTest(ps,"simple",14,300,150,false);
+  runTest(ps,"tiles",21,600,60,false);
+  runTest(ps,"growin",20,600,150,false);
+  runTest(ps,"puzzle",15,1000,60,false);
+  runTest(ps,"germen",19,399,60,false);
+  runTest(ps,"desliz",18,300,60,false);
+  runTest(ps,"emperadores",22,100,240,false);
+  runTest(ps,"caballos",17,150,60,true);
+  runTest(ps,"normal",16,80,200,true);
+  runTest(ps,"desopt",23,500,80,false);
+  runTest(ps,"desopt a manopla",24,500,80,false);
+  runTest(ps,"damas",25,20,30,false);
+
   //runTest(ps,"rebote",23,300,10,false); no anda porque no hay normales no esp por ahora
-  runTest(ps,"caballos",17,150,450,true);
-  runTest(ps,"normal",16,80,10000,true);
-  runTest(ps,"desopt",23,500,600,false);
-  runTest(ps,"desopt a manopla",24,500,800,false);
-  runTest(ps,"damas",25,1,4000,true);
-  
 
 #if !debugMode
   res=system("cpupower frequency-set --governor powersave");
