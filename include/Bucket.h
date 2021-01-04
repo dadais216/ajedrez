@@ -101,6 +101,23 @@ void clearBucket(bucket* b){
   }while(block);
 }
 
+struct bucketSizeData{
+  int usedSize;
+  int usedBuckets;
+};
+bucketSizeData getBucketSizeData(bucket* b){
+  bucket::block* block=b->firstBlock;
+  for(int i=1;;i++){
+    if(!block->next){
+      bucketSizeData sd;
+      sd.usedBuckets=i;
+      sd.usedSize=(i-1)*b->size + (int)(b->head - b->data);
+      return sd;
+    }
+    block=block->next;
+  }
+}
+
 #define getStruct(type,name,from)               \
   type* name=(type*)from.data;
 

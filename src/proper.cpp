@@ -236,14 +236,6 @@ void properGameInit(properState* ps,bool firstTestIteration){
 
   makeBoard(ps);
 
-  /*
-  for(int i=0; i<tablptr->tam.y; i++){
-    for(int j=0; j<tablptr->tam.x; j++){
-      cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
-    }
-    cout<<endl;
-    }*/
-
   drawScreen(properDraw);
 }
 
@@ -378,6 +370,16 @@ void properUpdate(char* mem){
     doTurn(ps,ps->player1,false);
     doTurn(ps,ps->player2,true);
   }catch(...){}
+
+  /*
+  board* brd=getBoard(ps);
+  for(int i=0; i<brd->dims.y; i++){
+    for(int j=0; j<brd->dims.x; j++){
+      printf("%d ",tile(brd,v(j,i))->triggersUsed);
+    }
+    printf("\n");
+  }
+  */
 }
 
 /*

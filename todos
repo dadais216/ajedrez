@@ -1,9 +1,4 @@
 
-en el ultimo test estaba bastante seguro de que las cosas iban a ser iguales o ligeramente mejores, pero corriendo varias veces me dieron resultados variados, lo que asumo que quiere decir que la precision de los test sigue siendo mala. Lo que debería hacer es correr cada test hasta que converga, algo como correr cada test hasta que la diferencia de su valor promedio con los 2 anteriores sea <100
-
-la convergencia anda razonablemente bien para todos los test MENOS la dama. Habría que mirar si la dama tiene algo raro.
-Supuestamente una forma mejor de medir es con el minimo, podría intentar converger con ese. 
-Otra es correrlo n veces y tomar el minimo, y correr todo devuelta. Mientras siga consiguiendo valores mas chicos se vuelve a correr todo.
 
 ----
 
@@ -206,6 +201,11 @@ small vector optimization para normales y eso?
 ---
 
 arreglar todo el tema de esp que quedo todo roto
+
+---
+
+se podría agregar un mecanismo a triggerbox para limpiarlo si se acumulan demasiados triggers, asumiendo que si hay muchos muchos son falsos. 
+No sé que tan util es en un caso real, pero en casos como el test de la dama con muchos turnos ayudaria
 
 ---
 

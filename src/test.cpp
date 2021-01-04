@@ -12,7 +12,9 @@ struct{
 struct testPrintData{
   char const* name;
   int holderBucketSize;
+  int holderBucketBuckets;
   int opBucketSize;
+  int opBucketBuckets;
   double promSec;
   double prom;
   double minProm;
@@ -25,27 +27,36 @@ struct{
   char const* name;
 }testPrint;
 
-template<typename T>
-void sGetNext(char** ss,T* var){
+void sSkipLine(char** ss){
   char* s=*ss;
-  do{s++;
+  /*do{s++;
     if(*s=='+'||*s=='-'){
       do{
         s++;
       }while(*s!='\n');
       continue;
     }
+    }while(*s>'9'||*s<'0');*/
+  do{s++;
+  }while(*s!='\n');
+  s++;
+  *ss=s;
+}
+
+template<typename T>
+void sGetNumber(char** ss,T* var){
+  char* s=*ss;
+  do{s++;
   }while(*s>'9'||*s<'0');
 
   char format[4]="%  ";
-  if(typeid(T)==typeid(int))
+  if constexpr(std::is_same<T,int>::value){
     format[1]='d';
-  else if(typeid(T)==typeid(double)){
+  }else{
+    static_assert(std::is_same<T,double>::value);
     format[1]='l';
     format[2]='f';
   }
-  else
-    fail("bad metaprogramming");
 
   sscanf(s,format,var);
   do{s++;
@@ -89,12 +100,14 @@ void getOldStats(){
       memcpy((char*)oldBench->name,b,s-b);//podria no copiar y mantener str, pero lo libero por las dudas de que tenga un impacto, no creo igual
       *(char*)(oldBench->name+(s-b))=0;//que rompe bola son los const
       
-      sGetNext(&s,&oldBench->holderBucketSize);
-      sGetNext(&s,&oldBench->opBucketSize);
-      sGetNext(&s,&oldBench->promSec);
-      sGetNext(&s,&oldBench->prom);
-      sGetNext(&s,&oldBench->minProm);
-    
+      sGetNumber(&s,&oldBench->holderBucketSize);
+      sGetNumber(&s,&oldBench->holderBucketBuckets);sSkipLine(&s);
+      sGetNumber(&s,&oldBench->opBucketSize);
+      sGetNumber(&s,&oldBench->opBucketBuckets);sSkipLine(&s);
+      sGetNumber(&s,&oldBench->promSec);sSkipLine(&s);
+      sGetNumber(&s,&oldBench->prom);sSkipLine(&s);
+      sGetNumber(&s,&oldBench->minProm);sSkipLine(&s);
+
       do{s++;}while(*s!='-'||*(s+1)!='-');//frenar en el ----, ignorar posibles menos
       do{s++;}while(*s=='-');
       s++;
@@ -112,14 +125,16 @@ void saveStats(){
 
   for(int i=0;i<testPrint.after.size;i++){
     testPrintData* actual=&testPrint.after[i];
-    int holderBucketSizeDelta=0,opBucketSizeDelta=0;
+    int holderBucketSizeDelta=0,holderBucketBucketsDelta=0,opBucketSizeDelta=0,opBucketBucketsDelta=0;
     double promSecDelta=0,promDelta=0,minPromDelta=0;
 
     for(int j=0;j<testPrint.before.size;j++){
       testPrintData* before=&testPrint.before[j];
       if(strcmp(before->name,actual->name)==0){
         holderBucketSizeDelta=actual->holderBucketSize-before->holderBucketSize;
+        holderBucketBucketsDelta=actual->holderBucketBuckets-before->holderBucketBuckets;
         opBucketSizeDelta=actual->opBucketSize-before->opBucketSize;
+        opBucketBucketsDelta=actual->opBucketBuckets-before->opBucketBuckets;
         promSecDelta=actual->promSec-before->promSec;
         promDelta=actual->prom-before->prom;
         minPromDelta=actual->minProm-before->minProm;
@@ -130,19 +145,23 @@ void saveStats(){
                     return val>=0?'+':'-';
                   };
 
-    printf("%s:\nholder bucket %d\t%c%d\nop bucket %d\t\t%c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f  (/%f = %c%f)\n---------------------------\n",
+    printf("%s:\nholder bucket %d  %d\t%c%d   %c%d\nop bucket %d  %d\t%c%d   %c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f  (/%f = %c%f)\n---------------------------\n",
            actual->name,
-           actual->holderBucketSize,charSign(holderBucketSizeDelta),std::abs(holderBucketSizeDelta),
-           actual->opBucketSize,charSign(opBucketSizeDelta),std::abs(opBucketSizeDelta),
+           actual->holderBucketSize,actual->holderBucketBuckets,
+           charSign(holderBucketSizeDelta),std::abs(holderBucketSizeDelta),charSign(holderBucketBucketsDelta),std::abs(holderBucketBucketsDelta),
+           actual->opBucketSize,actual->opBucketBuckets,
+           charSign(opBucketSizeDelta),std::abs(opBucketSizeDelta),charSign(opBucketBucketsDelta),std::abs(opBucketBucketsDelta),
            actual->promSec,charSign(promSecDelta),std::abs(promSecDelta),
            actual->prom,charSign(promDelta),std::abs(promDelta),
            actual->minProm,charSign(minPromDelta),std::abs(minPromDelta),
            actual->delta,charSign(minPromDelta),std::abs(minPromDelta)/actual->delta);
     if(saveBenchmark){
-      fprintf(file,"%s:\nholder bucket %d\t%c%d\nop bucket %d\t\t%c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f  (/%f = %c%f)\n---------------------------\n",
+      fprintf(file,"%s:\nholder bucket %d  %d\t%c%d   %c%d\nop bucket %d  %d\t%c%d   %c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f  (/%f = %c%f)\n---------------------------\n",
               actual->name,
-              actual->holderBucketSize,charSign(holderBucketSizeDelta),std::abs(holderBucketSizeDelta),
-              actual->opBucketSize,charSign(opBucketSizeDelta),std::abs(opBucketSizeDelta),
+              actual->holderBucketSize,actual->holderBucketBuckets,
+              charSign(holderBucketSizeDelta),std::abs(holderBucketSizeDelta),charSign(holderBucketBucketsDelta),std::abs(holderBucketBucketsDelta),
+              actual->opBucketSize,actual->opBucketBuckets,
+              charSign(opBucketSizeDelta),std::abs(opBucketSizeDelta),charSign(opBucketBucketsDelta),std::abs(opBucketBucketsDelta),
               actual->promSec,charSign(promSecDelta),std::abs(promSecDelta),
               actual->prom,charSign(promDelta),std::abs(promDelta),
               actual->minProm,charSign(minPromDelta),std::abs(minPromDelta),
@@ -241,9 +260,8 @@ al final no use nada de esto porque termine corriendo hasta conseguir un minimo 
 const int conscBiggerReq=100;//200
 void runTest(properState* ps,char const* name,int map,int turns,int times,bool player2Random){
   int run=0;
-  int runInd=0;
   int conscBigger=0;
-  double sumDeltas=0;
+  double maxDelta=0;
   testPrintData minimo,actual;
 
   while(true){
@@ -271,41 +289,44 @@ void runTest(properState* ps,char const* name,int map,int turns,int times,bool p
       testData.minProm=std::min(testData.minProm,testData.nProm/testData.dProm);
     }
 
-    testPrintData* result=&runData[runInd%2];
+    testPrintData* result=run==0?&minimo:&actual;
 
-    result->holderBucketSize=(intptr)(ps->gameState.head-(intptr)getBoard(ps));
-    result->opBucketSize=(intptr)(ps->pieceOps.head-ps->pieceOps.data);
+
+    auto holderBucketSizeData=getBucketSizeData(&ps->gameState);
+    auto opBucketSizeData=getBucketSizeData(&ps->pieceOps);
+    result->holderBucketSize=holderBucketSizeData.usedSize;
+    result->holderBucketBuckets=holderBucketSizeData.usedBuckets;
+    result->opBucketSize=opBucketSizeData.usedSize;
+    result->opBucketBuckets=opBucketSizeData.usedBuckets;
     result->promSec=(testData.sProm/(double)times)/1e9;
     result->prom=testData.sProm/(double)times;
     result->minProm=testData.minProm;
 
-    if(runInd>0){
-      if(runData[runInd%2].minProm>=runData[(runInd-1)%2].minProm){
-        double delta=runData[runInd%2].minProm-runData[(runInd-1)%2].minProm;
-        printf("  delt %f    ",delta);
+    if(run>0){
+      if(actual.minProm>=minimo.minProm){
+        double delta=actual.minProm-minimo.minProm;
+        printf("  min %f     delt %f",minimo.minProm,delta);
         conscBigger++;
-        sumDeltas+=delta;
+        maxDelta=std::max(maxDelta,delta);
         //la idea es que si los n ultimos fueron mas grandes, tengo el minimo. No pruebo con uno solo porque
         //tengo miedo de que un fluke me haga cortar temprano. Si hay un fluke que hace que consiga un minimo
         //muy bajo, no comun, me puede mover las mediciones. Por eso imprimo las diferencias, si hay un resultado
         //sospechoso lo debería poder comprobar si fue por esto, aunque creo que eso no debería pasar
         if(conscBigger==conscBiggerReq){
           testPrintData* after=newElem(&testPrint.after);
-          *after=runData[(runInd-1)%2];
+          *after=minimo;
           after->name=name;
-          after->delta=sumDeltas/(double)conscBiggerReq;
+          after->delta=maxDelta;
           break;
           //la idea de promediar los deltas es tener un valor de "error esperado" entre corridas iguales, con lo que
           //poder normalizar la diferencia entre corridas distintas. Es una heuristica
         }
       }else{
-        printf("  %f < %f   ",runData[runInd%2].minProm,runData[(runInd-1)%2].minProm);
+        printf("  %f < %f   ",actual.minProm,minimo.minProm);
         conscBigger=0;
-        sumDeltas=0;
-        runInd++;//swap del minimo
+        maxDelta=0;
+        minimo=actual;
       }
-    }else{
-      runInd++;
     }
     run++;
   }
@@ -345,20 +366,22 @@ void doTests(char* mem){
   timespec beg,end;
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&beg);
 
-  testPrint.name="se corren el mismo test varias veces hasta que el minimo de varias corridas sea peor al minimo de varias corridas anteriores + no se realoca memoria entre corridas de mismo test";
+  testPrint.name="cerrando mediciones por el momento";
 
-  runTest(ps,"simple",14,300,150,false);
-  runTest(ps,"tiles",21,600,60,false);
-  runTest(ps,"growin",20,600,150,false);
-  runTest(ps,"puzzle",15,1000,60,false);
+  runTest(ps,"simple",14,300,160,false);
+  runTest(ps,"tiles",21,600,90,false);
+  runTest(ps,"growin",20,600,250,false);
+  runTest(ps,"puzzle",15,1000,80,false);
   runTest(ps,"germen",19,399,60,false);
   runTest(ps,"desliz",18,300,60,false);
   runTest(ps,"emperadores",22,100,240,false);
-  runTest(ps,"caballos",17,150,60,true);
+  runTest(ps,"caballos",17,150,70,true);
   runTest(ps,"normal",16,80,200,true);
   runTest(ps,"desopt",23,500,80,false);
-  runTest(ps,"desopt a manopla",24,500,80,false);
-  runTest(ps,"damas",25,20,30,false);
+  runTest(ps,"desopt a manopla",24,500,140,false);
+  runTest(ps,"damas",25,30,80,false);
+  //si corre por muchos turnos el promedio se hace mas lento porque acumula triggers, y se recorren como lista
+  //cuando agrega mas. Esto no es un bug pero podría manejarse por las dudas, ver 
 
   //runTest(ps,"rebote",23,300,10,false); no anda porque no hay normales no esp por ahora
 
@@ -391,9 +414,12 @@ void randomTurnTestPlayer(bool bando,properState* ps){
   //drawScreen();
   if(clickers.size>0){
     //sleep(milliseconds(120));
+
+    Clicker* clickerToProcess=&clickers[rand()%clickers.size];
+
     timespec beg,end;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&beg);
-    executeClicker(&clickers[rand()%clickers.size],brd);
+    executeClicker(clickerToProcess,brd);
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&end);
 
     double elapsed=(end.tv_sec-beg.tv_sec)*1e9+(end.tv_nsec-beg.tv_nsec);
