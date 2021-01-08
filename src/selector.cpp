@@ -50,7 +50,7 @@ void updatePlayerSelector(playerSelector* ps){
     button b=ps->buttons[i];
     if(buttonClicked(&b,1)){
       ps->selected=b.n;
-      drawScreen(selectorDraw);
+      drawScreen([&](){selectorDraw(stateMem);});
       break;
     }
   }
@@ -99,7 +99,7 @@ void selectorInit(char* mem){
     s++;
   }
 
-  drawScreen(selectorDraw);
+  drawScreen([&](){selectorDraw(stateMem);});
   actualStateUpdate=selectorUpdate;
 }
 void selectorUpdate(char* mem){

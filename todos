@@ -1,5 +1,21 @@
 
 
+
+visualizador debug: 
+
+visualizar memoria de buckets, una seccion muestra la memoria de cada pieza, otra de holders. Es otro modo debug, en principio se va a poder acceder a este en la mitad de un movimiento aunque no es obligatorio. Tiene 2 modos adentro, uno para buckets operador y otro holder. En operador pinta cada pieza con un color, y corresponde con el area de memoria ocupada en el bucket. En holders hay uno por holder, tambien con colores respectivos. Cada area esta subdividida segun los operadores, con una letra que los marca. Si hay mas de un bucket se puede mover entre estos con unos botones. 
+
+visualizar movimiento mientras se hace. Hay un texto que muestra todo el movimiento, resaltando operadores actuales. Solo se muestra la memoria a la que se esta accediendo actualmente para no acupar mucho espacio en pantalla, se puede mover a otras con algun boton. Si la memoria es muy grande se muetra una seccion nomas, se puede scrolear. Que la memoria tenga su numero de posicion chiquito, aprovechando que ahora es mas grande
+
+
+arreglar peon
+
+----
+
+ En vez de manejar eventos en sistemas internos como el de humanTurn o el stall de debug volcar todo en un solo sistema de eventos, en otro thread. Humano y turno agregarían mas respuestas a eventos con un if o un array. Con esto se va a poder mover la ventana y tener el visualizador de buckets en mitad de un movimiento y cosas asi
+
+tecnicamente se podría hacer sin usar un thread pero para hacer eso necesito hacer que el codigo pase por la cola de eventos y vuelva a donde estaba. En el caso de humanTurn no sería muy complicado, pero en el caso de movimientos debug si. Tendría que retornar de toda esa cadena y despues reconstruirla de alguna forma, y es un quilombo al pedo. Sincronizando threads consigo lo mismo
+
 ----
 
 Cuando se tiene un desliz con 2 triggers, se activa el primero, se genera sobre el segundo y este nunca se vuelve a mirar.

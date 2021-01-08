@@ -179,6 +179,7 @@ typedef intptr_t intptr;
 #include "proper.h"
 #include "selector.h"
 
+#include "debug.h"
 
 #include "main.cpp"
 #include "Input.cpp"
@@ -206,6 +207,7 @@ typedef intptr_t intptr;
 
 #include "proper.cpp"
 
+#include "debug.cpp"
 #include "test.cpp"
 
 //en el momento me parecio buena idea delegar toda la construccion a este archivo,

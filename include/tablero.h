@@ -45,6 +45,7 @@ struct memData{
   int triggersUsed;
   int firstTriggerBox;
 };
+memData* getTileMd(int,board*);
 
 /*
 no estoy seguro de si tener un triggerBox prealocado para cada tile, que se mantiene, o no.

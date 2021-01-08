@@ -46,7 +46,15 @@ void humanTurn(bool bando,board* brd){
         while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
         throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
       }
+
+      //por ahora este codigo esta aca, eventualmente voy a tener un thread que maneje eventos y lo voy a tirar ahi
+      drawScreen([&](){properDraw(stateMem);
+          debugUpdateAndDrawBuckets();
+                 });
+      
 #endif
+
+
       if(input.click()&&input.inGameRange(brd->dims)){
         v posClicked=input.get();
         for(Clicker& cli:clickers){
@@ -55,7 +63,7 @@ void humanTurn(bool bando,board* brd){
           ///vuelva a meter solapamiento
           if(posClicked==cli.clickPos){
             executeClicker(&cli,brd);//accionar
-            drawScreen(properDraw);
+            drawScreen([&](){properDraw(stateMem);});
             clearClickers();
             return;
           }
@@ -66,10 +74,11 @@ void humanTurn(bool bando,board* brd){
         Holder* act=tile(brd,input.get())->holder;
         if(act&&act->bando==bando){
           makeCli(act);
-          debugPrintClickers(brd);
+          //debugPrintClickers(brd);
         }
-        drawScreen(properDraw);
+        //drawScreen([&](){properDraw(stateMem);});
       }
+
     }
 }
 
@@ -236,36 +245,17 @@ void properGameInit(properState* ps,bool firstTestIteration){
 
   makeBoard(ps);
 
-  drawScreen(properDraw);
-}
-
-
-int debugGet(memData* v,int i){
-  return (v+i)->val;
-}
-int debugGet(auto* v,int i){
-  return *(v+i);
-}
-const int cellsPerRow=16;
-const int cellSpacing=39;
-void debugDrawMemory(int memSize, int yOffset,auto memory){
 #if debugMode
-  for(int i=0;i<memSize;i++){
-    backgroundMem.setPosition(sf::Vector2f(530+cellSpacing*(i%cellsPerRow),yOffset+45*(i/cellsPerRow-memSize/cellsPerRow)));
-    window.draw(backgroundMem);
-  }
-  for(int i=0;i<memSize;i++){
-    textValMem.setPosition(530+cellSpacing*(i%cellsPerRow),yOffset+5+45*(i/cellsPerRow-memSize/cellsPerRow));
-    textValMem.setString(std::to_string(debugGet(memory,i)));
-    window.draw(textValMem);
-  }
+  debugUpdateAndDrawBucketsInit(reset);
 #endif
-};
+  drawScreen([](){properDraw(stateMem);});
+}
 
 
 
 
-void properDraw(char* mem){
+
+void properDraw(char* mem,bool drawDebug){
   properState* ps=(properState*)mem;
   board* brd=getBoard(ps);
   drawTiles(brd);
@@ -283,68 +273,6 @@ void properDraw(char* mem){
   textValMem.setString(std::to_string(ps->turno));
   textValMem.setPosition(sf::Vector2f(600,20));
   window.draw(textValMem);
-  if(drawDebug){
-    window.draw(*tileActDebug);
-  
-    window.draw(posPiece);
-    window.draw(textDebug);
-
-    debugDrawMemory(actualHolder.nh->base->memLocal.size,405,memMov.data);
-    debugDrawMemory(actualHolder.h->piece-> memPieceSize,305,actualHolder.h->memPiece.beg);
-    debugDrawMemory(brd->memGlobalSize,205,brd->memGlobals);
-    debugDrawMemory(brd->memTileSlots,105,getTileMd(0,brd));
-
-    if(actualHolder.nh->base->memLocal.size!=actualHolder.nh->base->memLocal.resetUntil){
-      int resetUntil=actualHolder.nh->base->memLocal.resetUntil;
-      localMemorySeparator.setPosition(sf::Vector2f(530+cellSpacing*(resetUntil%cellsPerRow),405+45*(resetUntil/cellsPerRow-actualHolder.nh->base->memLocal.size/cellsPerRow)));
-      window.draw(localMemorySeparator);
-    }
-    
-
-    bool cteInThisIteration=false;
-    for(int i=0;i<debugDrawChannel.size;i++){
-      switch(debugDrawChannel[i]){
-      case tdebugSetIndirectColor:
-        backgroundMemDebug.setFillColor(sf::Color(168,35,221,150));
-        break;
-      case tdebugUnsetIndirectColor:
-        backgroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-        break;
-      case tdebugDrawCte:
-        {
-          int val=debugDrawChannel[++i];
-          textValMem.setPosition(610,cteInThisIteration?480:455);
-          textValMem.setString(std::to_string(val));
-          window.draw(textValMem);
-          cteInThisIteration=true;
-        }
-        break;
-      case tdebugDrawPos://esta siempre antes de posX,posY y los accesos a tile
-        posMem.setPosition(sf::Vector2f(32*escala*actualHolder.nh->pos.x,32*escala*actualHolder.nh->pos.y));
-        window.draw(posMem);
-        break;
-      case tdebugDrawPosX:
-      case tdebugDrawPosY:
-        textValMem.setPosition(610,cteInThisIteration?480:455);
-        textValMem.setString(debugDrawChannel[i]==tdebugDrawPosX?"X":"Y");
-        window.draw(textValMem);
-        cteInThisIteration=true;
-        break;
-      default:
-        {
-          //se podría reescribir esto para que no dependa de memSize
-          cteInThisIteration=false;
-          int ind=debugDrawChannel[i++];
-          int memSize=debugDrawChannel[i++];
-          int drawOffset=debugDrawChannel[i];
-          backgroundMemDebug.setPosition(Vector2f(530+cellSpacing*(ind%cellsPerRow),
-                                                  drawOffset+45*(ind/cellsPerRow-memSize/cellsPerRow)));
-          window.draw(backgroundMemDebug);
-        }
-      }
-    }
-    debugDrawChannel.size=0;
-  }
 #endif
 }
 

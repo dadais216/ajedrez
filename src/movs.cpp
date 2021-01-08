@@ -111,8 +111,8 @@ void mov(){
 }
 
 void pausa(){
-    drawScreen(properDraw);
-    sleep(milliseconds(40));
+  drawScreen([&](){properDraw(stateMem);});
+  sleep(milliseconds(40));
 }
 vector<Holder*> reciclaje;
 void capt(){
@@ -170,14 +170,14 @@ void spwn(){
 }
 
 
-void debugShowAndWait(const char*,bool);
-//tambien podria haber hecho un define tome el nombre y el codigo y construya la funcion, retornando al final como aca. Es lo mismo
 #if debugMode
 #define CONDRET(VAL) debugShowAndWait(__func__,VAL); return VAL
 #else
 #define CONDRET(VAL) return VAL
 #endif
-
+//antes tenía mas sentido lo de CONDRET, ahora no tanto. Podría hacer que se llame a esta funcion en normalHolder antes de cada condicion y listo,
+//igual lo dejo porque tiene algunas ventajas, puedo hacer la distincion entre movimientos de memoria y posicion aca y tengo el nombre de las funciones,
+//no necesito hacer un mapeo a strings
 
 bool vacio(){
   CONDRET(actualHolder.tile->holder==nullptr);
@@ -241,61 +241,4 @@ bool langAssert(){
   return true;
 }
 
-#if debugMode
-RectangleShape backgroundMem;
-RectangleShape backgroundMemDebug;
-RectangleShape localMemorySeparator;
-Text textValMem;
-
-RectangleShape posPiece;
-RectangleShape posActGood;
-RectangleShape posActBad;
-RectangleShape posMem;
-RectangleShape* tileActDebug;
-
-Text textDebug;
-bool drawDebug;
-
-
-
-
-
-void debugShowAndWait(char const* name,bool val){
-  textDebug.setString(name);
-  
-  v posAct=actualHolder.nh->pos;
-  if(val){
-    posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
-    tileActDebug=&posActGood;
-    textDebug.setColor(sf::Color(78,84,68,100));
-  }else{
-    posActBad.setPosition(posAct.x*32*escala,posAct.y*32*escala);
-    tileActDebug=&posActBad;
-    textDebug.setColor(sf::Color(240,70,40,240));
-  }
-  posPiece.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
-  drawDebug=true;
-  drawScreen(properDraw);
-  drawDebug=false;
-        
-  stall();
-}
-void debugShowAndWaitMem(char const* name,bool val){
-  textDebug.setString(name);
-
-  tileActDebug=&posPiece;
-  posPiece.setPosition(-32*escala,-32*escala);
-
-  if(val)
-    textDebug.setColor(sf::Color(78,84,68,100));
-  else
-    textDebug.setColor(sf::Color(240,70,40,240));
-  
-  drawDebug=true;
-  drawScreen(properDraw);
-  drawDebug=false;
-  
-  stall();
-}
-#endif
 

@@ -403,8 +403,8 @@ void generarExcH(movHolder* m){
 
   int i;
   v offsetOrg=offset;
-  for(i=0;i<count(e->ops);i++){
-    movHolder* branch=e->ops[i];
+  for(i=0;i<count(e->movs);i++){
+    movHolder* branch=e->movs[i];
     branch->table->generar(branch);
     if(branch->bools&valorCadena){
       e->bools|=valor;
@@ -433,29 +433,29 @@ void reaccionarExcH(movHolder* m,T tnh){
 
   movHolder* branch;
   for(;i<=e->actualBranch;++i){
-    movHolder* nextBranch=e->ops[i];
+    movHolder* nextBranch=e->movs[i];
     if(nextBranch>nh){
-      branch=e->ops[i-1];
+      branch=e->movs[i-1];
       goto branchFound;
     }
   }
-  if(e->actualBranch!=count(e->ops)-1
-     && nh>=e->ops[e->actualBranch+1]){//si la actual no es la ultima existe la posibilidad de que el nh sea de una rama invalida
+  if(e->actualBranch!=count(e->movs)-1
+     && nh>=e->movs[e->actualBranch+1]){//si la actual no es la ultima existe la posibilidad de que el nh sea de una rama invalida
     deleteInnacesibleNormalsMaybeJump(tnh,[e](normalHolder* inh)->bool{
-                                                           return (char*)inh<(char*)e+size(e->ops);
+                                                           return (char*)inh<(char*)e+size(e->movs);
                                                          });
     reaccionarSig(e,tnh);
     return;
   }
 
-  branch=e->ops[e->actualBranch];
+  branch=e->movs[e->actualBranch];
  branchFound:
   branch->table->reaccionar(branch,nh);
   if(switchToGen){
     if(!(branch->bools&valorCadena)){ //si el ab al recalcularse se invalida generar todo devuelta, saltandolo
       int j;
-      for(j=i;j<count(e->ops);j++){
-        movHolder* brancj=e->ops[j];
+      for(j=i;j<count(e->movs);j++){
+        movHolder* brancj=e->movs[j];
         brancj->table->generar(brancj);
         if(brancj->bools&valorCadena){
           e->bools|=valor;
@@ -480,7 +480,7 @@ void reaccionarExcH(movHolder* m,T tnh){
 void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
   fromCast(e,m,excHolder*);
   if(!(e->bools&valorCadena)) return;
-  movHolder* branch=e->ops[e->actualBranch];
+  movHolder* branch=e->movs[e->actualBranch];
   branch->table->cargar(branch,norms);
   if(e->bools&makeClick)
     makeClicker(norms,e->base->h);
@@ -495,13 +495,13 @@ void initExcH(exc* org,Base* base_,char** head){
   e->table=&excTable;
 
   *head+=sizeof(excHolder);
-  e->ops.beg=(movHolder**)*head;
-  e->ops.after=(movHolder**)(*head+size(org->ops));
-  *head=(char*)e->ops.after;
+  e->movs.beg=(movHolder**)*head;
+  e->movs.after=(movHolder**)(*head+size(org->ops));
+  *head=(char*)e->movs.after;
   e->size=org->insideSize+sizeof(excHolder);
   int i=0;
   for(operador* opos:org->ops){
-    *(e->ops.beg+i++)=(movHolder*)*head;
+    *(e->movs.beg+i++)=(movHolder*)*head;
     crearMovHolder(opos,base_,head);
   }
 }
@@ -966,7 +966,7 @@ normalHolder* getNextNormalH(movHolder* m){
   if(m->table==&deslizTable)
     return getNextNormalH((movHolder*)((deslizHolder*)m)->movs[0]);
   if(m->table==&excTable)
-    return getNextNormalH(((excHolder*)m)->ops[0]);
+    return getNextNormalH(((excHolder*)m)->movs[0]);
   if(m->table==&isolTable || m->table==&isolNRMTable)
     return getNextNormalH(((isolHolder*)m)->inside);
   if(m->table==&desoptTable || m->table==&desoptNRMTable){

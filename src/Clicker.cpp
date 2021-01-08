@@ -136,15 +136,6 @@ void executeClicker(Clicker* c,board* brd){
   //(creo que el bug era que una pieza se capturaba a si misma, ponia triggers, se spawneaba a si misma y los
   //activaba. Esto por algun motivo rompia a veces)
 
-    /*
-    cout<<endl;
-    for(int i=0; i<tablptr->tam.y; i++){
-        for(int j=0; j<tablptr->tam.x; j++){
-            cout<<tablptr->tile(v(j,i))->triggers.size()<<"  ";
-        }
-        cout<<endl;
-    }
-    */
 }
 
 void debugPrintClickers(board* brd){

@@ -10,7 +10,7 @@ void arranqueDraw(char* mem){
 void arranqueInit(char* mem){
   Sprite* portada=new(mem)Sprite();
   portada->setTexture(image.get("portada.png"));
-  drawScreen(arranqueDraw);
+  drawScreen([&](){arranqueDraw(stateMem);});
   actualStateUpdate=arranqueUpdate;
 }
 void arranqueUpdate(char* mem){

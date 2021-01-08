@@ -50,7 +50,9 @@ en cada turno futuro se copia el vector. Si durante el procesado del vector hay 
 El tablero, la memoria global y tile quedaría en un malloc aparte
 */
 
-void properDraw(char*);
+board* getBoard(properState*);
+
+void properDraw(char*,bool =false);
 template<bool =false> void properInit(char*,int,int,int);
 template<bool =false> void properGameInit(properState*,bool =false);
 void properUpdate(char*);

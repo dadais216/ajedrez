@@ -35,7 +35,7 @@ int main(int argc,char** argv){
     return 0;
   }
 
-  properInit(stateMem,25,1,0);
+  properInit(stateMem,19,1,0);//23
   //arranqueInit(stateMem);
 
   float fpsLock=1./60.; //maximos fps TODO en test de velocidad que sea 0
@@ -65,8 +65,9 @@ int main(int argc,char** argv){
   }
 }
 
-#define drawScreen(drawFunc) \
-  window.clear(Color(209,177,158));\
-  drawFunc(stateMem);\
+void drawScreen(auto drawFunc){
+  window.clear(sf::Color(209,177,158));
+  drawFunc();
   window.display();
+}
 

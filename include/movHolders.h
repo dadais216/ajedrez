@@ -65,8 +65,8 @@ struct Base{ ///datos compartidos de un movimiento entero
 struct movHolder{
   virtualTableMov* table;
   Base* base; //ver de pasarselo al trigger como un offset para no tenerlo en cada movHolder, ver arriba
-    movHolder* sig;
-    int32_t bools;
+  movHolder* sig;
+  int32_t bools;
 };
 struct normal;
 struct normalHolder:public movHolder{
@@ -92,7 +92,7 @@ void initDeslizH(desliz*,Base*,char**);
 
 struct exc;
 struct excHolder:public movHolder{
-    barray<movHolder*> ops;
+    barray<movHolder*> movs;
     ///@optim podria probar usar barray<int> tamaños en vez de los punteros. Ocupa menos espacio y estaria del lado del operador
     ///no estoy seguro de si seria mas rapido
   int size;//no debería estar en el op? TODO sacar

@@ -4,19 +4,6 @@
 //triggers globales se crean en la creacion de la pieza y son fijos
 //triggers de memoria tile e indirectos funcionan los posicionales, se crean dinamicamente y solo son validos los generados en un mismo turno
 
-#if debugMode
-//necesito diferir los dibujados de debug para que se hagan despues de que se dibujen las demas cosas.
-//tengo un vector de ints donde estan las instrucciones y los datos de este frame. Esta bueno porque tengo todo
-//el codigo en un lugar solo
-vector<int> debugDrawChannel;
-enum{
-     tdebugSetIndirectColor=-9999,tdebugUnsetIndirectColor,
-     tdebugDrawCte,tdebugDrawPosX,tdebugDrawPosY,
-     tdebugDrawPos, 
-};
-
-
-#endif
 
 void debugDrawMem(int ind,int memSize,int drawOffset){  
 #if debugMode
@@ -26,6 +13,7 @@ void debugDrawMem(int ind,int memSize,int drawOffset){
 #endif
 }
 
+//TODO mirar, creo que el problema es que las acciones cargan cosas. Si las ignoro me puedo saltar este flag
 //en vez de poner el if aca lo podría haber puesto antes de dibujar en proper, se me ocurrio tarde
 void debugDrawMemMaybeAction(int ind,int memSize,int drawOffset){
 #if debugMode

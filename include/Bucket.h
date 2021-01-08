@@ -16,7 +16,7 @@ struct bucket{
     return (block*)(data-sizeof(block));
   }
 };
-int bucketSize=1<<20;
+int bucketSize=1<<16;//20
 
 void allocNewBucketBlock(bucket* b){
   bucket::block* nextBlock=(bucket::block*)::operator new(b->size+sizeof(bucket::block));
@@ -180,7 +180,7 @@ void alloc(bucket* b,barrayE* ba,int elemSize,int elems){
   ba->elemSize=elemSize;
   ensureSpace(b,elems*elemSize);
   ba->beg=b->head;
-  b->head+=elems;
+  b->head+=elems*elemSize;
   ba->after=b->head;
 }
 void copy(barrayE ba,void* data){
