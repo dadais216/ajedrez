@@ -17,10 +17,8 @@ void makeBoard(properState* p){
   brd->n.setTextureRect(IntRect(32,0,32,32));
 
 #if debugMode
-  posPiece.setSize(sf::Vector2f(32*escala,32*escala));
-  posActGood.setSize(sf::Vector2f(32*escala,32*escala));
-  posActBad.setSize(sf::Vector2f(32*escala,32*escala));
-  posMem.setSize(sf::Vector2f(32*escala,32*escala));
+  initDebugSystem();
+
 #endif
   for(Piece* piece:p->pieces){
     piece->spriteb.setScale(escala,escala);

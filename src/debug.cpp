@@ -30,7 +30,7 @@ void debugDrawMemories(){
   window.draw(*tileActDebug);
   
   window.draw(posPiece);
-  window.draw(textDebug);
+  //window.draw(textDebug);
 
   debugDrawMemoryCells(actualHolder.nh->base->memLocal.size,405,memMov.data);
   debugDrawMemoryCells(actualHolder.h->piece-> memPieceSize,305,actualHolder.h->memPiece.beg);
@@ -103,12 +103,18 @@ void debugShowAndWait(char const* name,bool val){
     textDebug.setColor(sf::Color(240,70,40,240));
   }
   posPiece.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
-
-  drawScreen([](){
+  
+  drawScreen([=](){
                properDraw(stateMem);
                debugDrawMemories();
+               debugShowMoveAndWait(val);
              });
-  
+
+  /*
+  textValMem.setString(std::to_string(ps->turno));
+  textValMem.setPosition(sf::Vector2f(600,20));
+  window.draw(textValMem);
+  */
         
   stall();
 }
@@ -130,6 +136,140 @@ void debugShowAndWaitMem(char const* name,bool val){
   
   stall();
 }
+
+struct{
+  v head;
+  int xSpace=600;
+  int windowBeg=0;
+  int windowSize=20;
+  bool madeIt;
+}dText;
+Text textMov;
+
+void initDebugSystem(){//se llama despues de construir el tablero
+  posPiece.setSize(sf::Vector2f(32*escala,32*escala));
+  posActGood.setSize(sf::Vector2f(32*escala,32*escala));
+  posActBad.setSize(sf::Vector2f(32*escala,32*escala));
+  posMem.setSize(sf::Vector2f(32*escala,32*escala));
+
+  textMov.setScale(.7,.7);
+  textMov.setFont(font);
+}
+
+void drawText(char* name,int colorType){
+  textMov.setString(name);
+
+  int len=textMov.getGlobalBounds().width;
+  if(dText.head.x+len>dText.xSpace){
+    dText.head.x=0;
+    dText.head.y++;
+  }
+  textMov.setPosition(580+dText.head.x,300+dText.head.y*30);
+  dText.head.x+=len+10;
+
+  sf::Color color;
+  switch(colorType){
+  case 0: color=sf::Color(153, 153, 102);break;
+  case 1: color=sf::Color(245, 153, 0);break;
+  case 2: color=dText.madeIt?
+      sf::Color(78,184,68):sf::Color(240,70,40);break;
+  case 3: color=sf::Color(110,110,170);break;
+  }
+  textMov.setColor(color);
+
+  window.draw(textMov);
+}
+
+void drawConditionText(operador* op){
+  normal* n=actualHolder.nh->op;
+  int i=0;
+  for(bool(**c)(void)=n->conds.beg;
+      c != n->conds.after;
+      c++){
+    void(*cast)(void)=(void(*)(void))*c;
+    if(n==op&&
+       *actualHolder.bufferPos==i){
+      drawText(funcToWord[cast],2);
+    }else{
+      drawText(funcToWord[cast],0);
+    }
+    i++;
+  }
+  for(void(**a)(void)=n->accs.beg;
+      a!=n->accs.after;
+      a++){
+    if(n==op){
+      drawText(funcToWord[*a],3);
+    }else{
+      drawText(funcToWord[*a],0);
+    }
+  }
+}
+
+void drawMoveTextInsideOp(char* name,auto insideOp,bool inRange){
+  //mirar si n esta adentro usando rangos
+  drawText(name,inRange?1:0);
+  insideOp();
+  drawText("end",inRange?1:0);
+}
+
+void drawMoveText(operador* op){
+  char* obj=(char*)actualHolder.nh->op;
+  bool inRange=obj>(char*)op && (op->sig?(obj<(char*)op->sig):true);
+
+  switch(op->tipo){
+  case NORMAL:{
+    normal* n=(normal*)op;
+    drawConditionText(op);
+  }break;
+  case DESLIZ:{
+    desliz* d=(desliz*)op;
+    drawMoveTextInsideOp("desliz",[=](){drawMoveText(d->inside);},inRange);
+  }break;
+  case EXC:{
+    exc* e=(exc*)op;
+    drawMoveTextInsideOp("exc",[=](){
+                                  for(operador** excOp=e->ops.beg;excOp!=e->ops.after;excOp++){
+                                    drawMoveText(*excOp);
+                                  }
+                               },inRange);
+  }break;
+  case ISOL:{
+    drawMoveTextInsideOp("isol",[=](){drawMoveText(((isol*)op)->inside);},inRange);
+  }break;
+  case DESOPT:{
+    desopt* d=(desopt*)op;
+    drawMoveTextInsideOp("desopt",[=](){
+                                     for(operador** desOp=d->ops.beg;desOp!=d->ops.after;desOp++){
+                                       drawMoveText(*desOp);
+                                     }
+                                  },inRange);
+  }break;
+  }
+  if(op->sig!=nullptr)
+    drawMoveText(op->sig);
+}
+
+void debugShowMoveAndWait(bool val){
+  normalHolder* nh=actualHolder.nh;
+  movHolder* root=nh->base->root;
+  int mi=0;
+  for(movHolder** hRoot=actualHolder.h->movs.beg;;hRoot++){
+    assert(hRoot!=actualHolder.h->movs.after);
+    if(root==*hRoot){
+      break;
+    }
+    mi++;
+  }
+  operador* rootOp=(*(actualHolder.h->piece->movs.beg+mi)).root;
+
+  dText.head=v(0,0);
+  dText.madeIt=val;
+  drawMoveText(rootOp);
+}
+
+
+
 
 RectangleShape rect;
 Text operatorLetter;
@@ -470,7 +610,7 @@ void debugUpdateAndDrawBuckets(){
       drawBucketElement(p,pieceSize,pieceColors[i]);
 
       for(pBase* pb=p->movs.beg;pb!=p->movs.after;pb++){
-        drawBucketOperator(pb->raiz,pieceColors[i]);
+        drawBucketOperator(pb->root,pieceColors[i]);
       }
     }
   }else{

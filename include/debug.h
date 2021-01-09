@@ -3,6 +3,8 @@
 void debugShowAndWait(const char*,bool);
 void debugShowAndWaitMem(const char*,bool);
 
+void debugShowMoveAndWait(bool val);
+
 RectangleShape backgroundMem;
 RectangleShape backgroundMemDebug;
 RectangleShape localMemorySeparator;
@@ -16,6 +18,8 @@ RectangleShape* tileActDebug;
 
 Text textDebug;
 
+std::map<void(*)(),char*> funcToWord;
+
 //necesito diferir los dibujados de debug para que se hagan despues de que se dibujen las demas cosas.
 //tengo un vector de ints donde estan las instrucciones y los datos de este frame. Esta bueno porque tengo todo
 //el codigo en un lugar solo
@@ -26,6 +30,7 @@ enum{
      tdebugDrawPos, 
 };
 
+void initDebugSystem();
 
 void debugUpdateAndDrawBuckets();
 void debugUpdateAndDrawBucketsInit(bool);

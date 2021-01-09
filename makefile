@@ -1,7 +1,7 @@
 #despues de testear tiempos resulta que compilar todo de una es mas rapido que compilar en pedazos y linkear. La makefile de arriba tardó 5.23 segundos en compilar cambios en 3 archivos (23 en compilar todo), esta tardó 5.02
 
 Debug:
-	gcc-9 -g3 -pipe -Wall -std=c++17 -fconcepts -o game all.cpp -I include/. -I src/. -lsfml-graphics -lsfml-window -lsfml-system -lstdc++ 
+	gcc-9 -g3 -pipe -Wall -Wno-write-strings -Wno-class-memaccess -std=c++17 -fconcepts -o game all.cpp -I include/. -I src/. -lsfml-graphics -lsfml-window -lsfml-system -lstdc++
 
 release:
 	gcc-9 -O3 -std=c++17 -fconcepts -o game all.cpp -I include/. -I src/. -lsfml-graphics -lsfml-window -lsfml-system -lstdc++ 

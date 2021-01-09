@@ -255,7 +255,7 @@ void properGameInit(properState* ps,bool firstTestIteration){
 
 
 
-void properDraw(char* mem,bool drawDebug){
+void properDraw(char* mem){
   properState* ps=(properState*)mem;
   board* brd=getBoard(ps);
   drawTiles(brd);
@@ -269,11 +269,6 @@ void properDraw(char* mem,bool drawDebug){
     window.draw(ps->turnoNegro);
 
 
-#if debugMode
-  textValMem.setString(std::to_string(ps->turno));
-  textValMem.setPosition(sf::Vector2f(600,20));
-  window.draw(textValMem);
-#endif
 }
 
 void doTurn(properState* ps,int player,bool bando){

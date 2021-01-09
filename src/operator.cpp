@@ -34,7 +34,7 @@ void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
     piece->movs[i].memLocal.resetUntil=pd->memLocal[i].resetUntil==-1?pd->memLocal[i].size:pd->memLocal[i].resetUntil;
     p.memLocal=piece->movs[i].memLocal;
 
-    piece->movs[i].raiz=parseOp(&p);
+    piece->movs[i].root=parseOp(&p);
     piece->movs[i].size=p.movSize;
     piece->hsSize+=p.movSize;
     failIf(pop(&p)!=tmovEnd,"missing ;");

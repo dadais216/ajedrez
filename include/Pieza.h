@@ -3,7 +3,7 @@
 struct operador;
 struct Piece;
 struct pBase{
-  operador* raiz;
+  operador* root;
   memLocalt memLocal;
   int size;
 };

@@ -77,7 +77,7 @@ Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
     //TODO lo de que root arranque en null y lo setee el primer movimiento se me hace raro, por que no lo marco desde aca?
     allocInitNC(hb,Base,base,{h,nullptr,pb.memLocal});
     h->movs[i++]=(movHolder*)hb->head;
-    crearMovHolder(pb.raiz,base,&hb->head);
+    crearMovHolder(pb.root,base,&hb->head);
   }
 
   //para cantidades grandes de movimientos el real mide 72 menos que el declarado, el tamaño de una normalHolder

@@ -29,7 +29,8 @@
 #desliz WA mover capt spwn 2 end;
 #desliz WA mover isol capt spwn 2 end end;
 #TW Tmover TW vacio spwn 1 color 0 0 255;
-W mover;
+s mover;
+desliz w mover end a mover s mover;
 
 :2 1 #torre
 desliz W mover c end W captura;

@@ -27,28 +27,35 @@ enum {
 void initParser(parseData* pd){
   init(&pd->tokenToWord,tlast);
   pd->tokenToWord.size=tlast;
-
 #define rel(T)                                  \
-    pd->wordToToken[stringForHash(#T)]=t##T;    \
-    pd->tokenToWord[t##T]=stringForHash(#T);    
+  pd->wordToToken[stringForHash(#T)]=t##T;      \
+  pd->tokenToWord[t##T]=stringForHash(#T);
+
+#if debugMode
+#define relF(T)                                 \
+  rel(T);                                       \
+  funcToWord[(void(*)(void))&T]=#T;
+#else
+#define relC(T)  rel(T);
+#endif
 
   rel(sprt);
   rel(numShow);
   rel(color);
 
-  rel(mov);
-  rel(pausa);
-  rel(spwn);
-  rel(capt);
-  rel(pass);
+  relF(mov);
+  relF(pausa);
+  relF(spwn);
+  relF(capt);
+  relF(pass);
 
   rel(esp);
-  rel(vacio);
-  rel(enemigo);
-  rel(piece);
-  rel(aliado);
-  rel(self);
-  rel(pass);
+  relF(vacio);
+  relF(enemigo);
+  relF(piece);
+  relF(aliado);
+  relF(self);
+  relF(pass);
 
   rel(desliz);
   rel(exc);
@@ -59,12 +66,12 @@ void initParser(parseData* pd){
   pd->wordToToken["c"]=tclick;//TODO por que no uso stringForHash aca? igual tendria que volar todo eso
   pd->wordToToken["or"]=tseparator;
   
-  rel(mcmp);
+  relF(mcmp);
   rel(mset);
   rel(madd);
-  rel(mless);
-  rel(mmore);
-  rel(mdist);
+  relF(mless);
+  relF(mmore);
+  relF(mdist);
 
   pd->wordToToken["goto"]=tmgoto;
   pd->tokenToWord[tmgoto]="goto";
