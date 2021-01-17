@@ -4,7 +4,7 @@
 void makeBoard(properState* p){
 
   parseData* pd=&p->pd;
-  board* brd=new(p->gameState.data)board;
+  brd=new(p->gameState.data)board;
   brd->dims=pd->dims;
   actualHolder.brd=brd;
 
@@ -16,10 +16,6 @@ void makeBoard(properState* p){
   brd->b.setTextureRect(IntRect(0,0,32,32));
   brd->n.setTextureRect(IntRect(32,0,32,32));
 
-#if debugMode
-  initDebugSystem();
-
-#endif
   for(Piece* piece:p->pieces){
     piece->spriteb.setScale(escala,escala);
     piece->spriten.setScale(escala,escala);
@@ -51,6 +47,10 @@ void makeBoard(properState* p){
       tile->holder=initHolder(p->pieces[std::abs(sind)-1],sign(sind),tile,&p->gameState);
     }
   }
+
+#if debugMode
+  initDebugSystem();
+#endif
 
   //assertf(p->gameState.head==p->gameState.data+p->hsSize,"antes de generar %d %d\n",p->gameState.head-p->gameState.data,p->hsSize);
   //TODO cuando haga el codigo general tendría que generar primero un bando, correr el codigo, despues el otro

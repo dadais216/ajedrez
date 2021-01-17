@@ -132,6 +132,12 @@ void capt(){
 
 //retorna void(*)(void) normalmente, pero puede tener otras cosas metidas
 void* getNextInBuffer(){
+#if debugMode
+  if(debugMultiParameterBegin==-1){//para pintar toda la condicion
+    debugMultiParameterBegin=*actualHolder.bufferPos;
+  }
+#endif
+
   //buffer es el buffer de punteros de funcion actual (sean acct o conds)
   //bufferPos es un puntero al iterador. Puede que necesite marcar el iterador como volatil?
   (*actualHolder.bufferPos)++;
@@ -170,74 +176,69 @@ void spwn(){
 }
 
 
-#if debugMode
-#define CONDRET(VAL) debugShowAndWait(__func__,VAL); return VAL
-#else
-#define CONDRET(VAL) return VAL
-#endif
-//antes tenía mas sentido lo de CONDRET, ahora no tanto. Podría hacer que se llame a esta funcion en normalHolder antes de cada condicion y listo,
-//igual lo dejo porque tiene algunas ventajas, puedo hacer la distincion entre movimientos de memoria y posicion aca y tengo el nombre de las funciones,
-//no necesito hacer un mapeo a strings
+//cuando mostraba de una condicion a la vez aca hacía #define CONDRET(VAL) debugShowAndWait(__func__,VAL); return VAL
 
 bool vacio(){
-  CONDRET(actualHolder.tile->holder==nullptr);
+  return actualHolder.tile->holder==nullptr;
 }
 bool piece(){
-  CONDRET(actualHolder.tile->holder);
+  return actualHolder.tile->holder;
 }
 bool enemigo(){
   Holder* other=actualHolder.tile->holder;
   if(other){
-    CONDRET(other->bando!=actualHolder.h->bando);
+    return other->bando!=actualHolder.h->bando;
   }
-  CONDRET(false);
+  return false;
 }
 bool aliado(){
   Holder* other=actualHolder.tile->holder;
   if(other){
-    CONDRET(other->bando==actualHolder.h->bando);
+    return other->bando==actualHolder.h->bando;
   }
-  CONDRET(false);
+  return false;
 }
 bool self(){
-  CONDRET(actualHolder.tile->holder==actualHolder.h);
+  return actualHolder.tile->holder==actualHolder.h;
 }
 
 bool pass(){
-  CONDRET(true);
+  return true;
 }//se usa al final de exc para retornar verdadero aunque las otras ramas hayan fallado
 
 
-
+/*
 bool ZPressed=false;
 int mil=25;
 void stall(){
-  ///@cleanup como esta todo tirado aca en vez de en input no se puede cerrar la ventana, pero bueno
   while(true){
+    handleSystemEvents();
     sleep(milliseconds(mil));
     if(!window.hasFocus()) continue;
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::Z)){
+    if(Input.z){
       if(!ZPressed){
         ZPressed=true;
         break;
       }
     }else
       ZPressed=false;
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::X)){
+    if(Input.x){
       mil=75;
       break;
     }else
       mil=25;
-    if(sf::Keyboard::isKeyPressed(sf::Keyboard::C)){
+    if(Input.c){
       mil=0;
       break;
     }
   }
 }
+*/
 bool langAssert(){
   printf("something wrong!!\n");
-  mil=2000;
-  stall();
+  //mil=2000;
+  sleep(milliseconds(2000));
+  //stall();
   return true;
 }
 

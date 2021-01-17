@@ -402,8 +402,6 @@ void doTests(char* mem){
 
 
 void randomTurnTestPlayer(bool bando,properState* ps){
-  board* brd=getBoard(ps);
-  
   for(int i=0; i<brd->dims.x; i++)
     for(int j=0; j<brd->dims.y; j++){
       Holder* act=tile(brd,v(i,j))->holder;

@@ -14,7 +14,7 @@ void arranqueInit(char* mem){
   actualStateUpdate=arranqueUpdate;
 }
 void arranqueUpdate(char* mem){
-  if(input.click()&&input.inRange()){
+  if(Input.leftClick&&clickInRange()){
     selectorInit(mem);
   }
 }

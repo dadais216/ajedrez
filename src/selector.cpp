@@ -26,7 +26,7 @@ void drawButton(selectorState* st,button* b){
 }
 
 bool buttonClicked(button* b,int scale){
-  v ve=input.pixel();
+  v ve=getClickInPixelCoordinates();
   if(ve.x>=b->x&&ve.x<=b->x+64*scale&&ve.y>=b->y&&ve.y<=b->y+32*scale) //puede que este mal
     return true;
   return false;
@@ -104,7 +104,7 @@ void selectorInit(char* mem){
 }
 void selectorUpdate(char* mem){
   selectorState* st=(selectorState*)mem;
-  if(input.click()){
+  if(Input.leftClick){
     for(int i=0;
         i<st->buttons.size;
         i++){

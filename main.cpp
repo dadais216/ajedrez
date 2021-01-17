@@ -1,14 +1,8 @@
 
 
-#if debugMode
-RenderWindow window(VideoMode(1200,512),"ajedres --debug");
-#else
-RenderWindow window(VideoMode(640,512),"ajedres");
-#endif
 
 Manager<Texture> image;
 Font font;
-Input input;
 void (*actualStateUpdate)(char*);
 
 constexpr int max(int a,int b){
@@ -35,32 +29,23 @@ int main(int argc,char** argv){
     return 0;
   }
 
-  properInit(stateMem,0,1,0);//23
-  //arranqueInit(stateMem);
+  //  properInit(stateMem,13,1,0);//23
+  arranqueInit(stateMem);
 
   float fpsLock=1./60.; //maximos fps TODO en test de velocidad que sea 0
   Clock clock;//@check investigar bien esto, por ahi deberia usar el mismo
   //que uso para los test de velocidad?
 
 
-  //TODO me gustaría dibujar solo cuando sea necesario, correr a 60fps solo para el input
   float dt=0;
   while(true){
-    dt+=clock.restart().asSeconds();
+    dt+=clock.restart().asSeconds();//TODO esto se usa para algo?
     //TODO faltaria el sleep, ahora hay busy wait
     while(dt>fpsLock){
       dt-=fpsLock;
 
-      input.check();
+      handleSystemEvents();
       actualStateUpdate(stateMem);
-
-      Event event;
-      while(window.pollEvent(event)){
-        if(event.type == Event::Closed){
-          window.close();
-          return 0;
-        }
-      }//TODO mover a otro thread, manejar demas eventos
     }
   }
 }

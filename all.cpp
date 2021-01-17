@@ -175,14 +175,19 @@ typedef intptr_t intptr;
 #include "lector.h"
 #include "operator.h"
 
-#include "Input.h"
 #include "proper.h"
 #include "selector.h"
 
 #include "debug.h"
 
+#if debugMode
+RenderWindow window(VideoMode(1200,512),"ajedres --debug");
+#else
+RenderWindow window(VideoMode(640,512),"ajedres");
+#endif
+
+#include "Input.h"
 #include "main.cpp"
-#include "Input.cpp"
 #include "arranque.cpp"
 #include "selector.cpp"
 

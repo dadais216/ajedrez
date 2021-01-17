@@ -47,6 +47,8 @@ struct memData{
 };
 memData* getTileMd(int,board*);
 
+board* brd;
+
 /*
 no estoy seguro de si tener un triggerBox prealocado para cada tile, que se mantiene, o no.
 Si se tiene hace el codigo más simple, no necesito tener el if de si el tile tiene una caja inicial en push, ni necesito

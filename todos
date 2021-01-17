@@ -241,6 +241,8 @@ notacion infija
 
 ---
 
+memorias de tile + global suficientemente grandes superan el tamaño de bucket y escriben afuera. Por ahora no hago nada porque creo que tenía pensado cambiar el bucket por un vector, no sé
+
 ----
 Estaria bueno tener una forma de ver si la escritura de una tile fue hecha por una pieza que no se movió desde que la hizo. El mecanismo para esto ya esta, porque se usa para ver si el trigger debería activarse cuando se pisa, pero no esta expuesto al lenguaje. 
 Sería util para tener un mecanismo para marcar casilleros sin necesidad de tener que limpiarlos despues, que es para lo que se usa ahora, nomas que el lenguaje no lo puede aprovechar.

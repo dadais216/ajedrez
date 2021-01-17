@@ -1,9 +1,5 @@
 
 
-board* getBoard(properState* ps){
-  return (board*)ps->gameState.firstBlock->data;
-}
-
 int dt=0;
 int clickI=0;
 bool confirm;
@@ -39,24 +35,21 @@ void humanTurn(bool bando,board* brd){
     */
     while(true){
       sleep(milliseconds(20));
-      input.check();
+      handleSystemEvents();
 #if debugMode
-      if(window.hasFocus()&&sf::Keyboard::isKeyPressed(sf::Keyboard::R)){
+      if(Input.r){
         properGameInit<true>((properState*)stateMem);
-        while(sf::Keyboard::isKeyPressed(sf::Keyboard::R)) sleep(milliseconds(10));
         throw nullptr;//es un longjump para evitar que proper::update llame a segundo en lugar de a primero
       }
-
-      //por ahora este codigo esta aca, eventualmente voy a tener un thread que maneje eventos y lo voy a tirar ahi
-      drawScreen([&](){properDraw(stateMem);
-          debugUpdateAndDrawBuckets();
+      drawScreen([&](){
+                   properDraw(stateMem);
+                   debugUpdateAndDrawBuckets();
                  });
-      
 #endif
 
 
-      if(input.click()&&input.inGameRange(brd->dims)){
-        v posClicked=input.get();
+      if(Input.leftClick&&inGameRange(brd->dims)){
+        v posClicked=getClickInGameCoordinates();
         for(Clicker& cli:clickers){
           ///@todo @optim esto se pregunta 60hz
           ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
@@ -69,9 +62,9 @@ void humanTurn(bool bando,board* brd){
           }
         }
         clearClickers();
-        printf("(%d,%d)\n",input.get().x,input.get().y);
+        printf("(%d,%d)\n",posClicked.x,posClicked.y);
 
-        Holder* act=tile(brd,input.get())->holder;
+        Holder* act=tile(brd,posClicked)->holder;
         if(act&&act->bando==bando){
           makeCli(act);
           //debugPrintClickers(brd);
@@ -108,33 +101,6 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   ps->turnoNegro.setScale(22,16);
   ps->turnoBlanco.setPosition(510,0);
   ps->turnoNegro.setPosition(510,0);
-
-#if debugMode
-  posPiece.setFillColor(sf::Color(250,240,190,150));
-  posActGood.setFillColor(sf::Color(180,230,100,100));
-  posActBad.setFillColor(sf::Color(240,70,40,100));
-  posMem.setFillColor(sf::Color(0,0,200,100));
-  textDebug.setFont(font);
-  textDebug.setPosition(520,465);
-  backgroundMem.setFillColor(sf::Color(240,235,200));
-  backgroundMem.setOutlineColor(sf::Color(195,195,175));
-  backgroundMem.setOutlineThickness(4);
-  backgroundMem.setSize(Vector2f(40,40));
-  backgroundMemDebug.setFillColor(sf::Color(163,230,128,150));
-  backgroundMemDebug.setOutlineColor(sf::Color(195,195,175));
-  backgroundMemDebug.setOutlineThickness(4);
-  backgroundMemDebug.setSize(sf::Vector2f(40,40));
-  textValMem.setColor(sf::Color::Black);
-  textValMem.setFont(font);
-  textValMem.setPosition(570,10);
-  localMemorySeparator.setFillColor(sf::Color(150,150,150));
-  localMemorySeparator.setOutlineColor(sf::Color::Red);
-  localMemorySeparator.setOutlineThickness(2);
-  localMemorySeparator.setSize(sf::Vector2f(1,40));
-
-  init(&debugDrawChannel);
-#endif
-
 
   init(&ps->pieces);
   initParser(&ps->pd);
@@ -200,7 +166,6 @@ void properGameInit(properState* ps,bool firstTestIteration){
     justSpawned.size=0;
 
     if(ps->gameState.size!=0){
-      board* brd=getBoard(ps);
       delete[] brd->ts.mem;
 
       free(&memMov);
@@ -257,7 +222,6 @@ void properGameInit(properState* ps,bool firstTestIteration){
 
 void properDraw(char* mem){
   properState* ps=(properState*)mem;
-  board* brd=getBoard(ps);
   drawTiles(brd);
   if(Clicker::drawClickers)
     for(Clicker& cli:clickers)
@@ -281,7 +245,7 @@ void doTurn(properState* ps,int player,bool bando){
     printf("%d ",brd->memTiles[i].val);
     }*/
   switch(player){
-  case 1: humanTurn(bando,getBoard(ps));break;
+  case 1: humanTurn(bando,brd);break;
   case 2: randomTurnTestPlayer(bando,ps);break;
   case 4: skipTurn();
   }

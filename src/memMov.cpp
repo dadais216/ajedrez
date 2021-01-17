@@ -2,12 +2,6 @@
 
 //como lo planteaba antes tenia una funcion mcond (y macc) que se traia el cond y lo llamaba. Como medio al pedo usar polimorfismo 2 veces, ahora tengo un macro al principio 
 
-#undef CONDRET
-#if debugMode
-#define CONDRET(VAL) debugShowAndWaitMem(__func__,VAL); return VAL
-#else
-#define CONDRET(VAL) return VAL 
-#endif
 //prefiero cargar las cosas debug especificas de los getters desde los getters
 //hacerlo de otra forma implicaria pasar los getters a debugShowAndWaitMem, que los llamaria devuelta con el buffer reseteado. Para eso tengo que guardar el estado inicial del buffer. Ademas de esto no tendría la informacion de a que memoria pertenece lo que acabo de hacer, a menos que haga un switch con los punteros de funcion o algo asi. 
 
@@ -28,30 +22,30 @@ get getGetter2(){
 
 bool mcmp(){
   get g=getGetter2();
-  CONDRET(*g.a==*g.b);
+  return *g.a==*g.b;
 }
 bool msetC(){
   get g=getGetter2();
 
   *g.a=*g.b;
-  CONDRET(true);
+  return true;
 }
 bool maddC(){
   get g=getGetter2();
   *g.a+=*g.b;
-  CONDRET(true);
+  return true;
 }
 bool mless(){
   get g=getGetter2();
-  CONDRET(*g.a<*g.b);
+  return *g.a<*g.b;
 }
 bool mmore(){
   get g=getGetter2();
-  CONDRET(*g.a>*g.b);
+  return *g.a>*g.b;
 }
 bool mdist(){
   get g=getGetter2();
-  CONDRET(*g.a!=*g.b);
+  return *g.a!=*g.b;
 }
 
 //TODO forzar no esp si esta al inicio de la normal, sino hace un esp y deja un trigger al pedo
@@ -59,11 +53,11 @@ bool mgoto(){
   get g=getGetter2();
   actualHolder.nh->pos=v(*g.a,*g.b);
   if(espFail(actualHolder.nh->pos)){
-    CONDRET(false);
+    return false;
   }
   actualHolder.tile=tile(actualHolder.brd,actualHolder.nh->pos);
   pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
-  CONDRET(true);
+  return true;
   //otra opcion es forzar un corte de normales despues de mgoto, y dejar que el codigo normal haga el esp y ponga el trigger, sería mas lindo pero cortar normales es un poco mas ineficiente y complicado
 }
 

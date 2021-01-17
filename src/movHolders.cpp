@@ -64,11 +64,16 @@ inline void generarProperNormalH(normalHolder* n){
   actualHolder.bufferPos=&i;
   for(bool(**c)(void)=n->op->conds.beg;
       c+i != n->op->conds.after;
-      i++)
-    if(!(*(c+i))()){
+      i++){
+    bool ret=(*(c+i))();
+#if debugMode
+    debugShowAndWait(ret);
+#endif
+    if(!ret){
       n->bools&=~(valorFinal|valorCadena|valor);
       return;
     }
+  }
   offset=n->pos;
 
   n->bools|=valor;
