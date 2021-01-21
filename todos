@@ -1,14 +1,6 @@
 
 
-
-visualizador debug: 
-
-visualizar memoria de buckets, una seccion muestra la memoria de cada pieza, otra de holders. Es otro modo debug, en principio se va a poder acceder a este en la mitad de un movimiento aunque no es obligatorio. Tiene 2 modos adentro, uno para buckets operador y otro holder. En operador pinta cada pieza con un color, y corresponde con el area de memoria ocupada en el bucket. En holders hay uno por holder, tambien con colores respectivos. Cada area esta subdividida segun los operadores, con una letra que los marca. Si hay mas de un bucket se puede mover entre estos con unos botones. 
-
-visualizar movimiento mientras se hace. Hay un texto que muestra todo el movimiento, resaltando operadores actuales. Solo se muestra la memoria a la que se esta accediendo actualmente para no acupar mucho espacio en pantalla, se puede mover a otras con algun boton. Si la memoria es muy grande se muetra una seccion nomas, se puede scrolear. Que la memoria tenga su numero de posicion chiquito, aprovechando que ahora es mas grande
-
-
-arreglar peon
+en algun momento rompi el tema del click implicito e isols, por ejemplo el peon no hace lo que deberia
 
 ----
 

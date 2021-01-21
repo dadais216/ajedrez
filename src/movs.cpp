@@ -133,7 +133,7 @@ void capt(){
 //retorna void(*)(void) normalmente, pero puede tener otras cosas metidas
 void* getNextInBuffer(){
 #if debugMode
-  if(debugMultiParameterBegin==-1){//para pintar toda la condicion
+  if(debugInCondition&&debugMultiParameterBegin==-1){//para pintar toda la condicion
     debugMultiParameterBegin=*actualHolder.bufferPos;
   }
 #endif

@@ -43,7 +43,9 @@ void humanTurn(bool bando,board* brd){
       }
       drawScreen([&](){
                    properDraw(stateMem);
-                   debugUpdateAndDrawBuckets();
+                   handleModeSelectors();
+                   if(debugState!=2)
+                     debugUpdateAndDrawBuckets();
                  });
 #endif
 
@@ -208,11 +210,11 @@ void properGameInit(properState* ps,bool firstTestIteration){
   }else
     initBucket(&ps->gameState,ps->hsSize);
 
-  makeBoard(ps);
-
 #if debugMode
   debugUpdateAndDrawBucketsInit(reset);
 #endif
+  makeBoard(ps);
+
   drawScreen([](){properDraw(stateMem);});
 }
 

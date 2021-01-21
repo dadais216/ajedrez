@@ -76,11 +76,27 @@ void initDebugSystem(){//se llama despues de construir el tablero
 
   init(&debugDrawChannel);
 
+  moveW.jumpToWord=true;
   debugMultiParameterBegin=-1;
 
   memDrawWindows[0].cells=brd->memGlobalSize;
   memDrawWindows[1].cells=brd->memTileSlots;
 
+}
+
+sf::RectangleShape stateSelectorButton;
+void handleModeSelectors(){
+  for(int i=0;i<3;i++){
+    stateSelectorButton.setPosition(650+40*i,20);
+    stateSelectorButton.setFillColor(debugState==i?sf::Color::Red:sf::Color(150,150,150));
+    window.draw(stateSelectorButton);
+
+    if(Input.leftClick&&Input.mouse.y>=20&&Input.mouse.y<=50&&
+       debugState!=i&&Input.mouse.x>=650+40*i&&Input.mouse.x<=680+40*i){
+      debugState=i;
+      bucketDraw.windowBeg=0;
+    }
+  }
 }
 
 void debugShowAndWait(bool val){
@@ -89,8 +105,14 @@ void debugShowAndWait(bool val){
     //y hacer el segundo dibujado solo cuando se actualize beg
     drawScreen([=](){
                  properDraw(stateMem);
-                 debugDrawMemories();
-                 debugShowMove(val);
+
+                 handleModeSelectors();
+                 if(debugState==2){
+                   debugDrawMemories();
+                   debugShowMove(val);
+                 }else{
+                   debugUpdateAndDrawBuckets();
+                 }
                });
     /*
       textValMem.setString(std::to_string(ps->turno));
@@ -98,8 +120,10 @@ void debugShowAndWait(bool val){
       window.draw(textValMem);
     */
     handleSystemEvents();
-    if(Input.c||Input.x||(Input.z))
+    if(Input.c||Input.x||(Input.z)){
+      moveW.jumpToWord=true;
       break;
+    }
     sleep(milliseconds(20));
   }
   if(Input.x)
@@ -150,25 +174,24 @@ void debugDrawMemoryCells(visualWindow* vw,auto memory){
 
 normalHolder* nhLastFrame=nullptr;
 void computeWindowHeights(){
-  if(actualHolder.nh==nhLastFrame)
-    return;
-  nhLastFrame=actualHolder.nh;
+  if(actualHolder.nh!=nhLastFrame){
+    nhLastFrame=actualHolder.nh;
 
-  moveW.beg=0;
-  memDrawWindows[0].beg=0;
-  memDrawWindows[1].beg=0;
-  memDrawWindows[2].beg=0;
-  memDrawWindows[3].beg=0;
+    moveW.beg=0;
+    memDrawWindows[0].beg=0;
+    memDrawWindows[1].beg=0;
+    memDrawWindows[2].beg=0;
+    memDrawWindows[3].beg=0;
 
-  memDrawWindows[2].cells=actualHolder.nh->base->memLocal.size;
-  memDrawWindows[3].cells=actualHolder.h->piece->memPieceSize;
-
+    memDrawWindows[2].cells=actualHolder.h->piece->memPieceSize;
+    memDrawWindows[3].cells=actualHolder.nh->base->memLocal.size;
+  }
   for(visualWindow& w:memDrawWindows){
     w.rows=(w.cells+cellsPerRow-1)/cellsPerRow;
     w.fixed=false;
   }
 
-  int available=8;
+  int available=9-std::min(4,moveW.y);
   int leftToFix=4,leftToFixBefore;
   int parcel;
 
@@ -210,7 +233,7 @@ void computeWindowHeights(){
     }
   }
   moveW.height=sum;
-  moveW.size=available+3;
+  moveW.size=available+3+std::min(4,moveW.y);
   return;
 }
 
@@ -283,7 +306,7 @@ void debugShowMove(bool val){
     }
     mi++;
   }
-  operador* rootOp=(*(actualHolder.h->piece->movs.beg+mi)).root;
+  operador* rootOp=(*(actualHolder.h->piece->movs.beg+mi + (actualHolder.h->piece->spawner?-1:0))).root;
 
   moveW.x=moveW.y=0;
   moveW.madeIt=val;
@@ -294,7 +317,7 @@ void debugShowMove(bool val){
     if(Input.wheelDelta!=0&&
        Input.mouse.x>530&&Input.mouse.x<530+cellSpacing*cellsPerRow&&
        Input.mouse.y>yOffset&&Input.mouse.y<yOffset+45*moveW.size){
-      updateScrolling(&moveW.beg,moveW.y-moveW.size);
+      updateScrolling(&moveW.beg,moveW.y-moveW.size+1);//no estoy seguro de donde sale el +1
     }
   }
 }
@@ -315,8 +338,9 @@ void drawText(char* name,int colorType){
 
   //despues se puede acomodar para moverse antes de salirse de foco si quiero, voy a necesitar
   //una variable para mirar si hay mas lineas abajo para no bajar si no hay nada
-  if(wordInFocus&&!inWindowRange){
+  if(moveW.jumpToWord&&wordInFocus&&!inWindowRange){
     moveW.beg=moveW.y-moveW.size+1;
+    moveW.jumpToWord=false;
     //esto es para cambiar el focus si la palabra actual esta fuera de rango
     //no puedo cambiarla inmediatemente porque lo anterior ya se dibujo (y se necesita para calcular el offset),
     //si quisiera hacerlo bien tendría que diferir el dibujado para que sea opcional o actualizar el offset
@@ -391,6 +415,7 @@ void drawNormalText(operador* op){
   dirs[j]=0;
   drawText(dirs,an==op?3:0);
 
+
   normal* n=(normal*)op;
   for(bool(**c)(void)=n->conds.beg;
       c != n->conds.after;
@@ -442,10 +467,12 @@ void drawMoveText(operador* op){
                                   drawMoveText(*excOp);
                                },inRange);
   }break;
-  case ISOL:{
+  case ISOL:
+  case ISOLNRM:{
     drawMoveTextInsideOp("isol",[=](){drawMoveText(((isol*)op)->inside);},inRange);
   }break;
-  case DESOPT:{
+  case DESOPT:
+  case DESOPTNRM:{
     desopt* d=(desopt*)op;
     drawMoveTextInsideOp("desopt",[=](){
                                      for(operador** desOp=d->ops.beg;desOp!=d->ops.after;desOp++){
@@ -466,8 +493,6 @@ RectangleShape rect;
 Text operatorLetter;
 Text textLabel;
 
-int debugState=2;//0 movHolder 1 opBucket 2 movHolderBucket
-sf::RectangleShape stateSelectorButton;
 
 //en vez de inyectar codigo en la creacion de operadores/movHolders
 //preferi rerecorrer el arbol aca. La ventaja de esto es que no ensucio
@@ -482,13 +507,6 @@ struct HolderColor{
 };
 vector<HolderColor> holderColors;//tipo un hash pero a lo perro con un for
 
-struct{
-  bucket* bkt;
-  int end;//para manejar poner la cola de exc, medio hack pero prefiero hacer eso a arrastrar calculos de tamaño
-  int windowBeg;
-  int maxHeight;
-  int actualBucket;//cuando hay mas de un bucket, por ahora en movHolders nomas
-}bucketDraw;
 int lineSize=512;
 int windowSize=22;
 
@@ -538,12 +556,12 @@ void drawRegionLine(int height,int beg,int end,sf::Color color){
     return;
 
   sf::Color borderColor(std::max(color.r-30,0),std::max(color.g-30,0),std::max(color.b-30,0),255);
-  rect.setSize(sf::Vector2f(end-beg,24));
+  rect.setSize(sf::Vector2f(end-beg,22));
   rect.setPosition(550+beg,60+(height-bucketDraw.windowBeg)*20);
   rect.setFillColor(borderColor);
   window.draw(rect);
 
-  rect.setSize(sf::Vector2f(end-beg-8,16));
+  rect.setSize(sf::Vector2f(end-beg-8,14));
   rect.setPosition(550+beg+4,60+(height-bucketDraw.windowBeg)*20+4);
   rect.setFillColor(color);
   window.draw(rect);
@@ -553,6 +571,22 @@ void drawRegionLine(int height,int beg,int end,sf::Color color){
     textLabel.setString(std::to_string(height/2)+"k");
     window.draw(textLabel);
   }
+}
+
+void drawBucketDelimitator(void* ptr){
+  int beg=(int)((char*)ptr-bucketDraw.bkt->data);
+  assert(beg>=0&&beg<bucketDraw.bkt->size);
+
+  int by=beg/lineSize;
+  int bx=beg%lineSize;
+
+  if(by<bucketDraw.windowBeg||by>=bucketDraw.windowBeg+windowSize)
+    return;
+
+  rect.setSize(sf::Vector2f(2,24));
+  rect.setPosition(550+bx,60+(by-bucketDraw.windowBeg)*20);
+  rect.setFillColor(sf::Color(210,210,210));
+  window.draw(rect);
 }
 
 void drawBucketElement(void* ptr,int size,sf::Color color,char letter=' '){
@@ -611,11 +645,13 @@ void drawBucketOperator(operador* op,sf::Color color){
     }
     drawBucketElement(bucketDraw.bkt->data+bucketDraw.end,size(e->ops),color,' ');
   }break;
-  case ISOL:{
+  case ISOL:
+  case ISOLNRM:{
     drawBucketElement(op,sizeof(isol),color,'i');
     drawBucketOperator(((isol*)op)->inside,colorFade);
   }break;
-  case DESOPT:{
+  case DESOPT:
+  case DESOPTNRM:{
     desopt* d=(desopt*)op;
     drawBucketElement(op,sizeof(desopt)+size(d->ops)+size(d->movSizes),color,'f');
     for(operador** desOp=d->ops.beg;desOp!=d->ops.after;desOp++){
@@ -640,7 +676,9 @@ void drawBucketMovholder(movHolder* mh,sf::Color color){
     for(int i=0;i<dh->cantElems;i++){
       drawBucketMovholder((movHolder*)(dh->movs.beg+dh->op->iterSize*i),colorFade);
     }
-    drawBucketElement((movHolder*)(dh->movs.beg+dh->cantElems*dh->op->iterSize),dh->op->insideSize-dh->op->iterSize*dh->cantElems,darkenColor(colorFade,40));
+    int vacantSpace=dh->op->insideSize-dh->op->iterSize*dh->cantElems;
+    if(vacantSpace)
+      drawBucketElement((movHolder*)(dh->movs.beg+dh->cantElems*dh->op->iterSize),vacantSpace,darkenColor(colorFade,40));
   }else if(mh->table==&excTable){
     excHolder* eh=(excHolder*)mh;
     drawBucketElement(mh,sizeof(excHolder)+size(eh->movs),color,'e');
@@ -656,6 +694,10 @@ void drawBucketMovholder(movHolder* mh,sf::Color color){
     drawBucketElement(dh,sizeof(desoptHolder)+dh->op->desoptInsideSize,darkenColor(colorFade,40));
     drawBucketElement(dh,sizeof(desoptHolder),color,'f');
     drawBucketdesoptHNodes(dh,dh->movs,color);
+  }else if(mh->table==&spawnerTable){
+    drawBucketElement(mh,sizeof(spawnerGen),color,'s');
+  }else{
+    drawBucketElement(mh,6,color,'?');
   }
   if(mh->sig!=nullptr)
     drawBucketMovholder(mh->sig,color);
@@ -703,38 +745,20 @@ void drawHolderData(Holder* h,int x,int y){
     //por ahora cada holder o esta entero o no esta en el bucket
     for(movHolder** mh=h->movs.beg;mh!=h->movs.after;mh++){
       drawBucketMovholder(*mh,color);
-      drawBucketElement(*mh,0,sf::Color::White);
+      drawBucketDelimitator(*mh);
     }
   }
 }
 
 void debugUpdateAndDrawBuckets(){
-  updateScrolling(&bucketDraw.windowBeg,bucketDraw.maxHeight);
-
-  stateSelectorButton.setPosition(650,20);
-  stateSelectorButton.setFillColor(debugState==1?sf::Color::Red:sf::Color(150,150,150));
-  window.draw(stateSelectorButton);
-  stateSelectorButton.setPosition(690,20);
-  stateSelectorButton.setFillColor(debugState==2?sf::Color::Red:sf::Color(150,150,150));
-  window.draw(stateSelectorButton);
-
-  if(Input.leftClick&&Input.mouse.y>=20&&Input.mouse.y<=50){
-    if(debugState!=1&&Input.mouse.x>=650&&Input.mouse.x<=680){
-      debugState=1;
-      bucketDraw.windowBeg=0;
-    }
-    else if(debugState!=2&&Input.mouse.x>=690&&Input.mouse.x<=720){
-      debugState=2;
-      bucketDraw.windowBeg=0;
-    }
-  }
+  updateScrolling(&bucketDraw.windowBeg,bucketDraw.maxScrollingHeight);
 
   properState* ps=(properState*)stateMem;
 
   bucket* bucket=debugState==1?&ps->pieceOps:&ps->gameState;
 
   bucketDraw.bkt=bucket;
-  bucketDraw.maxHeight=bucket->size/lineSize - windowSize;
+  bucketDraw.maxScrollingHeight=std::max(bucket->size/lineSize - windowSize,0);
 
   //recorro el arbol cada vez porque la eficiencia no importa aca
   //ademas como guardar la informacion para que retomarla sea comodo no es obvio,
@@ -763,6 +787,7 @@ void debugUpdateAndDrawBuckets(){
 
       for(pBase* pb=p->movs.beg;pb!=p->movs.after;pb++){
         drawBucketOperator(pb->root,pieceColors[i]);
+        drawBucketDelimitator(pb->root);
       }
     }
   }else{
@@ -811,7 +836,7 @@ void debugUpdateAndDrawBuckets(){
   }
 
   static int vel;
-  vel+=118;
+  vel+=267;
   if(vel/2<bucket->size)
     drawBucketElement(bucket->data+vel/2,vel,sf::Color::Red,'X');
 

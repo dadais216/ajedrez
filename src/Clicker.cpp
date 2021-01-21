@@ -5,9 +5,6 @@ bool Clicker::drawClickers;
 vector<Clicker> clickers;
 v getActualPos(v,v);
 
-#if debugMode
-bool debugInCondition=true;
-#endif
 
 void makeClicker(vector<normalHolder*>* normales,Holder* h){
   Clicker* clicker=newElem(&clickers);

@@ -31,7 +31,8 @@
 #TW Tmover TW vacio spwn 1 color 0 0 255;
 #desliz w mover madd l0 1 mless l0 3 end; 
 #w mset l6 8 mset p6 8 mset t116 8 mset g26 8 mover;
-w mover;
+#w mover;
+mset p0 4 w mover;
 
 :2 1 #torre
 desliz W mover c end W captura;

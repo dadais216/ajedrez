@@ -23,10 +23,12 @@ std::map<void(*)(),char*> funcToWord;
 //estado de l0 antes de meterle el 3, y esto haría dibujados especialmente erroneos si tengo indireccion ej mset ll0 3
 vector<int> debugDrawChannel;
 enum{
-     tdebugSetIndirectColor=0,tdebugUnsetIndirectColor,
+     tdebugSetIndirectColor=-99999,tdebugUnsetIndirectColor,
      tdebugDrawPos, 
 };
 int debugMultiParameterBegin;
+
+bool debugInCondition=true;//para bloquear los getters que se comparten en acciones y condiciones de tocar cosas debug. Tambien podría dejar que las toquen y limpiar
 
 //hay un presupuesto de alturas para cada ventana, por default:
 //las memorias como se sabe cuanto van a ocupar se le intenta dar suficiente para que entre todas
@@ -37,6 +39,7 @@ struct visualWindow{
     struct{
       int x,y;//para texto
       bool madeIt;
+      bool jumpToWord;
     };
     struct{
       int cells;//para memorias
@@ -50,7 +53,16 @@ struct visualWindow{
   int beg=0;
 };
 
+struct{
+  bucket* bkt;
+  int end;//para manejar poner la cola de exc, medio hack pero prefiero hacer eso a arrastrar calculos de tamaño
+  int windowBeg;
+  int maxScrollingHeight;
+  int actualBucket;//cuando hay mas de un bucket, por ahora en movHolders nomas
+}bucketDraw;
 
+int debugState=2;//0 movHolder 1 opBucket 2 moveText
+void handleModeSelectors();
 void initDebugSystem();
 void debugChangeMoveResetWindows();
 void computeWindowHeights();
