@@ -17,7 +17,7 @@ struct Piece{
   int memPieceSize;
   int hsSize;
   //bool kamikase;
-  bool spawner;
+  //bool spawner;
 };
 
 extern vector<Tile*> pisados;

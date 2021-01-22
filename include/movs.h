@@ -78,6 +78,11 @@ struct Holder;
 vector<Holder*> justSpawned;
 
 
+//antes cada acct era un objeto polimorfico en vez de una funcion, por lo que algunos podrian tener datos propios. Como ahora tengo un nivel de indireccion menos no puedo hacer eso,
+//osea lo podría hacer pero tendría algo igual que lo anterior y podría probar otra cosa.
+//lo que voy a hacer es poner la informacion que necesiten los acc/cond en el mismo buffer en el que estan, despues de si,
+//indicando al que recorre el buffer que los ignore. Lo malo de esto es que por ahi entorpece la iteracion, aunque seguro es mejor que tener un nivel de indireccion mas.
+//Lo otro malo es que cada dato tiene que caber en el tamaño de un puntero de funcion
 void* getNextInBuffer();
 
 void mov();

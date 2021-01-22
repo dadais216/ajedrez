@@ -121,9 +121,19 @@ void executeClicker(Clicker* c,board* brd){
   activateTriggers();
   pisados.size=0;
 
-  try{
+  //estos chequeos antes estaban adentro de movholders especiales, que hacian la generacion de spawners y
+  //un longjmp en caso de que fuera un kamikase que se suicido. Testeando vi que mover ese codigo ahi no
+  //hace un cambio en la eficiencia, asi que lo saque porque tener mas movholders, y en especial esos que
+  //eran hacks, agregaba complejidad y no aportaba nada a cambio. Ademas determinar si una pieza es kamikase
+  //es complejo, goto hace que haya muchos falsos positivos
+  for(Holder* h:justSpawned){
+    if(c->h!=h)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
+      generar(h);
+  }
+  if(c->h->inPlay){
     generar(c->h);
-  }catch(...){}//lngjmp para kamikases
+  }
+  justSpawned.size=0;
 
   ///una pieza nunca activa sus propios triggers porque al moverse los invalida
   ///necesita generar todos sus movimientos devuelta de forma explicita

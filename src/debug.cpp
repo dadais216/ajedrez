@@ -306,7 +306,7 @@ void debugShowMove(bool val){
     }
     mi++;
   }
-  operador* rootOp=(*(actualHolder.h->piece->movs.beg+mi + (actualHolder.h->piece->spawner?-1:0))).root;
+  operador* rootOp=(*(actualHolder.h->piece->movs.beg+mi/*+ (actualHolder.h->piece->spawner?-1:0)*/)).root;
 
   moveW.x=moveW.y=0;
   moveW.madeIt=val;
@@ -694,9 +694,10 @@ void drawBucketMovholder(movHolder* mh,sf::Color color){
     drawBucketElement(dh,sizeof(desoptHolder)+dh->op->desoptInsideSize,darkenColor(colorFade,40));
     drawBucketElement(dh,sizeof(desoptHolder),color,'f');
     drawBucketdesoptHNodes(dh,dh->movs,color);
-  }else if(mh->table==&spawnerTable){
+  }/*else if(mh->table==&spawnerTable){
     drawBucketElement(mh,sizeof(spawnerGen),color,'s');
-  }else{
+  }*/else{
+    fail("movholder no reconocido probablemente sea fail que no lo puse todavia\n");
     drawBucketElement(mh,6,color,'?');
   }
   if(mh->sig!=nullptr)

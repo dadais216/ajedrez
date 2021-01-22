@@ -1,12 +1,50 @@
 
 
-en algun momento rompi el tema del click implicito e isols, por ejemplo el peon no hace lo que deberia
+
+relPos esta en operador y holder por algun motivo¿
+ver si bools esta inicializado en movholders
+
+----
+mover step de tile a holder
+
+----
+es medio raro que en holder tengo las bases y los movimientos iniciales, podria tener las bases nomas. Hay que cambiar el contador de tamaño tambien
+
+----
+se podria sacar la base de cada movholder, hasta ahora estaba porque es la forma que tengo de conseguir la base en la reaccion, pero como ahora busco por rangos puedo sacarlo con un par de comparaciones. No sé si es mejor igual
+
+---
+
+donde estan los holders? en el bucket?
+
+---
+
+ver lo de construir antes en desliz, creo que desopt tambien?
+
+---
+
+hacer que exc tenga la caja antes 
+
+---
+
+reemplazar buckets por vectores en operador y movholder
+
+---
+
+hay cosas que se pueden mover al lado de pieza, como offsets y eso. Mover todo lo posible
+cambiar sig por centinela? medio experimental. Creo que no igual porque sig no esta al final de los operadores con tamaño variable
+
+---
+
+
+
+
+agregar fail al sistema debug
 
 ----
 
- En vez de manejar eventos en sistemas internos como el de humanTurn o el stall de debug volcar todo en un solo sistema de eventos, en otro thread. Humano y turno agregarían mas respuestas a eventos con un if o un array. Con esto se va a poder mover la ventana y tener el visualizador de buckets en mitad de un movimiento y cosas asi
+en algun momento rompi el tema del click implicito e isols, por ejemplo el peon no hace lo que deberia
 
-tecnicamente se podría hacer sin usar un thread pero para hacer eso necesito hacer que el codigo pase por la cola de eventos y vuelva a donde estaba. En el caso de humanTurn no sería muy complicado, pero en el caso de movimientos debug si. Tendría que retornar de toda esa cadena y despues reconstruirla de alguna forma, y es un quilombo al pedo. Sincronizando threads consigo lo mismo
 
 ----
 
@@ -80,9 +118,6 @@ se avanzaria por (sizeof(struct) + sizeof(pointer) - 1)/sizeof(pointer)
 
 ----
 
-relPos esta en operador y holder por algun motivo¿
-
-----
 
 Creo que no voy a hacer test que verifiquen que las cosas anden bien, los test de velocidad ya me dicen si alguien rompe, y si algo anda distinto se deberia ver en el tiempo. 
 
@@ -90,13 +125,7 @@ Los test que verifiquen cosas se podrían hacer teniendo condiciones y acciones 
 
 ----
 
-mover step de tile a holder
 
-----
-
-cambiar sig por centinela? medio experimental. Creo que no igual porque sig no esta al final de los operadores con tamaño variable
-
----
 
 codigo no ligado a pieza que corre todos los turnos. Con eso se puede implementar corte al paso, haciendo que el peon inicial al moverse ponga un peon tecnico que es eliminado por el codigo general (al que se le pasa la pos del peon), de paso hacer una pieza que tire un orbe que se mueve una tile cada turno.
 Tambien implementa piezas que reaccionen a turnos actualizando una memoria global todos los turnos. Tambien maneja tener turnos como que avanza 1 por jugador o 1 por ronda.
@@ -127,13 +156,7 @@ Por ahi tener funciones generateOnFirstNormal en vez de guardar memoria variable
 
 ----
 
-ver si bools esta inicializado en movholders
 
-----
-
-es medio raro que en holder tengo las bases y los movimientos iniciales, podria tener las bases nomas. Hay que cambiar el contador de tamaño tambien
-
-----
 
 medir tiempo de carga tambien, porque tiene un impacto en la IA. Seria el tiempo que tarda en cargar todos los clickers, promediado.
 
@@ -155,9 +178,6 @@ el sistema para no copiar todo el bloque de memoria es que cada movimiento sepa 
 
 ---
 
-se podria sacar la base de cada movholder, hasta ahora estaba porque es la forma que tengo de conseguir la base en la reaccion, pero como ahora busco por rangos puedo sacarlo con un par de comparaciones. No sé si es mejor igual
-
----
 
 movimiento (wasd) antes de operador hace normal al pedo
 
@@ -175,9 +195,10 @@ pensar como hacer el tema de movimientos que dependen de bando. Si termino yendo
 
 ---
 
-hay cosas que se pueden mover al lado de pieza, como offsets y eso
+hacer que los macros no alteren el orden, es una optimizacion al pedo y molesta
 
 ---
+
 
 probar si hacer todas las funciones estaticas hace mas rapida la compilacion, deberia
 
@@ -195,14 +216,7 @@ las acciones en condiciones, que creo que voy a limitar a  un mset nomas, activa
 
 ----
 
-ver que tan caro seria tener spawners y kamikases implementados con ifs. Puede que haya hecho trabajo al pedo con eso
-Los kamikases ahora estan inhabilitados
 
-Hacer un sistema que determine que pieza es kamikase es muy complejo, y en muchos casos va a tener falsos positivos (cualquier pieza que haga una captura a partir de una posicion que venga de memoria o despues de un goto). Podría hacer que el usuario marque que pieza es kamikase explicitamente. O hacer que el if mire eso y no hacer nada de lo otro.
-
-spawner no tiene problemas pero si el if no molesta es mas simple
-
----
 
 small vector optimization para normales y eso? 
 
@@ -258,7 +272,7 @@ Si decido hacer que se puedan correr acciones aleatorias, no solo msets, podría
 
 ----
 
-algun chequeo de bordes opcional cuando se esta trabajando con memoria en el lenguaje?
+algun chequeo de bordes opcional cuando se esta trabajando con memoria en el lenguaje? no estoy seguro de que tan util sería, un assert vs un crash posible
 
 ----
 
@@ -309,9 +323,6 @@ Y se expande a ???. Por ahora se expande a "b a b", porque no reacciona al cambi
 
 ----
 
-se podria hacer un visualizador de memoria. Lo tendría que haber hecho antes pero por ahi sirve. Mas que nada si empiezo a cambiar la estructura para probar boludeces
-----
-
 comando? que repite turno, si hay solo un clicker se selecciona automaticamente.
 
 ----
@@ -337,8 +348,6 @@ la version interpretada se va a usar en el editor, y va a tener todas las bolude
 
 los vectores temporales podrian compartir una memoria. Es algo re opcional igual, si sale sale
 ----
-eventos del SO deberian estar en un thread aparte diria
----
 
 limpiar triggers falsos en tiempo muerto? osea cuando esta esperando al jugador
 

@@ -36,7 +36,7 @@ void initParser(parseData* pd){
   rel(T);                                       \
   funcToWord[(void(*)(void))&T]=#T;
 #else
-#define relC(T)  rel(T);
+#define relF(T)  rel(T);
 #endif
 
   rel(sprt);
@@ -344,7 +344,7 @@ bool wordIsGetter(char* b,char* e){
   for(char* s=b;s!=e;s++){
     if(*s!='g'&&*s!='t'&&*s!='p'&&*s!='l'){
       if(s+1==e){
-        if(*s=='x'||*s=='y') return true;
+        if(*s=='x'||*s=='y'||*s=='Y') return true;
       }
       return wordIsNum(s,e);
     }

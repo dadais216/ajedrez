@@ -146,9 +146,6 @@ void* getNextInBuffer(){
 
 
 void spwn(){
-  //antes cada acct era un objeto polimorfico en vez de una funcion, por lo que algunos podrian tener datos propios. Como ahora tengo un nivel de indireccion menos no puedo hacer eso, osea lo podría hacer pero tendría algo igual que lo anterior y podría probar otra cosa.
-  //lo que voy a hacer es poner la informacion que necesiten los acc/cond en el mismo buffer en el que estan, despues de si, indicando al que recorre el buffer que los ignore. Lo malo de esto es que por ahi entorpece la iteracion, aunque seguro es mejor que tener un nivel de indireccion mal. Lo otro malo es que cada dato tiene que caber en el tamaño de un puntero de funcion
-
   int codedId=(intptr)getNextInBuffer();
   int ind=abs(codedId)-1;
   bool bando=codedId>0?actualHolder.h->bando:!actualHolder.h->bando;
@@ -173,6 +170,10 @@ void spwn(){
 
   push(&justSpawned,actualHolder.tile->holder);
   push(&pisados,actualHolder.tile);
+
+  //tecnicamente podría generar la pieza nueva inmediatamente, el problema es que como las acciones de la actual no terminaron
+  //va a generarse con el tablero en un estado erroneo. Cuando la actual termine se van a activar triggers y se va a reaccionar
+  //y regenerar. Si no hay problemas con el step en principio esto funcionaria, pero basicamente esta generando 2 veces y no me cierra.
 }
 
 

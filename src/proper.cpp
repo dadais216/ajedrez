@@ -47,6 +47,10 @@ void humanTurn(bool bando,board* brd){
                    if(debugState!=2)
                      debugUpdateAndDrawBuckets();
                  });
+#else
+      drawScreen([&](){
+                   properDraw(stateMem);
+                 });
 #endif
 
 

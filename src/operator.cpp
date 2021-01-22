@@ -40,12 +40,12 @@ void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
     failIf(pop(&p)!=tmovEnd,"missing ;");
   }
   assert(p.ind==tokens->size);
-  piece->spawner=pd->spawner;
+  //piece->spawner=pd->spawner;
   //piece->kamikase=p.kamikase;
   piece->hsSize+=sizeof(Holder)
     +pd->memPieceSize*sizeof(int)
     +pd->movQ*(sizeof(movHolder*)+sizeof(Base))
-    +(pd->spawner?(sizeof(movHolder*)+sizeof(Base)+sizeof(spawnerGen)):0);
+    /*+(pd->spawner?(sizeof(movHolder*)+sizeof(Base)+sizeof(spawnerGen)):0)*/;
   piece->ind=pieces->size;
   push(pieces,piece);
 }

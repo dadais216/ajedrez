@@ -32,7 +32,7 @@
 #desliz w mover madd l0 1 mless l0 3 end; 
 #w mset l6 8 mset p6 8 mset t116 8 mset g26 8 mover;
 #w mover;
-mset p0 4 w mover;
+w mover spwn 3;
 
 :2 1 #torre
 desliz W mover c end W captura;
@@ -304,7 +304,7 @@ msize l 60 mreset 30 desliz exc d mover or ss mover fail end w mover end;
 
 
 :21 0 #peon 
->promover = isol mcmp y 7 capt isol spwn 23 end spwn 25 end; 
+>promover = exc mcmp Y 7 capt isol spwn 23 c end spwn 25 or pass end c; 
 w Tmover mset p0 1 promover;
 >X=wa|wd;
 X Tcaptura mset p0 1 promover;
@@ -376,16 +376,16 @@ desliz isol desliz isol mover c end d end end s end;
 #pero bueno
 
 :34 2 #desopt
->X&Y=wa&wd|sa&sd;
-desopt 25 X mover c or Y mover c end;
+>X&Z=wa&wd|sa&sd;
+desopt 25 X mover c or Z mover c end;
 
 :35 2 #spam en lugar de desopt
 >X=wa|wd;
->Y=X X X|X X|X|;
-X Y mover;
+>Z=X X X|X X|X|;
+X Z mover;
 >X=sa|sd;
->Y=X X X|X X|X|;
-X Y mover;
+>Z=X X X|X X|X|;
+X Z mover;
 
 :36 6 #dama
 

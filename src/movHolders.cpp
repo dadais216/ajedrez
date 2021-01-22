@@ -984,7 +984,7 @@ normalHolder* getNextNormalH(movHolder* m){
 
 
 
-
+/*
 void generarNewlySpawned(movHolder* m){
   fromCast(s,m,spawnerGen*);
 
@@ -1030,6 +1030,7 @@ void initKamikase(kamikaseCntrl* k,Holder* h){
   k->table=&kamikaseTable;
   k->h=h;
 }
+*/
 
 /*
 sobre isol/desopt y memoria no reseteable:

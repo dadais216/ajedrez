@@ -123,6 +123,7 @@ void initDesoptNonResetMemH(desopt*,Base*,char**);
 
 void initFailH(char**);
 
+/*
 //comparten la tabla y base con los movHolders
 struct spawnerGen{
   virtualTableMov* table;
@@ -137,7 +138,7 @@ struct kamikaseCntrl{
 };
 void initKamikase(kamikaseCntrl*,Holder*);
 void kamikaseCheckAlive(movHolder*);
-
+*/
 
 
 #endif // MOVHOLDERS_H
