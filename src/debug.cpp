@@ -741,10 +741,15 @@ void drawHolderData(Holder* h,int x,int y){
     color=darkenColor(color,150);
   }
 
+  drawBucketElement(h,sizeof(Holder)+size(h->piece->movs),color,'H');
+  if(h->piece->memPieceSize)
+    drawBucketElement(((char*)h)+sizeof(Holder)+size(h->piece->movs),h->piece->memPieceSize*sizeof(int),color,'p');
+
   char* firstMov=(char*)*h->movs.beg;
   if(firstMov>=bucketDraw.bkt->data&&firstMov<bucketDraw.bkt->data+bucketDraw.bkt->size){
     //por ahora cada holder o esta entero o no esta en el bucket
     for(movHolder** mh=h->movs.beg;mh!=h->movs.after;mh++){
+      drawBucketElement(((char*)*mh)-sizeof(Base),sizeof(Base),color,'b');
       drawBucketMovholder(*mh,color);
       drawBucketDelimitator(*mh);
     }

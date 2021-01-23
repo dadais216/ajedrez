@@ -1,21 +1,8 @@
 
 
 
-relPos esta en operador y holder por algun motivo¿
-ver si bools esta inicializado en movholders
-
 ----
 mover step de tile a holder
-
-----
-es medio raro que en holder tengo las bases y los movimientos iniciales, podria tener las bases nomas. Hay que cambiar el contador de tamaño tambien
-
-----
-se podria sacar la base de cada movholder, hasta ahora estaba porque es la forma que tengo de conseguir la base en la reaccion, pero como ahora busco por rangos puedo sacarlo con un par de comparaciones. No sé si es mejor igual
-
----
-
-donde estan los holders? en el bucket?
 
 ---
 
@@ -28,6 +15,11 @@ hacer que exc tenga la caja antes
 ---
 
 reemplazar buckets por vectores en operador y movholder
+
+---
+
+cambiar el sistema de triggers, en vez de tener un puntero a normal que tiene una base, se puede tener en cada normal 2 ints, que indiquen holder y numero de movimiento (ocuparia lo mismo). Si muevo memLocal al lado de operador ya no hay motivo para tener bases. Creo que los otros operadores que usan bases podrían usar una variable global y listo.
+En un momento considere no guardar informacion en trigger y buscar el movimiento y holder haciendo comparaciones de rango, pero necesito algo contra lo que comparar, asi que algo de informacion voy a tener que pasar, y ya que hago eso pongo todos los datos y listo. Son 2 ints nomas
 
 ---
 

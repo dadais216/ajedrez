@@ -51,16 +51,13 @@ struct memLocalt{
   int resetUntil;
 };
 struct Base{ ///datos compartidos de un movimiento entero
-  Holder* h;
+  Holder* h;//cte entre movimientos
   movHolder* root;
   memLocalt memLocal;//estos son cte entre todos los holders por lo que podrian estar en algun lugar del lado de operador
 };
 //@optim? se podria hacer que esta base sea global durante la generacion para no tenerla apuntada desde cada
 //movholder. el problema esta que durante la reaccion necesito recuperar esa informacion, y la unica forma de
 //hacerlo es cargandolo en los triggers, lo que puede que termine haciendo todo mas lento?
-//@optim lo que se podria hacer para solucionar esto es guardar en operador el offset de la base, y usar eso
-//en lugar de informacion en trigger para recuperar el estado en reaccion (osea, cambiaria un puntero en cada
-//movHolder por un offset en normal y el uso de una global)
 
 struct movHolder{
   virtualTableMov* table;
@@ -74,7 +71,6 @@ struct normalHolder:public movHolder{
     barray<int> memAct;
     //no separo entre piezas con y sin memoria porque duplicaria mucho codigo.
     //Cuando haga la version compilada puedo hacer esa optimizacion y cosas mas especificas
-    v relPos; //pos actual = relPös + offset. Todas las acciones y condiciones la comparten
     v pos; //pos actual. @check por que se guarda?
 };
 void drawNormalH(normalHolder*);

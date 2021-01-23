@@ -87,7 +87,8 @@ void generarNormalH(movHolder* m){
   normalHolder* n=(normalHolder*) m;
   actualHolder.nh=n;
   memcpy(n->memAct.beg,memMov.data,n->base->memLocal.size*sizeof(int));
-  n->pos=getActualPos(n->relPos,offset);//pos se calcula siempre porque se usa para actualizar offset
+
+  n->pos=getActualPos(n->op->relPos,offset);//pos se calcula siempre porque se usa para actualizar offset
   if(n->bools&doEsp){
     if(espFail(n->pos)){
       n->bools&=~(valorFinal|valorCadena|valor);
@@ -121,7 +122,7 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
     pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
     generarProperNormalH(self);
     if(!(self->bools&valorFinal)){
-      offset=getOffset(self->relPos,self->pos);
+      offset=getOffset(self->op->relPos,self->pos);
       memcpy(memMov.data,self->memAct.beg,self->base->memLocal.size*sizeof(int));
       //esta restauracion esta para que el operador que contenga reciba el offset y mem local correcta
       //la alternativa a hacer esto es que todos los operadores contenedores guarden offset y memoria local
@@ -130,7 +131,7 @@ void reaccionarNormalH(movHolder* m,normalHolder* nh){
   }else if(self->bools&valor){
     reaccionarSig(self,nh);
     if(!(self->bools&valorFinal)){
-      offset=getOffset(self->relPos,self->pos);
+      offset=getOffset(self->op->relPos,self->pos);
       memcpy(memMov.data,self->memAct.beg,self->base->memLocal.size*sizeof(int));
     }
   }
@@ -157,7 +158,7 @@ void reaccionarNormalH(movHolder* m,nhBuffer* nhs){
       pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
       generarProperNormalH(s);
       if(!(s->bools&valorFinal)){
-        offset=getOffset(s->relPos,s->pos);
+        offset=getOffset(s->op->relPos,s->pos);
         memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
       }
       nhs->beg++;//faltaria reordenar si no es el primero pero si hago lo de filtrar no es necesario
@@ -167,7 +168,7 @@ void reaccionarNormalH(movHolder* m,nhBuffer* nhs){
   if(s->bools&valor){
     reaccionarSig(s,nhs);
     if(!(s->bools&valorFinal)){
-      offset=getOffset(s->relPos,s->pos);
+      offset=getOffset(s->op->relPos,s->pos);
       memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
     }
   }
@@ -247,7 +248,7 @@ void initNormalH(normal* org,Base* base_,char** head){
   n->memAct.after=((int*)*head)+base_->memLocal.size;
   *head=(char*)n->memAct.after;
 
-  n->relPos=n->op->relPos;
+  n->op->relPos=n->op->relPos;
 }
 
 
@@ -863,7 +864,7 @@ void initFailH(char** head){
 
 #define storeFirstNormalState(movHolder)              \
   normalHolder* tempNh=getNextNormalH(movHolder);     \
-  v tempPos=getOffset(tempNh->relPos,tempNh->pos);    \
+  v tempPos=getOffset(tempNh->op->relPos,tempNh->pos);    \
   memcpy(tempLocalMem,tempNh->memAct.beg,resetSize);
 normalHolder* getNextNormalH(movHolder*);
 
