@@ -196,7 +196,7 @@ void reaccionarNormalH(movHolder* m,nhBuffer* nhs){
  */
 
 void accionarNormalH(normalHolder* n){
-  actualHolder.h=n->base->h;
+  actualHolder.h=n->base->holder;
   actualHolder.nh=n;
   actualHolder.tile=tile(actualHolder.brd,n->pos);
 
@@ -214,7 +214,7 @@ void cargarNormalH(movHolder* m,vector<normalHolder*>* norms){
   if(!(n->bools&valorCadena)) return;
   push(norms,n);
   if(n->bools&makeClick)
-    makeClicker(norms,n->base->h);
+    makeClicker(norms,n->base->holder);
   if(n->sig)
     n->sig->table->cargar(n->sig,norms);
 }
@@ -363,7 +363,7 @@ void cargarDeslizH(movHolder* m,vector<normalHolder*>* norms){
     mov->table->cargar(mov,norms);
   }
   if(d->bools&makeClick&&!(norms->size==0)) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
-    makeClicker(norms,d->base->h);
+    makeClicker(norms,d->base->holder);
   if(d->sig)
     d->sig->table->cargar(d->sig,norms);
 }
@@ -489,7 +489,7 @@ void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
   movHolder* branch=e->movs[e->actualBranch];
   branch->table->cargar(branch,norms);
   if(e->bools&makeClick)
-    makeClicker(norms,e->base->h);
+    makeClicker(norms,e->base->holder);
   if(e->sig&&(branch->bools&valorFinal))
     e->sig->table->cargar(e->sig,norms);
 }
@@ -560,7 +560,7 @@ void cargarIsolH(movHolder*m,vector<normalHolder*>* norms){
   int sizeBefore=norms->size;
   s->inside->table->cargar(s->inside,norms);
   if(s->bools&makeClick&&!norms->size==0)//evitar generar clickers sin normales
-    makeClicker(norms,s->base->h);
+    makeClicker(norms,s->base->holder);
   norms->size=sizeBefore;
   if(s->sig)
     s->sig->table->cargar(s->sig,norms);
@@ -786,7 +786,7 @@ void cargarNodos(movHolder* m,desoptHolder::node* iter,vector<normalHolder*>* no
       assert(nextIter->iter);
       cargarNodos(d,nextIter->iter,norms);
     }else if((d->bools&makeClick)&&norms->size!=0){
-      makeClicker(norms,d->base->h);
+      makeClicker(norms,d->base->holder);
     }
     offset+=tam;
     norms->size=res;

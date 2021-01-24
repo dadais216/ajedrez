@@ -51,7 +51,7 @@ struct memLocalt{
   int resetUntil;
 };
 struct Base{ ///datos compartidos de un movimiento entero
-  Holder* h;//cte entre movimientos
+  Holder* holder;//cte entre movimientos
   movHolder* root;
   memLocalt memLocal;//estos son cte entre todos los holders por lo que podrian estar en algun lugar del lado de operador
 };

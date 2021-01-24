@@ -190,7 +190,7 @@ int* posYRead(){
 
 int* posSYRead(){
   int* posY=posYRead();
-  if(!actualHolder.nh->base->h->bando){
+  if(!actualHolder.nh->base->holder->bando){
     *posY=actualHolder.brd->dims.y-1-*posY;
   }
   return posY;

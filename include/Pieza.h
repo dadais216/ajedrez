@@ -32,6 +32,7 @@ struct Holder{
   barray<movHolder*> movs;
   bool bando;
   bool inPlay;//false cuando la pieza esta generada y capturada. Solo se usa para evitar activar triggers dinamicos a capturados
+  int step;//valor que varia para indicar si la pieza se movio, para comprobar validez de triggers
 };
 
 

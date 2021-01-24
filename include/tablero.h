@@ -7,13 +7,13 @@ struct normalHolder;
 //si usara step en pieza en vez de tiles podría no pasar stepCheck
 struct Trigger{
   normalHolder* nh; //puntero al movimiento a recalcular
-  int* stepCheck; //step de tile donde estaría la pieza que puso el trigger
-  int step; //valor. Si son el mismo que el check la pieza que puso el trigger esta en el mismo lugar y no se movio, nh es valido
+  int step; //si son el mismo que lo que tiene el holder ahora quiere decir que esta en el mismo lugar y no se movio, el trigger es valido
 };
-//@todo stepCheck no es necesario, tengo la tile cuando hago charge. Por ahora lo dejo para comparar velocidades
+//creo que step se podría poner en tile y sería lo mismo. Tengo la tile al momento de cargar los triggers tambien, y las demas cosas se podrían manejar igual. Es lo mismo igual,
+//y steps en holders me parece que tiene mas sentido
 
-
-const int triggersPerBox=3;//3=1 cache suponiendo que no haya padding xd
+const int triggersPerBox=3;
+//cuando saque buckets puedo subir a 7, con 4 de pad
 struct triggerBox{
   union{
     struct{
@@ -23,6 +23,7 @@ struct triggerBox{
     int nextFree;
   };
 };
+static_assert(sizeof(triggerBox)<=64);
 
 struct triggerSpace{
   int firstFree;
@@ -36,7 +37,6 @@ struct Tile{
   int firstTriggerBox;
   int triggersUsed;
   v pos;//tecnicamente es calculable, que sé yo
-  int step; //se actualiza por mov, capt y spawn
 };
 
 

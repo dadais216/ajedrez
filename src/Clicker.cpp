@@ -86,8 +86,7 @@ void executeClicker(Clicker* c,board* brd){
   }
   */
   Tile* tileBef=c->h->tile;
-  int stepBef=tileBef->step;
-
+  
   Clicker::drawClickers=false;
 
 #if debugMode
@@ -100,18 +99,19 @@ void executeClicker(Clicker* c,board* brd){
   debugInCondition=true;
 #endif
 
-  //TODO con step en holder esto no es necesario
-  ///@optim esto esta para movimientos que no mueven la pieza, que son una minoria
-  if(tileBef->step!=stepBef){
-    push(&pisados,tileBef);
-    push(&pisados,c->h->tile);
-    ///@optim piezas que no se mueven no deberian generar todo
-  }
-  else{
-    tileBef->step++;//evitar que se activen triggers viejos.
-                    //En principio evitaria redundancia nomas, pero como desopt reutiliza nhs puede triggerear un nh que ahora es distinta,
-                    //y eso es malo porque ahora se deja de buscar despues de encontrar la nh, y como esta es falsa ni siquiera se va a encontrar la verdadera
-  }
+  c->h->step++;
+
+  push(&pisados,tileBef);
+  push(&pisados,c->h->tile);
+
+  //TODO cuando tenga movimientos que no mueven la pieza (o que termina en el mismo lugar)
+  //podría probar poner un if que no agregue nada a pisados. Agregar la misma posicion 2 veces
+  //no es un problema porque la segunda vez no va a haber triggers que levantar, pero se podría
+  //hacer 0 veces considerando que las reacciones van a generar lo mismo porque la pieza sigue
+  //estando en el mismo lugar. El step se actualiza igual porque sino se activarian triggers viejos,
+  //lo que llevaria a calculos redundantes, se reaccionaria varias veces a lo mismo. Y en caso de
+  //que haya desopt puede que haya errores, por activar normales en el espacio dinamico que ahora
+  //son otra cosa.
 
   for(Tile* tile:pisados){
     chargeTriggers(&tile->triggersUsed,&tile->firstTriggerBox);

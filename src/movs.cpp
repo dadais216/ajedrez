@@ -104,10 +104,9 @@ struct spwn:public acm{
 */
 
 void mov(){
-    actualHolder.h->tile->step++;
-    actualHolder.h->tile->holder=nullptr;
-    actualHolder.h->tile=actualHolder.tile;
-    actualHolder.h->tile->holder=actualHolder.h;
+  actualHolder.h->tile->holder=nullptr;
+  actualHolder.h->tile=actualHolder.tile;
+  actualHolder.h->tile->holder=actualHolder.h;
 }
 
 void pausa(){
@@ -116,18 +115,18 @@ void pausa(){
 }
 vector<Holder*> reciclaje;
 void capt(){
-    actualHolder.tile->holder->inPlay=false;
-    //@optim se podria eliminar triggers estaticos en global aca para que no se iteren ni activen en falso
-    //for(memTriggers& mt:memGlobalTriggers[ind])
-    //    remove_if(mt.perma.begin(),mt.perma.end(),[&captT](normalHolder* nh)->bool{
-    //            return nh->h==captT->holder;
-    //          });
-    //el problema esta en recrearlos en spawn. Se tendria que agregar otra rama de polimorfismo para acceder a cada
-    //normalHolder y setear las memorias devuelta y no creo que lo valga
-    push(&reciclaje,actualHolder.tile->holder);
-    actualHolder.tile->holder=nullptr;
-    actualHolder.tile->step++;
-    push(&pisados,actualHolder.tile);
+  actualHolder.tile->holder->step++;
+  actualHolder.tile->holder->inPlay=false;
+  //@optim se podria eliminar triggers estaticos en global aca para que no se iteren ni activen en falso
+  //for(memTriggers& mt:memGlobalTriggers[ind])
+  //    remove_if(mt.perma.begin(),mt.perma.end(),[&captT](normalHolder* nh)->bool{
+  //            return nh->h==captT->holder;
+  //          });
+  //el problema esta en recrearlos en spawn. Se tendria que agregar otra rama de polimorfismo para acceder a cada
+  //normalHolder y setear las memorias devuelta y no creo que lo valga
+  push(&reciclaje,actualHolder.tile->holder);
+  actualHolder.tile->holder=nullptr;
+  push(&pisados,actualHolder.tile);
 }
 
 //retorna void(*)(void) normalmente, pero puede tener otras cosas metidas

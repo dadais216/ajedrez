@@ -168,13 +168,12 @@ void freeTriggerBox(triggerSpace* ts,int ind){
 
 void pushTrigger(int* used,int* pushTo){
   triggerSpace* ts=&actualHolder.brd->ts;
-  Tile* tile=actualHolder.h->tile;//la tile donde esta parada la pieza, no donde pasa el movimiento
   normalHolder* n=actualHolder.nh;
 
   int ind=*used;
   if(ind==0){//caso inicial. Si decido hacer que todos los tiles arranquen con 1 triggerBox no es necesario
     *pushTo=newTriggerBox(ts);
-    ts->mem[*pushTo].triggers[0]=Trigger({n,&tile->step,tile->step});
+    ts->mem[*pushTo].triggers[0]=Trigger({n,n->base->holder->step});
     *used=1;
     return;
   }
@@ -190,7 +189,7 @@ void pushTrigger(int* used,int* pushTo){
     tb=newTb;
     ind=0;
   }
-  ts->mem[tb].triggers[ind]=Trigger({n,&tile->step,tile->step});
+  ts->mem[tb].triggers[ind]=Trigger({n,n->base->holder->step});
   (*used)++;
 }
 
@@ -203,7 +202,10 @@ void chargeTriggers(int* used,int* source){
 
   auto evalTrig=[&](int ind)->void{
                   Trigger trig=ts->mem[tb].triggers[ind];
-                  if(trig.step==*trig.stepCheck){
+
+                  int stepCheck=trig.nh->base->holder->step;
+
+                  if(trig.step==stepCheck){
                     push(&trigsActivados,trig.nh);
                   }
                 };
@@ -242,7 +244,7 @@ void activateTriggers(){
     if(trigsActivados.size==1){
         switchToGen=false;
         Base* base=trigsActivados[0]->base;
-        actualHolder.h=base->h;
+        actualHolder.h=base->holder;
 
         if(!setjmp(jmpReaccion))
           base->root->table->reaccionar(base->root,trigsActivados[0]);
@@ -260,7 +262,7 @@ void activateTriggers(){
             int j=i+1;
             while(j<trigsActivados.size&&trigsActivados[j]->base->root==base)
                 j++;
-            actualHolder.h=base->base->h;
+            actualHolder.h=base->base->holder;
 
             if(!setjmp(jmpReaccion)){
               if(j==i+1)
