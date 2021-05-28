@@ -6,9 +6,11 @@ vector<Clicker> clickers;
 v getActualPos(v,v);
 
 
-void makeClicker(vector<normalHolder*>* normales,Holder* h){
+void makeClicker(vector<normalHolder*>* normales,int bInd){
+  Holder* h=gameVector<Holder>(gameVector<Base>(bInd)->holder);
+
   Clicker* clicker=newElem(&clickers);
-  clicker->h=h;
+  clicker->h=indGameVector(h);
 
   //TODO No alocar devuelta
   //TODO creo? que tengo que alocar algo aparte si o si, igual estaria bueno tenerlo en un espacio continuo, total se libera todo junto y
@@ -72,8 +74,8 @@ void drawClicker(Clicker* c){
     */
 }
 
-vector<Tile*> pisados;
-void executeClicker(Clicker* c,board* brd){
+vector<int> pisados;
+void executeClicker(Clicker* c){
   /*
   //esto es para confirmar el toque
   if(mod>1){
@@ -85,8 +87,9 @@ void executeClicker(Clicker* c,board* brd){
   return true;
   }
   */
-  Tile* tileBef=c->h->tile;
-  
+  Holder* h=gameVector<Holder>(c->h);
+  int tileBef=h->tile;
+
   Clicker::drawClickers=false;
 
 #if debugMode
@@ -99,10 +102,10 @@ void executeClicker(Clicker* c,board* brd){
   debugInCondition=true;
 #endif
 
-  c->h->step++;
+  h->step++;
 
   push(&pisados,tileBef);
-  push(&pisados,c->h->tile);
+  push(&pisados,h->tile);
 
   //TODO cuando tenga movimientos que no mueven la pieza (o que termina en el mismo lugar)
   //podría probar poner un if que no agregue nada a pisados. Agregar la misma posicion 2 veces
@@ -113,7 +116,8 @@ void executeClicker(Clicker* c,board* brd){
   //que haya desopt puede que haya errores, por activar normales en el espacio dinamico que ahora
   //son otra cosa.
 
-  for(Tile* tile:pisados){
+  for(int tileInd:pisados){
+    Tile* tile=gameVector<Tile>(tileInd);
     chargeTriggers(&tile->triggersUsed,&tile->firstTriggerBox);
   }
 
@@ -126,12 +130,12 @@ void executeClicker(Clicker* c,board* brd){
   //hace un cambio en la eficiencia, asi que lo saque porque tener mas movholders, y en especial esos que
   //eran hacks, agregaba complejidad y no aportaba nada a cambio. Ademas determinar si una pieza es kamikase
   //es complejo, goto hace que haya muchos falsos positivos
-  for(Holder* h:justSpawned){
-    if(c->h!=h)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
-      generar(h);
+  for(int sh:justSpawned){
+    if(c->h!=sh)//esto es un seguro contra un kamikase que se spawnea a si mismo inmediatamente
+      generar(gameVector<Holder>(sh));
   }
-  if(c->h->inPlay){
-    generar(c->h);
+  if(h->inPlay){
+    generar(h);
   }
   justSpawned.size=0;
 
@@ -145,7 +149,7 @@ void executeClicker(Clicker* c,board* brd){
 
 }
 
-void debugPrintClickers(board* brd){
+void debugPrintClickers(){
   vector<int> clicks;init(&clicks,brd->dims.x*brd->dims.y);defer(&clicks);
   clicks.size=clicks.cap;
   for(int i=0;i<clicks.size;i++){

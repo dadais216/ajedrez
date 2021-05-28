@@ -55,8 +55,9 @@ bool mgoto(){
   if(espFail(actualHolder.nh->pos)){
     return false;
   }
-  actualHolder.tile=tile(actualHolder.brd,actualHolder.nh->pos);
-  pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
+  Tile* tile=tileGet(actualHolder.nh->pos);
+  actualHolder.tile=indGameVector(tile);
+  pushTrigger(&tile->triggersUsed,&tile->firstTriggerBox);
   return true;
   //otra opcion es forzar un corte de normales despues de mgoto, y dejar que el codigo normal haga el esp y ponga el trigger, sería mas lindo pero cortar normales es un poco mas ineficiente y complicado
 }
@@ -84,25 +85,25 @@ void setCheck(memData* md){
 
 void msetG(){
   int ind=(intptr)getNextInBuffer();
-  memData* md=&actualHolder.brd->memGlobals[ind];
+  memData* md=&brd->memGlobals[ind];
   setCheck(md);
 }
 void msetGi(){
   getter g=(getter)getNextInBuffer();
   int ind=*g();
-  memData* md=&actualHolder.brd->memGlobals[ind];
+  memData* md=&brd->memGlobals[ind];
   setCheck(md);
 }
 
 void msetT(){
   int ind=(intptr)getNextInBuffer();
-  memData* md=getTileMd(ind,actualHolder.brd);
+  memData* md=getTileMd(ind);
   setCheck(md);
 }
 void msetTi(){
   getter g=(getter)getNextInBuffer();
   int ind=*g();
-  memData* md=getTileMd(ind,actualHolder.brd);
+  memData* md=getTileMd(ind);
   setCheck(md);
 }
 

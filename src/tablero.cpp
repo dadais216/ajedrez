@@ -2,11 +2,10 @@
 
 
 void makeBoard(properState* p){
-
   parseData* pd=&p->pd;
-  brd=new(p->gameState.data)board;
+  new(p->gameState.data)board;//llamar constructores de sfml
+
   brd->dims=pd->dims;
-  actualHolder.brd=brd;
 
   escala=16*(1/(float)(brd->dims.x>brd->dims.y?brd->dims.x:brd->dims.y));
   brd->b.setTexture(image.get("tiles.png"));
@@ -32,10 +31,9 @@ void makeBoard(properState* p){
   brd->memTiles=brd->memGlobals+pd->memGlobalSize;
   memset(brd->memTiles,0,pd->memTileSlots*brd->dims.x*brd->dims.y*sizeof(memData));
 
-  p->gameState.head+=sizeof(board)
+  p->gameState.size+=sizeof(board)
     + pd->dims.x*pd->dims.y*(sizeof(Tile)+pd->memTileSlots*sizeof(memData))
     + pd->memGlobalSize*sizeof(memData);
-
 
   memset(brd->tiles,0,sizeof(Tile)*pd->dims.x*pd->dims.y);
   for(int i=0; i<brd->dims.x*brd->dims.y; i++){
@@ -44,7 +42,7 @@ void makeBoard(properState* p){
     int id=pd->boardInit[i];
     if(id!=0){
       int sind=getCodedPieceIndexById(&pd->ids,id);
-      tile->holder=initHolder(p->pieces[std::abs(sind)-1],sign(sind),tile,&p->gameState);
+      tile->holder=initHolder(p->pieces[std::abs(sind)-1],sign(sind),indGameVector(tile),&p->gameState);
     }
   }
 
@@ -55,14 +53,16 @@ void makeBoard(properState* p){
   //assertf(p->gameState.head==p->gameState.data+p->hsSize,"antes de generar %d %d\n",p->gameState.head-p->gameState.data,p->hsSize);
   //TODO cuando haga el codigo general tendría que generar primero un bando, correr el codigo, despues el otro
   for(int i=0;i<brd->dims.x*brd->dims.y;i++){
-    Holder* hAct=brd->tiles[i].holder;
-    if(hAct)
+    int hActI=brd->tiles[i].holder;
+    if(hActI){
+      Holder* hAct=gameVector<Holder>(hActI);
       generar(hAct);
+    }
   }
   //assertf(p->gameState.head==p->gameState.data+p->hsSize,"despues de generar %d %d\n",p->gameState.head-p->gameState.data,p->hsSize);
 }
 
-Tile* tile(board* brd,v pos){
+Tile* tileGet(v pos){
   assert(pos.x>=0);
   assert(pos.y>=0);
   assert(pos.x<brd->dims.x);
@@ -70,7 +70,7 @@ Tile* tile(board* brd,v pos){
   return &brd->tiles[pos.x+pos.y*brd->dims.x];
 }
 
-void drawTiles(board* brd){
+void drawTiles(){
   for(int i=0; i<brd->dims.x; i++)
     for(int j=0; j<brd->dims.y; j++){
       if((i+j)&1){
@@ -84,12 +84,17 @@ void drawTiles(board* brd){
 }
 
 void drawHolder(Holder*);
-void drawPieces(board* brd){
+void drawPieces(){
   for(int i=0; i<brd->dims.x; i++)
     for(int j=0; j<brd->dims.y; j++){
-      Holder* p;
-      if((p=brd->tiles[i+j*brd->dims.x].holder))
-        drawHolder(p);
+      int hI;
+      if((hI=brd->tiles[i+j*brd->dims.x].holder)){
+        Holder* h=gameVector<Holder>(hI);
+        Sprite* sprt=h->bando==1?&opVector<Piece>(h->piece)->spriten:&opVector<Piece>(h->piece)->spriteb;
+        v pos=gameVector<Tile>(h->tile)->pos;
+        sprt->setPosition(pos.x*escala*32,pos.y*escala*32);
+        window.draw(*sprt);
+      }
     }
 }
 
@@ -167,13 +172,15 @@ void freeTriggerBox(triggerSpace* ts,int ind){
 //@optim cuando pueda visualizar y medir bien probar hacer que arranquen todos con una caja
 
 void pushTrigger(int* used,int* pushTo){
-  triggerSpace* ts=&actualHolder.brd->ts;
-  normalHolder* n=actualHolder.nh;
+  triggerSpace* ts=&brd->ts;
+  int n=indGameVector(actualHolder.nh);
+
+  Trigger newTrig=Trigger{n,gameVector<Holder>(gameVector<Base>(actualHolder.nh->base)->holder)->step};
 
   int ind=*used;
   if(ind==0){//caso inicial. Si decido hacer que todos los tiles arranquen con 1 triggerBox no es necesario
     *pushTo=newTriggerBox(ts);
-    ts->mem[*pushTo].triggers[0]=Trigger({n,n->base->holder->step});
+    ts->mem[*pushTo].triggers[0]=newTrig;
     *used=1;
     return;
   }
@@ -189,13 +196,13 @@ void pushTrigger(int* used,int* pushTo){
     tb=newTb;
     ind=0;
   }
-  ts->mem[tb].triggers[ind]=Trigger({n,n->base->holder->step});
+  ts->mem[tb].triggers[ind]=newTrig;
   (*used)++;
 }
 
-vector<normalHolder*> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
+vector<int> trigsActivados; //para llamar a todos los mh una vez, despues de procesar pisados y limpiar
 void chargeTriggers(int* used,int* source){
-  triggerSpace* ts=&actualHolder.brd->ts;
+  triggerSpace* ts=&brd->ts;
 
   int tb=*source;
   int tu=*used;
@@ -203,7 +210,8 @@ void chargeTriggers(int* used,int* source){
   auto evalTrig=[&](int ind)->void{
                   Trigger trig=ts->mem[tb].triggers[ind];
 
-                  int stepCheck=trig.nh->base->holder->step;
+                  normalHolder* nh=gameVector<normalHolder>(trig.nh);
+                  int stepCheck=gameVector<Holder>(gameVector<Base>(nh->base)->holder)->step;
 
                   if(trig.step==stepCheck){
                     push(&trigsActivados,trig.nh);
@@ -243,40 +251,42 @@ void activateTriggers(){
     if(trigsActivados.size==0) return;
     if(trigsActivados.size==1){
         switchToGen=false;
-        Base* base=trigsActivados[0]->base;
-        actualHolder.h=base->holder;
+        Base* base=gameVector<Base>(gameVector<normalHolder>(trigsActivados[0])->base);
+
+        actualHolder.h=gameVector<Holder>(base->holder);
 
         if(!setjmp(jmpReaccion))
-          base->root->table->reaccionar(base->root,trigsActivados[0]);
+          gameVector<movHolder>(base->movRoot)->table->reaccionar(base->movRoot,trigsActivados[0]);
     }
     else{
-      //@test no sería suficiente con ordenar segun nh desde el principio?
+      //TODO no sería suficiente con ordenar segun nh desde el principio?
 
         ///@optim supongo que volcarlo a una matriz es mas rapido que ordenarlo y trocearlo
-      std::sort(&trigsActivados[0],&trigsActivados.data[trigsActivados.size],[](normalHolder* a,normalHolder* b)->bool
-             {return a->base->root<b->base->root;});
+      std::sort(&trigsActivados[0],&trigsActivados.data[trigsActivados.size],[](int a,int b)->bool{
+                                                                               return gameVector<normalHolder>(a)->base<gameVector<normalHolder>(b)->base;});
         int i=0;
         while(i<trigsActivados.size){
             switchToGen=false;
-            movHolder* base=trigsActivados[i]->base->root;
+            int movRInd=gameVector<Base>(gameVector<normalHolder>(trigsActivados[i])->base)->movRoot;
+            movHolder* movR=gameVector<movHolder>(movRInd);
             int j=i+1;
-            while(j<trigsActivados.size&&trigsActivados[j]->base->root==base)
+            while(j<trigsActivados.size&&gameVector<Base>(gameVector<normalHolder>(trigsActivados[j])->base)->movRoot==movRInd)
                 j++;
-            actualHolder.h=base->base->holder;
+            actualHolder.h=gameVector<Holder>(gameVector<Base>(movR->base)->holder);
 
             if(!setjmp(jmpReaccion)){
               if(j==i+1)
-                base->table->reaccionar(base,trigsActivados[i]);
+                movR->table->reaccionar(movRInd,trigsActivados[i]);
               else{
                 nhBuffer nb;
                 nb.size=j-i;
                 nb.beg=0;
-                nb.buf=(normalHolder**)alloca(nb.size*sizeof(normalHolder*));
-                memcpy(nb.buf,&trigsActivados[i],(j-i)*sizeof(normalHolder*));
+                nb.buf=(int*)alloca(nb.size*sizeof(int));
+                memcpy(nb.buf,&trigsActivados[i],(j-i)*sizeof(int));
 
-                std::sort(&nb.buf[0],&nb.buf[nb.size],[](normalHolder* a,normalHolder* b)->bool{return a<b;});
+                std::sort(&nb.buf[0],&nb.buf[nb.size],[](int a,int b)->bool{return a<b;});
                 //TODO si apunto al otro vector en vez de hacer la copia debería andar igual
-                base->table->reaccionarVec(base,&nb);
+                movR->table->reaccionarVec(movRInd,&nb);
               }
             }
 

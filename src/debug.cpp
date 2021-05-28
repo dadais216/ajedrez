@@ -6,7 +6,6 @@
 
 RectangleShape backgroundMem;
 RectangleShape backgroundMemDebug;
-RectangleShape localMemorySeparator;
 Text textValMem;
 Text textIndexMem;
 
@@ -55,25 +54,20 @@ void initDebugSystem(){//se llama despues de construir el tablero
   posActGood.setFillColor(sf::Color(180,230,100,100));
   posActBad.setFillColor(sf::Color(240,70,40,100));
   posMem.setFillColor(sf::Color(0,0,200,100));
-  backgroundMem.setFillColor(sf::Color(240,235,200));
   backgroundMem.setOutlineColor(sf::Color(195,195,175));
   backgroundMem.setOutlineThickness(4);
-  backgroundMem.setSize(Vector2f(40,35));
+  backgroundMem.setSize(sf::Vector2f(36,35));
   backgroundMemDebug.setFillColor(sf::Color(163,230,128,150));
   backgroundMemDebug.setOutlineColor(sf::Color(195,195,175));
   backgroundMemDebug.setOutlineThickness(4);
-  backgroundMemDebug.setSize(sf::Vector2f(40,35));
+  backgroundMemDebug.setSize(sf::Vector2f(36,35));
   textValMem.setColor(sf::Color::Black);
   textValMem.setFont(font);
   //textValMem.setPosition(570,10);
   textIndexMem.setColor(sf::Color(200,200,200,200));
   textIndexMem.setFont(font);
-  textIndexMem.setScale(sf::Vector2f(.6,.6));
-  localMemorySeparator.setFillColor(sf::Color(150,150,150));
-  localMemorySeparator.setOutlineColor(sf::Color::Red);
-  localMemorySeparator.setOutlineThickness(2);
-  localMemorySeparator.setSize(sf::Vector2f(1,40));
-
+  textIndexMem.setScale(sf::Vector2f(.4,.4));
+  
   init(&debugDrawChannel);
 
   moveW.jumpToWord=true;
@@ -94,7 +88,7 @@ void handleModeSelectors(){
     if(Input.leftClick&&Input.mouse.y>=20&&Input.mouse.y<=50&&
        debugState!=i&&Input.mouse.x>=650+40*i&&Input.mouse.x<=680+40*i){
       debugState=i;
-      bucketDraw.windowBeg=0;
+      bvectorDraw.windowBeg=0;
     }
   }
 }
@@ -111,7 +105,7 @@ void debugShowAndWait(bool val){
                    debugDrawMemories();
                    debugShowMove(val);
                  }else{
-                   debugUpdateAndDrawBuckets();
+                   debugUpdateAndDrawBvectors();
                  }
                });
     /*
@@ -129,6 +123,7 @@ void debugShowAndWait(bool val){
   if(Input.x)
     sleep(milliseconds(175));
   debugMultiParameterBegin=-1;
+  debugDrawChannel.size=0;
 }
 
 void updateScrolling(int* beg,int max){
@@ -147,7 +142,7 @@ int debugGetCellVal(auto* v,int i){
 }
 const int cellsPerRow=16;
 const int cellSpacing=39;
-void debugDrawMemoryCells(visualWindow* vw,auto memory){
+void debugDrawMemoryCells(visualWindow* vw,auto memory, int resetBar=INT_MAX){
   int yOffset=vw->height*45+30+(vw-&memDrawWindows[0])*10;
   if(Input.wheelDelta!=0&&
      Input.mouse.x>530&&Input.mouse.x<530+cellSpacing*cellsPerRow&&
@@ -159,6 +154,11 @@ void debugDrawMemoryCells(visualWindow* vw,auto memory){
   int end=std::min((vw->beg+vw->size)*cellsPerRow,vw->cells);
 
   for(int i=beg;i<end;i++){
+    if(i>=resetBar){
+      backgroundMem.setFillColor(sf::Color(255,225,190));
+    }else{
+      backgroundMem.setFillColor(sf::Color(240,235,200));
+    }
     backgroundMem.setPosition(sf::Vector2f(530+cellSpacing*(i%cellsPerRow),yOffset+45*((i-beg)/cellsPerRow)));
     window.draw(backgroundMem);
   }
@@ -183,8 +183,8 @@ void computeWindowHeights(){
     memDrawWindows[2].beg=0;
     memDrawWindows[3].beg=0;
 
-    memDrawWindows[2].cells=actualHolder.h->piece->memPieceSize;
-    memDrawWindows[3].cells=actualHolder.nh->base->memLocal.size;
+    memDrawWindows[2].cells=opVector<Piece>(actualHolder.h->piece)->memPieceSize;
+    memDrawWindows[3].cells=gameVector<Base>(actualHolder.nh->base)->memLocal.size;
   }
   for(visualWindow& w:memDrawWindows){
     w.rows=(w.cells+cellsPerRow-1)/cellsPerRow;
@@ -239,26 +239,20 @@ void computeWindowHeights(){
 
 void debugDrawMemories(){
   //window.draw(textDebug);
-
   computeWindowHeights();
 
   debugDrawMemoryCells(&memDrawWindows[0],brd->memGlobals);
-  debugDrawMemoryCells(&memDrawWindows[1],getTileMd(0,brd));
-  debugDrawMemoryCells(&memDrawWindows[2],actualHolder.h->memPiece.beg);
-  debugDrawMemoryCells(&memDrawWindows[3],memMov.data);
+  debugDrawMemoryCells(&memDrawWindows[1],getTileMd(0));
+  debugDrawMemoryCells(&memDrawWindows[2],gameVector<int>(actualHolder.h->memPiece.beg));
+  debugDrawMemoryCells(&memDrawWindows[3],memMov.data,gameVector<Base>(actualHolder.nh->base)->memLocal.resetUntil);
 
-  if(actualHolder.nh->base->memLocal.size!=actualHolder.nh->base->memLocal.resetUntil){
-    int resetUntil=actualHolder.nh->base->memLocal.resetUntil;
-    localMemorySeparator.setPosition(sf::Vector2f(530+cellSpacing*(resetUntil%cellsPerRow),405+45*(resetUntil/cellsPerRow-actualHolder.nh->base->memLocal.size/cellsPerRow)));
-    window.draw(localMemorySeparator);
-  }
   for(int i=0;i<debugDrawChannel.size;i++){
     switch(debugDrawChannel[i]){
     case tdebugSetIndirectColor:
-      backgroundMemDebug.setFillColor(sf::Color(168,35,221,150));
+      backgroundMemDebug.setFillColor(sf::Color(8,35,221,120));
       break;
     case tdebugUnsetIndirectColor:
-      backgroundMemDebug.setFillColor(sf::Color(163,230,128,150));
+      backgroundMemDebug.setFillColor(sf::Color(163,230,128,120));
       break;
     case tdebugDrawPos://esta siempre antes de posX,posY y los accesos a tile
       posMem.setPosition(sf::Vector2f(32*escala*actualHolder.nh->pos.x,32*escala*actualHolder.nh->pos.y));
@@ -269,13 +263,19 @@ void debugDrawMemories(){
         //se podría reescribir esto para que no dependa de memSize
         int ind=debugDrawChannel[i++];
         int memType=debugDrawChannel[i];
-        backgroundMemDebug.setPosition(Vector2f(530+cellSpacing*(ind%cellsPerRow),
-                                                memDrawWindows[memType].height*45+30+45*(ind/cellsPerRow)+memType*10));
-        window.draw(backgroundMemDebug);
+
+        visualWindow* vw=&memDrawWindows[memType];
+        int beg=vw->beg*cellsPerRow;
+        int end=std::min((vw->beg+vw->size)*cellsPerRow,vw->cells);
+
+        if(ind>=beg&&ind<end){
+          backgroundMemDebug.setPosition(Vector2f(530+cellSpacing*(ind%cellsPerRow),
+                                                  memDrawWindows[memType].height*45+30+45*(ind/cellsPerRow)+memType*10));
+          window.draw(backgroundMemDebug);
+        }
       }
     }
   }
-  debugDrawChannel.size=0;
 }
 
 
@@ -285,6 +285,8 @@ const int yInterleave=30;
 
 void debugShowMove(bool val){
   v posAct=actualHolder.nh->pos;
+  Tile* tile=gameVector<Tile>(actualHolder.h->tile);
+
   if(val){
     posActGood.setPosition(posAct.x*32*escala,posAct.y*32*escala);
     tileActDebug=&posActGood;
@@ -292,21 +294,21 @@ void debugShowMove(bool val){
     posActBad.setPosition(posAct.x*32*escala,posAct.y*32*escala);
     tileActDebug=&posActBad;
   }
-  posPiece.setPosition(actualHolder.h->tile->pos.x*32*escala,actualHolder.h->tile->pos.y*32*escala);
+  posPiece.setPosition(tile->pos.x*32*escala,tile->pos.y*32*escala);
   window.draw(posPiece);
   window.draw(*tileActDebug);
 
   normalHolder* nh=actualHolder.nh;
-  movHolder* root=nh->base->root;
-  int mi=0;
-  for(movHolder** hRoot=actualHolder.h->movs.beg;;hRoot++){
-    assert(hRoot!=actualHolder.h->movs.after);
-    if(root==*hRoot){
+  movHolder* root=gameVector<movHolder>(gameVector<Base>(nh->base)->movRoot);
+  int mi;
+  for(mi=0;;mi++){
+    assert(mi<actualHolder.h->movs.size);
+    movHolder* hRoot=gameVector<movHolder>(*varrayGameElem(&actualHolder.h->movs,mi));
+    if(root==hRoot){
       break;
     }
-    mi++;
   }
-  operador* rootOp=(*(actualHolder.h->piece->movs.beg+mi/*+ (actualHolder.h->piece->spawner?-1:0)*/)).root;
+  operador* rootOp=opVector<operador>(varrayOpElem(&opVector<Piece>(actualHolder.h->piece)->movs,mi)->root);
 
   moveW.x=moveW.y=0;
   moveW.madeIt=val;
@@ -388,8 +390,7 @@ char* bufferElementToString(void(*func)(), char* buffer){
 }
 
 void drawNormalText(operador* op){
-  normal* an=actualHolder.nh->op;
-  int i=0;
+  normal* an=opVector<normal>(actualHolder.nh->op);
 
   v relPos=((normal*)op)->relPos;
   char dirs[255];//no va a ser exactamente igual a como esta escrito por el usuario pero el resultado es el mismo
@@ -417,23 +418,17 @@ void drawNormalText(operador* op){
 
 
   normal* n=(normal*)op;
-  for(bool(**c)(void)=n->conds.beg;
-      c != n->conds.after;
-      c++){
-    void(*cast)(void)=(void(*)(void))*c;
+  forVOp(n->conds){
     if(n==an&&
-       ((*actualHolder.bufferPos==i)||
-       (debugMultiParameterBegin!=-1 && debugMultiParameterBegin<=i && *actualHolder.bufferPos>=i))){
-      drawText(bufferElementToString(cast,dirs),2);
+       ((*actualHolder.bufferPos==indv)||
+       (debugMultiParameterBegin!=-1 && debugMultiParameterBegin<=indv && *actualHolder.bufferPos>=indv))){
+      drawText(bufferElementToString((void(*)())*el,dirs),2);
     }else{
-      drawText(bufferElementToString(cast,dirs),0);
+      drawText(bufferElementToString((void(*)())*el,dirs),0);
     }
-    i++;
   }
-  for(void(**a)(void)=n->accs.beg;
-      a!=n->accs.after;
-      a++){
-    drawText(bufferElementToString(*a,dirs),an==op?3:0);
+  forVOp(n->accs){
+    drawText(bufferElementToString(*el,dirs),an==op?3:0);
   }
 }
 
@@ -445,8 +440,8 @@ void drawMoveTextInsideOp(char* name,auto insideOp,bool inRange){
 }
 
 void drawMoveText(operador* op){
-  char* obj=(char*)actualHolder.nh->op;
-  bool inRange=obj>(char*)op && (op->sig?(obj<(char*)op->sig):true);
+  int obj=actualHolder.nh->op;
+  bool inRange=obj>indOpVector(op) && (op->sig?(obj<op->sig):true);
 
   switch(op->tipo){
   case NORMAL:{
@@ -454,35 +449,40 @@ void drawMoveText(operador* op){
   }break;
   case DESLIZ:{
     desliz* d=(desliz*)op;
-    drawMoveTextInsideOp("desliz",[=](){drawMoveText(d->inside);},inRange);
+    drawMoveTextInsideOp("desliz",[=](){drawMoveText(opVector<operador>(d->inside));},inRange);
   }break;
   case EXC:{
     exc* e=(exc*)op;
     drawMoveTextInsideOp("exc",[=](){
-                                 operador** excOp;
-                                  for(excOp=e->ops.beg;excOp!=e->ops.after-1;excOp++){
-                                    drawMoveText(*excOp);
-                                    drawText("or",inRange?1:0);
-                                  }
-                                  drawMoveText(*excOp);
+                                 int i;
+                                 for(i=0;i<elems(e->ops)-1;i++){
+                                   drawMoveText(opVector<operador>(*varrayOpElem(&e->ops,i)));
+                                   drawText("or",inRange?1:0);
+                                 }
+                                 drawMoveText(opVector<operador>(*varrayOpElem(&e->ops,i)));
                                },inRange);
   }break;
   case ISOL:
   case ISOLNRM:{
-    drawMoveTextInsideOp("isol",[=](){drawMoveText(((isol*)op)->inside);},inRange);
+    drawMoveTextInsideOp("isol",[=](){
+                                  drawMoveText(opVector<operador>(((isol*)op)->inside));
+                                },inRange);
   }break;
   case DESOPT:
   case DESOPTNRM:{
     desopt* d=(desopt*)op;
     drawMoveTextInsideOp("desopt",[=](){
-                                     for(operador** desOp=d->ops.beg;desOp!=d->ops.after;desOp++){
-                                       drawMoveText(*desOp);
-                                     }
+                                    int i;
+                                    for(i=0;i<elems(d->ops)-1;i++){
+                                      drawMoveText(opVector<operador>(*varrayOpElem(&d->ops,i)));
+                                      drawText("or",inRange?1:0);
+                                    }
+                                    drawMoveText(opVector<operador>(*varrayOpElem(&d->ops,i)));
                                   },inRange);
   }break;
   }
-  if(op->sig!=nullptr)
-    drawMoveText(op->sig);
+  if(op->sig!=0)
+    drawMoveText(opVector<operador>(op->sig));
 }
 
 
@@ -502,7 +502,7 @@ Text textLabel;
 
 vector<sf::Color> pieceColors;
 struct HolderColor{
-  Holder* h;
+  int hI;
   sf::Color color;
 };
 vector<HolderColor> holderColors;//tipo un hash pero a lo perro con un for
@@ -525,21 +525,19 @@ sf::Color darkenColor(sf::Color color,int darkness){
   return darkerColor;
 }
 
-void debugUpdateAndDrawBucketsInit(bool reset){
+void debugUpdateAndDrawBvectorsInit(bool reset){
   properState* ps=(properState*)stateMem;
 
   if(reset){
     pieceColors.size=0;
     holderColors.size=0;
   }else{
-    init(&pieceColors,ps->pieces.size);
-    init(&holderColors,ps->pieces.size*2);
+    init(&pieceColors,20);
+    init(&holderColors,40);//no uso ps->pieces porque debuggeando test no lo tengo antes de correr el primero
   }
   for(int i=0;i<ps->pieces.size;i++){
     push(&pieceColors,newRandomColor());
   }
-
-  bucketDraw.actualBucket=0;
 
   operatorLetter.setScale(.7,.7);
   operatorLetter.setFont(font);
@@ -552,46 +550,44 @@ void debugUpdateAndDrawBucketsInit(bool reset){
 }
 
 void drawRegionLine(int height,int beg,int end,sf::Color color){
-  if(height<bucketDraw.windowBeg||height>=bucketDraw.windowBeg+windowSize)
+  if(height<bvectorDraw.windowBeg||height>=bvectorDraw.windowBeg+windowSize)
     return;
 
   sf::Color borderColor(std::max(color.r-30,0),std::max(color.g-30,0),std::max(color.b-30,0),255);
   rect.setSize(sf::Vector2f(end-beg,22));
-  rect.setPosition(550+beg,60+(height-bucketDraw.windowBeg)*20);
+  rect.setPosition(550+beg,60+(height-bvectorDraw.windowBeg)*20);
   rect.setFillColor(borderColor);
   window.draw(rect);
 
   rect.setSize(sf::Vector2f(end-beg-8,14));
-  rect.setPosition(550+beg+4,60+(height-bucketDraw.windowBeg)*20+4);
+  rect.setPosition(550+beg+4,60+(height-bvectorDraw.windowBeg)*20+4);
   rect.setFillColor(color);
   window.draw(rect);
 
   if(height%2==0){//se va a dibujar varias veces pero bueno
-    textLabel.setPosition(520,60+(height-bucketDraw.windowBeg)*20);
+    textLabel.setPosition(520,60+(height-bvectorDraw.windowBeg)*20);
     textLabel.setString(std::to_string(height/2)+"k");
     window.draw(textLabel);
   }
 }
 
-void drawBucketDelimitator(void* ptr){
-  int beg=(int)((char*)ptr-bucketDraw.bkt->data);
-  assert(beg>=0&&beg<bucketDraw.bkt->size);
+void drawBvectorDelimitator(int beg){
+  assert(beg>=0&&beg<bvectorDraw.bv->size);
 
   int by=beg/lineSize;
   int bx=beg%lineSize;
 
-  if(by<bucketDraw.windowBeg||by>=bucketDraw.windowBeg+windowSize)
+  if(by<bvectorDraw.windowBeg||by>=bvectorDraw.windowBeg+windowSize)
     return;
 
   rect.setSize(sf::Vector2f(2,24));
-  rect.setPosition(550+bx,60+(by-bucketDraw.windowBeg)*20);
+  rect.setPosition(550+bx,60+(by-bvectorDraw.windowBeg)*20);
   rect.setFillColor(sf::Color(210,210,210));
   window.draw(rect);
 }
 
-void drawBucketElement(void* ptr,int size,sf::Color color,char letter=' '){
-  int beg=(int)((char*)ptr-bucketDraw.bkt->data);
-  assert(beg>=0&&beg<bucketDraw.bkt->size);
+void drawBvectorElement(int beg,int size,sf::Color color,char letter=' '){
+  assert(beg>=0&&beg<bvectorDraw.bv->size);
 
   int by=beg/lineSize;
   int bx=beg%lineSize;
@@ -613,122 +609,140 @@ void drawBucketElement(void* ptr,int size,sf::Color color,char letter=' '){
     drawRegionLine(ey,0,ex,color);
   }
 
-  if(by>=bucketDraw.windowBeg&&by<bucketDraw.windowBeg+windowSize){
+  if(by>=bvectorDraw.windowBeg&&by<bvectorDraw.windowBeg+windowSize){
     operatorLetter.setColor(sf::Color(std::max(color.r-40,0),std::max(color.g-40,0),std::max(color.b-40,0),255));
     operatorLetter.setString(letter);
     if(bx+20<lineSize)
-      operatorLetter.setPosition(555+bx,59+(by-bucketDraw.windowBeg)*20);
+      operatorLetter.setPosition(555+bx,59+(by-bvectorDraw.windowBeg)*20);
     else
-      operatorLetter.setPosition(555,59+(by-bucketDraw.windowBeg+1)*20);
+      operatorLetter.setPosition(555,59+(by-bvectorDraw.windowBeg+1)*20);
     window.draw(operatorLetter);
   }
-  bucketDraw.end=end;
+  bvectorDraw.end=end;
 }
 
-void drawBucketOperator(operador* op,sf::Color color){
+void drawBvectorOperator(int opInd,sf::Color color){
+  operador* op=opVector<operador>(opInd);
+
   sf::Color colorFade=darkenColor(color,10);
   switch(op->tipo){
   case NORMAL:{
     normal* n=(normal*)op;
-    drawBucketElement(op,sizeof(normal)+size(n->accs)+size(n->conds)+size(n->colors),color,'n');
+    drawBvectorElement(opInd,sizeof(normal)+n->accs.size+n->conds.size+n->colors.size,color,'n');
   }
     break;
   case DESLIZ:{
-    drawBucketElement(op,sizeof(desliz),color,'d');
-    drawBucketOperator(((desliz*)op)->inside,colorFade);
+    drawBvectorElement(opInd,sizeof(desliz),color,'d');
+    drawBvectorOperator(((desliz*)op)->inside,colorFade);
   }break;
   case EXC:{
     exc* e=(exc*)op;
-    drawBucketElement(op,sizeof(exc),color,'e');
-    for(operador** excOp=e->ops.beg;excOp!=e->ops.after;excOp++){
-      drawBucketOperator(*excOp,colorFade);
+    drawBvectorElement(opInd,sizeof(exc),color,'e');
+    forVOp(e->ops){
+      drawBvectorOperator(*el,colorFade);
     }
-    drawBucketElement(bucketDraw.bkt->data+bucketDraw.end,size(e->ops),color,' ');
+    //for(int i=0;i<e->ops.size;i++){
+    //  drawBvectorOperator(*varrayOpElem(&e->ops,i),colorFade);
+    //}
+    drawBvectorElement(bvectorDraw.end,e->ops.size,color,' ');
   }break;
   case ISOL:
   case ISOLNRM:{
-    drawBucketElement(op,sizeof(isol),color,'i');
-    drawBucketOperator(((isol*)op)->inside,colorFade);
+    drawBvectorElement(opInd,sizeof(isol),color,'i');
+    drawBvectorOperator(((isol*)op)->inside,colorFade);
   }break;
   case DESOPT:
   case DESOPTNRM:{
     desopt* d=(desopt*)op;
-    drawBucketElement(op,sizeof(desopt)+size(d->ops)+size(d->movSizes),color,'f');
-    for(operador** desOp=d->ops.beg;desOp!=d->ops.after;desOp++){
-      drawBucketOperator(*desOp,colorFade);
+    drawBvectorElement(opInd,sizeof(desopt),color,'f');
+    forVOp(d->ops){
+      drawBvectorOperator(*el,colorFade);
     }
+    drawBvectorElement(bvectorDraw.end,d->ops.size+d->movSizes.size,color,' ');
   }break;
+  case FAILOP:
+    drawBvectorElement(opInd,sizeof(operador),color,'F');
+    break;
+  defaultAssert;
   }
-  if(op->sig!=nullptr)
-    drawBucketOperator(op->sig,color);
+  if(op->sig!=0)
+    drawBvectorOperator(op->sig,color);
 }
 
 
-void drawBucketMovholder(movHolder* mh,sf::Color color){
+void drawBvectorMovholder(int mhInd,sf::Color color){
   sf::Color colorFade=darkenColor(color,20);
+  movHolder* mh=gameVector<movHolder>(mhInd);
 
   if(mh->table==&normalTable){
     normalHolder* nh=(normalHolder*)mh;
-    drawBucketElement(mh,sizeof(normalHolder)+size(nh->memAct),color,'n');
+    drawBvectorElement(mhInd,sizeof(normalHolder)+nh->memAct.size,color,'n');
   }else if(mh->table==&deslizTable){
     deslizHolder* dh=(deslizHolder*)mh;
-    drawBucketElement(mh,sizeof(deslizHolder),color,'d');
+    desliz* op=opVector<desliz>(dh->op);
+    drawBvectorElement(mhInd,sizeof(deslizHolder),color,'d');
     for(int i=0;i<dh->cantElems;i++){
-      drawBucketMovholder((movHolder*)(dh->movs.beg+dh->op->iterSize*i),colorFade);
+      drawBvectorMovholder(dh->beg+op->iterSize*i,colorFade);
     }
-    int vacantSpace=dh->op->insideSize-dh->op->iterSize*dh->cantElems;
+    int vacantSpace=op->insideSize-op->iterSize*dh->cantElems;
     if(vacantSpace)
-      drawBucketElement((movHolder*)(dh->movs.beg+dh->cantElems*dh->op->iterSize),vacantSpace,darkenColor(colorFade,40));
+      drawBvectorElement(dh->beg+dh->cantElems*op->iterSize,vacantSpace,darkenColor(colorFade,40));
   }else if(mh->table==&excTable){
     excHolder* eh=(excHolder*)mh;
-    drawBucketElement(mh,sizeof(excHolder)+size(eh->movs),color,'e');
-    for(movHolder** mi=eh->movs.beg;mi!=eh->movs.after;mi++){
-      drawBucketMovholder(*mi,colorFade);
+    drawBvectorElement(mhInd,sizeof(excHolder)+eh->movs.size,color,'e');
+    forVGame(eh->movs){
+      drawBvectorMovholder(*el,colorFade);
     }
   }else if(mh->table==&isolTable || mh->table==&isolNRMTable){
     isolHolder* ih=(isolHolder*)mh;
-    drawBucketElement(mh,sizeof(isolHolder),color,'i');
-    drawBucketMovholder(ih->inside,color);
+    drawBvectorElement(mhInd,sizeof(isolHolder),color,'i');
+    drawBvectorMovholder(ih->inside,color);
   }else if(mh->table==&desoptTable || mh->table==&desoptNRMTable){
     desoptHolder* dh=(desoptHolder*)mh;
-    drawBucketElement(dh,sizeof(desoptHolder)+dh->op->desoptInsideSize,darkenColor(colorFade,40));
-    drawBucketElement(dh,sizeof(desoptHolder),color,'f');
-    drawBucketdesoptHNodes(dh,dh->movs,color);
+    drawBvectorElement(mhInd,sizeof(desoptHolder)+opVector<desopt>(dh->op)->desoptInsideSize,darkenColor(colorFade,40));
+    drawBvectorElement(mhInd,sizeof(desoptHolder),color,'f');
+
+    //    printf("%p %p %d %d\n",(char*)dh->movs,(char*)dh+sizeof(desoptHolder),indGameVector(dh->movs),indGameVector((char*)dh+sizeof(desoptHolder)));
+
+    drawBvectorDesoptHNodes(dh,indGameVector(dh->movs),color);
   }/*else if(mh->table==&spawnerTable){
-    drawBucketElement(mh,sizeof(spawnerGen),color,'s');
-  }*/else{
-    fail("movholder no reconocido probablemente sea fail que no lo puse todavia\n");
-    drawBucketElement(mh,6,color,'?');
+    drawBvectorElement(mh,sizeof(spawnerGen),color,'s');
+    }*/else if(mh->table==&failTable){
+    drawBvectorElement(mhInd,sizeof(movHolder),color,'F');
+  }else{
+    fail("bad movHolder in debug\n");
   }
-  if(mh->sig!=nullptr)
-    drawBucketMovholder(mh->sig,color);
+  if(mh->sig!=0)
+    drawBvectorMovholder(mh->sig,color);
 }
-void drawBucketdesoptHNodes(desoptHolder* d,desoptHolder::node* iter,sf::Color color){
+void drawBvectorDesoptHNodes(desoptHolder* d,int clusterIter,sf::Color color){
   int branchOffset=0;
-  for(int tam:d->op->movSizes){
-    desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+branchOffset);
-    movHolder* actualMov=(movHolder*)(nextIter+1);
+  desopt* op=opVector<desopt>(d->op);
+  forVOp(op->movSizes){
+    int tam=*el;
+    int movIter=clusterIter+branchOffset;
+    movHolder* actualMov=gameVector<movHolder>(movIter+sizeof(int));
     branchOffset+=tam;
 
-    drawBucketElement(nextIter,sizeof(desoptHolder::node*),sf::Color(std::min(color.r+30,255),std::min(color.g+30,255),std::min(color.b+30,255),color.a));
-    drawBucketMovholder(actualMov,color);
+    drawBvectorElement(movIter,sizeof(int),sf::Color(std::min(color.r+30,255),std::min(color.g+30,255),std::min(color.b+30,255),color.a));
+    drawBvectorMovholder(indGameVector(actualMov),color);
 
     if(actualMov->bools&valorFinal){
-      drawBucketdesoptHNodes(d,nextIter->iter,darkenColor(color,4));
+      drawBvectorDesoptHNodes(d,*gameVector<int>(movIter),darkenColor(color,4));
     }
   }
 }
 
 void drawHolderData(Holder* h,int x,int y){
   sf::Color color;
-  for(int i=0;i<holderColors.size;i++){
-    if(holderColors[i].h==h){
+  for(int i=0;i<elems(holderColors);i++){
+    if(holderColors[i].hI==indGameVector(h)){
       color=holderColors[i].color;
       goto cont;
     }
   }
   color=newRandomColor();
-  push(&holderColors,HolderColor{h,color});
+  push(&holderColors,HolderColor{indGameVector(h),color});
  cont:
 
   bool capturado=x==-1;
@@ -741,30 +755,31 @@ void drawHolderData(Holder* h,int x,int y){
     color=darkenColor(color,150);
   }
 
-  drawBucketElement(h,sizeof(Holder)+size(h->piece->movs),color,'H');
-  if(h->piece->memPieceSize)
-    drawBucketElement(((char*)h)+sizeof(Holder)+size(h->piece->movs),h->piece->memPieceSize*sizeof(int),color,'p');
+  Piece* piece=opVector<Piece>(h->piece);
+  drawBvectorElement(indGameVector(h),sizeof(Holder)+piece->movs.size,color,'H');
+  if(piece->memPieceSize)
+    drawBvectorElement(indGameVector(h)+sizeof(Holder)+elems(piece->movs),piece->memPieceSize*sizeof(int),color,'p');
 
-  char* firstMov=(char*)*h->movs.beg;
-  if(firstMov>=bucketDraw.bkt->data&&firstMov<bucketDraw.bkt->data+bucketDraw.bkt->size){
-    //por ahora cada holder o esta entero o no esta en el bucket
-    for(movHolder** mh=h->movs.beg;mh!=h->movs.after;mh++){
-      drawBucketElement(((char*)*mh)-sizeof(Base),sizeof(Base),color,'b');
-      drawBucketMovholder(*mh,color);
-      drawBucketDelimitator(*mh);
-    }
+  int firstMov=h->movs.beg;
+  assert(firstMov<=bvectorDraw.bv->size);
+
+  forVGame(h->movs){
+    int mh=*el;
+    drawBvectorElement(mh-sizeof(Base),sizeof(Base),color,'b');
+    drawBvectorMovholder(mh,color);
+    drawBvectorDelimitator(mh);
   }
 }
 
-void debugUpdateAndDrawBuckets(){
-  updateScrolling(&bucketDraw.windowBeg,bucketDraw.maxScrollingHeight);
+void debugUpdateAndDrawBvectors(){
+  updateScrolling(&bvectorDraw.windowBeg,bvectorDraw.maxScrollingHeight);
 
   properState* ps=(properState*)stateMem;
 
-  bucket* bucket=debugState==1?&ps->pieceOps:&ps->gameState;
+  bigVector* bv=debugState==1?&ps->pieceOps:&ps->gameState;
 
-  bucketDraw.bkt=bucket;
-  bucketDraw.maxScrollingHeight=std::max(bucket->size/lineSize - windowSize,0);
+  bvectorDraw.bv=bv;
+  bvectorDraw.maxScrollingHeight=std::max(bvectorDraw.bv->cap/lineSize - windowSize,0);
 
   //recorro el arbol cada vez porque la eficiencia no importa aca
   //ademas como guardar la informacion para que retomarla sea comodo no es obvio,
@@ -772,79 +787,61 @@ void debugUpdateAndDrawBuckets(){
   //con informacion extra, o podría tener la lista de bloques y trocearlos dinamicamente
   //aca. Las 2 tienen sus problemas, hacer todo dinamico es lo mas simple
 
-  drawBucketElement(bucket->data,bucket->size,sf::Color::Black);
+  drawBvectorElement(0,bvectorDraw.bv->cap,sf::Color(150,150,150));
+  drawBvectorElement(0,bvectorDraw.bv->size,sf::Color::Black);
 
   if(debugState==1){
     for(int x=0;x<brd->dims.x;x++){
       for(int y=0;y<brd->dims.y;y++){
-        Holder* h=tile(brd,v(x,y))->holder;
-        if(h){
+        int hI=tileGet(v(x,y))->holder;
+        if(hI){
+          Holder* h=gameVector<Holder>(hI);
           rect.setSize(sf::Vector2f(32*escala,32*escala));
           rect.setPosition(32*escala*x,32*escala*y);
-          rect.setFillColor(pieceColors[h->piece->ind]);
+          rect.setFillColor(pieceColors[opVector<Piece>(h->piece)->ind]);
           window.draw(rect);
         }
       }
     }
-    for(int i=0;i<ps->pieces.size;i++){
+    for(int i=0;i<elems(ps->pieces);i++){
       Piece* p=ps->pieces[i];
-      int pieceSize=sizeof(Piece)+size(p->movs);
-      drawBucketElement(p,pieceSize,pieceColors[i]);
+      int pieceSize=sizeof(Piece)+p->movs.size;
+      drawBvectorElement(indOpVector(p),pieceSize,pieceColors[i]);
 
-      for(pBase* pb=p->movs.beg;pb!=p->movs.after;pb++){
-        drawBucketOperator(pb->root,pieceColors[i]);
-        drawBucketDelimitator(pb->root);
+      for(int j=0;j<elems(p->movs);j++){
+        pBase* pb=varrayOpElem(&p->movs,j);
+        drawBvectorOperator(pb->root,pieceColors[i]);
+        drawBvectorDelimitator(pb->root);
       }
     }
   }else{
-    int bucketQ=getBucketSizeData(bucket).usedBuckets;
-    char* dataTemp=bucket->data;
-
-    textLabel.setPosition(800,20);
-    textLabel.setColor(sf::Color(90,90,90));
-    textLabel.setString(std::to_string(bucketDraw.actualBucket+1)+"/"+std::to_string(bucketQ));
-    window.draw(textLabel);
-
-    if(Input.rightClick){
-      bucketDraw.actualBucket=(bucketDraw.actualBucket+1)%bucketQ;
-    }
-
-    bucket::block* block=bucket->firstBlock;
-    for(int i=0;i<bucketDraw.actualBucket;i++){
-      block=block->next;
-    }
-    bucket->data=block->data;
-
-    if(bucketDraw.actualBucket==0){
-      parseData* pd=&ps->pd;
-      drawBucketElement(bucket->data,sizeof(board),sf::Color(204, 102, 0),'B');
-      int memTileSize=pd->dims.x*pd->dims.y*(sizeof(Tile)+pd->memTileSlots*sizeof(memData));
-      if(memTileSize)
-        drawBucketElement(bucket->data+sizeof(board),memTileSize,sf::Color(153, 153, 102),'T');
-      int memGlobalSize=pd->memGlobalSize*sizeof(memData);
-      if(memGlobalSize)
-        drawBucketElement(bucket->data+sizeof(board)+memTileSize,memGlobalSize,sf::Color(255, 102, 102),'G');
-    }
+    parseData* pd=&ps->pd;
+    drawBvectorElement(0,sizeof(board),sf::Color(204, 102, 0),'B');
+    int memTileSize=pd->dims.x*pd->dims.y*(sizeof(Tile)+pd->memTileSlots*sizeof(memData));
+    if(memTileSize)
+      drawBvectorElement(sizeof(board),memTileSize,sf::Color(153, 153, 102),'T');
+    int memGlobalSize=pd->memGlobalSize*sizeof(memData);
+    if(memGlobalSize)
+      drawBvectorElement(sizeof(board)+memTileSize,memGlobalSize,sf::Color(255, 102, 102),'G');
 
     for(int x=0;x<brd->dims.x;x++){
       for(int y=0;y<brd->dims.y;y++){
-        Holder* h=tile(brd,v(x,y))->holder;
-        if(h){
+        int hI=tileGet(v(x,y))->holder;
+        if(hI){
+          Holder* h=gameVector<Holder>(hI);
           drawHolderData(h,x,y);
         }
       }
     }
-    for(int i=0;i<reciclaje.size;i++){
-      drawHolderData(reciclaje[i],-1,-1);
+    for(int i=0;i<elems(reciclaje);i++){
+      drawHolderData(gameVector<Holder>(reciclaje[i]),-1,-1);
     }
-
-    bucket->data=dataTemp;
   }
 
   static int vel;
-  vel+=267;
-  if(vel/2<bucket->size)
-    drawBucketElement(bucket->data+vel/2,vel,sf::Color::Red,'X');
+  vel+=346;
+  if(vel/2<bvectorDraw.bv->size)
+    drawBvectorElement(vel/2,vel,sf::Color::Red,'X');
 
 }
 

@@ -3,7 +3,7 @@
 int dt=0;
 int clickI=0;
 bool confirm;
-void humanTurn(bool bando,board* brd){
+void humanTurn(bool bando){
     /*
     dt++;//se podría mover adentro del if?
     if(!clickers.empty()){
@@ -45,7 +45,7 @@ void humanTurn(bool bando,board* brd){
                    properDraw(stateMem);
                    handleModeSelectors();
                    if(debugState!=2)
-                     debugUpdateAndDrawBuckets();
+                     debugUpdateAndDrawBvectors();
                  });
 #else
       drawScreen([&](){
@@ -61,7 +61,7 @@ void humanTurn(bool bando,board* brd){
           ///Lo mejor seria hacer que se bloquee hasta recibir otro click, hacerlo bien cuando
           ///vuelva a meter solapamiento
           if(posClicked==cli.clickPos){
-            executeClicker(&cli,brd);//accionar
+            executeClicker(&cli);//accionar
             drawScreen([&](){properDraw(stateMem);});
             clearClickers();
             return;
@@ -70,10 +70,13 @@ void humanTurn(bool bando,board* brd){
         clearClickers();
         printf("(%d,%d)\n",posClicked.x,posClicked.y);
 
-        Holder* act=tile(brd,posClicked)->holder;
-        if(act&&act->bando==bando){
+        int actI=tileGet(posClicked)->holder;
+        if(actI){
+          Holder* act=gameVector<Holder>(actI);
+          if(act->bando==bando){
           makeCli(act);
           //debugPrintClickers(brd);
+          }
         }
         //drawScreen([&](){properDraw(stateMem);});
       }
@@ -123,28 +126,24 @@ void properInit(char* mem,int boardId,int player1Id,int player2Id){
   init(&reciclaje);
   init(&justSpawned);
 
-  initBucket(&ps->pieceOps);
+  //TODO alguien calcula esto para no usar un tamaño fijo?
+  init(&ps->pieceOps);
 
 
   if constexpr(forTest){
-    ps->gameState.size=0;
-    //marcar para no borrar la primera vez en test, porque no hay nada que borrar
-    //podría alocar algo al pedo para borrar, pero poner un if es mas simple y
-    //esto no es algo importante
+    init(&ps->gameState,1);//asi tengo algo que borrar la primera vez
+#if debugMode
+    debugUpdateAndDrawBvectorsInit(false);
+#endif
   }else{
     actualStateUpdate=properUpdate;
     properGameInit<false>(ps);
   }
 }
 
-void resetBucket(bucket* b,int size=bucketSize){
-  clearBucket(b);
-  delete b->firstBlock;
-  initBucket(b,size);
-}
 
 template<bool reset>
-void properGameInit(properState* ps,bool firstTestIteration){
+void properGameInit(properState* ps){
   if constexpr(reset){
     parseData* pd=&ps->pd;
 
@@ -175,10 +174,14 @@ void properGameInit(properState* ps,bool firstTestIteration){
       delete[] brd->ts.mem;
 
       free(&memMov);
-      if(firstTestIteration)//no termino de entender esto, la primera vez quien lo aloca? TODO
-        resetBucket(&ps->pieceOps);
-      else
-        clearBucketNoFree(&ps->pieceOps);
+
+
+      ps->pieceOps.size=0;
+      //esto no es exactamente correcto porque leakea capacidad entre tests,
+      //no sé si eso juega un factor importante igual. Todos los test siguientes no
+      //se van a comer el costo de realocacion. Como ahora tomo el minimo de los test
+      //en vez del promedio no importa, en el caso real solo se aloca una vez
+
     }
   }
 
@@ -202,21 +205,19 @@ void properGameInit(properState* ps,bool firstTestIteration){
             + ps->pd.memGlobalSize*sizeof(memData);
 
   if constexpr(reset){
-    if(firstTestIteration){
-      if(ps->gameState.size!=0){
-        resetBucket(&ps->gameState,ps->hsSize);
-      }else{
-        initBucket(&ps->gameState,ps->hsSize);
-      }
-    }else{
-      clearBucketNoFree(&ps->gameState);
+    if(ps->hsSize>ps->gameState.size){//cuando cambia el test y al principio puede que el nuevo tablero pida mas de la memoria que se crece en una reserva
+      free(&ps->gameState);
+      init(&ps->gameState,ps->hsSize);
     }
+    ps->gameState.size=0;
   }else
-    initBucket(&ps->gameState,ps->hsSize);
+    init(&ps->gameState,ps->hsSize);
+  actualHolder.gameState=&ps->gameState;
 
 #if debugMode
-  debugUpdateAndDrawBucketsInit(reset);
+  debugUpdateAndDrawBvectorsInit(reset);
 #endif
+
   makeBoard(ps);
 
   drawScreen([](){properDraw(stateMem);});
@@ -228,11 +229,11 @@ void properGameInit(properState* ps,bool firstTestIteration){
 
 void properDraw(char* mem){
   properState* ps=(properState*)mem;
-  drawTiles(brd);
+  drawTiles();
   if(Clicker::drawClickers)
     for(Clicker& cli:clickers)
       drawClicker(&cli);
-  drawPieces(brd);
+  drawPieces();
   if(ps->turno&1)
     window.draw(ps->turnoBlanco);
   else
@@ -251,7 +252,7 @@ void doTurn(properState* ps,int player,bool bando){
     printf("%d ",brd->memTiles[i].val);
     }*/
   switch(player){
-  case 1: humanTurn(bando,brd);break;
+  case 1: humanTurn(bando);break;
   case 2: randomTurnTestPlayer(bando,ps);break;
   case 4: skipTurn();
   }

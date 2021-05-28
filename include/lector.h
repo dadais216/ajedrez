@@ -76,7 +76,7 @@ int getCodedPieceIndexById(vector<int>*,int);
 void generateTokens(parseData*,vector<int>*,char*);
 void loadGlobalMacros(parseData*,char*);
 void processTokens(parseData*,vector<int>*);
-void makePiece(parseData*,int,int,vector<int>*,vector<Piece*>*,bucket*);
+void makePiece(parseData*,int,int,vector<int>*,vector<Piece*>*,bigVector*);
 template<bool global> void loadMacro(parseData*,char**);
 void expandVersions(parseData*,vector<int>*,vector<int>*,int,int,int);
 void expandTangledVersions(parseData*,vector<int>*,vector<int>*,int,int,int);

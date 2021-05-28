@@ -104,19 +104,20 @@ struct spwn:public acm{
 */
 
 void mov(){
-  actualHolder.h->tile->holder=nullptr;
+  gameVector<Tile>(actualHolder.h->tile)->holder=0;
   actualHolder.h->tile=actualHolder.tile;
-  actualHolder.h->tile->holder=actualHolder.h;
+  gameVector<Tile>(actualHolder.h->tile)->holder=indGameVector(actualHolder.h);
 }
-
 void pausa(){
   drawScreen([&](){properDraw(stateMem);});
   sleep(milliseconds(40));
 }
-vector<Holder*> reciclaje;
+vector<int> reciclaje;
 void capt(){
-  actualHolder.tile->holder->step++;
-  actualHolder.tile->holder->inPlay=false;
+  Tile* tile=gameVector<Tile>(actualHolder.tile);
+  Holder* holder=gameVector<Holder>(tile->holder);
+  holder->step++;
+  holder->inPlay=false;
   //@optim se podria eliminar triggers estaticos en global aca para que no se iteren ni activen en falso
   //for(memTriggers& mt:memGlobalTriggers[ind])
   //    remove_if(mt.perma.begin(),mt.perma.end(),[&captT](normalHolder* nh)->bool{
@@ -124,8 +125,8 @@ void capt(){
   //          });
   //el problema esta en recrearlos en spawn. Se tendria que agregar otra rama de polimorfismo para acceder a cada
   //normalHolder y setear las memorias devuelta y no creo que lo valga
-  push(&reciclaje,actualHolder.tile->holder);
-  actualHolder.tile->holder=nullptr;
+  push(&reciclaje,tile->holder);
+  tile->holder=0;
   push(&pisados,actualHolder.tile);
 }
 
@@ -152,23 +153,24 @@ void spwn(){
   Holder* h;
   //TODO puede que sea buena idea mover todo este procesado a generarNewlySpawned
   for(int i=0;i<reciclaje.size;i++){
-    Holder* r=reciclaje[i];
-    if(r->piece->ind==ind){//reciclo piezas enemigas tambien
+    Holder* r=gameVector<Holder>(reciclaje[i]);
+    if(opVector<Piece>(r->piece)->ind==ind){//reciclo piezas enemigas tambien
       r->inPlay=true;
       r->bando=bando;
-      memset(r->memPiece.beg,0,sizeof(int)*size(r->memPiece));
+      memset(gameVector<void>(r->memPiece.beg),0,sizeof(int)*r->memPiece.size);
       unorderedErase(&reciclaje,i);
       h=r;
       goto end;
     }
   }
-  h=initHolder(actualHolder.ps->pieces[ind],bando,actualHolder.tile,&actualHolder.ps->gameState);
+  h=gameVector<Holder>(initHolder(actualHolder.ps->pieces[ind],bando,actualHolder.tile,&actualHolder.ps->gameState));
  end:
-  actualHolder.tile->holder=h;
+  Tile* tile= gameVector<Tile>(actualHolder.tile);
+  tile->holder=indGameVector(h);
   h->tile=actualHolder.tile;
 
-  push(&justSpawned,actualHolder.tile->holder);
-  push(&pisados,actualHolder.tile);
+  push(&justSpawned,tile->holder);
+  push(&pisados,h->tile);
 
   //tecnicamente podría generar la pieza nueva inmediatamente, el problema es que como las acciones de la actual no terminaron
   //va a generarse con el tablero en un estado erroneo. Cuando la actual termine se van a activar triggers y se va a reaccionar
@@ -179,27 +181,29 @@ void spwn(){
 //cuando mostraba de una condicion a la vez aca hacía #define CONDRET(VAL) debugShowAndWait(__func__,VAL); return VAL
 
 bool vacio(){
-  return actualHolder.tile->holder==nullptr;
+  return gameVector<Tile>(actualHolder.tile)->holder==0;
 }
 bool piece(){
-  return actualHolder.tile->holder;
+  return gameVector<Tile>(actualHolder.tile)->holder;
 }
 bool enemigo(){
-  Holder* other=actualHolder.tile->holder;
-  if(other){
+  int otherI=gameVector<Tile>(actualHolder.tile)->holder;
+  if(otherI){
+    Holder* other=gameVector<Holder>(otherI);
     return other->bando!=actualHolder.h->bando;
   }
   return false;
 }
 bool aliado(){
-  Holder* other=actualHolder.tile->holder;
-  if(other){
+  int otherI=gameVector<Tile>(actualHolder.tile)->holder;
+  if(otherI){
+    Holder* other=gameVector<Holder>(otherI);
     return other->bando==actualHolder.h->bando;
   }
   return false;
 }
 bool self(){
-  return actualHolder.tile->holder==actualHolder.h;
+  return gameVector<Tile>(actualHolder.tile)->holder==indGameVector(actualHolder.h);
 }
 
 bool pass(){

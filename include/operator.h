@@ -1,6 +1,6 @@
 
 struct parseMovData{
-  bucket* b;
+  bigVector* b;
   parseData* pd;
   vector<int> tokens;
   int ind;
@@ -17,13 +17,13 @@ struct parseMovData{
 
 struct operador{
   int tipo;
-  operador* sig;
+  int sig;
   int32_t bools;//makeClick, hasClick, doEsp en normal
 };
 struct normal:public operador{
-  barray<void(*)(void)> accs;
-  barray<bool(*)(void)> conds;
-  barray<int> colors;
+  varray<void(*)(void)> accs;
+  varray<bool(*)(void)> conds;
+  varray<int> colors;
   //struct setupTrigInfo{
   //    char type; //0 global 1 pieza 2 turno
   //    int ind;
@@ -32,21 +32,21 @@ struct normal:public operador{
   v relPos;
 };
 struct desliz:public operador{
-  operador* inside;
-  size_t insideSize;
-  size_t iterSize;
+  int inside;
+  int insideSize;
+  int iterSize;
 };
 struct exc:public operador{
-  barray<operador*> ops;
+  varray<int> ops;
   int insideSize;//tamaño de movHolders + lo que ocupe ops
 };
 struct isol:public operador{
   int size;
-  operador* inside;
+  int inside;
 };
 struct desopt:public operador{
-  barray<operador*> ops;
-  barray<int> movSizes;//tamaño de cada movimiento, incluyendo puntero al proximo cluster
+  varray<int> ops;
+  varray<int> movSizes;//tamaño de cada movimiento, incluyendo puntero al proximo cluster
   int desoptInsideSize;
   int clusterSize;
   int dinamClusterBaseOffset;
@@ -71,7 +71,7 @@ esto solo pasa cuando se crear las piezas la primera vez.
 #define actionBuffer void(*)(void)
 typedef  bool(*conditionBuffer)(void);
 
-operador* parseOp(parseMovData*,bool fromNormal=false);
+int parseOp(parseMovData*,bool fromNormal=false);
 normal* parseNormal(parseMovData*);
 desliz* parseDesliz(parseMovData*);
 exc* parseExc(parseMovData*);

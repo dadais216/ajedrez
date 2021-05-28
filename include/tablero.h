@@ -6,24 +6,24 @@ struct tile;
 struct normalHolder;
 //si usara step en pieza en vez de tiles podría no pasar stepCheck
 struct Trigger{
-  normalHolder* nh; //puntero al movimiento a recalcular
+  int nh; //puntero al movimiento a recalcular
   int step; //si son el mismo que lo que tiene el holder ahora quiere decir que esta en el mismo lugar y no se movio, el trigger es valido
 };
 //creo que step se podría poner en tile y sería lo mismo. Tengo la tile al momento de cargar los triggers tambien, y las demas cosas se podrían manejar igual. Es lo mismo igual,
 //y steps en holders me parece que tiene mas sentido
 
-const int triggersPerBox=3;
-//cuando saque buckets puedo subir a 7, con 4 de pad
+const int triggersPerBox=7;
 struct triggerBox{
   union{
     struct{
       Trigger triggers[triggersPerBox];
       int next;
+      char pad[4];
     };
     int nextFree;
   };
 };
-static_assert(sizeof(triggerBox)<=64);
+static_assert(sizeof(triggerBox)==64);
 
 struct triggerSpace{
   int firstFree;
@@ -33,7 +33,7 @@ struct triggerSpace{
 };
 
 struct Tile{
-  Holder* holder;
+  int holder;
   int firstTriggerBox;
   int triggersUsed;
   v pos;//tecnicamente es calculable, que sé yo
@@ -45,9 +45,9 @@ struct memData{
   int triggersUsed;
   int firstTriggerBox;
 };
-memData* getTileMd(int,board*);
+memData* getTileMd(int);
 
-board* brd;
+#define brd ((board*)actualHolder.gameState->data)
 
 /*
 no estoy seguro de si tener un triggerBox prealocado para cada tile, que se mantiene, o no.
@@ -95,9 +95,9 @@ struct board{
 
 
 struct nhBuffer{
-  normalHolder** buf;
-  int size;
+  int* buf;
   int beg;
+  int size;
 };
 
 void init(triggerSpace* ts);

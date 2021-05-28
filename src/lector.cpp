@@ -246,7 +246,7 @@ void clearMacros(parseData* pd){
 //la funcion de arriba solo se usa para test pero debería usarse normalmente 
 
 //consigo todas las pieces juntas para saber los tamaños de las memorias. Esto incluye piezas que no esten en el tablero, aparezcan por spawn
-void makePieces(parseData* pd,vector<Piece*>* pieces,bucket* b){
+void makePieces(parseData* pd,vector<Piece*>* pieces,bigVector* b){
   char* filePtr=loadFile("piezas.txt");
   defer(filePtr);
 
@@ -400,10 +400,10 @@ void tokenWord(parseData* pd,vector<int>* tokens,char* b,char* e){
   if(tokens->data[tokens->size-1]==tmsize &&
      e-b==1){
     switch(*b){
-    case 'g': push(tokens,tmglobal);return;
-    case 't': push(tokens,tmtile);return;
-    case 'p': push(tokens,tmpiece);return;
-    case 'l': push(tokens,tmlocal);return;
+    case 'g': push(tokens,(int)tmglobal);return;
+    case 't': push(tokens,(int)tmtile);return;
+    case 'p': push(tokens,(int)tmpiece);return;
+    case 'l': push(tokens,(int)tmlocal);return;
     }
   }
 

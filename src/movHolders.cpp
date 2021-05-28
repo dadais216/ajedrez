@@ -15,36 +15,46 @@ inline v getOffset(v relPos,v pos){
   return pos-relPos;
 }
 
-void initMovH(movHolder* m,operador* op,Base* base_){
-  if(!base_->root)
-    base_->root=m;
-  m->base=base_;
+void initMovH(movHolder* m,operador* op,int baseInd){
+  Base* base=gameVector<Base>(baseInd);
+  if(!base->movRoot)
+    base->movRoot=indGameVectorInc(m);
+  m->base=baseInd;
   m->bools=op->bools;//setea makeClick, hasClick y doEsp en normalh
 }
+
+
+movHolder* movH(int ind){
+  return gameVector<movHolder>(ind);
+}
+
+#define getPtr(type,name,ind)                   \
+  type* name gameVectorInc<type>(ind);
 
 void generarSig(movHolder* m){
   //se llama cuando valor == true
   if(m->sig){
     m->bools&=~(valorCadena|valorFinal);
-    m->sig->table->generar(m->sig);
-    if(m->bools&hasClick)
-      m->bools|=valorCadena;
-    else
-      m->bools|=m->sig->bools&valorCadena;
-    m->bools|=m->sig->bools&valorFinal;
+    movHolder* mh=movH(m->sig);
+    mh->table->generar(m->sig);
+    if(m->bools&hasClick){
+      m->bools|=valorCadena;//TODO esto debería depender de propagar valorCadena, idenpendientemente de hasClick?
+    }else
+      m->bools|=mh->bools&valorCadena;
+    m->bools|=mh->bools&valorFinal;
   }else
     m->bools|=valorFinal|valorCadena;
 }
 
 //para manejar templates
-void reaccionarOverload(movHolder* m,normalHolder* nh){
-  m->table->reaccionar(m,nh);
+void reaccionarOverload(int m,int nh){
+  gameVector<movHolder>(m)->table->reaccionar(m,nh);
 }
-void reaccionarOverload(movHolder* m,nhBuffer* nh){
-  m->table->reaccionarVec(m,nh);
+void reaccionarOverload(int m,nhBuffer* nh){
+  gameVector<movHolder>(m)->table->reaccionarVec(m,nh);
 }
 
-void reaccionarSig(movHolder*m,auto nhs){
+void reaccionarSig(movHolder* m,auto nhs){
   if(m->sig){
     reaccionarOverload(m->sig,nhs);
     if(switchToGen){
@@ -52,20 +62,22 @@ void reaccionarSig(movHolder*m,auto nhs){
       if(m->bools&hasClick)
         m->bools|=valorCadena;
       else
-        m->bools|=m->sig->bools&valorCadena;
-      m->bools|=m->sig->bools&valorFinal;
+        m->bools|=movH(m->sig)->bools&valorCadena;
+      m->bools|=movH(m->sig)->bools&valorFinal;
     }
   }
 }
 
 inline void generarProperNormalH(normalHolder* n){
-  int i=0;
-  actualHolder.buffer=(void(**)(void))n->op->conds.beg;
+  int i;
+  normal* op=opVector<normal>(n->op);
+  actualHolder.buffer=(void(**)(void))varrayOpElem(&op->conds,0);
   actualHolder.bufferPos=&i;
-  for(bool(**c)(void)=n->op->conds.beg;
-      c+i != n->op->conds.after;
-      i++){
-    bool ret=(*(c+i))();
+
+
+
+  for(i=0;i<elems(op->conds);i++){
+    bool ret=(*varrayOpElem(&op->conds,i))();
 #if debugMode
     debugShowAndWait(ret);
 #endif
@@ -80,21 +92,23 @@ inline void generarProperNormalH(normalHolder* n){
   generarSig(n);
 }
 bool espFail(v pos){
-  return pos.x<0||pos.x>=actualHolder.brd->dims.x
-       ||pos.y<0||pos.y>=actualHolder.brd->dims.y;
+  return pos.x<0||pos.x>=brd->dims.x
+       ||pos.y<0||pos.y>=brd->dims.y;
 }
-void generarNormalH(movHolder* m){
-  normalHolder* n=(normalHolder*) m;
-  actualHolder.nh=n;
-  memcpy(n->memAct.beg,memMov.data,n->base->memLocal.size*sizeof(int));
+void generarNormalH(int mInd){
+  getPtr(normalHolder,n=,mInd);
 
-  n->pos=getActualPos(n->op->relPos,offset);//pos se calcula siempre porque se usa para actualizar offset
+  actualHolder.nh=n;
+  memcpy(gameVectorInc(n->memAct.beg),memMov.data,gameVector<Base>(n->base)->memLocal.size*sizeof(int));
+
+  n->pos=getActualPos(opVector<normal>(n->op)->relPos,offset);//pos se calcula siempre porque se usa para actualizar offset
   if(n->bools&doEsp){
     if(espFail(n->pos)){
       n->bools&=~(valorFinal|valorCadena|valor);
       return;
     }
-    actualHolder.tile=tile(actualHolder.brd,n->pos); //se me hace raro que tile solo se actualice si es esp, hay que mirar todo el tema de esp TODO
+    Tile* tile=tileGet(n->pos); //se me hace raro que tile solo se actualice si es esp, hay que mirar todo el tema de esp TODO
+    actualHolder.tile=indGameVector(tile);
 
     //los triggers se ponen aca y se reponen en la reaccion. Las normales esp ahora son
     //las normales que se originan despues de un movimiento. (o hacen miran memoria de tile)
@@ -105,71 +119,79 @@ void generarNormalH(movHolder* m){
     //se esta poniendo un trigger en las dos ramas de exc en vez de antes de este, lo que no aprovecha la normal
     //de w que va a estar ahi de todas formas y hace que se tengan multiples triggers, lo que es mas caro.
     //Puede que se pueda hacer un sistema mejor en la version compilada, aunque no sé si lo vale.
-    pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
+    
+    pushTrigger(&tile->triggersUsed,&tile->firstTriggerBox);
   }
   generarProperNormalH(n);
 }
-void reaccionarNormalH(movHolder* m,normalHolder* nh){
-  normalHolder* self=(normalHolder*) m;
+void reaccionarNormalH(int mInd,int nhInd){
+  getPtr(normalHolder,self=,mInd);
 
-  if(nh==self){
-    actualHolder.nh=nh;
+  Base* base=gameVector<Base>(self->base);
+  normal* op=opVector<normal>(self->op);
 
-    memcpy(memMov.data,self->memAct.beg,self->base->memLocal.size*sizeof(int));
+  if(nhInd==mInd){
+    actualHolder.nh=self;
+
+    memcpy(memMov.data,gameVectorInc<void>(self->memAct.beg),base->memLocal.size*sizeof(int));
     switchToGen=true;
 
-    actualHolder.tile=tile(actualHolder.brd,self->pos);
-    pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
+    Tile* tile=tileGet(self->pos);
+    actualHolder.tile=indGameVector(tile);
+    pushTrigger(&tile->triggersUsed,&tile->firstTriggerBox);
     generarProperNormalH(self);
     if(!(self->bools&valorFinal)){
-      offset=getOffset(self->op->relPos,self->pos);
-      memcpy(memMov.data,self->memAct.beg,self->base->memLocal.size*sizeof(int));
+      offset=getOffset(op->relPos,self->pos);
+      memcpy(memMov.data,gameVectorInc<void>(self->memAct.beg),base->memLocal.size*sizeof(int));
       //esta restauracion esta para que el operador que contenga reciba el offset y mem local correcta
       //la alternativa a hacer esto es que todos los operadores contenedores guarden offset y memoria local
       //para cada iteración/rama, lo que tambien tiene sus desventajas.
     }
   }else if(self->bools&valor){
-    reaccionarSig(self,nh);
+    reaccionarSig(self,nhInd);
     if(!(self->bools&valorFinal)){
-      offset=getOffset(self->op->relPos,self->pos);
-      memcpy(memMov.data,self->memAct.beg,self->base->memLocal.size*sizeof(int));
+      offset=getOffset(op->relPos,self->pos);
+      memcpy(memMov.data,gameVectorInc<void>(self->memAct.beg),base->memLocal.size*sizeof(int));
     }
   }
 }
-void reaccionarNormalH(movHolder* m,nhBuffer* nhs){
-  normalHolder* s=(normalHolder*) m;
-
+void reaccionarNormalH(int mInd,nhBuffer* nhs){
+  getPtr(normalHolder,self=,mInd);
   assert(nhs->size>0);
+
+  Base* base=gameVector<Base>(self->base);
+  normal* op=opVector<normal>(self->op);
   for(int i=0;i<nhs->size;++i){
-    normalHolder* nh=nhs->buf[i];
-    if(nh==s){
+    int nhInd=nhs->buf[i];
+    if(nhInd==mInd){
       #if debugMode
       if(i!=0){
         printf("normal fuera de orden\n");
       }
       #endif
 
-      actualHolder.nh=nh;
+      actualHolder.nh=self;
 
-      memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
+      memcpy(memMov.data,gameVectorInc<void>(self->memAct.beg),base->memLocal.size*sizeof(int));
       switchToGen=true;
 
-      actualHolder.tile=tile(actualHolder.brd,s->pos);
-      pushTrigger(&actualHolder.tile->triggersUsed,&actualHolder.tile->firstTriggerBox);
-      generarProperNormalH(s);
-      if(!(s->bools&valorFinal)){
-        offset=getOffset(s->op->relPos,s->pos);
-        memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
+      Tile* tile=tileGet(self->pos);
+      actualHolder.tile=indGameVector(tile);
+      pushTrigger(&tile->triggersUsed,&tile->firstTriggerBox);
+      generarProperNormalH(self);
+      if(!(self->bools&valorFinal)){
+        offset=getOffset(op->relPos,self->pos);
+        memcpy(memMov.data,gameVectorInc<void>(self->memAct.beg),base->memLocal.size*sizeof(int));
       }
       nhs->beg++;//faltaria reordenar si no es el primero pero si hago lo de filtrar no es necesario
       return;
     }
-    }
-  if(s->bools&valor){
-    reaccionarSig(s,nhs);
-    if(!(s->bools&valorFinal)){
-      offset=getOffset(s->op->relPos,s->pos);
-      memcpy(memMov.data,s->memAct.beg,s->base->memLocal.size*sizeof(int));
+  }
+  if(self->bools&valor){
+    reaccionarSig(self,nhs);
+    if(!(self->bools&valorFinal)){
+      offset=getOffset(op->relPos,self->pos);
+      memcpy(memMov.data,gameVectorInc<void>(self->memAct.beg),base->memLocal.size*sizeof(int));
     }
   }
 }
@@ -196,45 +218,48 @@ void reaccionarNormalH(movHolder* m,nhBuffer* nhs){
  */
 
 void accionarNormalH(normalHolder* n){
-  actualHolder.h=n->base->holder;
+  actualHolder.h=gameVector<Holder>(gameVector<Base>(n->base)->holder);
   actualHolder.nh=n;
-  actualHolder.tile=tile(actualHolder.brd,n->pos);
+  actualHolder.tile=indGameVector(tileGet(n->pos));
 
-  int i=0;
-  actualHolder.buffer=n->op->accs.beg;
+  normal* op=opVector<normal>(n->op);
+  int i;
+  actualHolder.buffer=varrayOpElem(&op->accs,0);
   actualHolder.bufferPos=&i;
 
-  for(void(**func)(void)=n->op->accs.beg;
-      func+i != n->op->accs.after;
-      i++)
-    (*(func+i))();
+  for(i=0;i<elems(op->accs);i++){
+    (*varrayOpElem(&op->accs,i))();
+  }
 }
 void cargarNormalH(movHolder* m,vector<normalHolder*>* norms){
-  fromCast(n,m,normalHolder*);
+  normalHolder* n=(normalHolder*)m;
   if(!(n->bools&valorCadena)) return;
   push(norms,n);
   if(n->bools&makeClick)
-    makeClicker(norms,n->base->holder);
+    makeClicker(norms,n->base);
   if(n->sig)
-    n->sig->table->cargar(n->sig,norms);
+    movH(n->sig)->table->cargar(movH(n->sig),norms);
 }
-void drawNormalH(normalHolder* n){
-  actualHolder.nh=n;
-  for(int i:n->op->colors){
-    coloresImp[i].draw();
+void drawNormalH(normalHolder* nh){
+  actualHolder.nh=nh;
+  normal* n=opVector<normal>(nh->op);
+  for(int i=0;i<elems(n->colors);i++){
+    int c=*varrayOpElem(&n->colors,i);
+    coloresImp[c].draw();
   }
 }
 
- virtualTableMov normalTable={generarNormalH,reaccionarNormalH,reaccionarNormalH,cargarNormalH};
+virtualTableMov normalTable={generarNormalH,reaccionarNormalH,reaccionarNormalH,cargarNormalH};
 
-void initNormalH(normal* org,Base* base_,char** head){
-  fromCast(n,*head,normalHolder*);
+void initNormalH(normal* org,int base_,bigVector* hv){
+  fromCast(n,head(hv),normalHolder*);
+
   initMovH(n,org,base_);
   n->table=&normalTable;
   
-  *head+=sizeof(normalHolder);
+  hv->size+=sizeof(normalHolder);
 
-  n->op=org;
+  n->op=indOpVector(org);
   /*for(auto trigInfo:n->op->setUpMemTriggersPerNormalHolder)
     switch(trigInfo.type){
     case 0:
@@ -244,11 +269,9 @@ void initNormalH(normal* org,Base* base_,char** head){
       break;case 2:
       turnoTrigs[base_->h->bando].push_back({base_->h,n}); ///@check
       }*/
-  n->memAct.beg=(int*)*head;
-  n->memAct.after=((int*)*head)+base_->memLocal.size;
-  *head=(char*)n->memAct.after;
-
-  n->op->relPos=n->op->relPos;
+  n->memAct.beg=hv->size;
+  n->memAct.size=gameVector<Base>(base_)->memLocal.size*sizeof(int);
+  hv->size+=n->memAct.size;
 }
 
 
@@ -257,20 +280,25 @@ void initNormalH(normal* org,Base* base_,char** head){
 //TODO se me hace raro que se creen en el momento, no sería costoso armarlos todos al principio
 void maybeAddIteration(deslizHolder*d,int i){
   if(d->cantElems==i){
-    char* place=(char*)d->movs.beg+d->movs.elemSize*i;//crearMovHolder necesita **
-    crearMovHolder(d->op->inside,d->base,&place);
+    bigVector* hv=&actualHolder.ps->gameState;
+    int sizeBefore=hv->size;
+    hv->size=d->beg+d->elemSize*i;
+    crearMovHolder(opVector<desliz>(d->op)->inside,d->base,hv);
     d->cantElems++;
-    assert(d->cantElems<=count(d->movs));
+    assert(d->cantElems<=(d->after-d->beg)/d->elemSize);
+    assert(hv->size<=sizeBefore);
+    hv->size=sizeBefore;
   }
 }
-void generarDeslizH(movHolder* m){
-  fromCast(d,m,deslizHolder*);
+void generarDeslizH(int mInd){
+  getPtr(deslizHolder,d=,mInd);
+
   movHolder* act;
   int i=0;
   for(;;){
     v offsetOrg=offset;
-    act=(movHolder*)d->movs[i];
-    act->table->generar(act);
+    act=movH(d->beg+d->elemSize*i);
+    act->table->generar(indGameVector(act));
     if(!(act->bools&valorFinal)){
       offset=offsetOrg;
       break;
@@ -285,58 +313,66 @@ void generarDeslizH(movHolder* m){
   d->f=i;
   generarSig(d);
 }
-normalHolder* getFirstNormal(normalHolder* nh){
+int getFirstNormal(int nh){
   return nh;
 }
-normalHolder* getFirstNormal(nhBuffer* nb){
+int getFirstNormal(nhBuffer* nb){
   return nb->buf[nb->beg];
 }
 
-void deleteInnacesibleNormalsMaybeJump(normalHolder* nh,auto cond){
+void deleteInnacesibleNormalsMaybeJump(int nh,auto cond){
   longjmp(jmpReaccion,1);
 }
 void deleteInnacesibleNormalsMaybeJump(nhBuffer* nb,auto cond){
   for(;
       nb->beg<nb->size;
       nb->beg++){
-    if(!cond(nb->buf[nb->beg])){
+    if(!cond(gameVector<normalHolder>(nb->buf[nb->beg]))){
       return;
     }
   }
   longjmp(jmpReaccion,1);
 }
 
-template<typename T>
-void reaccionarDeslizH(movHolder* m,T tnh){
-  deslizHolder* d=(deslizHolder*)m;
-  constexpr bool singleNh=std::is_same<T,normalHolder*>::value;
-  normalHolder* nh=getFirstNormal(tnh);
+movHolder* deslizElem(deslizHolder* d,int i){
+  return gameVector<movHolder>(d->beg+d->elemSize*i);
+}
 
-  if((char*)nh>=(char*)d+d->op->insideSize){
+template<typename T>
+void reaccionarDeslizH(int mInd,T tnh){
+  getPtr(deslizHolder,d=,mInd);
+  
+  constexpr bool singleNh=std::is_same<T,int>::value;
+  int nhInd=getFirstNormal(tnh);
+
+  desliz* des=opVector<desliz>(d->op);
+
+  if(nhInd>=mInd+des->insideSize){
     reaccionarSig(d,tnh);
     return;
   }
 
-  assert((char*)nh>=(char*)d->movs.beg);
-  intptr diff=(char*)nh-(char*)d->movs.beg;
-  int iter=diff/d->op->iterSize;
+  assert(nhInd>=d->beg);
+  int diff=nhInd-d->beg;
+  int iter=diff/des->iterSize;
   for(int i=0;i<iter;++i){
-    if(!(((movHolder*)d->movs[i])->bools&valorFinal)){
-      deleteInnacesibleNormalsMaybeJump(tnh,[d](normalHolder* inh)->bool{
-                                                     return (char*)inh<(char*)d+d->op->insideSize;
+    movHolder* m=deslizElem(d,i);
+    if(!(m->bools&valorFinal)){
+      deleteInnacesibleNormalsMaybeJump(tnh,[=](normalHolder* inh)->bool{
+                                                     return (char*)inh<(char*)d+des->insideSize;
                                                     });
       reaccionarSig(d,tnh);
       return;
     }
   }
-  movHolder* act=(movHolder*)d->movs[iter];
-  reaccionarOverload(act,tnh);
+  movHolder* act=deslizElem(d,iter);
+  reaccionarOverload(indGameVector(act),tnh);
 
   if constexpr(!singleNh){
     if(!switchToGen){
       //esto pasa en caso de que la nh estaba en un isol, desopt o region innacesible de operador interior
       //y hay mas normales en el buffer, que pueden estar en proximas iteraciones o despues
-      reaccionarDeslizH(m,tnh);
+      reaccionarDeslizH(mInd,tnh);
       return;
     }
   }
@@ -345,8 +381,8 @@ void reaccionarDeslizH(movHolder* m,T tnh){
   for(;act->bools&valorFinal;){
     iter++;
     maybeAddIteration(d,iter);
-    act=(movHolder*)d->movs[iter];
-    act->table->generar(act);
+    act=deslizElem(d,iter);
+    act->table->generar(indGameVector(act));
   }
   if(act->bools&valorCadena)
     d->bools|=lastNotFalse;
@@ -359,36 +395,37 @@ void cargarDeslizH(movHolder* m,vector<normalHolder*>* norms){
   fromCast(d,m,deslizHolder*);
   if(!(d->bools&valorCadena)) return;
   for(int i=0;i<(d->bools&lastNotFalse?d->f+1:d->f);i++){
-    fromCast(mov,d->movs[i],movHolder*);
+    movHolder* mov=deslizElem(d,i);
     mov->table->cargar(mov,norms);
   }
   if(d->bools&makeClick&&!(norms->size==0)) ///un desliz con makeClick genera clickers incluso cuando f=0. Tiene sentido cuando hay algo antes del desliz
-    makeClicker(norms,d->base->holder);
+    makeClicker(norms,d->base);
   if(d->sig)
-    d->sig->table->cargar(d->sig,norms);
+    movH(d->sig)->table->cargar(movH(d->sig),norms);
 }
 
-virtualTableMov deslizTable={generarDeslizH,reaccionarDeslizH<normalHolder*>,reaccionarDeslizH<nhBuffer*>,cargarDeslizH};
+virtualTableMov deslizTable={generarDeslizH,reaccionarDeslizH<int>,reaccionarDeslizH<nhBuffer*>,cargarDeslizH};
 //esta version del desliz retrocede a la posicion de inicio de una iteracion si la iteracion falla
 //esto la hace mas consistente en casos donde se usen multiples normales y cosas asi. Pero para
 //casos comunes como la torre no se usa, agrega codigo y almacenamiento, y lo mas importante es
 //que genera multiples triggers. No vale la pena agregar otra version ahora para no hacer bloat,
 //pero en la version compilada podria estar. Tambien se podria agregar instrucciones bizarras
 //solo de desliz sin mucho problema, como cambiar la pos de retorno o breaks.
-void initDeslizH(desliz* org,Base* base_,char** head){
-  fromCast(d,*head,deslizHolder*);
+void initDeslizH(desliz* org,int base_,bigVector* hv){
+  getPtr(deslizHolder,d=,hv->size);
 
   initMovH(d,org,base_);
   d->table=&deslizTable;
 
-  *head+=sizeof(deslizHolder);
-  d->op=org;
-  d->movs.beg=*head;
-  d->movs.after=(char*)d->movs.beg+org->insideSize;
-  d->movs.elemSize=org->iterSize;
+  hv->size+=sizeof(deslizHolder);
+  d->op=indOpVector(org);
+  d->beg=hv->size;
+  d->after=d->beg+org->insideSize;
+  d->elemSize=org->iterSize;
 
-  crearMovHolder(org->inside,base_,head);//crear primera iteracion
-  *head=(char*)d->movs.after;
+  crearMovHolder(org->inside,base_,hv);//crear primera iteracion
+
+  hv->size=d->after;
   d->cantElems=1;
 }
 
@@ -404,14 +441,20 @@ void generarSigExc(movHolder* e,movHolder* validBranch){
   }
 }
 
-void generarExcH(movHolder* m){
-  fromCast(e,m,excHolder*);
+int iterations=0;
+void generarExcH(int mInd){
+  getPtr(excHolder,e=,mInd);
+
+  iterations++;
+  //if(iterations==19){
+  //  int fafsd=423;
+  //}
 
   int i;
   v offsetOrg=offset;
-  for(i=0;i<count(e->movs);i++){
-    movHolder* branch=e->movs[i];
-    branch->table->generar(branch);
+  for(i=0;i<elems(e->movs);i++){
+    movHolder* branch=movH(*varrayGameElem(&e->movs,i));
+    branch->table->generar(indGameVector(branch));
     if(branch->bools&valorCadena){
       e->bools|=valor;
       e->actualBranch=i; ///para ahorrar tener que buscarla en draw, reaccionar y cargar. Asegura que valorCadena==true
@@ -424,45 +467,46 @@ void generarExcH(movHolder* m){
   e->actualBranch=i-1;
 }
 template<typename T>
-void reaccionarExcH(movHolder* m,T tnh){
-  excHolder* e=(excHolder*)m;
-  constexpr bool singleNh=std::is_same<T,normalHolder*>::value;
-  normalHolder* nh=getFirstNormal(tnh);
+void reaccionarExcH(int mInd,T tnh){
+  getPtr(excHolder,e=,mInd);
+
+  constexpr bool singleNh=std::is_same<T,int>::value;
+  int nhInd=getFirstNormal(tnh);
 
   int i=1;
  loop:
 
-  if((char*)nh-(char*)e>=e->size){
+  if(nhInd-mInd>=e->size){
     reaccionarSig(e,tnh);
     return;
   }
 
   movHolder* branch;
   for(;i<=e->actualBranch;++i){
-    movHolder* nextBranch=e->movs[i];
-    if(nextBranch>nh){
-      branch=e->movs[i-1];
+    int nextBranch=indGameVector(varrayGameElem(&e->movs,i));
+    if(nextBranch>nhInd){
+      branch=gameVector<movHolder>(*varrayGameElem(&e->movs,i-1));
       goto branchFound;
     }
   }
-  if(e->actualBranch!=count(e->movs)-1
-     && nh>=e->movs[e->actualBranch+1]){//si la actual no es la ultima existe la posibilidad de que el nh sea de una rama invalida
+  if(e->actualBranch!=e->movs.size-1
+     && nhInd>=*varrayGameElem(&e->movs,e->actualBranch+1)){//si la actual no es la ultima existe la posibilidad de que el nh sea de una rama invalida
     deleteInnacesibleNormalsMaybeJump(tnh,[e](normalHolder* inh)->bool{
-                                                           return (char*)inh<(char*)e+size(e->movs);
+                                                           return (char*)inh<(char*)e+e->movs.size;
                                                          });
     reaccionarSig(e,tnh);
     return;
   }
 
-  branch=e->movs[e->actualBranch];
+  branch=gameVector<movHolder>(*varrayGameElem(&e->movs,e->actualBranch));
  branchFound:
-  branch->table->reaccionar(branch,nh);
+  branch->table->reaccionar(indGameVector(branch),nhInd);
   if(switchToGen){
     if(!(branch->bools&valorCadena)){ //si el ab al recalcularse se invalida generar todo devuelta, saltandolo
       int j;
-      for(j=i;j<count(e->movs);j++){
-        movHolder* brancj=e->movs[j];
-        brancj->table->generar(brancj);
+      for(j=i;j<elems(e->movs);j++){
+        movHolder* brancj=gameVector<movHolder>(*varrayGameElem(&e->movs,j));
+        brancj->table->generar(indGameVector(brancj));
         if(brancj->bools&valorCadena){
           e->bools|=valor;
           e->actualBranch=j;
@@ -479,36 +523,36 @@ void reaccionarExcH(movHolder* m,T tnh){
     }
   }else{
     assert(!singleNh);
-    assert(((nhBuffer*)tnh)->size>0);
+    assert(((nhBuffer*)(intptr)tnh)->size>0);
     goto loop;
   }
 }
 void cargarExcH(movHolder* m,vector<normalHolder*>* norms){
-  fromCast(e,m,excHolder*);
+  excHolder* e=(excHolder*)m;
   if(!(e->bools&valorCadena)) return;
-  movHolder* branch=e->movs[e->actualBranch];
+  movHolder* branch=gameVector<movHolder>(*varrayGameElem(&e->movs,e->actualBranch));
   branch->table->cargar(branch,norms);
   if(e->bools&makeClick)
-    makeClicker(norms,e->base->holder);
+    makeClicker(norms,e->base);
   if(e->sig&&(branch->bools&valorFinal))
-    e->sig->table->cargar(e->sig,norms);
+    movH(e->sig)->table->cargar(movH(e->sig),norms);
 }
 
-virtualTableMov excTable={generarExcH,reaccionarExcH<normalHolder*>,reaccionarExcH<nhBuffer*>,cargarExcH};
-void initExcH(exc* org,Base* base_,char** head){
-  fromCast(e,*head,excHolder*);
+virtualTableMov excTable={generarExcH,reaccionarExcH<int>,reaccionarExcH<nhBuffer*>,cargarExcH};
+void initExcH(exc* org,int base_,bigVector* hv){
+  excHolder* e=(excHolder*)head(hv);
   initMovH(e,org,base_);
   e->table=&excTable;
+  hv->size+=sizeof(excHolder);
 
-  *head+=sizeof(excHolder);
-  e->movs.beg=(movHolder**)*head;
-  e->movs.after=(movHolder**)(*head+size(org->ops));
-  *head=(char*)e->movs.after;
+  e->movs.beg=hv->size;
+  e->movs.size=org->ops.size;
+  hv->size+=org->ops.size;
+
   e->size=org->insideSize+sizeof(excHolder);
-  int i=0;
-  for(operador* opos:org->ops){
-    *(e->movs.beg+i++)=(movHolder*)*head;
-    crearMovHolder(opos,base_,head);
+  for(int i=0;i<elems(org->ops);i++){
+    *varrayGameElem(&e->movs,i)=hv->size;
+    crearMovHolder(*varrayOpElem<int>(&org->ops,i),base_,hv);
   }
 }
 
@@ -525,26 +569,27 @@ void initExcH(exc* org,Base* base_,char** head){
 
 
 
-void generarIsolH(movHolder* m){
-  fromCast(s,m,isolHolder*);
+void generarIsolH(int mInd){
+  getPtr(isolHolder,s=,mInd);
 
-  int resetSize=s->base->memLocal.resetUntil*sizeof(int);
+  int resetSize=gameVector<Base>(s->base)->memLocal.resetUntil*sizeof(int);
   storeState(resetSize);
-  s->inside->table->generar(s->inside);
+  movH(s->inside)->table->generar(s->inside);
   restoreState(resetSize);
 
   if(s->sig){
-    s->sig->table->generar(s->sig);
+    movH(s->sig)->table->generar(s->sig);
     s->bools&=~valorFinal;
-    s->bools|=s->sig->bools&valorFinal;
+    s->bools|=movH(s->sig)->bools&valorFinal;
   }
 }
 
 template<typename T>
-void reaccionarIsolH(movHolder* m,T tnh){
-  isolHolder* s=(isolHolder*)m;
-  normalHolder* nh=getFirstNormal(tnh);
-  if((char*)nh-(char*)s<s->size){
+void reaccionarIsolH(int mInd,T tnh){
+  getPtr(isolHolder,s=,mInd);
+
+  int nhInd=getFirstNormal(tnh);
+  if(nhInd-mInd<s->size){
     reaccionarOverload(s->inside,tnh);
     deleteInnacesibleNormalsMaybeJump(tnh,[s](normalHolder* inh)->bool{
                                             return (char*)inh<(char*)s+s->size;
@@ -555,37 +600,38 @@ void reaccionarIsolH(movHolder* m,T tnh){
     reaccionarOverload(s->sig,tnh);
 }
 
-void cargarIsolH(movHolder*m,vector<normalHolder*>* norms){
-  fromCast(s,m,isolHolder*);
+void cargarIsolH(movHolder* m,vector<normalHolder*>* norms){
+  isolHolder* s=(isolHolder*)m;
   int sizeBefore=norms->size;
-  s->inside->table->cargar(s->inside,norms);
+  movH(s->inside)->table->cargar(movH(s->inside),norms);
   if(s->bools&makeClick&&!norms->size==0)//evitar generar clickers sin normales
-    makeClicker(norms,s->base->holder);
+    makeClicker(norms,s->base);
   norms->size=sizeBefore;
   if(s->sig)
-    s->sig->table->cargar(s->sig,norms);
+    movH(s->sig)->table->cargar(movH(s->sig),norms);
 }
 
-virtualTableMov isolTable={generarIsolH,reaccionarIsolH<normalHolder*>,reaccionarIsolH<nhBuffer*>,cargarIsolH};
-void initIsolH(isol* org,Base* base_,char** head){
-  fromCast(s,*head,isolHolder*);
+virtualTableMov isolTable={generarIsolH,reaccionarIsolH<int>,reaccionarIsolH<nhBuffer*>,cargarIsolH};
+void initIsolH(isol* org,int base_,bigVector* hv){
+  isolHolder* s=(isolHolder*)head(hv);
+
   initMovH(s,org,base_);
   s->table=&isolTable;
 
-  *head+=sizeof(isolHolder);
-  s->inside=(movHolder*)*head;
-  crearMovHolder(org->inside,base_,head);
+  hv->size+=sizeof(isolHolder);
+  s->inside=hv->size;
+  crearMovHolder(org->inside,base_,hv);
   s->bools|=valor|valorFinal|valorCadena;
   s->size=org->size;
 }
 
 
 
-#define desoptMov ((char*)d+sizeof(desoptHolder))
+#define desoptMov (mInd+sizeof(desoptHolder))
 
 void construirYGenerarNodo(desoptHolder*,int);
 
-void generarDesoptH(movHolder* m){
+void generarDesoptH(int mInd){
   //se tiene la base y primera iteracion construidos, rondas mas alla de estas usan el resto de memoria
   //de forma dinamica. Es un punto intermedio entre tener todo construido y reservar mucha memoria que probablemente
   //no se use, y hacer todo dinamico y estar reconstruyendo operadores en cada generacion
@@ -593,96 +639,120 @@ void generarDesoptH(movHolder* m){
 
   //con limpiar la caja de movHolders de la primera iteracion antes de la generacion total
   //y sobreescribir el espacio dinamico no deberia haber ningun problema de construcciones kakeadas y cosas asi
-  fromCast(d,m,desoptHolder*);
+  getPtr(desoptHolder,d=,mInd);
 
-  d->dinamClusterHead=desoptMov+d->op->dinamClusterBaseOffset;
+  desopt* op=opVector<desopt>(d->op);
+  Base* base=gameVector<Base>(d->base);
+
+  d->dinamClusterHead=desoptMov+op->dinamClusterBaseOffset;
 
   int clusterOffset=0;
-  char* correspondingCluster=desoptMov+d->op->clusterSize;
+  int correspondingCluster=desoptMov+op->clusterSize;
 
-  int resetSize=d->base->memLocal.resetUntil*sizeof(int);
+  int resetSize=base->memLocal.resetUntil*sizeof(int);
 
   storeState(resetSize);
   
   void* memTemp2=alloca(resetSize);
 
-  for(int tam:d->op->movSizes){
-    desoptHolder::node* firstIter=(desoptHolder::node*)(desoptMov+clusterOffset);
+  forVOp(op->movSizes){
+    int tam=*el;
+    int firstIter=desoptMov+clusterOffset;
     //puede que sea mas rapido no usar un puntero para la primera iteracion, no sé
-    movHolder* actualMov=(movHolder*)(firstIter+1);
+    movHolder* actualMov= gameVector<movHolder>(firstIter+sizeof(int));
 
-    actualMov->table->generar(actualMov);
+    actualMov->table->generar(indGameVector(actualMov));
     if(actualMov->bools&valorFinal){
-      firstIter->iter=(desoptHolder::node*)correspondingCluster;
+      *gameVector<int>(firstIter)=correspondingCluster;
       int clusterOffset2=0;
       v offsetOrg2=offset;
       memcpy(memTemp2,memMov.data,resetSize);
 
-      for(int tam:d->op->movSizes){
-        desoptHolder::node* secondIter=(desoptHolder::node*)((char*)firstIter->iter+clusterOffset2);
-        movHolder* actualMov2=(movHolder*)(secondIter+1);
+      forVOp(op->movSizes){
+        int tam=*el;
+        int secondIter=*gameVector<int>(firstIter)+clusterOffset2;
+        movHolder* actualMov2=gameVector<movHolder>(secondIter+sizeof(int));
 
-        actualMov2->table->generar(actualMov2);
+        actualMov2->table->generar(indGameVector(actualMov2));
         if(actualMov2->bools&valorFinal){
-          secondIter->iter=(desoptHolder::node*)d->dinamClusterHead;
+          *gameVector<int>(secondIter)=d->dinamClusterHead;
           construirYGenerarNodo(d,resetSize);
         }else
-          secondIter->iter=nullptr;
+          *gameVector<int>(secondIter)=0;
         clusterOffset2+=tam; //@optim por ahi vale la pena saltarse esto en la ultima iteracion? en el bucle exterior dependeria de si hay sig
         offset=offsetOrg2;
         memcpy(memMov.data,memTemp2,resetSize);
       }
     }else
-      firstIter->iter=nullptr;
+      *gameVector<int>(firstIter)=0;
     clusterOffset+=tam;
-    correspondingCluster+=d->op->clusterSize;
+    correspondingCluster+=op->clusterSize;
     restoreState(resetSize);
   }
   if(d->sig)//TODO deberia propagar el valorFinal como isol
-    d->sig->table->generar(d->sig);
+    movH(d->sig)->table->generar(d->sig);
 }
 //TODO es necesario contruir en el momento? no debería dar lo mismo construir todo al principio, si son siempre los mismos bloques?
 void construirYGenerarNodo(desoptHolder* d,int resetSize){
-  char* clusterBeg=d->dinamClusterHead;
-  assert(d->dinamClusterHead<desoptMov+d->op->desoptInsideSize);
-  for(operador* opos:d->op->ops){
-    *(movHolder**)d->dinamClusterHead=nullptr;
-    d->dinamClusterHead+=sizeof(desoptHolder::node);
-    crearMovHolder(opos,d->base,&d->dinamClusterHead);
+  desopt* op=opVector<desopt>(d->op);
+  int clusterBeg=d->dinamClusterHead;
+
+  assert(d->dinamClusterHead<indGameVector(d)+(int)sizeof(desoptHolder)+op->desoptInsideSize);
+  forVOp(op->ops){
+    operador* opos=gameVector<operador>(*el);
+    *gameVector<int>(d->dinamClusterHead)=0;
+    d->dinamClusterHead+=sizeof(int);
+
+    bigVector* hv=&actualHolder.ps->gameState;
+    int sizeBefore=hv->size;
+    hv->size=d->dinamClusterHead;
+
+    crearMovHolder(indGameVector(opos),d->base,hv);
+
+    assert(hv->size<=sizeBefore);
+    d->dinamClusterHead=hv->size;
+    hv->size=sizeBefore;
   }
   int clusterOffset=0;
   storeState(resetSize);
 
-  for(int tam:d->op->movSizes){
-    desoptHolder::node* nextIter=(desoptHolder::node*)(clusterBeg+clusterOffset);
-    movHolder* actualMov=(movHolder*)(nextIter+1);
+  forVOp(op->movSizes){
+    int tam=*el;
 
-    actualMov->table->generar(actualMov);
+    int nextIter=clusterBeg+clusterOffset;
+    movHolder* actualMov=gameVector<movHolder>(nextIter+sizeof(int));
+
+    assert(*gameVector<int>(nextIter)==0);
+    actualMov->table->generar(nextIter+sizeof(int));
     if(actualMov->bools&valorFinal){
-      nextIter->iter=(desoptHolder::node*)d->dinamClusterHead;
+      *gameVector<int>(nextIter)=d->dinamClusterHead;
       construirYGenerarNodo(d,resetSize);
     }
     clusterOffset+=tam;
     restoreState(resetSize);
   }
 }
-void generarNodo(desoptHolder* d,desoptHolder::node** iter,int resetSize){
-  if(*iter){
+void generarNodo(desoptHolder* d,int nextIter,int resetSize){
+  int iter=*gameVector<int>(nextIter);
+  if(iter){
+    desopt* op=opVector<desopt>(d->op);
+
     int clusterOffset=0;
     storeState(resetSize);
 
-    for(int tam:d->op->movSizes){
-      desoptHolder::node* nextIter=(desoptHolder::node*)((char*)*iter+clusterOffset);
-      movHolder* actualMov=(movHolder*)(nextIter+1);
-      actualMov->table->generar(actualMov);
+    forVOp(op->movSizes){
+      int tam=*el;
+      int nextIter=iter+clusterOffset;
+      movHolder* actualMov=gameVector<movHolder>(nextIter+sizeof(int));
+      actualMov->table->generar(indGameVector(actualMov));
       if(actualMov->bools&valorFinal){
-        generarNodo(d,&nextIter->iter,resetSize);
+        generarNodo(d,nextIter,resetSize);
       }
       clusterOffset+=tam;
       restoreState(resetSize);
     }
   }else{
-    *iter=(desoptHolder::node*)d->dinamClusterHead;
+    *gameVector<int>(nextIter)=d->dinamClusterHead;
     construirYGenerarNodo(d,resetSize);
   }
 }
@@ -712,35 +782,39 @@ void generarNodo(desoptHolder* d,desoptHolder::node** iter,int resetSize){
 
   TODO?
  */
-void reactIfNh(normalHolder* nh,movHolder* actualMov,int tam){
-  if((char*)nh>=(char*)actualMov&&(char*)nh<(char*)actualMov+tam){
-    actualMov->table->reaccionar(actualMov,nh);
+void reactIfNh(int nh,movHolder* actualMov,int tam){
+  int indM=indGameVector(actualMov);
+  if(nh>=indM&&nh<indM+tam){
+    actualMov->table->reaccionar(indM,nh);
   }
 }
 void reactIfNh(nhBuffer* nhs,movHolder* actualMov,int tam){
   for(int i=0;i<nhs->size;){
-    normalHolder* beforeNh=nhs->buf[i];
+    int beforeNh=nhs->buf[i];
     reactIfNh(beforeNh,actualMov,tam);
     if(switchToGen) break;
     if(nhs->buf[i]==beforeNh) i++;//para manejar el caso donde el reaccionar consume el actual, y por ahi proximos, ahi no se avanza
   }
 }
 template<typename T>
-void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
+void reaccionarProperDesoptH(desoptHolder* d,T nh,int iter){
   int branchOffset=0;
+  desopt* op=opVector<desopt>(d->op);
 
-  for(int tam:d->op->movSizes){
-    desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+branchOffset);
-    movHolder* actualMov=(movHolder*)(nextIter+1);
+  forVOp(op->movSizes){
+    int tam=*el;
+
+    int nextIter=iter+branchOffset;
+    movHolder* actualMov=gameVector<movHolder>(nextIter+sizeof(int));
     branchOffset+=tam;
 
     reactIfNh(nh,actualMov,tam);
 
     if(switchToGen){
       if(actualMov->bools&valorFinal){
-        generarNodo(d,&nextIter->iter,d->base->memLocal.resetUntil*sizeof(int));
+        generarNodo(d,nextIter,gameVector<Base>(d->base)->memLocal.resetUntil*sizeof(int));
       }
-      if constexpr(std::is_same<T,normalHolder*>::value){
+      if constexpr(std::is_same<T,int>::value){
         longjmp(jmpReaccion,1);
       }else{
         if(nh->size==0)
@@ -748,20 +822,20 @@ void reaccionarProperDesoptH(desoptHolder* d,T nh,desoptHolder::node* iter){
       }
     }else{
       if(actualMov->bools&valorFinal)
-        reaccionarProperDesoptH(d,nh,nextIter->iter);
+        reaccionarProperDesoptH(d,nh,*gameVector<int>(nextIter));
     }
 
     switchToGen=false;
   }
 }
 
-template<typename T,void(*reaccionarProper)(desoptHolder*,T,desoptHolder::node*)>
-void reaccionarDesoptH(movHolder* m,T tnh){
-  desoptHolder* d=(desoptHolder*)m;
-  if((char*)getFirstNormal(tnh)<(char*)d+sizeof(desoptHolder)+d->op->desoptInsideSize){
-    reaccionarProper(d,tnh,d->movs);
+template<typename T,void(*reaccionarProper)(desoptHolder*,T,int)>
+void reaccionarDesoptH(int mInd,T tnh){
+  getPtr(desoptHolder,d=,mInd);
+  if(getFirstNormal(tnh)<(int)desoptMov+opVector<desopt>(d->op)->desoptInsideSize){
+    reaccionarProper(d,tnh,indGameVector(d->movs));
   }else{
-    reaccionarOverload(d,tnh);
+    reaccionarOverload(indGameVector(d),tnh);
   }
 }
 
@@ -774,29 +848,32 @@ void reaccionarDesoptH(movHolder* m,T tnh){
   va a crear comportamientos erroneos, es calculos al pedo nomas. No creo que pase muy seguido igual, y si agrego la optimizacion de no
   seguir generando si la normal que se activó no cambio su valor de validez, el impacto de esto se reduce a solo recalcular una normal.
  */
-void cargarNodos(movHolder* m,desoptHolder::node* iter,vector<normalHolder*>* norms){
+void cargarNodos(movHolder* m,int iter,vector<normalHolder*>* norms){
   fromCast(d,m,desoptHolder*);
+  desopt* op=opVector<desopt>(d->op);
+
   int res=norms->size;
   int offset=0;
-  for(int tam:d->op->movSizes){
-    desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+offset);
-    movHolder* actualMov=(movHolder*)(nextIter+1);
+  forVOp(op->movSizes){
+    int tam=*el;
+    int nextIter=iter+offset;
+    movHolder* actualMov=gameVector<movHolder>(nextIter+sizeof(int));
     if(actualMov->bools&valorFinal){//TODO falta manejar estado intermedio no?
       actualMov->table->cargar(actualMov,norms);
-      assert(nextIter->iter);
-      cargarNodos(d,nextIter->iter,norms);
+      assert(*gameVector<int>(nextIter));
+      cargarNodos(d,*gameVector<int>(nextIter),norms);
     }else if((d->bools&makeClick)&&norms->size!=0){
-      makeClicker(norms,d->base->holder);
+      makeClicker(norms,d->base);
     }
     offset+=tam;
     norms->size=res;
   }
 }
-void cargarDesoptH(movHolder*m,vector<normalHolder*>* norms){
-  fromCast(d,m,desoptHolder*);
-  cargarNodos(d,(desoptHolder::node*)desoptMov,norms);
+void cargarDesoptH(movHolder* m,vector<normalHolder*>* norms){
+  desoptHolder* d=(desoptHolder*)m;
+  cargarNodos(d,indGameVector(d)+sizeof(desoptHolder),norms);
   if(m->sig)
-    m->sig->table->cargar(m->sig,norms);
+    movH(m->sig)->table->cargar(movH(m->sig),norms);
 }
 /*
   desopt actua como un isol respecto a lo que esta antes y despues.
@@ -810,32 +887,36 @@ void cargarDesoptH(movHolder*m,vector<normalHolder*>* norms){
   @testarVelocidad con A a la izquierda, sin partir con c
 */
 
-virtualTableMov desoptTable={generarDesoptH,reaccionarDesoptH<normalHolder*,reaccionarProperDesoptH>,
+virtualTableMov desoptTable={generarDesoptH,reaccionarDesoptH<int,reaccionarProperDesoptH>,
                              reaccionarDesoptH<nhBuffer*,reaccionarProperDesoptH>,cargarDesoptH};
-void initDesoptH(desopt* org,Base* base_,char** head){
-  fromCast(d,*head,desoptHolder*);
+void initDesoptH(desopt* org,int base_,bigVector* hv){
+  desoptHolder* d=(desoptHolder*)head(hv);
   initMovH(d,org,base_);
   d->table=&desoptTable;
 
-  d->op=org;
+  d->op=indOpVector(org);
 
-  *head+=sizeof(desoptHolder);
-  char* nextIteration=*head;
-  char* headFirst=*head;
-  for(operador* opos:org->ops){//armar base
-    assert(sizeof(movHolder*)==sizeof(char*));//debe haber una forma menos sospechosa de hacer esto
-    **((movHolder***)head)=(movHolder*)(nextIteration+=d->op->clusterSize);//head apunta a puntero al proximo cluester de movimientos,
-    *head+=sizeof(desoptHolder::node*);//que corresponde a la proxima iteracion de este movHolder
-    crearMovHolder(opos,base_,head);
+  int clusterSize=org->clusterSize;
+  hv->size+=sizeof(desoptHolder);
+
+  int nextIteration=hv->size;
+  int headFirst=hv->size;
+  forVOp(org->ops){//armar base
+    operador* opos=opVector<operador>(*el);
+    nextIteration+=clusterSize;
+    *gameVectorInc<int>(hv->size)=nextIteration;//head apunta a puntero al proximo cluester de movimientos,
+    hv->size+=sizeof(int);//que corresponde a la proxima iteracion de este movHolder
+    crearMovHolder(indOpVector(opos),base_,hv);
   }
-  for(int i=0;i<count(org->ops);i++){//armar primer iteracion
-    for(operador* opos:org->ops){
-      **(movHolder***)head=nullptr;//cuando se use apunta a un espacio dinamico
-      *head+=sizeof(desoptHolder::node*);
-      crearMovHolder(opos,base_,head);
+  for(int i=0;i<elems(org->ops);i++){//armar primer iteracion
+    for(int j=0;j<elems(org->ops);j++){
+      *gameVectorInc<int>(hv->size)=0;//cuando se usa apunta a un espacio dinamico
+      hv->size+=sizeof(int);
+      crearMovHolder(*varrayOpElem(&org->ops,j),base_,hv);
     }
   }
-  *head=headFirst+org->desoptInsideSize;
+
+  hv->size=headFirst+org->desoptInsideSize;
   d->bools|=valorCadena|valorFinal;
 }
 
@@ -843,45 +924,45 @@ void initDesoptH(desopt* org,Base* base_,char** head){
 
 
 //fail tambien se podría implementar retornando falso en todo y forzando el operador anterior a tener hasClick,
-void generarFail(movHolder* m){
-  m->bools=valorCadena; //valorFinal=false, el resto no importa
+void generarFail(int m){
+  movH(m)->bools=valorCadena; //valorFinal=false, el resto no importa
   return;
 }
-void reaccionarFail(movHolder* m, normalHolder* nh){}
-void reaccionarFail(movHolder* m, nhBuffer* nhs){}
+void reaccionarFail(int m, int nh){}
+void reaccionarFail(int m, nhBuffer* nhs){}
 void cargarFail(movHolder* m, vector<normalHolder*>* norms){}
 virtualTableMov failTable={generarFail,reaccionarFail,reaccionarFail,cargarFail};
 
-void initFailH(char** head){
-  fromCast(f,*head,movHolder*);
+void initFailH(bigVector* hv){
+  movHolder* f=(movHolder*)head(hv);
   f->table=&failTable;
-  f->base=nullptr;
+  f->base=0;
   f->bools=0;
-  *head+=sizeof(movHolder);
+  hv->size+=sizeof(movHolder);
 }
 
 
 
 #define storeFirstNormalState(movHolder)              \
   normalHolder* tempNh=getNextNormalH(movHolder);     \
-  v tempPos=getOffset(tempNh->op->relPos,tempNh->pos);    \
-  memcpy(tempLocalMem,tempNh->memAct.beg,resetSize);
+  v tempPos=getOffset(opVector<normal>(tempNh->op)->relPos,tempNh->pos); \
+  memcpy(tempLocalMem,gameVectorInc<void>(tempNh->memAct.beg),resetSize);
 normalHolder* getNextNormalH(movHolder*);
 
 template<typename T>
-void reaccionarIsolNonResetMemH(movHolder* m,T tnh){
-  isolHolder* s=(isolHolder*)m;
-  constexpr bool singleNh=std::is_same<T,normalHolder*>::value;
-  if((char*)getFirstNormal(tnh)-(char*)s<s->size){
-    int resetSize=s->base->memLocal.resetUntil*sizeof(int);
+void reaccionarIsolNonResetMemH(int mInd,T tnh){
+  getPtr(isolHolder,s=,mInd);
+  constexpr bool singleNh=std::is_same<T,int>::value;
+  if(getFirstNormal(tnh)-mInd<s->size){
+    int resetSize=gameVector<Base>(s->base)->memLocal.resetUntil*sizeof(int);
     void* tempLocalMem=alloca(resetSize);
-    storeFirstNormalState(s->inside);
+    storeFirstNormalState(movH(s->inside));
 
     reaccionarOverload(s->inside,tnh);
     assert(singleNh?switchToGen:true);
     if(singleNh||switchToGen){
       restoreState(resetSize);
-      if(s->sig) s->sig->table->generar(s->sig); //se sigue generando porque potencialmente se cambio memoria que no se resetea
+      if(s->sig) movH(s->sig)->table->generar(s->sig); //se sigue generando porque potencialmente se cambio memoria que no se resetea
       //no se limpian normales extra que estan contenidas en este isol, si las hay, porque se sigue
       //generando y no son relevantes. El isol comun si lo hace porque se vuelve a reaccionar.
       return;
@@ -893,9 +974,9 @@ void reaccionarIsolNonResetMemH(movHolder* m,T tnh){
 
 
 virtualTableMov isolNRMTable={generarIsolH,reaccionarIsolNonResetMemH,reaccionarIsolNonResetMemH,cargarIsolH};
-void initIsolNonResetMemH(isol* org,Base* base_,char** head){
-  fromCast(s,*head,isolHolder*);
-  initIsolH(org,base_,head);
+void initIsolNonResetMemH(isol* org,int base_,bigVector* hv){
+  isolHolder* s=(isolHolder*)head(hv);
+  initIsolH(org,base_,hv);
   s->table=&isolNRMTable;
 }
 
@@ -907,23 +988,25 @@ void initIsolNonResetMemH(isol* org,Base* base_,char** head){
 //desoptNRM se usa si alguna rama usa memoria no reseteable. Aunque una rama no toque esa memoria, que se haya disparado su trigger implica
 //que potencialmente va a invalidar o crear nodos futuros, y por lo menos uno de esos nodos si toca la memoria.
 template<typename T,bool firstReaccionar=true>
-void reaccionarProperDesoptNonResetMemH(desoptHolder* d,T nh,desoptHolder::node* iter){
+void reaccionarProperDesoptNonResetMemH(desoptHolder* d,T nh,int iter){
   int branchOffset=0;
-  int resetSize=d->base->memLocal.resetUntil*sizeof(int);
+  int resetSize=gameVector<Base>(d->base)->memLocal.resetUntil*sizeof(int);
   void* tempLocalMem=alloca(resetSize);
   //printf("desopt NRM\n");
-  for(int tam:d->op->movSizes){
-    desoptHolder::node* nextIter=(desoptHolder::node*)((char*)iter+branchOffset);
-    movHolder* actualMov=(movHolder*)(nextIter+1);
+  desopt* op=opVector<desopt>(d->op);
+  forVOp(op->movSizes){
+    int tam=*el;
+    int nextIter=iter+branchOffset;
+    int actualMovInd=nextIter+sizeof(int);
+    movHolder* actualMov=gameVector<movHolder>(actualMovInd);
     branchOffset+=tam;
-
 
     if(switchToGen){
       //tengo que volver a generar todos los nodos que estan despues en el orden de generacion, no solo los siguientes al nodo que disparo el trigger
       storeStateNoAlloc(resetSize);
-      actualMov->table->generar(actualMov);
+      actualMov->table->generar(actualMovInd);
       if(actualMov->bools&valorFinal){
-        generarNodo(d,&nextIter->iter,resetSize);
+        generarNodo(d,nextIter,resetSize);
       }
       restoreState(resetSize);
     }else{
@@ -931,27 +1014,27 @@ void reaccionarProperDesoptNonResetMemH(desoptHolder* d,T nh,desoptHolder::node*
       reactIfNh(nh,actualMov,tam);
       if(switchToGen){
         if(actualMov->bools&valorFinal){
-          generarNodo(d,&nextIter->iter,resetSize);
+          generarNodo(d,nextIter,resetSize);
         }
       }else if(actualMov->bools&valorFinal){
-        reaccionarProperDesoptNonResetMemH<T,false>(d,nh,nextIter->iter);
+        reaccionarProperDesoptNonResetMemH<T,false>(d,nh,*gameVector<int>(nextIter));
       }
       restoreState(resetSize);
     }
   }
   if constexpr(firstReaccionar){
       if(switchToGen&&d->sig){
-        d->sig->table->generar(d->sig);
+        movH(d->sig)->table->generar(d->sig);
       }
     }
 }
 
-virtualTableMov desoptNRMTable={generarDesoptH,reaccionarDesoptH<normalHolder*,reaccionarProperDesoptNonResetMemH>,
+virtualTableMov desoptNRMTable={generarDesoptH,reaccionarDesoptH<int,reaccionarProperDesoptNonResetMemH>,
                                 reaccionarDesoptH<nhBuffer*,reaccionarProperDesoptNonResetMemH>,cargarDesoptH};
-void initDesoptNonResetMemH(desopt* org,Base* base_,char** head){
+void initDesoptNonResetMemH(desopt* org,int base_,bigVector* hv){
   //printf("gbdfgbdf\n");
-  fromCast(d,*head,desoptHolder*);
-  initDesoptH(org,base_,head);
+  getPtr(desoptHolder,d=,hv->size);
+  initDesoptH(org,base_,hv);
   d->table=&desoptNRMTable;
 }
 
@@ -970,14 +1053,14 @@ normalHolder* getNextNormalH(movHolder* m){
   if(m->table==&normalTable)
     return (normalHolder*)m;
   if(m->table==&deslizTable)
-    return getNextNormalH((movHolder*)((deslizHolder*)m)->movs[0]);
+    return getNextNormalH(gameVector<movHolder>(((deslizHolder*)m)->beg));
   if(m->table==&excTable)
-    return getNextNormalH(((excHolder*)m)->movs[0]);
+    return getNextNormalH(gameVector<movHolder>(((excHolder*)m)->movs.beg));
   if(m->table==&isolTable || m->table==&isolNRMTable)
-    return getNextNormalH(((isolHolder*)m)->inside);
+    return getNextNormalH(gameVector<movHolder>(((isolHolder*)m)->inside));
   if(m->table==&desoptTable || m->table==&desoptNRMTable){
-    desoptHolder::node* firstIter=(desoptHolder::node*)((char*)m+sizeof(desoptHolder));
-    return getNextNormalH((movHolder*)(firstIter+1));
+    int firstIter=indGameVector(m)+sizeof(desoptHolder);
+    return getNextNormalH(gameVector<movHolder>(firstIter+sizeof(int)));
   }
   fail("getNextNormalH didn't found nh\n");
   return nullptr;

@@ -25,12 +25,12 @@ void debugDrawMemMaybeAction(int ind,int memType){
 //pero es codigo debug no lo vale
 void debugSetIndirectColor(){
 #if debugMode
-  push(&debugDrawChannel,tdebugSetIndirectColor);
+  push(&debugDrawChannel,(int)tdebugSetIndirectColor);
 #endif
 }
 void debugUnsetIndirectColor(){
 #if debugMode
-  push(&debugDrawChannel,tdebugUnsetIndirectColor);
+  push(&debugDrawChannel,(int)tdebugUnsetIndirectColor);
 #endif
 }
 
@@ -49,7 +49,7 @@ int* localg(){
 
 int* localAccg(){
   intptr ind=(intptr)getNextInBuffer();;
-  return &actualHolder.nh->memAct[ind];
+  return varrayGameElem(&actualHolder.nh->memAct,ind);
 }
 
 int* localgi(){
@@ -64,13 +64,13 @@ int* localgi(){
 int* localAccgi(){//aparece en cadenas de 3 o mas
   getter g=(getter)getNextInBuffer();
   int ind=*g();
-  return &actualHolder.nh->memAct[ind];
+  return varrayGameElem(&actualHolder.nh->memAct,ind);
 }
 
 int* pieceg(){
   intptr ind=(intptr)getNextInBuffer();
   debugDrawMemMaybeAction(ind,2);
-  return &actualHolder.h->memPiece[ind];
+  return varrayGameElem(&actualHolder.h->memPiece,ind);
 }
 
 int* piecegi(){
@@ -79,7 +79,7 @@ int* piecegi(){
   int ind=*g();
   debugUnsetIndirectColor();
   debugDrawMemMaybeAction(ind,2);
-  return &actualHolder.h->memPiece[ind];
+  return varrayGameElem(&actualHolder.h->memPiece,ind);
 }
 
 
@@ -91,7 +91,7 @@ int* globalRead(){
   intptr ind=(intptr)getNextInBuffer();;
   debugDrawMem(ind,2);
 
-  memData* md=&actualHolder.brd->memGlobals[ind];
+  memData* md=&brd->memGlobals[ind];
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);//probar triggers fijos despues
   return &md->val;
 }
@@ -107,7 +107,7 @@ int* globalReadi(){
   int ind=*g();
   debugUnsetIndirectColor();
   debugDrawMem(ind,0);
-  memData* md=&actualHolder.brd->memGlobals[ind];
+  memData* md=&brd->memGlobals[ind];
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);
   return &md->val;
 }
@@ -118,17 +118,17 @@ int* globalReadNTi(){
   int ind=*g();
   debugUnsetIndirectColor();;
   debugDrawMem(ind,0);
-  return &actualHolder.brd->memGlobals[ind].val;
+  return &brd->memGlobals[ind].val;
 }
 
 void debugPushPosition(){
 #if debugMode
-  push(&debugDrawChannel,tdebugDrawPos);
+  push(&debugDrawChannel,(int)tdebugDrawPos);
 #endif
 }
 
-memData* getTileMd(int ind,board* b){
-  return &b->memTiles[ind+actualHolder.nh->pos.x*b->memTileSlots+actualHolder.nh->pos.y*b->dims.x*b->memTileSlots];
+memData* getTileMd(int ind){
+  return &brd->memTiles[ind+actualHolder.nh->pos.x*brd->memTileSlots+actualHolder.nh->pos.y*brd->dims.x*brd->memTileSlots];
 }
 
 int* tileRead(){
@@ -136,13 +136,13 @@ int* tileRead(){
   intptr ind=(intptr)getNextInBuffer();
   debugDrawMem(ind,1);
 
-  memData* md=getTileMd(ind,actualHolder.brd);
+  memData* md=getTileMd(ind);
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);
   return &md->val;
 }
 int* tileReadNT(){
   intptr ind=(intptr)getNextInBuffer();
-  return &getTileMd(ind,actualHolder.brd)->val;
+  return &getTileMd(ind)->val;
 }
 
 int* tileReadi(){
@@ -153,7 +153,7 @@ int* tileReadi(){
   debugUnsetIndirectColor();
   debugDrawMem(ind,1);
 
-  memData* md=getTileMd(ind,actualHolder.brd);
+  memData* md=getTileMd(ind);
   pushTrigger(&md->triggersUsed,&md->firstTriggerBox);
   return &md->val;
 }
@@ -161,7 +161,7 @@ int* tileReadi(){
 int* tileReadNTi(){
   getter g=(getter)getNextInBuffer();
   int ind=*g();
-  return &getTileMd(ind,actualHolder.brd)->val;
+  return &getTileMd(ind)->val;
 }
 
 //cteRead == (int)(*)()getNextInBuffer
@@ -190,8 +190,8 @@ int* posYRead(){
 
 int* posSYRead(){
   int* posY=posYRead();
-  if(!actualHolder.nh->base->holder->bando){
-    *posY=actualHolder.brd->dims.y-1-*posY;
+  if(!gameVector<Holder>(gameVector<Base>(actualHolder.nh->base)->holder)->bando){
+    *posY=brd->dims.y-1-*posY;
   }
   return posY;
 }

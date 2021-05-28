@@ -41,21 +41,22 @@
 
 
 
-Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
-  ensureSpace(hb,p->hsSize);
+int initHolder(Piece* p,int bando,int posInd,bigVector* hb){
+  reserve(hb,p->hsSize);
   Holder* h=allocNC<Holder>(hb);
 
   h->bando=bando==1;
-  h->piece=p;
-  h->tile=pos;
+  h->piece=indOpVector(p);
+  h->tile=posInd;
   h->inPlay=true;
   
-  allocNC(hb,&h->movs,count(p->movs)/*+(p->spawner||p->kamikase?1:0)*/);
+  allocNC(hb,&h->movs,elems(p->movs)/*+(p->spawner||p->kamikase?1:0)*/);
 
   allocNC(hb,&h->memPiece,p->memPieceSize);
-  memset(h->memPiece.beg,0,p->memPieceSize*sizeof(int));
+  memset(&actualHolder.gameState->data[h->memPiece.beg],0,p->memPieceSize*sizeof(int));
 
-  int i=0;/*
+  /*
+  int i=0;
   if(p->spawner||p->kamikase){
     allocInitNC(hb,Base,base,{h,nullptr,{0,0}}); //para algunas cosas especificas que necesitan tratar a todos los movholders por igual, no se usa directamente
     //puntualmente creo que es solo el memset que limpia la memoria local
@@ -73,56 +74,54 @@ Holder* initHolder(Piece* p,int bando,Tile* pos,bucket* hb){
     i=1;
   }*/
 
-  for(pBase& pb:p->movs){
+  for(int j=0;j<elems(p->movs);j++){
+    pBase* pb=varrayOpElem(&p->movs,j);
     //TODO lo de que root arranque en null y lo setee el primer movimiento se me hace raro, por que no lo marco desde aca?
-    allocInitNC(hb,Base,base,{h,nullptr,pb.memLocal});
-    h->movs[i++]=(movHolder*)hb->head;
-    crearMovHolder(pb.root,base,&hb->head);
+    Base* base=new(head(hb))Base{indGameVector(h),0,pb->memLocal};
+    hb->size+=sizeof(Base);
+
+    *varrayGameElem(&h->movs,j)=hb->size;
+    crearMovHolder(pb->root,indGameVector(base),hb);
   }
 
   //para cantidades grandes de movimientos el real mide 72 menos que el declarado, el tamaño de una normalHolder
   //este bucle itera la cantidad de veces correcta, si fuera que faltara una vez la diferencia seria normalHolder+base
 
-  assertf(hb->head-(char*)h==p->hsSize,"real %d == declared %d\n",hb->head-(char*)h,p->hsSize);
-  return h;
+  assertf((char*)head(hb)-(char*)h==p->hsSize,"real %d == declared %d\n",(char*)head(hb)-(char*)h,p->hsSize);
+  return indGameVector(h);
 }
 
-void crearMovHolder(operador* op,Base* base,char** place){
-  movHolder* thisMov=(movHolder*)*place;
+void crearMovHolder(int opInd,int baseInd,bigVector* hv){
+  operador* op=opVector<operador>(opInd);
+  movHolder* thisMov=(movHolder*)head(hv);
   switch(op->tipo){
   case NORMAL:
-    initNormalH((normal*)op,base,place); break;
+    initNormalH((normal*)op,baseInd,hv); break;
   case DESLIZ:
-    initDeslizH((desliz*)op,base,place); break;
+    initDeslizH((desliz*)op,baseInd,hv); break;
   case EXC:
-    initExcH((exc*)op,base,place); break;
+    initExcH((exc*)op,baseInd,hv); break;
   case ISOL:
-    initIsolH((isol*)op,base,place); break;
+    initIsolH((isol*)op,baseInd,hv); break;
   case ISOLNRM:
-    initIsolNonResetMemH((isol*)op,base,place); break;
+    initIsolNonResetMemH((isol*)op,baseInd,hv); break;
   case DESOPT:
-    initDesoptH((desopt*)op,base,place); break;
+    initDesoptH((desopt*)op,baseInd,hv); break;
   case DESOPTNRM:
-    initDesoptNonResetMemH((desopt*)op,base,place);break;
+    initDesoptNonResetMemH((desopt*)op,baseInd,hv);break;
   case FAILOP:
-    initFailH(place);break;
+    initFailH(hv);break;
   default:
     assert(false);
   }
   if(op->sig){
-    thisMov->sig=(movHolder*)*place;
-    crearMovHolder(op->sig,base,place);
+    thisMov->sig=hv->size;
+    crearMovHolder(op->sig,baseInd,hv);
   }
   else
-    thisMov->sig=nullptr;
+    thisMov->sig=0;
 }
 
-void drawHolder(Holder* h){
-    //TODO el sprite debería actualizarse cada vez que se mueve en lugar de cada vez que se dibuja, pero bueno
-  Sprite* sprt=h->bando==1?&h->piece->spriten:&h->piece->spriteb;
-  sprt->setPosition(h->tile->pos.x*escala*32,h->tile->pos.y*escala*32);
-  window.draw(*sprt);
-}
 /*void Holder::draw(int n)  //pos en capturados
 {
     Sprite* sp;
@@ -137,7 +136,8 @@ void drawHolder(Holder* h){
     }*/
 vector<normalHolder*> normales;
 void makeCli(Holder* h){
-  for(movHolder* b:h->movs){
+  for(int i=0;i<elems(h->movs);i++){
+    movHolder* b=gameVector<movHolder>(*varrayGameElem(&h->movs,i));
     if(!(b->bools&valorCadena)) continue;
     b->table->cargar(b,&normales);
     normales.size=0;
@@ -147,10 +147,13 @@ void makeCli(Holder* h){
 
 void generar(Holder* h){
     actualHolder.h=h;
-    for(movHolder* m:h->movs){
-        offset=h->tile->pos;
-        memset(memMov.data,0,m->base->memLocal.size*sizeof(int));
-        m->table->generar(m);
+    for(int i=0;i<elems(h->movs);i++){
+      int* mInd=varrayGameElem(&h->movs,i);
+      movHolder* m=gameVector<movHolder>(*mInd);
+
+      offset=gameVector<Tile>(h->tile)->pos;
+      memset(memMov.data,0,gameVector<Base>(m->base)->memLocal.size*sizeof(int));
+      m->table->generar(*mInd);
     }
 }
 

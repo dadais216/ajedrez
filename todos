@@ -1,4 +1,48 @@
 
+manejar tamaño en alocacion de operadores para no hacer lo que hago ahora, sino alocar algo mas chico e ir creciendo
+
+----
+
+actualholder.h debería ser un int tambien, si se realoca durante la mitad de un movimiento vuela todo a la mierda. Si hay problemas de eficiencia podría verse de reemplazar todos los punteros globales cuando se realoca
+
+----
+
+encapsulado no se grafica bien porque el inRange se calcula mal. Se debería calcular segun cada operador en caso de que no tenga sig, depende de cada tamaño
+
+----
+
+puede que prohiba tener cadenas de movimientos en exc, no me termina de cerrar y es raro
+
+creo que hay un problema tambien, si se tiene
+exc  
+    desliz exc A or B c end end D c 
+    or E end 
+
+pasa algo que no es muy claro
+-si se va por el camino B+A* D y D falla, se toma esta rama porque tuvo clickers. Este es el comportamiento raro que acepto
+-si se va por el camino A+ D y D falla, tambien se toma esta rama aunque NO se creo ningun clicker
+
+actualmente valor solo significa algo para normal (creo)
+valorCadena significa que PUEDE haber algo adentro en la cadena
+valorFinal asegura que toda la cadena es valida
+
+valorCadena es suficiente para cargar clickers, pero no como logica para exc. Creo que en los otros operadores no importa pero puede que tambien
+en este caso valorCadena significa "en esta cadena hay un clicker valido", lo que es un concepto mas especifico.
+
+desliz tomaría su valorCadena de si se le propaga algo internamente Y si le viene algo despues. (actualmente tiene hasClick que cumple mas o menos esa funcion y supongo que por eso lo invente)
+otros operadores tambien van a tener esa capacidad de ser propagados por cosas internas ademas de lo que viene despues
+
+puede ser que baste con propagar valorCadena solo cuando un makeClick se hace valido? Puede que haciendo esto tampoco necesite hasClick, no sé
+
+----
+
+goto no se grafica por algun motivo?
+
+----
+
+growin tenía clicker roto, creo que lo rompi en este cambio asi que lo arregle
+
+emperador anda como antes pero habría que mirar bien que onda
 
 
 ---
@@ -11,29 +55,62 @@ hacer que exc tenga la caja antes
 
 ---
 
-reemplazar buckets por vectores en operador y movholder
+en desopt puedo construir todo antes, asi no tengo que manejar esta logica de si existe el bloque o no. Siempre van a ser los mismos movholders, la diferencia esta en como se enlazan nomas. Que quede un estado interno viejo no debería ser un problema, por ejemplo en exc pasa y no rompe nada, cuando se regenera se pisa todo.
+Cuando genera construye, marcando el proximo iterador en 0 cuando el movimiento es invalido.
+Cuando reacciona solo construye en espacios nuevos, lo que fue construido se reutiliza.
 
----
-
-cambiar el sistema de triggers, en vez de tener un puntero a normal que tiene una base, se puede tener en cada normal 2 ints, que indiquen holder y numero de movimiento (ocuparia lo mismo). Si muevo memLocal al lado de operador ya no hay motivo para tener bases. Creo que los otros operadores que usan bases podrían usar una variable global y listo.
-En un momento considere no guardar informacion en trigger y buscar el movimiento y holder haciendo comparaciones de rango, pero necesito algo contra lo que comparar, asi que algo de informacion voy a tener que pasar, y ya que hago eso pongo todos los datos y listo. Son 2 ints nomas
+es confuso que el codigo de generarNodo no se use en generar, solo en reaccion, debería tener un nombre mas especifico
 
 ---
 
 hay cosas que se pueden mover al lado de pieza, como offsets y eso. Mover todo lo posible
 cambiar sig por centinela? medio experimental. Creo que no igual porque sig no esta al final de los operadores con tamaño variable
 
+el puntero a la tabla virtual podría estar en operador, no hay motivos para que este del lado de movholder
+sig podría ser un offset en operador, base tambien. 
+Lo unico de movholder serían los bools porque algunos se necesitan y los otros no molestan.
+
+en normalH op por ahora queda, pero podría probar moverlo al trigger (traería normal + normalh)
+el varray queda pero las estructuras de control estan en operador, en normalh esta solo el contenido
+pos queda
+
+
+en desliz creo que podía sacar cantElems si construyo todo desde el principio
+beg podría ser un offset 
+f queda
+
+exc manejar el varray como en normalh, actualBranch queda
+
+isol creo que puedo delegar todo al operador? tiene un size que creo que esta al pedo, despues un offset
+
+desopt tiene solo el dinamclusterhead, que queda.
+
+como ahora voy a recorrer el arbol de operadores voy a tener que mantener un estado interno que antes estaba en movholders, pero creo que no sería demasiado complejo, creo que es practicamente lo mismo
+
+
 ---
 
+cambiar el sistema de triggers, en vez de tener un puntero a normal que tiene una base, se puede tener en cada normal 2 ints, que indiquen holder y numero de movimiento (ocuparia lo mismo). Si muevo memLocal al lado de operador ya no hay motivo para tener bases. Creo que los otros operadores que usan bases podrían usar una variable global y listo.
+En un momento considere no guardar informacion en trigger y buscar el movimiento y holder haciendo comparaciones de rango, pero necesito algo contra lo que comparar, asi que algo de informacion voy a tener que pasar, y ya que hago eso pongo todos los datos y listo. Son 2 ints nomas
 
+Sino se podría probar de tener solo la normal y buscar el holder por rango, dejando que cada trigger mida 8 bites? no sé si importe mucho porque con segundo orden puede que meta mas informacion en el trigger?
 
+---
 
-agregar fail al sistema debug
+considerar un desopt y desliz que realoquen de necesitarlo. Puede que el golpe de eficiencia en la primera iteracion valga el tener una memoria mas ajustada, y hace que el programa no crashee por error de usuario lo que es mucho mas amigable. El tamaño se puede poner manualmente igual, pero va a haber un if (que si no se usa es practicamente gratis) para crecer si se necesita.
+
+---
+
+renombrar fail a break
+lo que hace fail/break es retornar falso pero dejando las acciones que estaban antes. Sería equivalente a <normal> c mcmp 1 2, con la diferencia de que esto otro hace un clicker y break no. Es util para romper desopts/deslizs cuando hay una condicion positiva pero no se necesita iterar mas
 
 ----
 
 en algun momento rompi el tema del click implicito e isols, por ejemplo el peon no hace lo que deberia
 
+----
+
+w desliz dasda end hace una normal en w, estaría bueno que no pase? implicaria ponerle un desplazamiento a cada operador, no sé
 
 ----
 
@@ -65,13 +142,15 @@ Cuando se efectua un movimiento en reaccionar simplemente se toma la rama corres
 
 Otra ventaja de tener modo reaccionar es que funciones de puntaje que evaluen cosas complicadas (como cantidad de casilleros amenazados) serian mas faciles de hacer, creo
 
-En principio reaccionar parece mejor pero para funcionar necesita tener que guardar estado por cada normal y tener triggers. Tengo miedo de que esto termine siendo mas costoso que las generaciones que ahorra. La version directa funciona solo usando operadores, no hay movholders ni sistema de triggers. Esta bien que con movimientos mas complejos rehacer todo tiene un costo, pero los movimientos complejos tienden a reaccionar de forma temprana y recalcular una parte importante, asi que puede que no cambie mucho.
+En principio reaccionar parece mejor pero para funcionar necesita tener que guardar estado por cada normal y tener triggers. Tengo miedo de que esto termine siendo mas costoso que las generaciones que ahorra. La version directa funciona solo usando operadores, no hay movholders ni sistema de triggers (se mantiene algo de memoria temporal mientras se hace el movimiento). Esta bien que con movimientos mas complejos rehacer todo tiene un costo, pero los movimientos complejos tienden a reaccionar de forma temprana y recalcular una parte importante, asi que puede que no cambie mucho.
 
 Me parece que el mejor curso de accion es seguir con reaccion hasta tener el rey y piezas de ese nivel de complejidad, hacer varios test y despues rehacer el ajedrez en modo directo para probarlo. El modo directo no me debería llevar demasiado tiempo, es volar las reacciones y meter la carga en la generacion, que generaria una version de normalholder que solo tiene acciones y posicion. El test que se haría para comparar es hacer un movimiento y llegar a un estado donde se tengan todos los movimientos del tablero, lo que simularia hacer un paso en un arbol minimax.
 - en reaccion, hacer un movimiento y generar la pieza y realizar las reacciones, despues cargar todos los movimientos.
 - en directo, hacer un movimiento y generar todas las piezas.
 
 si resulta que reaccion es mejor sigo como esta. Sino bueno, me cambio al otro que es mas simple. Un poco de bronca por la falacia de costo invertido pero bueno, este otro sistema tiene la ventaja de que es mas simple. Si hubiera ido por ese primero, y hubiera pensado en el otro, tambien tendría dudas de cual es mejor.
+
+necesitaria investigar bien alpha beta prunning y otras cosas que usan algoritmos de ajedrez, puede ser que le este pifiando horriblemente
 
 ----
 
@@ -202,6 +281,8 @@ los operadores quedarian aparte del estado de juego porque son constantes, se co
 ----
 
 las acciones en condiciones, que creo que voy a limitar a  un mset nomas, activan triggers desde triggers lo que puede ser un quilombo. La llamada a activar triggers tiene que estar adentro de la generacion, por lo que voy a necesitar una condicion especial al final que llame a eso,  o mas facil, tener un bit y setearlo desde el mset* y meter un if. Testear el costo de un if en el flujo principal, no creo que sea importante
+
+creo que esto puede ser reemplazado por codigo no ligado a pieza entre turnos? despues de cada accion corre este codigo, que puede activar triggers, y despues se corren las reacciones. Lo malo de esto es que no se aprovecha del mecanismo de triggers y va a correr todo el codigo todos los turnos, pero tiene mas usos y es mas facil de entender.
 
 ----
 
@@ -336,13 +417,20 @@ la version interpretada se va a usar en el editor, y va a tener todas las bolude
 ----
 
 los vectores temporales podrian compartir una memoria. Es algo re opcional igual, si sale sale
+
+----
+
+no es necesario inicializar la free list creo, pero puede que eso cree mas chequeos mirar
+
 ----
 
 limpiar triggers falsos en tiempo muerto? osea cuando esta esperando al jugador
 
 sacar archivos de boludeces
 
+----
 
+para los mecanismos de mirar al futuro bastaria con tener una memoria que los turnos futuros pueden escribir, que se lee desde el presente? creo que si. Igual no tengo claro que pasa una vez que se reacciona a la informacion del futuro, porque lo invalidaria. No sé si tiene sentido esto
 
 
 ####

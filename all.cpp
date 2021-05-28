@@ -146,6 +146,8 @@ char* loadFile(char const* fileName){
 #include <time.h>
 #include <ctime>
 #include "float.h"
+#include <tuple>
+#include <climits>
 
 #include <SFML/Graphics.hpp>
 using namespace sf;

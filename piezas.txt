@@ -31,11 +31,16 @@
 #TW Tmover TW vacio spwn 1 color 0 0 255;
 #desliz w mover madd l0 1 mless l0 3 end; 
 #w mset l6 8 mset p6 8 mset t116 8 mset g26 8 mover;
-#w mover;
-w mover spwn 3;
+#desopt w mover c end;
+#desliz W mover c end;
+#w spwn 1 blue;
+#desopt w mover or a mover end;
+w mover;
+s mover;
 
 :2 1 #torre
-desliz W mover c end W captura;
+#desliz W mover c end W captura;
+desopt wd mover c end;
 
 :3 2 #caballo
 >A=ww|ss;
@@ -358,7 +363,7 @@ TW Tmover TW vacio spwn 29 color 0 0 255;
 
 :30 2 #local y pieza #probar meter un isol para los desliz
 >X=a|d;
-mset l0 p0 exc mless l0 5 madd l0 1 or mset l0 1 end desliz mdist l1 l0 X isol Tmover mset p0 l0 end madd l1 1 end; 
+mset l0 p0 exc mless l0 5 madd l0 1 or mset l0 1 end desliz mdist l1 l0 X isol Tmover mset p0 l0 c end madd l1 1 end; 
 
 :31 0 #tile 1
 mset t0 1 TW Tmover;

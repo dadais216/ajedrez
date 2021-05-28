@@ -15,7 +15,7 @@ struct Clicker{
     //bool activo;
     //void activacion(int);
     //int val,mod;
-    Holder* h;
+    int h;
 };
 
 extern vector<Clicker> clickers;

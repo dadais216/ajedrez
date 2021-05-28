@@ -3,7 +3,7 @@
 struct operador;
 struct Piece;
 struct pBase{
-  operador* root;
+  int root;
   memLocalt memLocal;
   int size;
 };
@@ -12,7 +12,7 @@ struct Piece{
   int ind;//se usa en el reciclaje en spawn
   int sn;
 
-  barray<pBase> movs;
+  varray<pBase> movs;
 
   int memPieceSize;
   int hsSize;
@@ -20,24 +20,24 @@ struct Piece{
   //bool spawner;
 };
 
-extern vector<Tile*> pisados;
+extern vector<int> pisados;
 
 
 struct Holder{
-  Piece* piece;
-  Tile* tile;
+  int piece;
+  int tile;
   
-  barray<int> memPiece;//podria ser 1 puntero en vez de 2 TODO
+  varray<int> memPiece;//podria ser 1 puntero en vez de 2 TODO
   
-  barray<movHolder*> movs;
+  varray<int> movs;
   bool bando;
   bool inPlay;//false cuando la pieza esta generada y capturada. Solo se usa para evitar activar triggers dinamicos a capturados
   int step;//valor que varia para indicar si la pieza se movio, para comprobar validez de triggers
 };
 
 
-void crearMovHolder(operador*,Base*,char**);
-Holder* initHolder(Piece*,int,Tile*,bucket*);
+void crearMovHolder(int,int,bigVector*);
+int initHolder(Piece*,int,int,bigVector*);
 void generar(Holder*);
 void makeCli(Holder*);
 

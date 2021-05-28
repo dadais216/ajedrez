@@ -7,8 +7,10 @@ int peek(parseMovData* p){
   return p->tokens[p->ind];
 }
 
+
 void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
-               vector<Piece*>* pieces,bucket* operatorBucket){
+               vector<Piece*>* pieces,bigVector* operatorBucket){
+  actualHolder.opState=operatorBucket;
   Piece* piece=alloc<Piece>(operatorBucket);
   piece->sn=sn;
 
@@ -30,12 +32,14 @@ void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
     p.clickExplicit=false;
 
     failIf(pd->memLocal[i].resetUntil>pd->memLocal[i].size,"reset size %d bigger than size %d",pd->memLocal[i].resetUntil,pd->memLocal[i].size);//prefiero fallar a poner el maximo, queda medio raro sino
-    piece->movs[i].memLocal.size=pd->memLocal[i].size;
-    piece->movs[i].memLocal.resetUntil=pd->memLocal[i].resetUntil==-1?pd->memLocal[i].size:pd->memLocal[i].resetUntil;
-    p.memLocal=piece->movs[i].memLocal;
 
-    piece->movs[i].root=parseOp(&p);
-    piece->movs[i].size=p.movSize;
+    pBase* base=varrayOpElem(&piece->movs,i);
+    base->memLocal.size=pd->memLocal[i].size;
+    base->memLocal.resetUntil=pd->memLocal[i].resetUntil==-1?pd->memLocal[i].size:pd->memLocal[i].resetUntil;
+    p.memLocal=base->memLocal;
+
+    base->root=parseOp(&p);
+    base->size=p.movSize;
     piece->hsSize+=p.movSize;
     failIf(pop(&p)!=tmovEnd,"missing ;");
   }
@@ -44,13 +48,13 @@ void makePiece(parseData* pd,int id,int sn,vector<int>* tokens,
   //piece->kamikase=p.kamikase;
   piece->hsSize+=sizeof(Holder)
     +pd->memPieceSize*sizeof(int)
-    +pd->movQ*(sizeof(movHolder*)+sizeof(Base))
+    +pd->movQ*(sizeof(int)+sizeof(Base))
     /*+(pd->spawner?(sizeof(movHolder*)+sizeof(Base)+sizeof(spawnerGen)):0)*/;
   piece->ind=pieces->size;
   push(pieces,piece);
 }
 
-operador* parseOp(parseMovData* p,bool fromNormal){//=false
+int parseOp(parseMovData* p,bool fromNormal){//=false
   operador* op;
   switch(p->tokens[p->ind]){
   case tdesliz: p->ind++;op=parseDesliz(p);break;
@@ -60,7 +64,7 @@ operador* parseOp(parseMovData* p,bool fromNormal){//=false
   case tfail:   p->ind++;op=parseFail(p);break;
   case tend:
   case tmovEnd:
-  case tseparator:       op=nullptr;break;
+  case tseparator:       return 0;
   default:
     if(fromNormal){
       fail("%s out of place",tokenToWord(p->pd,p->tokens[p->ind]));
@@ -68,7 +72,7 @@ operador* parseOp(parseMovData* p,bool fromNormal){//=false
       op=parseNormal(p);
     }
   }
-  return op;
+  return indOpVector(op);
 }
 
 //esto esta aca porque no hay lambdas con templates
@@ -126,7 +130,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
       if(!condsTemp.size==0||!accsTemp.size==0){
         p->ind--;
         setupBarrays();
-        n->sig=parseNormal(p);
+        n->sig=indOpVector(parseNormal(p));
         return n;
       }else{
         switch(tok){
@@ -337,7 +341,7 @@ TODO probar haciendo un memcpy al final de todo. Si resulta ser mas rapido deber
                  cmd!=msetP);
           accsTemp.size--;
           setupBarrays();
-          n->sig=parseNormal(p);
+          n->sig=indOpVector(parseNormal(p));
           return n;
           //medio choto esto porque tengo que reconstruir el comando,
           //por ahi vale la pena dejarlo terminar y copiarlo terminado.
@@ -409,12 +413,16 @@ desliz* parseDesliz(parseMovData* p){
 
   if(d->bools&makeClick)
     d->bools|=hasClick;
-  else
-    for(operador* op=d->inside;op!=nullptr;op=op->sig)
+  else{
+    operador* op;
+    for(int opI=d->inside;opI;opI=op->sig){
+      op=opVector<operador>(opI);
       if(op->bools&hasClick){
         d->bools|=hasClick;
         break;
       }
+    }
+  }
   return d;
 }
 
@@ -427,16 +435,16 @@ exc* parseExc(parseMovData* p){
   int movSizeBefore=p->movSize;
 
   int finalTok;
-  vector<operador*> opsTemp;init(&opsTemp);defer(&opsTemp);
+  vector<int> opsTemp;init(&opsTemp);defer(&opsTemp);
   do{
-    operador* op=parseOp(p);
+    int op=parseOp(p);
     push(&opsTemp,op);
     finalTok=pop(p);
   }while(finalTok==tseparator);
   failIf(finalTok!=tend,"exc with no end");
 
   allocCopy(p->b,&e->ops,opsTemp.size,opsTemp.data);
-  p->movSize+=size(e->ops);
+  p->movSize+=e->ops.size;
 
   e->insideSize=p->movSize-movSizeBefore;
   p->movSize+=sizeof(excHolder);
@@ -447,11 +455,13 @@ exc* parseExc(parseMovData* p){
     e->bools|=hasClick;
   else{
     e->bools&=~hasClick;
-    for(operador* op:e->ops)
+    forVOp(e->ops){
+      operador* op=opVector<operador>(*el);
       if(op->bools&hasClick){
         e->bools|=hasClick;
         break;
       }
+    }
   }
   return e;
 }
@@ -505,27 +515,28 @@ desopt* parseDesopt(parseMovData* p){
 
   int movSizeBefore=p->movSize;
   bool writeInLocalMemBefore=p->writeInLocalMem;
-  vector<operador*> opsTemp;init(&opsTemp);defer(&opsTemp);
+  vector<int> opsTemp;init(&opsTemp);defer(&opsTemp);
   vector<int> sizesTemp;init(&sizesTemp);defer(&sizesTemp);
   int branches=0;
   do{
     int movSizeBefore=p->movSize;
-    operador* op=parseOp(p);
+    int op=parseOp(p);
     push(&opsTemp,op);
     push(&sizesTemp,p->movSize-movSizeBefore);
     branches++;
   }while(pop(p)==tseparator);
   failIf(p->tokens[p->ind-1]!=tend,"desopt with no end");
 
+  //TODO queda alocado despues de los demas operadores, medio raro como exc. Creo que sería mejor
+  //que este todo junto al principio. De paso podria estar todo en el mismo buffer en vez de que sean 2
   allocCopy(p->b,&d->ops,opsTemp.size,opsTemp.data);
 
   for(int i=0;i<sizesTemp.size;i++)
-    sizesTemp[i]+=sizeof(desoptHolder::node*);
-
+    sizesTemp[i]+=sizeof(int);
 
   allocCopy(p->b,&d->movSizes,branches,sizesTemp.data);
 
-  p->movSize+=branches*sizeof(desoptHolder::node*);
+  p->movSize+=branches*sizeof(int);
   d->clusterSize=p->movSize-movSizeBefore;
   d->dinamClusterBaseOffset=d->clusterSize+d->clusterSize*branches;
 
@@ -548,11 +559,13 @@ desopt* parseDesopt(parseMovData* p){
     d->bools|=hasClick;
   else{
     d->bools&=~hasClick;
-    for(operador* op:d->ops)
+    forVOp(d->ops){
+      operador* op=opVector<operador>(*el);
       if(op->bools&hasClick){
         d->bools|=hasClick;
         break;
       }
+    }
   }
   return d;
 }
@@ -560,7 +573,7 @@ desopt* parseDesopt(parseMovData* p){
 operador* parseFail(parseMovData* p){
   operador* failOp=alloc<operador>(p->b);
   failOp->tipo=FAILOP;
-  failOp->sig=nullptr;
+  failOp->sig=0;
   failOp->bools=0;
   p->movSize+=sizeof(movHolder);
   return failOp;

@@ -75,7 +75,7 @@ template<bool(*chck)(getter*,getter*),string* n> struct macc{
 };viendolo ahora podría haber abstraido el void y bool en un typename para hacerlo mas criptico*/
 
 struct Holder;
-vector<Holder*> justSpawned;
+vector<int> justSpawned;
 
 
 //antes cada acct era un objeto polimorfico en vez de una funcion, por lo que algunos podrian tener datos propios. Como ahora tengo un nivel de indireccion menos no puedo hacer eso,

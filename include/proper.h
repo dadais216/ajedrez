@@ -16,14 +16,13 @@ struct Proper{
 struct properState{
   int player1,player2;
   Sprite turnoBlanco,turnoNegro;
-  bucket pieceOps;
+  bigVector pieceOps;
   vector<Piece*> pieces;
   vector<Clicker> clickers;
   vector<int> memMov;//se podría mover a gameState, consiguendo su max TODO
-  bucket   gameState;//por ahora
+  bigVector   gameState;
   //char* board; //tablero+memorias globales
-  //char* holderSpace; //vector que voy a implementar a mano, porque necesito correr codigo para determinar si crecer o no, y cuanto
-
+  
   int boardId;
   parseData pd;
 
@@ -52,7 +51,7 @@ El tablero, la memoria global y tile quedaría en un malloc aparte
 
 void properDraw(char*);
 template<bool =false> void properInit(char*,int,int,int);
-template<bool =false> void properGameInit(properState*,bool =false);
+template<bool =false> void properGameInit(properState*);
 void properUpdate(char*);
 
 

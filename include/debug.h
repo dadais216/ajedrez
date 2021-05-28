@@ -54,12 +54,11 @@ struct visualWindow{
 };
 
 struct{
-  bucket* bkt;
+  bigVector* bv;
   int end;//para manejar poner la cola de exc, medio hack pero prefiero hacer eso a arrastrar calculos de tamaño
   int windowBeg;
   int maxScrollingHeight;
-  int actualBucket;//cuando hay mas de un bucket, por ahora en movHolders nomas
-}bucketDraw;
+}bvectorDraw;
 
 int debugState=2;//0 movHolder 1 opBucket 2 moveText
 void handleModeSelectors();
@@ -67,8 +66,8 @@ void initDebugSystem();
 void debugChangeMoveResetWindows();
 void computeWindowHeights();
 
-void debugUpdateAndDrawBuckets();
-void debugUpdateAndDrawBucketsInit(bool);
+void debugUpdateAndDrawBvectors();
+void debugUpdateAndDrawBvectorsInit(bool);
 
 void debugDrawMemories();
 void debugShowMove(bool);
@@ -76,7 +75,7 @@ void drawMoveText(operador*);
 void debugShowClickerActions();
 
 void drawNormalText(operador*);
-void drawBucketdesoptHNodes(desoptHolder*,desoptHolder::node*,sf::Color);
+void drawBvectorDesoptHNodes(desoptHolder*,int,sf::Color);
 
 /*
   en un momento quise imprimir un buffer de acciones actual, e ir mostrando como se consolidan al hacer clickers.

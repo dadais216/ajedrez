@@ -11,10 +11,8 @@ struct{
 
 struct testPrintData{
   char const* name;
-  int holderBucketSize;
-  int holderBucketBuckets;
-  int opBucketSize;
-  int opBucketBuckets;
+  int holderVectorSize;
+  int opVectorSize;
   double promSec;
   double prom;
   double minProm;
@@ -100,10 +98,8 @@ void getOldStats(){
       memcpy((char*)oldBench->name,b,s-b);//podria no copiar y mantener str, pero lo libero por las dudas de que tenga un impacto, no creo igual
       *(char*)(oldBench->name+(s-b))=0;//que rompe bola son los const
       
-      sGetNumber(&s,&oldBench->holderBucketSize);
-      sGetNumber(&s,&oldBench->holderBucketBuckets);sSkipLine(&s);
-      sGetNumber(&s,&oldBench->opBucketSize);
-      sGetNumber(&s,&oldBench->opBucketBuckets);sSkipLine(&s);
+      sGetNumber(&s,&oldBench->holderVectorSize);sSkipLine(&s);
+      sGetNumber(&s,&oldBench->opVectorSize);sSkipLine(&s);
       sGetNumber(&s,&oldBench->promSec);sSkipLine(&s);
       sGetNumber(&s,&oldBench->prom);sSkipLine(&s);
       sGetNumber(&s,&oldBench->minProm);sSkipLine(&s);
@@ -125,47 +121,37 @@ void saveStats(){
 
   for(int i=0;i<testPrint.after.size;i++){
     testPrintData* actual=&testPrint.after[i];
-    int holderBucketSizeDelta=0,holderBucketBucketsDelta=0,opBucketSizeDelta=0,opBucketBucketsDelta=0;
+    int holderVectorSizeDelta=0,opVectorSizeDelta=0;
     double promSecDelta=0,promDelta=0,minPromDelta=0;
 
     for(int j=0;j<testPrint.before.size;j++){
       testPrintData* before=&testPrint.before[j];
       if(strcmp(before->name,actual->name)==0){
-        holderBucketSizeDelta=actual->holderBucketSize-before->holderBucketSize;
-        holderBucketBucketsDelta=actual->holderBucketBuckets-before->holderBucketBuckets;
-        opBucketSizeDelta=actual->opBucketSize-before->opBucketSize;
-        opBucketBucketsDelta=actual->opBucketBuckets-before->opBucketBuckets;
+        holderVectorSizeDelta=actual->holderVectorSize-before->holderVectorSize;
+        opVectorSizeDelta=actual->opVectorSize-before->opVectorSize;
         promSecDelta=actual->promSec-before->promSec;
         promDelta=actual->prom-before->prom;
         minPromDelta=actual->minProm-before->minProm;
       }
     }
 
-    auto charSign=[](double val)->char{
-                    return val>=0?'+':'-';
-                  };
-
-    printf("%s:\nholder bucket %d  %d\t%c%d   %c%d\nop bucket %d  %d\t%c%d   %c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f  (/%f = %c%f)\n---------------------------\n",
+    printf("%s:\nholder vector %d  %+d\nop vector %d  %+d\npromedio s %f\t%+f\npromedio %f\t%+f\nmejor %f\t%+f  (/%f = %+f)\n---------------------------\n",
            actual->name,
-           actual->holderBucketSize,actual->holderBucketBuckets,
-           charSign(holderBucketSizeDelta),std::abs(holderBucketSizeDelta),charSign(holderBucketBucketsDelta),std::abs(holderBucketBucketsDelta),
-           actual->opBucketSize,actual->opBucketBuckets,
-           charSign(opBucketSizeDelta),std::abs(opBucketSizeDelta),charSign(opBucketBucketsDelta),std::abs(opBucketBucketsDelta),
-           actual->promSec,charSign(promSecDelta),std::abs(promSecDelta),
-           actual->prom,charSign(promDelta),std::abs(promDelta),
-           actual->minProm,charSign(minPromDelta),std::abs(minPromDelta),
-           actual->delta,charSign(minPromDelta),std::abs(minPromDelta)/actual->delta);
+           actual->holderVectorSize,holderVectorSizeDelta,
+           actual->opVectorSize,opVectorSizeDelta,
+           actual->promSec,promSecDelta,
+           actual->prom,promDelta,
+           actual->minProm,minPromDelta,
+           actual->delta,minPromDelta/actual->delta);
     if(saveBenchmark){
-      fprintf(file,"%s:\nholder bucket %d  %d\t%c%d   %c%d\nop bucket %d  %d\t%c%d   %c%d\npromedio s %f\t%c%f\npromedio %f\t%c%f\nmejor %f\t%c%f  (/%f = %c%f)\n---------------------------\n",
+      fprintf(file,"%s:\nholder vector %d  %+d\nop vector %d  %+d\npromedio s %f\t%+f\npromedio %f\t%+f\nmejor %f\t%+f  (/%f = %+f)\n---------------------------\n",
               actual->name,
-              actual->holderBucketSize,actual->holderBucketBuckets,
-              charSign(holderBucketSizeDelta),std::abs(holderBucketSizeDelta),charSign(holderBucketBucketsDelta),std::abs(holderBucketBucketsDelta),
-              actual->opBucketSize,actual->opBucketBuckets,
-              charSign(opBucketSizeDelta),std::abs(opBucketSizeDelta),charSign(opBucketBucketsDelta),std::abs(opBucketBucketsDelta),
-              actual->promSec,charSign(promSecDelta),std::abs(promSecDelta),
-              actual->prom,charSign(promDelta),std::abs(promDelta),
-              actual->minProm,charSign(minPromDelta),std::abs(minPromDelta),
-              actual->delta,charSign(minPromDelta),std::abs(minPromDelta)/actual->delta);
+              actual->holderVectorSize,holderVectorSizeDelta,
+              actual->opVectorSize,opVectorSizeDelta,
+              actual->promSec,promSecDelta,
+              actual->prom,promDelta,
+              actual->minProm,minPromDelta,
+              actual->delta,minPromDelta/actual->delta);
     }
   }
   if(saveBenchmark){
@@ -272,7 +258,7 @@ void runTest(properState* ps,char const* name,int map,int turns,int times,bool p
     for(int i=0;i<times;i++){
       ps->boardId=map;
       ps->player2=player2Random?2:4;
-      properGameInit<true>(ps,i==0&&run==0);
+      properGameInit<true>(ps);
       //podria hacer un copy paste del estado inicial en vez de recrear todo
       //ahora se reutiliza la misma memoria bucket para no tener problemas de variabilidad.
       //en test que necesiten reservar mas bloques, tambien se conservan estos. Para hacer eso
@@ -292,12 +278,8 @@ void runTest(properState* ps,char const* name,int map,int turns,int times,bool p
     testPrintData* result=run==0?&minimo:&actual;
 
 
-    auto holderBucketSizeData=getBucketSizeData(&ps->gameState);
-    auto opBucketSizeData=getBucketSizeData(&ps->pieceOps);
-    result->holderBucketSize=holderBucketSizeData.usedSize;
-    result->holderBucketBuckets=holderBucketSizeData.usedBuckets;
-    result->opBucketSize=opBucketSizeData.usedSize;
-    result->opBucketBuckets=opBucketSizeData.usedBuckets;
+    result->holderVectorSize=ps->gameState.size;
+    result->opVectorSize=ps->pieceOps.size;
     result->promSec=(testData.sProm/(double)times)/1e9;
     result->prom=testData.sProm/(double)times;
     result->minProm=testData.minProm;
@@ -404,9 +386,12 @@ void doTests(char* mem){
 void randomTurnTestPlayer(bool bando,properState* ps){
   for(int i=0; i<brd->dims.x; i++)
     for(int j=0; j<brd->dims.y; j++){
-      Holder* act=tile(brd,v(i,j))->holder;
-      if(act&&act->bando==bando){
-        makeCli(act);
+      int actI=tileGet(v(i,j))->holder;
+      if(actI){
+        Holder* act=gameVector<Holder>(actI);
+        if(act->bando==bando){
+          makeCli(act);
+        }
       }
     }
   //drawScreen();
@@ -417,7 +402,7 @@ void randomTurnTestPlayer(bool bando,properState* ps){
 
     timespec beg,end;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&beg);
-    executeClicker(clickerToProcess,brd);
+    executeClicker(clickerToProcess);
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&end);
 
     double elapsed=(end.tv_sec-beg.tv_sec)*1e9+(end.tv_nsec-beg.tv_nsec);
