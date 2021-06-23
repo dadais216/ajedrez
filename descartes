@@ -58,8 +58,47 @@ Una de las cosas que podría automatizarse es agregar movimientos nuevos, solo n
 
 Igual no lo necesito, sería algo que esta bueno nomas.
 
+-------------------
+
+Una opcion es algo como
+mdir d0 l0 desliz mshift d0 1 mdist d0 l8 mset d0 0 end #limpiar una lista de 8
+
+habria que agregar 3 operadores y un tipo de memoria (global), d, que sería como un puntero. Este puntero puede apuntar a cualquier tipo de memoria, y se determina a que apunta como mdir. mshift la desplaza, y mdist retorna true si donde apunta es distinto a su segundo parametro. 
+mdir va a tener que usar polimorfismo para saber como desplazarse. (o al menos va a tener 2 versiones, una global y una local, por la forma en que esta armada la memoria).
+Puede que tenga otros problemas con los tipos y demas que no estoy pensando ahora. 
+Puede que sea un poco confuso porque mete la idea de punteros, pero bueno. No es una mala opcion.
+
+Otra opcion es algo como
+desliz mset ll0 0 madd l0 1 mless l0 9 end mset l0 0 #limpiar lista de 8
+
+Este me gusta mas porque es mas intuitivo y no agrega comandos nuevos. Es mas explicito tambien, se lee mejor. 
+Para implementarlo habria que dar la posibilidad de que los accesores puedan tomar accesores en vez de constantes, lo que probablemente se implemente dandoles una nueva version.
 
 
+-------------------
 
+
+Hacer el juego para mas de 2 jugadores es hacible, pero no vale la pena.
+Bando dejaria de ser un bool, los colores de las piezas deberían determinarse con una funcion y ser un efecto arriba del sprite, se necesitaria agregar un prefijo al tablero de texto. 
+Internet se complicaria un poco pero no demasiado. 
+El problema esta en la IA. Para actuar bien tendría que no solo calcular el movimiento del proximo jugador, sino de toda la cadena de jugadores. No entendería muy bien alianzas ni cosas por el estilo.
+Se podría agregar el modo de mas de 2 jugadores para solo humanos, pero es mucho trabajo por algo que no creo que se use mucho. A demas, muchos juegos de mas de dos personas usan tableros no cuadrados, y eso es algo que no pienso agregar.
+
+
+--------------------
+
+mgrw - toma un valor. Si ese valor es mas grande que la memoria, la agranda
+Con esto se pueden tener memorias de tamaño variable sin tener que especificar nada
+Lo malo es que si se lee antes de escribir se rompe todo pero es esperable, aclarar en el instructivo. No creo que cuelgue el juego 
+Manejarse con un comando aparte hace que no se haga este chequeo en la escritura normal, y en la version compilada permite usar arrays en vez de vectores cuando se vea que no esta
+
+
+Hay casos raros donde es util escribir espacio global durante el chequeo de condiciones, asi que se va a agregar una notacion especial para eso. Aunque es algo raro de pensar porque los chequeos pueden pasar en momentos inesperados, asi que se tiene que usar sabiendo que se esta haciendo
+
+--------------------
+
+
+lo mas eficiente para partidas humano vs humano sería calcular el movimiento de la pieza que el jugador toca y listo, en vez de generar todos los movimientos y ir recalculando. Pero hacer esto inhabilita el segundo orden, y las acciones en condiciones. Y a demas va a congelar el juego por un milisegundo cuando se toca la pieza, mientras que el otro sistema calcula antes de que se toque la pieza y el jugador esta pensando.
+Se podría agregar como optimizacion de algunos casos, pero es algo de trabajo y probablemente haga el juego parecer mas lento, asi que no lo vale. Hacer lo mismo para todo es mas simple y limpio.
 
 

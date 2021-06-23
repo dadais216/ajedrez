@@ -1,400 +1,4 @@
 
-Hay que hacer que los movimientos se guarden en memoria para evitar recalcularlos constantemente
-
-La IA evalua el tablero por cada movimiento, y evaluar el tablero implica calcular todos los movimientos.
-Si los movimientos se guardan en memoria solo va a ser necesario recalcular los movimientos de la pieza que se movio
-y las que sean afectadas por eso
-(si n es la cantidad de movimientos y extra los movimientos de piezas afectadas la cantidad de calculos en el primer turno
-es 2n+extra, y en el proximo es n+extra. Sin guardan en memoria la cantidad de calculos es n^2 en todos los turnos)
-
-Tambien se ahorrarían recalculos para ver si hay jaque
-
---
-
-El lenguaje da las instrucciones para formar movimientos
-Hay 3 estructuras de movimiento, normal, desliz y opt.
-
-los movimientos tienen en comun:
-bool estado, valido o invalido
-lista pos triggers, si una de estas posiciones se pisa o se deja por la pieza que se esta movimiendo se tiene que recalcular
-(debería haber varios tipos de triggers, de chequeo de vacio, enemigo, etc? por ahi no, nomas serían utiles es casos raros
-y aun asi no cubririan todos los casos)
-lista acciones, con las acciones marcadas en posiciones absolutas
-next, para encadenar movimientos
-tambien podrían tener un enum que los identifique, para hacer algunas optimizaciones especificas (si hay)
-
-en un movimiento normal:
-cuando se activa un trigger, siendo el estado valido o invalido, se recalcula.
-En la gran mayoria de los casos si el estado es valido se vuelve invalido, aun asi habría que recalcular por casos raros
-
-desliz:
-contiene una lista de movimientos, que genera a partir de un movimiento interno
-su estado es valido si el primer movimiento es valido, en la lista de movimientos todos menos el ultimo son validos
-cuando falla un trigger se invalidan todos los siguientes movimientos en la lista y se recalcula el fallado, reconstruyendo
-si hay un next se corre cuando falle el ultimo
-
-desliz genera los movimientos conforme los chequeos de su movimiento interno sigan dando verdadero, por lo que va ocupando
-memoria con movimientos absolutos. Cuando fallan se borran. 
-Por ahi podría no borrarse y mantener la memoria reservada, habría que ver. (si termina siendo necesario)
-
-
-la ventaja de hacer desliz una estructura es que una cadena de movimientos se guarda como una cadena de movimientos, no
-una lista de movimientos donde cada elemento tiene una copia del anterior mas un paso mas
-y tambien da lugar a un manejo mas inteligente de los recalculos, ya no es necesario recalcular toda la cadena, solo
-lo que venga despues de un trigger
-para recalcular avanzado habría que guardar la pos de cada inicio de mov o algo asi, no debería ser complicado
-
-
-desliz se tiene como siguiente a si mismo para manejarse bien con las ramificaciones de opt, si usara un bucle while habría
-que crear una estructura de control para cada ramificacion de opt
-
-opt:
-contiene una lista de movimientos internos que usa para crear ramificaciones, tambien una lista de acciones y triggers para
-cada rama.
-Se limita a recalcular solo la rama que haya disparado un trigger.
-
---
-
-
-los movimientos se guardan en memoria como una accion y una pos. Ocupa mas espacio y hay muchas posiciones repetidas,
-pero hay que calcular menos cuando se hacen los calculos de movimientos y eso es lo que necesita mas velocidad.
-Se van a tener que copiar mas posiciones pero no se van a tener que copiar las instrucciones que cambiaban la posicion.
-A demas la posicion global tarda mas en acceder, debe ser eso lo que realentiza
-Y es algo que se abstrae del lenguaje.
-
-se manejan desde controladores de normal, desliz y opt
-
-dentro de normal:
-las condiciones si son falsas invalidan el movimiento y dejar un trigger en esa pos. Hasta que no se dispare ese trigger
-ese mov queda invalidado.
-si es verdadero se dejan triggers y se sigue mirando hasta terminar. 
-
-No sé si opt exc se va a poder agregar sin muchos problemas, en cualquier caso hacer un operador exc o if que haga eso y listo
-
-
-
-
-Actualmente cuando se toca una pieza a partir de las instrucciones se generan clickers, que crean una copia
-de el buffer de acciones y de colores. No hay distincion entre desliz, opt y normal a este nivel, los clickers
-se crean de forma explicita
-
-el sistema nuevo tendría que crearlos usando las estructuras que tambien usa la IA, asi queda todo con lo mismo y no
-hay un quilombo de cosas. A demas el sistema anterior tenia cosas raras, ver si se puede hacer algo con para que no
-pasen en este
-
-
-Una vez hecha la generacion va a quedar una lista de movimientos con posiciones absolutas dentro de 
-las estructuras (normal, desliz, opt).
-
-No sé si hay una forma clara de delimitar movimientos, puede que necesite poner una especie de click.
-Por ahi se puede hacer solo usando unos flags y aprovechando que las estructuras ahora son diferenciables.
--al llegar a una normal sin continuacion
--en cada elemento de la lista de un desliz nc
--aplicando las mismas reglas en cada rama de un opt
-y arrastrando todo lo que haya atras
-
-la forma de identificar estos movimientos en las estructuras debería ser rapida, iterable y referenciable.
-La IA va a necesitar obtener un elemento, hacer algunas acciones, y luego obtener el proximo. 
-Los clickers van a necesitar alguna forma de referenciar que elemento de la lista de movimientos, y de que a que punto,
-hace referencia
-Hay que tener en cuenta que los movimientos se van a leer muchas veces
-
-Supongo que lo mejor va a ser tener una funcion que devuelva
-un movimiento en forma de lista de normales. La proxima vez que se la llame va a dar otro.
-Va a usar una estructura interna para saber cual es el siguiente o terminar
-Tambien se puede guardar y restaurar
-esta lista de normales es lo que se guarda en los clickers. La lista es de punteros para que sea rapido y simple
-
-Un tema es que la IA va a tener que usar esa funcion muchas veces para acceder a los mismos movimientos.
-(en cada iteracion del analisis de tableros. Abstraer el movimiento asi es util porque los recalculos no afectan nada)
-Aunque la funcion debería ser bastante rapida y no debería dar problemas.
-Guardar las normales en memoria y cambiarlas en caso de recalculo es una opcion, pero puede que mantener las listas
-en memoria y hacer chequeos de reemplazo y reemplazos a demas de ser complejo termine siendo mas lento. 
-La funcion solo debería hacer unas comparaciones de ints antes de devolver una lista de normales.
-
-La funcion recibe un vector<normalHolder*>* para evitar tener que armar la lista y despues copiarla a el clicker o la
-estructura de control de la normal. Si la funcion no puede generar nada devuelve falso y listo, si puede genera, lo tira
-en ese puntero y eso se pasa al constructor de clicker
-
-
-
-limites y memoria
-estos funcionan durante el chequeo de condiciones, esta parte esta bastante intacta, no debería haber problemas
-Como en el producto final solo quedan las acciones no debería haber uso de memoria en el resultado final, es un condt
-la memoria era movt por posrestore y posremember nomas. Estos se pueden implementar como actt que tienen la pos seteada
-en la fase de condiciones
-en desliz y deslizopt se va a tener que guardar el estado de memoria para retomar calculos, pero solo ahi
-
-bloque
-bloque<contenido> = opt<contenido TERMINAR,>
-podría hacerse como un opt agregando un comando de terminar forzazamente el movimiento, o como una estructura unica.
-Hacer una estructura unica es gratis y es mas limpio
-Usaría un solo int de control, 0 hace que devuelva su normal y termine el movimiento, 1 hace que no haga nada
-
-De la misma forma podría agregarse un exc asi no bloteo opt
-
-
-
-
-Lo primero a implementar es sacar las instrucciones de movimiento, y poner la pos directamente en las acciones.
-En terminos de memoria es mas o menos lo mismo porque cada movimiento implica un puntero mas, se ahorran espacio
-si hay muchas acciones en una posicion pero se pierden si hay muchos movimientos.
-Y tener posiciones relativas va a ser mas facil conseguir absolutas, y las absolutas hacen todo el proceso mas simple y
-rapido
-Dentro de una normal las posiciones relativas son fijas
-Supongo que los graficos van a estar ligados a la normal, aparte de las acciones para ser toggeables. Se van a manejar igual,
-con posiciones absolutas y eso. En el sistema nuevo va a haber muchas menos copias al pedo de un mismo sprite, y usando
-indireccion se podría hacer que sean re pocas, una por RGBA usado, no se si es al pedo igual
-
-no hay necesidad de acm porque las pos van a estar en cada cosa
-
-De paso desglobalizar todo para no tener problemas de thredeado
-
-lo unico malo de thredear es que tengo que pasar por parametro la pos, el holder y el tablero del thread. Pero bueno, no
-creo que traiga mucho problema
-Supongo que lo mejor para esto va a ser meter la pos y el tablero dentro de holder y pasar solo holder. Total el tablero
-se accede pocas veces y aunque la pos se accede muchas veces es mas rapido acceder a ella que copiarla, supongo
-variables como outbounds se van a tener que guardar en holder
-los movimientos absolutos y triggers tambien, dentro de las estructuras de normal y eso
-
-la ventaja de tener el tablero como una matriz de punteros es que preguntar si una pieza esta en una posicion es directamente
-mirar en la matriz, en lugar de recorrer un vector de piezas comparando numeros
-Por otro lado, tener la pos guardada en el holder seria un poco mas comodo porque se tendría que pasar un parametro menos
-en las llamadas a funcion, aunque en la mayoria de los casos despues se va a tener que obtener la pos de ese puntero. Aun asi,
-puede que sea mas rapido. La pos se determina antes de llamar a calcular movimientos segun la matriz, y se suma a los valores
-relativos de cada movimiento.
-
-el desliz despues de cada iteracion setea pos a la pos del ultimo movimiento de su lista
-
-
-
-cuando se intente calcular los movs de un holder, en un primer turno:
-se calculan todos los movimientos, lo que implica obtener todos los movimientos de pieza, que ya tienen las posiciones
-relativas armadas, transformar las condiciones a absolutas y probar que anden.
-si andan, traducir las posiciones de las acciones y guardarlas (por ahora alocando y borrando, despues intentar no borrar)
-(se guardan en el holder, es algo unico de este)
-Las condiciones tambien guardan una lista de posiciones que se usa de trigger (no me parece util diferenciar entre distintos
-tipos de triggers), conforme se vayan evaluando, cortando antes si es falso
-En los proximos turnos se recalculan movimientos solo si se pisan triggers
-
-
-En holder van a estar los movimientos absolutos y los triggers, dentro de estructuras de control
-En pieza van a estar los movimientos relativos y las condiciones
-
-En cada turno se recorren todos los holder para ver si alguna estructura de control activo un trigger. De hacerlo,
-la misma va a llamar a la parte correspondiente en pieza para recalcular
-Por lo que cada estructura de control va a necesitar un puntero a su estructura correspondiente en pieza, y tambien 
-pasarse a si mismo como parametro. Quedo medio raro
-Supongo que basta con un puntero a funcion, sino un puntero a objeto
-
-si se activa un trigger en normal llama a normal en pieza y este recalcula, pasa todas las condiciones y acciones
-las normales solo se generan a traves de deslices, por lo que estos deberían ser los encargados de armarlas, ademas
-del arme inicial. Asi evito tener ifs de generado adentro de las normales y se aceleran un poco las cosas
-
-tengo que ver como copiar los accs de pieza a holder
-
-
-Desliz manda a revisar triggers a su contenido. Si alguno se activa, manda a recalcular a este y a los siguientes
-Por ejemplo, si tiene normal la primera normal que se active y las siguientes llamarian a pieza
-si tiene desliz, este desliz haria lo mismo con sus normales y si hubo recalculos le avisa a desliz, y todas las proximas
-iteraciones se recalculan
-la pos a adelantar se obtiene de el ultimo elemento de la ultima normal.
-No sé si va a haber problemas con opts, verlo cuando esten mas pensados
-Como voy a hacer opt distinto hacer que desliz no se llame a si mismo ocupando el stack al pedo
-
-
-Desliz crea una nueva instancia de contenido en holder, de necesitar, antes de llamarla a calcular, y pieza la setea.
-Asi se ahorra tener que crear y destruir al pedo
-
-Opt como esta ahora no sirve porque genera los datos al aire. Cuando esta adentro de un desliz genera una estructura
-de arbol y desliz genera listas. No hay forma de meter el arbol en la lista, al menos no una forma simple que se haga
-desde adentro de un opt no conciente de que esta en un desliz. Y aunque hubiera una solucion tendría que tener en cuenta
-todos los casos raros de anidacion y demases
--
-Una solucion desde adentro de opt es hacer que cada vez que se lo llame genere sus 2 entradas (suponiendo que tenga 2 ramas),
-la proxima vez 2^2 y asi, estableciendo una relacion numerica entre cada uno. (el de la pos N le siguen 2N y 2N+1).
-El tema de esto es que opt necesita saber cuantas veces se lo llamo, y cosas como recalcular son complicadas. Tampoco estoy
-seguro de que funcione con casos raros, y la estructura termina siendo medio bizarra
--
-otra solucion es crear una estructura deslizopt que se arme en una segunda barrida, haciendo algo como
-desliz n1 opt n2 , n3 end n4 end => deslizopt(n1,(n2,n3),n4)
-Sería lo mejor porque se llevaria bien con cualquier tipo de anidacion rara, y maneja los casos de tener cosas 
-antes y despues de opt de la forma mas eficiente. Crea la estructura de arbol directamente sin tener que hacer cosas
-rebuscadas. Es lo mas limpio.
-Igual dejar esto para mas adelante, ahora no es algo necesario.
-Tambien esta el tema de tener desliz opt n1 n2 end n3 opt n4 n5 end end, cosas como esta podrían directamente prohibirse
-porque nomas se dan en casos muy raros y pueden reescribirse de forma que no creen problemas y se mantengan igual
-
-
-
-
-
-
-
-
-
-
-
-porRestore se deberían sacar porque no siguen en esquema de que cada normal tiene posiciones relativas fijas
-(lo que no es una restriccion necesaria pero las demas cosas la cumplen y simplifica un poco),
-por ejemplo w posRestore w no se podría pasar a relativas fijas. A ori, si actua solo dentro de una normal, no le 
-veo mucho sentido.
-posRestore no se usaria casi nunca pero tener algo que cargue posiciones a memoria permite hacer las piezas que
-promocionan en tal lugar sin usar contadores. Tambien se podría replicar un posRestore haciendo un desliz de normales que
-cuenten y avancen.
-
-
-Carga de movimientos:
-Al iniciar la partida se cargan todos los movimientos de todas las piezas.
-
-Si el turno es de un humano, al elegir una pieza, con sus movimientos ya cargados, por cada movimiento se cargan todos
-los cambios de tablero que forme, que es volver a generar los movimientos de esa pieza en su nueva posicion y los movimientos 
-que se hayan recalculado por pisar triggers. Esto se hace para evitar movimientos invalidos que tengan que ver con el jaque
-y para marcar jaques
-
-Si el turno es de la IA, esta genera todos los cambios por cada movimiento que tiene y hace sus cosas
-
-
-
-
-
-
-
-
-
-
-
-Habría un beneficio en guardar todos los movimientos de movimientos? Como con los movimientos, habría una un incremento
-importante en la memoria que se usa, pero las cosas se harían mas rapido a la larga. La IA no tendría que recalcular los
-cambios que causa un movimiento si estos cambios no activaron sus triggers
-Al inicio de la partida se calcularian todos los movimientos y los cambios de cada uno (los movimientos de esa pieza
-una vez que cambio de posicion y los recalculos de los movimientos que se haya triggereado).
-En el turno del jugador todas las piezas tienen sus movimientos cargados, las que se invalidan por jaque estan invalidadas
-y las que crean jaques estan marcadas. No hay que calcular nada.
-En el turno de la IA tampoco hay que calcular nada, habría que correr la funcion de puntuar tablero con la informacion
-existente.
-
-Despues de que se efectue un movimiento habría que reemplazar los calculos del movimiento central, que es el que acaba
-de hacerse, por el de segundo orden que corresponda. Borrar los demas movimientos de segundo orden y calcular nuevos.
-Esto es lo unico que se calcularia en cada turno
-
-La diferencia entre este sistema y el que habia pensado antes es que este guarda los cambios y el anterior no, el anterior
-recalcula cosas al pedo y este ocupa mas memoria. Como hasta ahora estuve yendo por el camino de ocupar mas memoria voy
-a seguir con eso.
-
-se calculan todos los movimientos de todas las piezas, con sus triggers. 
-por cada movimiento se calculan los movimientos de segundo orden, como se tiene que pasar por condiciones ya se cargan
-sus triggers pero no se usan para nada por el momento. Una vez calculado cada movimiento de segundo orden se mira si
-piso algun trigger de primer orden de toda la lista y en caso de haberlo hecho se guarda en ese movimiento el recalculo 
-del pisado (la IA haria esto en cada turno sino)
-
-los recalculos nunca causan mas recalculos, creo. Pasaría con piezas tardias, pero estas van a tener su sistema y no
-creo que rompan nada
-
-Aleatorio no necesita este sistema pero se lo dejo, no vale la pena meter un if para esto total es algo que no se va
-a usar nunca. Quedaría para debuggear velocidades
-
-Se hace en forma general en lugar de desde la IA porque asi puedo guardar cosas directamente en los movimientos sin que
-quede raro y tambien porque el jugador humano necesita el segundo orden para hacer el chequeo de jaques
-
-
-
-
-
-
-La IA como esta ahora no valora las piezas, nomas valora como esta el tablero antes y despues de hacer un movimiento.
-Ver si esto es suficiente
-
-Optimizacion:
-cuando falla un trigger de una normal no es necesario verificar todas las condiciones, solo la que generó ese trigger.
-El tema es que los triggers no se diferencian y no hacen referencia a sus condiciones, y si lo hacen terminario siendo
-todo mas lento
-Pero puede que se pueda relacionar un trigger con su condicion por la posicion en la que esta en la lista. El trigger #3
-debería corresponder a la condicion #3 de la normal. Seguro que esto varia un poco ya que no todas las condiciones
-generan triggers, pero aun asi puede hacerse algo
-
-
---
-
-Piezas como el ubi ubi no van a llevarse bien con la IA porque tienen una cantidad de movimientos muy grande que se va
-a elevar al cuadrado. Podría meterse un ubi ubi haciendo que sus movimientos solo terminen con una pieza capturada, y 
-metiendo un prob persistente en cada pieza que se capture. El deslizopt se va a gastar y solo van a quedar tantos movimientos
-como piezas en rango del ubi ubi, que va a ser un numero bajo
-
-El emperado puede meterse directamente, va a tardar en cargar al principio pero sus calculos solo van a variar por
-cada movimiento de pieza, y no de forma exagerada
-
-Creo que no hay ninguna condicion no posicional que importe. Se podría dar que una pieza base su condicion en una propiedad
-de otra y cosas como every cambien esa propiedad. En estos casos especificos se podría hacer que un cambio en una pieza
-active los triggers que esten sobre esa pieza
-
-
-estaria bueno llegar a un nivel de abstraccion donde el jaque puede
-armarse desde el lenguaje.
-El rey tendría un every que prohibe movimientos aliados que lo dejen
-amenazado.
-Lo unico que habría que hacer es darle a every la capacidad de invalidar
-el movimiento anterior, el resto debería venir solo con el segundo orden
-
-
-actualmente los triggers estan en vectores en cada movimiento de cada
-pieza. Cuando se hace un movimiento se genera un vector de pisados, si
-alguna coordenada de ese vector coincide con alguna coordenada de un trigger
-se recalcula el movimiento del trigger
-La IA tiene que hacer este proceso de contraste de vectores por cada movimiento,
-por lo que puede terminar siendo lento. Aun asi es mas rapido que recalcular
-todos los movimientos
-Otra forma de hacerlo sería por señales. En cada pos se deja un struct, que
-simboliza el trigger. Este struct contiene un puntero al movimiento de la
-pieza que lo causo. A su vez la pieza tiene un puntero al struct. 
-Entonces, cuando se genera el vector de pisados nomas hay que mirar en esos
-pisados. Si hay triggers se activan.
-Por otro lado, cada vez que una pieza se actualiza (por ahora solo moviendose,
-pero tambien esta el caso de que cambie) se tienen que sacar sus triggers y
-poner otros. Supongo que todo se hace usando mapas en el tablero
-No sé si va a terminar siendo mas eficiente, y es mas complejo. A la larga
-puede que lo sea. Igual por ahora mantenerlo como esta, si mas adelante
-veo que lo necesito lo meto.
-Como segundo orden va a usar un sistema parecido podría meterlo ahora
-
-
-segundo orden
-La IA necesita crear todos los tableros posibles dentro de un turno, por
-lo que necesita calcular todos los movimientos despues de cada movimiento.
-Se ahorran muchos calculos guardando los movimientos basicos en memoria,
-por lo que lo unico que se necesita recalcular por movimiento son los movimientos de la pieza que se movio y lo que haya levantado triggers.
-
-Se podría calcular esto al aire y listo, aunque sería util guardar los
-movimientos de segundo orden tambien para no tener que recalcularlos si se
-necesitan.
-Comparando:
-si se calcula al aire, una pieza quieta tendría que recalcular sus movimientos de segundo orden cada turno. 
-Si se guarda en memoria, solo debería recalcular cuando se levante un trigger
-de segundo orden. 
-
-Los triggers de segundo orden se guardan en los movimientos de primer orden. Cuando se activan se recalcula directamente. Es mucho mas rapido que recalcular todos los movimientos todos los turnos, con el costo de meter un trigger hell.
-
-Hay que tener en cuenta que el segundo orden solo va a ser usado por la IA y algunas piezas especiales (como el rey), si ninguna de las dos esta presente entonces no se arma. Nada simple debería depender de que exista. Tambien, como la carga de movimientos tiene dos fuentes hay que mirar que lo que se necesite calcular no haya sido calculado por la otra
-Thredear no debería ser demasiado complejo, cada thread maneja el recalculo de 
-movimientos distintos en tableros distintos. El tablero original se tiene en comun, pero solo se lee. Los cambios de segundo orden son unicos de cada movimiento de primer orden, y se guardan en estos, no hay conflicto.
-
-
-
-
-
-aclaracion sobre every:
-Dependiendo como este configurado, un every puede correr al finalizar el turno de un jugador, o en cada turno de los dos jugadores. 
-Para que las cosas anden bien el segundo orden tiene que tener en cuenta que los efectos de every pueden pasar antes y despues de los movimientos enemigos (no hace explosion combinatronica porque no hay ramificaciones, es solo cosas que se procesan antes y despues de cada movimiento)
-
-
-!mirar el tema del copyrigth con las fuentes
-
-Hacer el juego para mas de 2 jugadores es hacible, pero no vale la pena.
-Bando dejaria de ser un bool, los colores de las piezas deberían determinarse con una funcion y ser un efecto arriba del sprite, se necesitaria agregar un prefijo al tablero de texto. 
-Internet se complicaria un poco pero no demasiado. 
-El problema esta en la IA. Para actuar bien tendría que no solo calcular el movimiento del proximo jugador, sino de toda la cadena de jugadores. Y eso hace una explosion combinatronica.
-Tambien esta el tema de que no entendería muy bien alianzas ni cosas por el estilo.
-Se podría agregar el modo de mas de 2 jugadores para solo humanos, pero es mucho trabajo por algo que no creo que se use mucho. A demas, muchos juegos de mas de dos personas usan tableros no cuadrados, y eso es algo que no pienso agregar.
 
 
 
@@ -408,9 +12,6 @@ La local se guarda en cada normalHolder para poder restaurarla cuando se recalcu
 Las operaciones de lectura se hacen durante el chequeo de condiciones, mientras que las de escritura se hacen solo si es sobre memoria local. 
 Las escrituras sobre memoria global son acciones
 
-Hay casos raros donde es util escribir espacio global durante el chequeo de condiciones, asi que se va a agregar una notacion especial para eso. Aunque es algo raro de pensar porque los chequeos pueden pasar en momentos inesperados, asi que se tiene que usar sabiendo que se esta haciendo
-
-
 mcpm
 mset
 madd
@@ -423,91 +24,6 @@ t - tile
 g - global
 
 se puede acceder a la posicion actual del puntero / numero de turno poniendo px,py,t
-(una forma garca de implementar esto seria reemplazandolos por g-1,g-2,g-3, pero eso requeriria actualizar ese espacio de memoria para cada cambio de posicion)
-
-
-
-
-
-
-mgrw - toma un valor. Si ese valor es mas grande que la memoria, la agranda
-Con esto se pueden tener memorias de tamaño variable sin tener que especificar nada
-Lo malo es que si se lee antes de escribir se rompe todo pero es esperable, aclarar en el instructivo. No creo que cuelgue el juego 
-Manejarse con un comando aparte hace que no se haga este chequeo en la escritura normal, y en la version compilada permite usar arrays en vez de vectores cuando se vea que no esta
-
-cuando se hace el chequeo de condiciones, dentro de una normal, el orden de procesado de condiciones es lecturas -> condiciones que no usan memorias -> escrituras.
-
-Esto es para manejar eficientemente casos como
-w mcmp 0l 0 mover 
-w vacio mset 0l 1
-
-pero hace cosas como
-madd 1l 1 mcmp 1l 3
-raras porque el mcmp se ejecuta antes del madd.
-
-Podría hacer que todo se ejecute en orden, pero tendria que meter un chequeo por iteracion y agregar otro nivel de polimorfismo. Por ahora lo dejo asi. 
-
-O no. termina siendo muy no intuitivo, y no creo que atrase demasiado. Ir por la otra, que termina comportandose como se comporta la version final. 
-
-
---
-
-Algo ahora imposible en el lenguaje es poder armar una lista de tamaño indefinido, y poder recorrerla. Esto es util en bastantes piezas y es algo que debería estar.
-Lo que se necesita especificamente es que un valor indique en que posicion de memoria ejectar un comando (hasta ahora los comandos toman una posicion constante, como l0, y no se puede pasar algo variable como lX)
-
-Una forma de hacerlo es harcodeando algunos operadores, pero haria el lenguaje feo y no se podría acceder a los operadores comunes, a menos que se haga una version especial de cada uno de estos y haya un sistema que los relacione y que se yo. No
-
-Una opcion es algo como
-mdir d0 l0 desliz mshift d0 1 mdist d0 l8 mset d0 0 end #limpiar una lista de 8
-
-habria que agregar 3 operadores y un tipo de memoria (global), d, que sería como un puntero. Este puntero puede apuntar a cualquier tipo de memoria, y se determina a que apunta como mdir. mshift la desplaza, y mdist retorna true si donde apunta es distinto a su segundo parametro. 
-mdir va a tener que usar polimorfismo para saber como desplazarse. (o al menos va a tener 2 versiones, una global y una local, por la forma en que esta armada la memoria).
-Puede que tenga otros problemas con los tipos y demas que no estoy pensando ahora. 
-Puede que sea un poco confuso porque mete la idea de punteros, pero bueno. No es una mala opcion.
-
-Otra opcion es algo como
-desliz mset ll0 0 madd l0 1 mless l0 9 end mset l0 0 #limpiar lista de 8
-
-Este me gusta mas porque es mas intuitivo y no agrega comandos nuevos. Es mas explicito tambien, se lee mejor. 
-Para implementarlo habria que dar la posibilidad de que los accesores puedan tomar accesores en vez de constantes, lo que probablemente se implemente dandoles una nueva version.
---
-Esto se podría hacer con templates, pero ya es un quilombo y da pie a cambiar todo por polimorfismo. Total esta no es la version final y la diferencia de velocidad no va a ser muy notable. Y puede que el tiempo de compilacion se haga muy largo con templates, a demas de que va a ser un asco escribir eso
---
-
-Un criterio importante para definir cual usar va a ser cual es mas rapido en la version final, compilada.
-El primero tomaría un puntero a un lugar y lo desplazaria. 
-El segundo accede pasando una variable a un array. 
-Si es un acceso solo son iguales, y creo que despues tambien. Los dos hacen una suma y un acceso, el primero incrementando el puntero y accediendo, el segundo incrementando la base del array por la variable y accediendo. Puede que el primero sea marginalmente mas rapido porque toma una constante en lugar de una variable, pero son practicamente lo mismo.
-
-Me parece que voy a ir por el segundo porque es mas facil de escribir. En el producto final van a ser casi igual de rapidos, asi que no estoy perdiendo nada
-
-
-
----
-
-mcmp p0 2
-mset p0 2
-mcmp p0 p1
-mset p0 p1
-mset l0 p0
-mset p0 l0
-mcmp p0 g0
-mset p0 g0
-mset g0 p0
-
-mcmp lp1 lp2
-mset lp1 lp2
-mcmp pl0 pl1
-mset pl0 pl1
-mcmp pp0 pp1
-mset pp0 pp1
-
-
-
-
-
-
-
 
 
 desliz mset gl0 1 madd l0 1 mless l0 5 end
@@ -729,95 +245,149 @@ ops    16688
 
 
 
+el problema de los operadores es que ligan flujo de datos con si las condiciones fallan o no, lo que en principio esta bueno porque en la mayoria de los casos es lo que se quiere, pero si se necesita la otra cosa no se puede. No sé si desligar las cosas o agregar alguna notacion rara para manejar el segundo caso, creo que prefiero eso
 
 
-Graficos
-Agregar boton que muestre las memorias. La global se vería todo el tiempo. Si se toca un espacio se dibuja la memoria de tile y la de pieza si hay una pieza en esa pos.
-En modo debug se dibuja la memoria de movimiento mientras este se calcula, y se redibujan todas en cada paso
+desliz COND ACC end
+=>
+while COND
+ ACC
+end
 
-%%%
+exc COND1 ACC1 or COND2 ACC2 end
+=>
+if COND1
+ ACC1
+else if COND2
+ ACC2
+end
 
-WhenNoMoves
-Ahora cuando un jugador se queda sin movimientos y es su turno el juego queda en softlock. Se podría dejar asi y listo. Una solucion desde adentro del lenguaje es agregar un boton de rendicion. 
-Se puede agregar un sistema que detecte esto. No estoy seguro de si lo valga, agrega chequeos cada vez que se acciona. Para adaptarse a cada juego posible tiene que chequear si los dos jugadores tienen movimientos posibles despues de cada accionar.
-Se sabe que un jugador tiene movimientos si tiene un holder que tenga un movimiento que tenga su primer movholder con valorCadena verdadero.
-En primera instancia se podría mirar el holder que genera despues de moverse y los que reaccionan para ver si estos hacen algo. Si eso falla se va a tener que recorrer el tablero buscando algun holder que cumpla la condicion. Si no hay ninguno se llega a la conclusion de que no hay movimientos.
-Cuando pasa esto, se corre el codigo WhenNoMoves asociado a ese jugador
--
-Lo que no me convence de este sistema es que es relativamente lento e invade todos los juegos, cuando no necesariamente todos lo usen, y no es algo totalmente escencial. 
-Por ahi tendria mas sentido como algo opcional para la version compilada
-Cuando los dos jugadores se bloquean al mismo tiempo andaria medio raro, pero supongo que se puede salvar desde el lenguaje. 
+isol COND ACC end
+=>
+if COND
+ ACC
+ ROLLBACK
+end
 
+desopt COND1 ACC1 or COND2 ACC2 end
+=>
+if COND1
+ ACC1
+ RECUR
+ ROLLBACK
+end
+if COND2
+ ACC2
+ RECUR
+ ROLLBACK
+end
 
- 
+tambien hay cosas raras como que las condiciones tienen efecto, por lo que por ejemplo ramas anteriores de un exc tienen un impacto en la actual, y las condiciones no son conmutativas. Esto por ahí podría arreglarse haciendo que las condiciones con efecto corran despues de las sin efecto, aunque puede que esto haga todo mas confuso, no sé. Y hay condiciones sin efecto que dependen de condiciones con efecto, asi que no.
+Igual creo que esto es relevante solo en contextos raros, y con una notacion que marque bien las cosas no debería importar mucho;
+exc y desliz cuando fallan resetean la posicion pero no resetean la memoria local, lo que por ahí es raro. Se podría agregar eso, sería mas ineficiente porque tengo que guardar la memoria local pero bueno, hace el lenguaje mas consistente y saca este caso raro de tener ramas anteriores fallidas del exc/ultima iteracion del desliz con potencial de tener efecto. En la version compilada no importa porque solo se agregaria este codigo cuando se necesite de verdad, que es casi nunca.
+Otro tema es que solo se resetearia la memoria reseteable, por lo que la funcionalidad anterior va a seguir estando en el area no reseteable se quiera o no.
 
-
-### IA
-aparentemente el segundo orden es solo usado por la IA. Ya que lo estoy haciendo podría agregar comandos que lo aprovechen, pero la verdad es que no hay mucho que se pueda hacer que no se pueda hacer usando memoria y triggers o every, y esas soluciones suelen ser mas limpias y eficientes. 
-
-Los triggers de segundo orden son necesarios porque aumentan mucho la eficiencia, pero habria que ver como agregarlos sin molestar a los juegos que no lo usen. Supongo que si son iguales a los triggers de primer orden no habria problema
-
-
-
-hacer modo debug donde se muestre el movimiento elegido medio transparentado. Cuando se elige una pieza se muestra el valor que se le dio a cada movimiento sobre su clicker. Se puede mover cualquier pieza.
-
-Hay un espacio de memoria que la IA lee y limpia al final de cada movimiento, antes de dar la valoracion final. El valor leido se suma directamente al valor. Sirve para que se pueda influir artificialmente en la valorizacion. Agregar una IA que solo se maneja con esto
-
-
-###
-
-/// threads
-Agregan mucha complejidad y puede que no sean muy necesarios, ver
-
-Alguna opcion visual para ver que piezas se estan calculando actualmente
-
-
-
-///
-
----mas cosas
-
-por ahi agregar funciones para no blotear tanto con macros. No creo que cambie la eficiencia pero bueno. No debería ser muy complejo ya que no tienen parametros, si se les necesita pasar algo se pasa por memorias
-
-una matriz extra del tablero para sprites solo esteticos
-
-una matriz extra del lector para valores iniciales de la memoria tile, y otra para sprites esteticos
-
-neg, operador que tiene una normal y retorna el valor opuesto. Hace un chequeo que mira que la normal solo contenga condiciones
-
-forma mas simple de dar doble turno y cosas asi, preferiblemente sin agregar nada
-
-agregar un break a desliz, se usaria bastante. Por ejemplo en la torre:
-desliz {w,a,s,d} exc mover or captura break end
-
-checkid a, comando que da verdadero si el id de la pieza en esa pos es a
-
-Modo debug, se elige en la pantalla del tablero.
-Hace que se hagan pausas en el calculo de movimientos, que se avanzan de a una apretando una tecla. Sirve para debuggear movimientos y para explicar como funciona el sistema. Se marca la pieza actual, se dibuja el movimiento parcial y donde esta el puntero de posicion. 
-No estoy seguro de que determina las pausas
-Cuando se esta en este modo solo hay un thread
--
-En la implementacion supongo que voy a hacer otro calcular, para no meter un if(debug) en el calcular normal
-
-opcion de ver todos los movimientos de un bando
-
-Se podría agregar un operador rand que es una especie de opt, pero solo
-corre una rama elegida aleatoriamente
-En el lenguaje se tendría que escribir un porcentaje en cada rama, y todas
-las ramas tienen que sumar 100
-Dentro de todo es simple y da bastante juego.
-En la IA se puede implementar haciendo una cuenta que tome el valor y riesgo de 
-hacer cada movimiento, pesados por su probabilidad
-Un problema de generalizacion es este: Hay dos ramas, una verdadera y una
-falsa. Debería descartarse la falsa y solo tener en cuenta la verdadera, o
-elegir aleatoriamente entre las dos y si cae la falsa no hacer nada?
-Como se puede abstraer para tener los dos casos? Una forma sería con un
-flag y ya esta
+Otro tema raro son cadenas cortables. desliz A c B end corre hasta que falle A o B, si falla B queda media iteracion al final.
+en exc A c B or [] end si falla B se toma esa rama como valida igual, lo que supongo que es lo que se quiere. 
 
 
 
-lo mas eficiente para partidas humano vs humano sería calcular el movimiento de la pieza que el jugador toca y listo, en vez de generar todos los movimientos y ir recalculando. Pero hacer esto inhabilita el segundo orden, y las acciones en condiciones. Y a demas va a congelar el juego por un milisegundo cuando se toca la pieza, mientras que el otro sistema calcula antes de que se toque la pieza y el jugador esta pensando.
-Se podría agregar como optimizacion de algunos casos, pero es algo de trabajo y probablemente haga el juego parecer mas lento, asi que no lo vale. Hacer lo mismo para todo es mas simple y limpio.
+Supongamos que tengo
+
+desliz exc A or B false end C end
+
+La rama B parece no tener sentido, y no lo tiene, a menos que haga algo con efecto como actualizar memoria local (por ahora toda, puede que despues solo deje la memoria local no reseteable), o tener un isol o c.
+El desliz solo iteraria por A y C hasta que caiga B, y ahí corta. 
+Igual esto puede reescribirse como
+
+desliz mset l0 1 A mset l0 0 C end exc mmcmp l0 1 B end 
+desliz l0<=1 A l0<=0 C end exc l0==1 B end
+
+lo que es mas entendible y sería preferible. Notece que para que esto funcione desliz NO tiene que resetear la memoria local, y me parece que tiene sentido y debería ser asi. No sé si opino lo mismo con exc, pero para mantener consistencia quedaría. 
+Exc es raro porque uno no piensa que las ramas se ejecutan secuencialmente, pero bueno. Mas adelante pensaba tener calculos de memoria temporal, que en muchos casos sacan la necesidad de actualizar memoria local.
+
+El segundo caso tambien permite que B pueda tener acciones comunes, sin necesidad de poner un c
+
+
+Igual para manejar el primer caso podría agregar un comando especial fail, que retorne falso pero en una nueva cadena, manteniendo la validez de la anterior (como tener c pero sin hacer un clicker).
+Entonces tendría
+
+desliz exc A or B fail end C end
+fail marcaría a exc como valido hasta la mitad, por la rama 2. Si hubiera una rama 3 no correría, tampoco corre C (creo, si no es asi lo cambiaría). Para casos de operadores anidados si se usarían flags, y como aca tambien por ahora no vale la pena agregarlo.
+
+
+
+
+
+
+
+Ahora el problema esta con un caso parecido en desopt
+
+desopt exc A or B end or [] end
+
+quiero correr B solo si A falla, pero quiero que si corro B no se vuelva a iterar. Podría hacer:
+desopt exc A or B false end or [] end
+pero eso solo funciona si B hace algo como escribir memoria local, tener un isol o c. Si solo quiero agregar acciones comunes que vengan de B no puedo.
+
+Usando flags podría hacer
+desopt l0==0 exc A or l0<=1 end or l0==0 [] end
+lo que funcionaría, la proxima iteracion pasa pero la bloqueo en todas las ramas.
+
+Igual me parece que vale la pena agregar algun operador, no tan general como un break, que frene la iteracion del desopt actual.
+Lo que pasa con desopt es que no puedo correr codigo despues de él, en el caso del desliz puedo poner codigo despues y listo. Tambien esta el tema de si este codigo debería correr despues de todas las ramas o algunas
+
+usando esto quedaría 
+
+desopt exc A or B destop end or [] end
+desopt A desoptEnd B end or [] end
+
+lo que es util porque da una forma de tener codigo que finalice en desopt, lo que no es un caso muy raro. De paso es eficiente porque no tengo que hacer una iteracion mas
+La segunda opcion es mas facil de implementar pero me gusta mas la primera porque agrega un comando en vez de un operador, y es mas poderosa porque puede estar adentro de una anidacion de operadores.
+(el comando no cambia el flujo, nomas setea un flag que se mira antes de iterar)
+
+
+Otra alternativa sería
+
+desopt exc A or B fail end or [] end
+
+que hace lo que quiero hacer sin necesidad de agregar mecanicas nuevas, y es eficiente. Asi que voy a usar este. Hace algunas cosas de desliz un poco mas comodas, y eso se marca mas con desopt. Igual no es algo absolutamente necesario, pero lo vale.
+
+--
+
+Podría agregarse un operador break para tener mas control sobre el flujo. Hasta ahora no lo necesite pero podría ser util, por ejemplo:
+desliz A exc B break or C end D end E
+
+Pero puede verse que este caso es cubierto reemplazando break por fail, o reescribiendo
+desliz A n(B) C D end E
+
+
+Por ahí sería util para saltar de un nido de operadores, pero para eso necesitaría un mecanismo propio que sepa a donde ir y deje a todos los operadores intermedios en un estado de "contiene cosas validas pero no hasta el final". Creo que se puede hacer pero hasta ahora no lo necesite y es un quilombo y se pueden manejar con flags. No creo que valga la pena, me parece mejor idea mover todo a flags y no tener casos raros en el lenguaje.
+
+
+---
+
+Un caso que quería analizar es poder correr codigo cuando todos las ramas de un desopt fallen. Si el codigo puede correrse mas veces de las necesarias se puede poner en todas las ramas, incluso solo en una, usando exc y fail. Pero digamos que por eficiencia, o porque el codigo necesita solo correr cuando fallen todas las ramas, se tiene que hacer bien. 
+No creo que valga la pena agregar algo especial al lenguaje para este caso, pero quiero ver que tan complejo es manejarlo.
+
+desopt A or B or C end
+
+usando memoria no reseteable
+
+mset l0 10 desopt madd l0 1 A or B or madd l0 -1 C end
+
+l0 es el index de un array de bools que indica si alguna rama de el nivel l0 fue valida 
+
+desopt madd l0 1 A mset ll0 1 or B mset ll0 1 or madd l0 -1 exc C or exc mcmp ll0 1 madd l0 -1 or madd l0 -1 D fail end end end 
+
+donde D es el codigo que corre cuando fallen todas las ramas. No es horrible, y en muchos casos no se necesita porque se puede hacer alguna comparacion que tengan que ver con el dominio para ahorrar casos.
+
+Igual si se necesita mucha dependendia entre las ramas se puede pensar de implementar el desopt con desliz y isol y muchas operaciones de memoria
+
+
+---
+
+
+
 
 
 

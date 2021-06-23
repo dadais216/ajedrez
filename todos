@@ -154,6 +154,10 @@ necesitaria investigar bien alpha beta prunning y otras cosas que usan algoritmo
 
 ----
 
+algo que hace al lenguaje complejo es que las condiciones aplican solo al estado del tablero actual, lo que puede hacer algunas cosas confusas. En el caso de la dama la complejidad se dispara por eso. Podría considerar tener un modelo donde apliquen las acciones cuando se calcula, y despues se deshacen. La idea de usar snapshots no funcionaria ni en pedo porque es demasiado costosa, todavia mas si se tiene en cuenta que los rollbacks no se hacen solo al final del movimiento pero en varias partes en caso de isols y demases. La otra opcion es hacer todas las acciones reversibles. Supongo que duplicaria el costo de cualquier movimiento pero puede que valga la pena, no sé. Guardar la memoria local en cada paso sigue siendo necesario, asi que no simplifica eso, suponiendo que tenga el modelo de reaccion. 
+
+----
+
 cortar regeneracion si la normal que disparó el trigger no cambia de estado (falso->falso o verdadero->verdadero)
 Para hacer esto necesito el mecanismo de longjmp para poder huir. Si hay mas de un trigger se vuelve a modo busqueda, no pasa nada
 Esto no andaria si la normal depende de memoria global/tile y hace un pasaje a memoria local, ya que aunque mantenga su estado de validez puede propagar algo distinto. En principio que la memoria sea reseteable o no no cambia esto. 
@@ -329,7 +333,7 @@ Lo unico que se agregaria es una condicion marked que toma un numero, que indica
 
 No es un operador que indica directamente si un casillero esta siendo amenazado igual, porque piezas que tengan mas de un paso, como un torre, podrian ser cortadas y mantendrían marcados casilleros donde ya no estan haciendo nada. Esto no es un problema con triggers, porque serían triggers falseados y listo, pero usar esto para logica de lenguaje podría ser confuso. Para manejar algo asi sería necesario que las piezas que se cortan sigan recorriendo, y escriban en ese slot algo que indique que la marca no es valida, que despues se tiene que contrastar ademas de mirar si esta marcado. El tema esta en que cuando uno esta generando no sabe si es una generacion inicial o una regeneracion, y este codigo solo tiene sentido en una regeneracion. Cuando se choca con una pieza no se sabe si es porque esta cortó el movimiento o si nomas se choco con una pieza, y la solucion simple es seguir hasta llegar al borde del tablero siempre.
 Que tenga este problema me hace dudar de si vale la pena agregarlo. 
-Otra opcion es verificar si un trigger es falso o no con un recorrido como el que hace reaccionar, pero es un quilombo tambien
+Otra opcion es verificar si un trigger es falso o no con un recorrido como el que hace reaccionar, pero es un quilombo tambien (o no, puede que ande bien y listo)
 
 La funcion mas util que tiene es para piezas como el rey, que solo se pueden mover a espacios no marcados. Igual soluciona solo parte del problema, y el rey se puede implementar de otra forma.
 
@@ -359,6 +363,15 @@ Para esto no es necesario esa optimizacion de no recalcular cadenas validas que 
 recordar que pienso agregar funciones que miren el futuro mas adelante, puede que la version final no sea tan enquilombada
 
 la dama podria usar memset* para prohibirse a si misma
+
+
+Una opcion mucho mas simple sería exponer al lenguaje los clickers, y tener un comando que los invalide y listo. El rey, al ser amenazado, va a invalidar todos los clickers excepto los que lo cubran, evaluandolos segun la posicion. No sé exactamente como sería la sintaxis para recorrer la lista de clickers, algo como forEachClick [] end donde se puede acceder a algunas variables especiales como la posicion del puntero y la pieza dueña. Es la solucion mas directa, simple y eficiente.
+Supongo que no pense en esto antes por limitarme a la idea de que cada pieza es dueña de los movimientos que genera, y eso llevo a la otra implementacion que bajo esas restricciones cumplia pero terminaba siendo mucho mas compleja y bizarra, y de todas formas rompia la regla de no tener efecto en las condiciones.
+-
+un problema aparte es prohibir movimientos que descubran al rey y lo dejen amenazado. La verificacion de every podría buscar estas piezas y marcarlas para que no generen desde el principio. Es una verificacion mas compleja pero creo que es la unica forma razonable.
+
+Agregar un control tipo every, que verifique que el rey no sea amenazado despues de mover una pieza, no funcionaria porque la cancelacion del movimiento se hace al finalizar su generacion, y every corre despues de que pase una accion. Esto parte del tema de la separacion de las condiciones y acciones, si se hiciera todo junto con la idea de reversibilidad se podría hacer la verificacion mas directamente. 
+
 
 ----
 
@@ -440,6 +453,8 @@ alguna forma de seleccionar memoria para no copiar todo siempre. Hacerlo por cam
 
 El sistema de evaluacion de la IA esta en el lenguaje, con comandos que dan puntos. Lo bueno de esto es que puedo combinarlo con codigo que corre todos los turnos para tener una evaluacion totalmente configurable. Supongo que va a haber algunas cosas hechas como contar cantidad de piezas para ser mas rapido, pero si se quiere hacer algo aparte se puede. Igual creo que el evaluador principal es la cantidad de capt/movs que tiene cada jugador, y eso deberia venir hecho
 
+Por ejemplo se le podría dar un valor a amenazar espacios cercanos al rey, para intentar impulsar un jaque.
+
 antes tenia planteada la idea de tener una matriz de cambio y manejar solo las diferencias con el tablero en lugar de tener el una copia por thread, no sé si vale la pena hacer eso pero es una idea.
 
 visualizaciones de la ia, barra de progreso
@@ -479,6 +494,43 @@ Seria interesante generar una normal para cada combinacion posible de sus bools,
 -----
 
 
+clickers especiales para movimientos de varios pasos (solo el ultimo es real). El juego por atras calcula todos los caminos posibles como siempre, nomas esta como algo para la interfaz del jugador humano. 
+
+-----
+
+WhenNoMoves
+Ahora cuando un jugador se queda sin movimientos y es su turno el juego queda en softlock. Se podría dejar asi y listo. Una solucion desde adentro del lenguaje es agregar un boton de rendicion. 
+Se puede agregar un sistema que detecte esto. No estoy seguro de si lo valga, agrega chequeos cada vez que se acciona. Para adaptarse a cada juego posible tiene que chequear si los dos jugadores tienen movimientos posibles despues de cada accionar.
+Se sabe que un jugador tiene movimientos si tiene un holder que tenga un movimiento que tenga su primer movholder con valorCadena verdadero.
+En primera instancia se podría mirar el holder que genera despues de moverse y los que reaccionan para ver si estos hacen algo. Si eso falla se va a tener que recorrer el tablero buscando algun holder que cumpla la condicion. Si no hay ninguno se llega a la conclusion de que no hay movimientos.
+Cuando pasa esto, se corre el codigo WhenNoMoves asociado a ese jugador
+-
+Cuando los dos jugadores se bloquean al mismo tiempo andaria medio raro, pero supongo que se puede salvar  
+
+------
+
+alguna forma de agregar sprites solo esteticos
+
+
+--------
+
+Se podría agregar un operador rand que es una especie de opt, pero solo
+corre una rama elegida aleatoriamente
+En el lenguaje se tendría que escribir un porcentaje en cada rama, y todas
+las ramas tienen que sumar 100
+Dentro de todo es simple y da bastante juego.
+En la IA se puede implementar haciendo una cuenta que tome el valor y riesgo de 
+hacer cada movimiento, pesados por su probabilidad
+Un problema de generalizacion es este: Hay dos ramas, una verdadera y una
+falsa. Debería descartarse la falsa y solo tener en cuenta la verdadera, o
+elegir aleatoriamente entre las dos y si cae la falsa no hacer nada?
+por ahi manejar los 2 casos, aunque condiciones despues de rolls es medio raro.
+
+-----------
+
+!mirar el tema del copyrigth con las fuentes
+
+
 >>
 metaprogramacion
 marcar regiones, dentro de estas regiones poder tener variables. Despues de la region hay codigo en c que se encarga de generar un archivo donde se va a pegar el codigo y compilar, con todo eso ya cubierto. El codigo solo hace el fprintf, por ahi con una notacion especial para abstraer el orden de parametros, y ahi se pueden hacer cosas como pegar el codigo n veces con algo cambiado o que sé yo
@@ -500,7 +552,55 @@ Es mucho quilombo y hay cosas que no sé si tienen sentido.
 Forzar que el movimiento depende solo del estado actual del tablero no es una idea tan compleja
 
 
+
+
+la unica mecanica que no tengo totalmente clara es la de tener mas de un movimiento en un turno. Se puede hackear con flags haciendo que el otro tenga un turno sin movimientos validos, pero podría haber algo mejor. Creo que esto amerita tener codigo especial para manejarlo, y en principio no veo ningun problema en hacer eso. Tambien permite mecanicas interesantes como botones para hacer votaciones y cosas asi, que son acciones independientes que no deberían consumir un turno (aunque se evaluan al mismo tiempo, no son asincronicas. Si se quiere algo en muchos pasos con interaccion del otro jugador si se usarian flags)
+
+La partida termina en empate si se repiten los mismos movimientos 3 veces o no se come ninguna
+pieza ni se mueve un peon en los ultimos 30 turnos
+
+Cuando la maquina esta perdiendo (le quede un porcentaje de sus piezas iniciales y diferencia con la cantidad del jugador) 
+las tiles del fondo empiezan a cambiar aleatoriamente, con una chance dependiente del porcentaje
+
+
+un tablero con una doble fila de amigo-huerfanos seria interesante
+
+un ajedrez como el comun, pero en cada turno se tienen que mover dos piezas distintas
+-variante donde se tienen que mover piezas de distinta clase (en el primer turno se movería un peon y un caballo)
+-variante donde se tienen que mover piezas de la misma clase
+
+ajedrez hecho unicamente de piezas bizarras, con propiedades raras y movimientos con efectos secundarios
+
+ajedrez donde varias piezas puedan replicarse, mecanicas alrededor de eso
+
+un tablero de islas, con plataformas que se mueven
+-las plataformas serian espacio vacio entre paredes, se manejaria con algun every que va moviendo las paredes
+se podría agregar plataformas que se mueven, como barcos. Estos tendrían una pieza tecnica que haga de control, que permita mover el barco y las piezas que esten arriba. Si el espacio de control esta ocupado este se mueve a un espacio no ocupado o se corre el codigo de control desde la pieza que lo ocupo
+
+
 PIEZAS:
+https://en.wikipedia.org/wiki/Fairy_chess_piece
+https://en.wikipedia.org/wiki/Chess_with_different_armies
+https://en.wikipedia.org/wiki/Baroque_chess
+https://en.wikipedia.org/wiki/Wa_shogi
+https://en.wikipedia.org/wiki/Stratomic
+pieza que genere estructuras
+pieza que cambie su posicion con cualquier otra dentro de un rango de 3
+pieza que pueda generar paredes
+una pieza vivorita multiblock
+pieza camuflada, en grupos, tiene como movimiento especial ser reemplazada por otra pieza, y hacer que el resto de su clase
+se vuelvan normales (ej grupo de peones donde uno se puede volver reina, los otros quedan normales)
+Pieza que respawnee
+pieza multiblock. Ni idea de como capturaria o sería capturada, pero no estaría mal.
+pieza ariete, que pueda contener otra pieza 
+pieza que tenga un movimiento que permita cambiar su posicion con cualquier otra, y pueda hacer esto varias veces
+en un mismo turno
+pieza absorbente, que obtiene todos los bloques de movimiento, accion y propiedades de quien absorva. Necesita absorver
+a una pieza aliada para comenzar a actuar, su unico movimiento inicial es absorver ortogonalmente. Puede que este un 
+poco rota. Es una cuestion de tener una super pieza vs tener muchas piezas.
+pieza que levante paredes a su alrededor al finalizar cada turno y las baje antes de calcular sus movimientos
+pieza que deje un trail de piezas tecnicas permanente
+Aislador: Cuando activa su habilidad especial inmoviliza todo lo que no este en un radio de 5x5 a su alrededor, hasta que sea capturado o pase cierta cantidad de turnos Al moverse mueve el campo alrededor. Lo malo de esta pieza es que es muy facil crear situaciones de tablas, aunque eso podría tomarse como un aporte porque no te permite hacer estrategias muy forras, ya que si le matas a todas sus piezas no congeladas se termina el juego, y el oponente siempre tiene la opcion de mover sus piezas fuera para congelarlas, lo que lleva a situaciones bizarras. Esta bueno.
 torre que hace la cruz en su pos actual y una en la que estuvo antes y marcó
 pieza que se duplica todas las veces que quiera, pero si se la comen se comen todas
 pieza que no se puede mover si el enemigo esta haciendo una formacion especifica con sus piezas
@@ -509,5 +609,189 @@ serpiente con camino hamiltoniano
 todas las piezas se mueven hasta chocar con algo
 piezas que solo den estados alterados a otras piezas
 ajedrez 69 solomon
+Una pieza que se mueva y pueda invocar orbes ortogonalmente, los orbes son piezas sin movimiento propio que se mueven en la misma direccion un casillero por turno. Desaparecen al salir del tablero o capturar una pieza de cualquier bando
+Torre 2x2, solo frena si pisa dos piezas a la vez. Supongo que nomas una esquina es clickeable
+Pieza controlable por ambos jugadores, cambia de bando cada turno
+pieza solo capturable por una clase de piezas
+forma de convertir piezas en otras, si se convierte al rey se tiene una version 'real' de esa pieza
+pieza con hitpoints
+Pieza que promociona despues de capturar 3 veces
+Pieza cuyo rango dependa de la cantidad de piezas de cierto tipo en el tablero
+Pieza con pieza hermana, entre las dos forman un area. Cualquiera puede saltar a cualquier punto de esta area. Si se las lleva a las esquinas del tablero se tendría un universal leaper
+el bufon, arranca fuera del tablero y puede saltar a cualquier casillero vacio. De ahi en adelante copia los movimientos de la ultima pieza enemiga que se haya movido.
+portales
+pieza que pueda moverse una vez sin gastar el turno
+el cocodrilo para un cuerpo de agua aleatorio es un problema complicado? Habria que implementar un space fill desde el lenguaje, que tenga en cuenta las costas. No se que tan feo seria, ver. Igual se puede harcodear para cada tablero especifico
+
+En retrospectiva podría haber terminado el proyecto mucho antes, y de forma mas eficiente, harcodeando todas las piezas. Ese nunca fue el fin del proyecto, pero bueno, da para pensar eso. Hacer el lenguaje de alto nivel tiene sus ventajas, es mucho mas amigable y permite iterar cosas simples rapido. Pero tiene sus desventajas, fue una inversion grande para mi hacerlo y limita la flexibilidad de lo que se puede llegar a crear. Si hubiera hecho algo tipo un framework de c menos usuarios podrían hacer cosas, por necesitar aprender muchas cosas especificas y molestas, pero las cosas que crearian esos usuarios serían considerablemente mas custom e interesantes. El teorema del colchon de agua. 
+Puede que igual un acercamiento asi termine mas o menos en lo mismo que a lo que llegue. El mecanismo de reaccion es la parte mas pesada y mas automatizada por el lenguaje. Tener que hacer un sistema como ese para cada pieza sin tener errores de consistencia en cada punto de restauracion seria bastante incomodo. Y usando abstracciones que lo manejen terminaria con lo mismo que el lenguaje. Puede que se maneje un poco mejor igual, pero al costo de mucho trabajo, bloat de codigo y riesgo de errores. La falta de estandarizacion haria que piezas complejas tengan mala interoperabilidad
+
+
+
+
+
+
+
+
+
+
+La alternativa que sería mas rapida y mas flexible sería hacer que el lenguaje de piezas compile a codigo en c++
+Hace el arranque mas complejo:
+Habria un programa inicial que te da a elegir el tablero. Una vez elegido, el programa genera el codigo de las piezas, lo compila junto con el resto del juego y lo arranca. (Puede que parte del juego este compilada y espere que se linkee, no sé)
+Tambien esta el tema de que debería andar con varios compiladores, lo unico que debería cambiar es la llamada nomas igual
+
+La gran ventaja de generar codigo es que ahora toda la estructura de movHolders y movimientos es inline.
+Tambien se pueden agregar optimizaciones especificas como no meter control de memoria en movimientos que no usan memoria, no necesitar pasar argumentos de mas a movs que no los necesiten, separar esp de otras conds, no recalcular posAct si no se mueve, agregar un solo trigger por pos, etc
+Puede tener una desventaja menor de que al generar codigo hay mas bloat y eso afecte a la cache, pero no creo. 
+
+Puede que la separacion entre operador y holder ya no tenga sentido en este modelo. Podría hacerse que el holder contenga las estructuras necesarias para funcionar, que pueden variar (a demas de los datos de holder, una normal sola solo tendría el array de acciones, pero un desliz necesita un vector de normales y algunos datos de control) y operador sea solo la funcion generar
+
+ej
+w vacio mov
+->
+(los movimientos probablemente esten inline)
+void mov.generar(data* dat){
+    v posAct;
+    posAct=data->pos+v(0,1);
+    if(!esp(posAct)){
+        valido=false;
+        return;
+    }
+    agregarTrigger(posAct);
+    if(!vacio(posAct)){
+        valido=false;
+        return;
+    }
+    posAct=data->pos+v(0,1);
+    data->accs[0].pos=posAct;
+}
+
+agregarTrigger sería algo como 
+tablero->tile(posAct)->triggers.push_back(Trigger(this,1));
+
+el 1 es un numero de control para el mecanismo de reaccion. 
+No tengo claro si usar una la funcion de generar para reaccion y generar, o tenerlas como cosas separadas.
+-
+el mecanismo de reaccion es complicado. Si fuera todo plano sería un switch con gotos al principio de la funcion, pero con desliz eso no funciona directamente.
+Una solucion que creo que funcionaria para todos los casos es ir asignando numeros a cada eslabon del desliz cuando se genera. En el switch hay un for por cada desliz que mira el numero que se pasó es de ese desliz. Si lo es se salta a este acomodando su iterador. Esto se puede hacer andar con anidacion. Los iteradores entonces quedan ligados a un valor generado en runtime. La n-upla que guarda esto se genera cuando se compila. 
+No sé si es la solucion mas simple
+Tambien tiene que guardar un offset para pos 
+
+
+
+
+
+
+desliz w vacio mov end
+
+void mov.generar(data* dat){
+    v posAct;
+    posAct=data->pos;
+    i=0;
+    while(true){
+        posAct+=(0,1);
+        if(!esp(posAct)){
+            cap=i;
+            return;
+        }
+        agregarTrigger(posAct);
+        if(!vacio(posAct)){
+            cap=i;
+            return;
+        }
+        posAct=data->pos+v(0,1);
+        data->norm[i].accs[0].pos=posAct;
+    }
+}
+
+
+
+
+Algo bizarro que se podría agregar facil es la habilidad de poder insertar codigo en c++ directamente adentro del lenguaje de piezas, escribir algo como
+desliz w mover <@for(int i=0;i<50;i++) cout<<"dasda";@> end
+(el codigo se marcaría como condicion o accion con alguna notacion. El codigo que se genera esta dentro de una funcion bool o void, respectivamente)
+No sé si hay algun contexto en el que sea util, pero estaría bueno. 
+Se podría llamar a comandos comunes usando los nombres de las funciones, como 
+mov(), etc. Como no es el lenguaje de piezas el que esta llamando cosas como esp no se van a poner automaticamente, los movimientos del puntero no se van procesar junto con las del lenguaje, etc. Pero si uno es conciente de estas limitaciones no habría problema.
+
+
+La alternativa que sería mas rapida y mas flexible sería hacer que el lenguaje de piezas compile a codigo en c++
+Hace el arranque mas complejo:
+Habria un programa inicial que te da a elegir el tablero. Una vez elegido, el programa genera el codigo de las piezas, lo compila junto con el resto del juego y lo arranca. (Puede que parte del juego este compilada y espere que se linkee, no sé)
+Tambien esta el tema de que debería andar con varios compiladores, lo unico que debería cambiar es la llamada nomas igual
+
+La gran ventaja de generar codigo es que ahora toda la estructura de movHolders y movimientos es inline.
+Tambien se pueden agregar optimizaciones especificas como no meter control de memoria en movimientos que no usan memoria, no necesitar pasar argumentos de mas a movs que no los necesiten, separar esp de otras conds, no recalcular posAct si no se mueve, agregar un solo trigger por pos, etc
+Puede tener una desventaja menor de que al generar codigo hay mas bloat y eso afecte a la cache, pero no creo. 
+
+Puede que la separacion entre operador y holder ya no tenga sentido en este modelo. Podría hacerse que el holder contenga las estructuras necesarias para funcionar, que pueden variar (a demas de los datos de holder, una normal sola solo tendría el array de acciones, pero un desliz necesita un vector de normales y algunos datos de control) y operador sea solo la funcion generar
+
+ej
+w vacio mov
+->
+(los movimientos probablemente esten inline)
+void mov.generar(data* dat){
+    v posAct;
+    posAct=data->pos+v(0,1);
+    if(!esp(posAct)){
+        valido=false;
+        return;
+    }
+    agregarTrigger(posAct);
+    if(!vacio(posAct)){
+        valido=false;
+        return;
+    }
+    posAct=data->pos+v(0,1);
+    data->accs[0].pos=posAct;
+}
+
+agregarTrigger sería algo como 
+tablero->tile(posAct)->triggers.push_back(Trigger(this,1));
+
+el 1 es un numero de control para el mecanismo de reaccion. 
+No tengo claro si usar una la funcion de generar para reaccion y generar, o tenerlas como cosas separadas.
+-
+el mecanismo de reaccion es complicado. Si fuera todo plano sería un switch con gotos al principio de la funcion, pero con desliz eso no funciona directamente.
+Una solucion que creo que funcionaria para todos los casos es ir asignando numeros a cada eslabon del desliz cuando se genera. En el switch hay un for por cada desliz que mira el numero que se pasó es de ese desliz. Si lo es se salta a este acomodando su iterador. Esto se puede hacer andar con anidacion. Los iteradores entonces quedan ligados a un valor generado en runtime. La n-upla que guarda esto se genera cuando se compila. 
+No sé si es la solucion mas simple
+Tambien tiene que guardar un offset para pos 
+
+
+
+
+
+
+desliz w vacio mov end
+
+void mov.generar(data* dat){
+    v posAct;
+    posAct=data->pos;
+    i=0;
+    while(true){
+        posAct+=(0,1);
+        if(!esp(posAct)){
+            cap=i;
+            return;
+        }
+        agregarTrigger(posAct);
+        if(!vacio(posAct)){
+            cap=i;
+            return;
+        }
+        posAct=data->pos+v(0,1);
+        data->norm[i].accs[0].pos=posAct;
+    }
+}
+
+
+
+
+Algo bizarro que se podría agregar facil es la habilidad de poder insertar codigo en c++ directamente adentro del lenguaje de piezas, escribir algo como
+desliz w mover <@for(int i=0;i<50;i++) cout<<"dasda";@> end
+(el codigo se marcaría como condicion o accion con alguna notacion. El codigo que se genera esta dentro de una funcion bool o void, respectivamente)
+No sé si hay algun contexto en el que sea util, pero estaría bueno. 
+Se podría llamar a comandos comunes usando los nombres de las funciones, como 
+mov(), etc. Como no es el lenguaje de piezas el que esta llamando cosas como esp no se van a poner automaticamente, los movimientos del puntero no se van procesar junto con las del lenguaje, etc. Pero si uno es conciente de estas limitaciones no habría problema.
 
 
