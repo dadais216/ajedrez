@@ -20,9 +20,9 @@ c indica que lo que se evaluó hasta el momento es un movimiento valido, que pue
 El proyecto esta programado en c++ usando SFML para manejar los graficos. El estilo de programacion es estructurado, ya que considero importante priorizar la eficiencia. Programar de esta forma me permite tener un control fino sobre el manejo de memoria y una vision clara del procesamiento. La eficiencia es importante en este caso porque el algoritmo usado por la inteligencia artificial es un min max cercano a fuerza bruta, que es bastante exigente, y por encima de esto el dominio sobre el que se aplica es dinamico al estar definido por el usuario, por lo que muchas optimizaciones que se podrían hacer para juegos especificos no aplican. 
 
 ## Pantallazos ##
-![p1](https://github.com/dadais216/ajedrez/tree/master/fotos/Selection_555.png)
-![p2](https://github.com/dadais216/ajedrez/tree/master/fotos/Selection_556.png)
-![p3](https://github.com/dadais216/ajedrez/tree/master/fotos/f5c040f1-ce7e-4352-84c9-fa252c3373d3.jpg)
-![p4](https://github.com/dadais216/ajedrez/tree/master/fotos/190069c9-ee3a-48bf-a437-721d3c01b10e.jpg)
+![p1](https://github.com/dadais216/ajedrez/blob/master/fotos/Selection_555.png)
+![p2](https://github.com/dadais216/ajedrez/blob/master/fotos/Selection_556.png)
+![p3](https://github.com/dadais216/ajedrez/blob/master/fotos/f5c040f1-ce7e-4352-84c9-fa252c3373d3.jpg)
+![p4](https://github.com/dadais216/ajedrez/blob/master/fotos/190069c9-ee3a-48bf-a437-721d3c01b10e.jpg)
 
 
